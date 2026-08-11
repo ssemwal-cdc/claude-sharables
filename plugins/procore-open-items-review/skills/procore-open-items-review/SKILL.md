@@ -337,8 +337,8 @@ it: one click is the point.
 
 The script prints the headline line.
 
-If the script aborts because the sentinels are missing, **restore the template from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/` — do not rebuild it from memory.** A design change goes in the **plugin repo's** `assets/dashboard_template.html`, not the workspace
-copy — Step 0 overwrites that copy on every run, so an edit made there lasts exactly one run and
+If the script aborts because the sentinels are missing, **restore the template from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/` — do not rebuild it from memory.** A design change goes in the **plugin repo** — the copy of `dashboard_template.html` under that
+skill's `assets/` directory — not the workspace copy — Step 0 overwrites that copy on every run, so an edit made there lasts exactly one run and
 reaches nobody else. Keep the sentinels intact, then push; teammates get it on their next plugin
 update.
 

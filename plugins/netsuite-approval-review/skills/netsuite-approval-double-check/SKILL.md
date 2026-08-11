@@ -326,8 +326,8 @@ The template already handles, on every open:
 - per-item decision marking with local-storage persistence and the batched execute bar
 - a one-click re-run button, which is the refresh path now that the page never queries NetSuite itself
 
-A design change goes in the **plugin repo's** `assets/dashboard_template.html`, not the workspace
-copy — Step 0 overwrites that copy on every run, so an edit made there lasts exactly one run and
+A design change goes in the **plugin repo** — the copy of `dashboard_template.html` under that
+skill's `assets/` directory — not the workspace copy — Step 0 overwrites that copy on every run, so an edit made there lasts exactly one run and
 reaches nobody else. Keep the sentinels intact, then push; teammates get it on their next plugin
 update.
 

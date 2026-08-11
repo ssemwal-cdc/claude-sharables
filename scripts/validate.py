@@ -222,6 +222,15 @@ for doc in ("README.md", "CLAUDE.md"):
         if looks_like_plugin and mentioned not in registered:
             fail(f"{doc} references {mentioned!r}, which is not registered in marketplace.json")
 
+    # The docs must not instruct anyone to do what the rules above reject.
+    # Quoted failure examples are fine; instructions are not.
+    for line in body.splitlines():
+        if re.search(r"^\s*(Use|Spell|Set|Write|Put)\b.*\"?source\"?.*\./plugins/", line):
+            fail(
+                f"{doc} instructs using a relative-path source ({line.strip()[:60]}…), "
+                f"which validate.py rejects. Say git-subdir."
+            )
+
 # -------------------------------------------------------------------- report
 for n in notes:
     print(f"note: {n}")

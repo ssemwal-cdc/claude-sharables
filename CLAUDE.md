@@ -156,7 +156,7 @@ anyway*, failing at install with:
 
 > Source path does not exist: /…/<repo>/<name>
 
-Spell every source out as `./plugins/<name>` and leave `pluginRoot` unset.
+Use a `git-subdir` source and leave `pluginRoot` unset.
 `scripts/validate.py` rejects the file if it reappears.
 
 **Asset paths must use `${CLAUDE_PLUGIN_ROOT}`.**

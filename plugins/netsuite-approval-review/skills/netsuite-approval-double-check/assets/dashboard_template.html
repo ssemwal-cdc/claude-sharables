@@ -54,6 +54,21 @@ h2{font-size:15px;font-weight:500;margin:22px 0 0}
 @media (prefers-color-scheme:dark){:root{--ink:#eceae4;--ink2:#a6a49d;--ink3:#9a978d;--line:#35342f;--bg:#191816;--card:#22201d;--surf:#272521;--sunk:#2d2a26;--ctl:#46433d;--ctl2:#6b6860;--ctl-on:#37342e;--inv:#191816;--ink-hi:#ffffff;--ok-bg:#16301d;--ok-fg:#79c78c;--ok-line:#2b5436;--bad-bg:#381d1b;--bad-fg:#ef8b84;--bad-line:#61302c;--warn-bg:#31260f;--warn-fg:#dfb25e;--warn-line:#57431e;--acc-bg:#16283c;--acc-fg:#7db3ed;--acc-line:#2a4868}
 }
 </style>
+<script>
+// Integrity guard, and it has to run first. The widget host takes this file as inline content, so
+// unlike the old artifact path (which passed it by path) the whole layout travels through a tool
+// call and can arrive truncated. A short dashboard looks plausible: fewer rows reads as a shorter
+// queue, not as damage. This looks for a marker that is the very last element in the document.
+document.addEventListener("DOMContentLoaded",function(){
+  if(document.getElementById("__complete"))return;
+  var w=document.createElement("div");
+  w.style.cssText="position:sticky;top:0;z-index:999;background:#a32d2d;color:#fff;padding:12px 16px;"+
+    "font:500 14px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif";
+  w.textContent="This dashboard did not render completely — part of it was lost on the way to the "+
+    "screen, so items may be missing. Do not act on anything below. Ask for it to be rendered again.";
+  document.body.insertBefore(w,document.body.firstChild);
+});
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -96,6 +111,12 @@ var money=function(n){return Math.abs(n).toLocaleString("en-US",{style:"currency
 function parseNsDate(s){if(!s)return null;var p=String(s).split("/");if(p.length!==3)return null;return new Date(+p[2],+p[0]-1,+p[1])}
 function ageDays(s){var d=parseNsDate(s);if(!d)return null;return Math.max(0,Math.floor((Date.now()-d.getTime())/86400000))}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function nav(a){
+  // The widget host exposes openLink as a bare global; target=_blank is unreliable in a sandboxed
+  // iframe. Fall through to the anchor on any host that does not provide it.
+  if(window.openLink){try{window.openLink(a.href);return false}catch(e){}}
+  return true
+}
 function recUrl(id){return "https://"+ACCT+".app.netsuite.com/app/accounting/transactions/transaction.nl?id="+id}
 
 // This page never queries NetSuite. The widget host exposes no callMcpTool, and an on-open
@@ -183,7 +204,7 @@ function newRow(n){
   '<p class="ven">arrived since the last review'+(a!=null?' · dated '+esc(n.trandate)+' ('+a+'d)':'')+(n.po_ref?' · '+esc(n.po_ref):'')+'</p>'+
   '<p class="head">No verdict yet — no math or support check has run against this item</p>'+
   '<div class="acts"><button onclick="sendRun()">Run the check on this ↗</button>'+
-  '<a href="'+recUrl(n.id)+'" target="_blank" rel="noopener">Open record</a></div></div>'
+  '<a href="'+recUrl(n.id)+'" target="_blank" rel="noopener" onclick="return nav(this)">Open record</a></div></div>'
 }
 
 function itemRow(it,c2){
@@ -210,7 +231,7 @@ function itemRow(it,c2){
   '<button class="'+(m&&m.kind==="approve"?"on":"")+'" onclick="mark('+it.id+',\'approve\')">'+(m&&m.kind==="approve"?"✓ ":"")+'Approve</button>'+
   '<button class="'+(m&&m.kind==="notes"?"on":"")+'" onclick="mark('+it.id+',\'notes\')">'+(m&&m.kind==="notes"?"✓ ":"")+'With notes</button>'+
   '<span style="flex:1"></span>'+
-  '<a href="'+recUrl(it.id)+'" target="_blank" rel="noopener">Open record</a>'+
+  '<a href="'+recUrl(it.id)+'" target="_blank" rel="noopener" onclick="return nav(this)">Open record</a>'+
   '<button class="rj '+(m&&m.kind==="reject"?"on":"")+'" onclick="mark('+it.id+',\'reject\')">'+(m&&m.kind==="reject"?"✓ ":"")+'Reject</button>'+
   '</div>';
   if(m&&m.kind==="notes")h+='<input type="text" placeholder="Note to record with the approval" value="'+esc(m.text||"")+'" oninput="setText('+it.id+',this.value)">';
@@ -288,5 +309,6 @@ function go(){say(window.__prompt)}
 
 render();
 </script>
+<div id="__complete" hidden></div>
 </body>
 </html>

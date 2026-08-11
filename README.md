@@ -4,26 +4,36 @@ Internal marketplace of Claude plugins for Compass Datacenters.
 
 ## For teammates: installing
 
-Run these two commands in Cowork or Claude Code, once:
+Register the marketplace once in Cowork or Claude Code:
 
 ```
 /plugin marketplace add ssemwal-cdc/claude-sharables
-/plugin install netsuite-approval-review@compass-claude-plugins
 ```
 
-The first argument is this repo; the `@compass-claude-plugins` suffix is the
-marketplace name declared in `.claude-plugin/marketplace.json`, which is why
-the two differ. If the install summary says `Run /reload-plugins to activate.`,
-run that too.
+Then install whichever plugins you need:
 
-After installing, say "run my approval check". First-time setup happens
-automatically and asks you to confirm your own NetSuite identity.
+```
+/plugin install netsuite-approval-review@compass-claude-plugins
+/plugin install procore-open-items-review@compass-claude-plugins
+```
+
+The argument to `marketplace add` is this repo; the `@compass-claude-plugins`
+suffix is the marketplace name declared in `.claude-plugin/marketplace.json`,
+which is why the two differ. If an install summary says
+`Run /reload-plugins to activate.`, run that too.
+
+After installing, say "run my approval check" for the NetSuite queue, or
+"run my Procore review" for the Procore one. Each plugin runs its own
+first-time setup automatically the first time you use it — NetSuite asks you
+to confirm your NetSuite identity, Procore asks for your company id and a
+couple of per-company tool and field ids.
 
 ## Available plugins
 
-| Plugin | What it does |
-|---|---|
-| `netsuite-approval-review` | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it |
+| Plugin | What it does | Needs |
+|---|---|---|
+| `netsuite-approval-review` | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | NetSuite MCP connector |
+| `procore-open-items-review` | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
 
 ## For maintainers: releasing an update
 
@@ -42,10 +52,23 @@ bump it, everyone silently keeps their cached copy and your fix never lands.
 
 ## Adding another plugin
 
-Put it in `plugins/<name>/` and add an entry to the `plugins` array in
-`.claude-plugin/marketplace.json`. Keep everything in this one marketplace —
-each person can only register one marketplace per name, so a second marketplace
-would replace this one rather than sit alongside it.
+Both steps are required, and missing the first one fails silently at install
+time rather than at push time:
+
+1. Put the plugin in `plugins/<name>/`, with its own
+   `plugins/<name>/.claude-plugin/plugin.json` declaring a `name` and
+   `description` — and no `version`, per the rule above. Skills go in
+   `plugins/<name>/skills/<skill-name>/SKILL.md`; the conventional `skills/`
+   location is picked up automatically, so `plugin.json` needs no `skills` key.
+2. Add an entry to the `plugins` array in `.claude-plugin/marketplace.json`.
+   `source` is relative to `metadata.pluginRoot` (`./plugins`), so it is just
+   the folder name. Keep `name` identical to the one in `plugin.json`.
+
+Either existing plugin works as a template for the layout.
+
+Keep everything in this one marketplace — each person can only register one
+marketplace per name, so a second marketplace would replace this one rather
+than sit alongside it.
 
 ## Repo visibility
 

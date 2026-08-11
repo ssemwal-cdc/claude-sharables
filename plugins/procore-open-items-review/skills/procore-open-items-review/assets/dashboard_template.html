@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Procore open items queue</title>
+<style>
+:root{color-scheme:light;--ink:#141413;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:8px}
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:var(--bg);color:var(--ink);font:400 15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin:0}
+h2{font-size:15px;font-weight:500;margin:26px 0 0}
+.sub{font-size:13px;color:var(--ink2);margin:3px 0 0}
+.pill{font-size:12px;padding:3px 9px;border-radius:var(--r);white-space:nowrap}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.freshbox{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:16px 0 0}
+.freshbox.stale{border-color:var(--warn-line);background:var(--warn-bg)}
+.freshtext{flex:1;min-width:160px;font-size:13px;line-height:1.45}
+.freshtext b{font-weight:500;font-size:13.5px}
+button.primary{background:var(--ink);border-color:var(--ink);color:#fff;font-size:13px;padding:9px 15px}
+button.primary:hover{background:#000;border-color:#000}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:16px 0 22px}
+.card{background:#f1f0ec;border-radius:var(--r);padding:13px 14px}
+.card .l{font-size:12.5px;color:var(--ink2)}
+.card .v{font-size:23px;font-weight:500;margin-top:2px;font-variant-numeric:tabular-nums}
+.row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 17px;margin-bottom:10px}
+.row.mk{border-width:2px;border-color:var(--acc-line)}
+.row.mkr{border-width:2px;border-color:var(--bad-line)}
+.rh{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.doc{font-size:15px;font-weight:500;flex:1;min-width:150px}
+.amt{font-size:15px;font-weight:500;font-variant-numeric:tabular-nums}
+.ven{font-size:13px;color:var(--ink2);margin:5px 0 0}
+.head{font-size:14px;margin:9px 0 0}
+ul.f{margin:7px 0 0;padding-left:17px;font-size:12.5px;color:var(--ink2);line-height:1.6;font-variant-numeric:tabular-nums}
+ul.f li{margin:1px 0}
+.po{font-size:12.5px;color:var(--ink2);background:#f6f5f2;padding:7px 10px;border-radius:var(--r);margin:9px 0 0;font-variant-numeric:tabular-nums}
+.det{font-size:13px;color:var(--ink2);line-height:1.7;margin:10px 0 0;display:none}
+.acts{display:flex;gap:8px;align-items:center;margin-top:11px;padding-top:10px;border-top:1px solid var(--line);flex-wrap:wrap}
+button{font:400 12.5px/1 inherit;padding:7px 12px;background:transparent;border:1px solid #c9c8c2;border-radius:var(--r);color:var(--ink);cursor:pointer}
+button:hover{background:#f1f0ec}
+button.on{background:#eceae4;border-color:#9a9992}
+button.rj{border-color:var(--bad-line);color:var(--bad-fg)}
+button.go{border-color:#9a9992;font-size:13px}
+button.caution{border-color:var(--warn-line);color:var(--warn-fg)}
+button.acc{border-color:var(--acc-line);color:var(--acc-fg)}
+input[type=text]{width:100%;font:400 13px inherit;padding:8px 10px;border:1px solid #c9c8c2;border-radius:var(--r);margin-top:10px;background:#fff;color:var(--ink)}
+a{color:var(--acc-fg);text-decoration:none;font-size:12.5px}
+a:hover{text-decoration:underline}
+.bar{background:#f1f0ec;border-radius:12px;padding:15px 17px;margin-top:20px}
+.note{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
+.banner{border-radius:12px;padding:12px 15px;margin-bottom:14px;font-size:13.5px}
+.empty{text-align:center;padding:34px 20px;color:var(--ink2);font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.binrow{background:#f1f0ec;border-radius:var(--r);padding:11px 14px;margin-top:8px;display:flex;gap:10px;align-items:center;color:var(--ink3);font-size:13.5px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.tog{cursor:pointer;user-select:none}
+.seclead{font-size:12.5px;color:var(--ink3);margin:4px 0 10px}
+.toolbar{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin:16px 0 0}
+.fgrp{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto}
+.tbl{font-size:12px;color:var(--ink3)}
+select{font:400 12.5px/1 inherit;padding:7px 26px 7px 9px;border:1px solid #c9c8c2;border-radius:var(--r);background:#fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%235f5e5a' stroke-width='1.4'/%3E%3C/svg%3E") no-repeat right 8px center/11px;color:var(--ink);cursor:pointer;-webkit-appearance:none;appearance:none}
+select.act{border-color:var(--acc-line);background-color:var(--acc-bg);color:var(--acc-fg)}
+input.search{width:auto;flex:1;min-width:130px;margin-top:0;font-size:12.5px;padding:7px 10px}
+.chip{font-size:12px;padding:5px 10px;border-radius:var(--r);background:#f1f0ec;color:var(--ink2);cursor:pointer;border:1px solid transparent}
+.chip.on{background:var(--acc-bg);color:var(--acc-fg);border-color:var(--acc-line)}
+.hid{font-size:12.5px;color:var(--warn-fg);margin:9px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h2 class="sr">Procore open items dashboard. Every item awaiting Shivam's workflow response is listed with the verdict from the last review. Items he cannot respond to are filtered out. Responses are marked per item and executed together only after he presses execute.</h2>
+
+<div class="top">
+  <div>
+    <h1>Procore open items</h1>
+    <p class="sub" id="sub">…</p>
+  </div>
+  <span class="pill" id="conn" style="background:var(--warn-bg);color:var(--warn-fg)">Snapshot</span>
+</div>
+
+<div class="freshbox" id="freshbox">
+  <div class="freshtext" id="freshtext"></div>
+  <button class="primary" onclick="sendRun()">Re-check Procore now ↗</button>
+</div>
+
+<div class="cards" id="cards"></div>
+
+<div class="toolbar">
+  <span class="fgrp"><span class="tbl">Sort</span>
+    <select id="fSort" onchange="setView('sort',this.value)">
+      <option value="oldest">Oldest first</option>
+      <option value="newest">Newest first</option>
+      <option value="amtDesc">$ descending</option>
+      <option value="amtAsc">$ ascending</option>
+      <option value="doc">Item #</option>
+    </select></span>
+  <span class="fgrp"><span class="tbl">Campus</span>
+    <select id="fCampus" onchange="setView('campus',this.value)"></select></span>
+  <span class="fgrp"><span class="tbl">Building</span>
+    <select id="fBldg" onchange="setView('bldg',this.value)"></select></span>
+  <span class="fgrp"><span class="tbl">Type</span>
+    <select id="fType" onchange="setView('type',this.value)"></select></span>
+  <input class="search" id="fQ" type="text" placeholder="Search title, vendor, id…" oninput="setView('q',this.value)">
+  <span class="chip" id="fReset" onclick="resetView()">Reset</span>
+</div>
+
+<div id="banners"></div>
+<div id="rows"></div>
+<div id="bar"></div>
+<div id="ungatedwrap"></div>
+<div id="skipwrap"></div>
+<div id="binwrap"></div>
+
+<div class="freshbox" style="margin-top:24px">
+  <div class="freshtext">Verdicts are written by the procore-open-items-review skill. Procore has no MCP connector, so this page cannot re-query the queue by itself — a re-check runs the review again through the browser and republishes this page.</div>
+  <button class="primary" onclick="sendRun()">Re-check Procore now ↗</button>
+</div>
+</div>
+
+<script>
+var REVIEW=/*__REVIEW_DATA__*/{"lastRun":"","lastRunISO":"","suppressed":0,"config":{},"items":[]}/*__END__*/;
+var CO=(REVIEW.config&&REVIEW.config.company)||"";
+var ICR_TOOL=(REVIEW.config&&REVIEW.config.icrToolId)||"";
+
+// publish_dashboard.py splits Procore's "<Campus> - <Building>" into campus + bldg,
+// because every campus has its own Building 1. Derive defensively if an older
+// payload arrives without them.
+REVIEW.items.forEach(function(i){
+  if(!i.campus && i.projLabel){var p=String(i.projLabel).split(" \u00b7 ");i.campus=p[0];i.bldg=p[1]||"Campus-wide"}
+  if(!i.bldg)i.bldg="Campus-wide";
+  if(!i.campus)i.campus="";
+  if(!i.projLabel)i.projLabel=(i.campus+" \u00b7 "+i.bldg).replace(/^ \u00b7 | \u00b7 $/,"");
+  if(!i.resp)i.resp=[];
+  if(!i.facts)i.facts=[];
+});
+
+var KEY="pc_marks_v1", marks={};
+try{marks=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){marks={}}
+function saveMarks(){try{localStorage.setItem(KEY,JSON.stringify(marks))}catch(e){}}
+
+var showSkipped=false;
+
+// ---- view state: sort / filter / search, persisted ---------------------------
+var VKEY="pc_view_v2";
+var DEFV={sort:"oldest",campus:"all",bldg:"all",type:"all",q:""};
+var view=Object.assign({},DEFV);
+try{var sv=JSON.parse(localStorage.getItem(VKEY)||"null"); if(sv)view=Object.assign(view,sv)}catch(e){}
+function saveView(){try{localStorage.setItem(VKEY,JSON.stringify(view))}catch(e){}}
+function setView(k,v){
+  view[k]=v;
+  if(k==="campus")view.bldg="all";   // campus is the outer axis; buildings belong to one campus
+  if(k==="q"&&v)showSkipped=true;
+  saveView(); render();
+  if(k==="q"){var e=document.getElementById("fQ"); if(e){e.focus(); e.setSelectionRange(e.value.length,e.value.length)}}
+}
+function resetView(){view=Object.assign({},DEFV);saveView();render()}
+function viewActive(){return view.campus!=="all"||view.bldg!=="all"||view.type!=="all"||!!view.q}
+
+function bldgRank(b){
+  if(b==="Campus-wide")return 0;
+  if(/(\d+)\s*$/.test(b))return 10+parseInt(RegExp.$1,10);
+  return 99;
+}
+function docNum(d){var m=String(d).match(/(\d+)/);return m?parseInt(m[1],10):0}
+
+function applyView(list){
+  var q=(view.q||"").toLowerCase().trim();
+  var out=list.filter(function(i){
+    if(view.campus!=="all" && i.campus!==view.campus)return false;
+    if(view.bldg!=="all"   && i.bldg!==view.bldg)return false;
+    if(view.type!=="all"   && i.type!==view.type)return false;
+    if(q){
+      var hay=(i.doc+" "+i.vendor+" "+i.projLabel+" "+i.type+" "+i.id+" "+i.head).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  });
+  var s=view.sort;
+  out.sort(function(a,b){
+    var ad=daysSince(a.due), bd=daysSince(b.due);
+    switch(s){
+      case "newest":  if(ad==null)return 1; if(bd==null)return -1; return ad-bd;
+      case "amtDesc": return (b.amt||0)-(a.amt||0);
+      case "amtAsc":  return (a.amt||0)-(b.amt||0);
+      case "doc":     return a.type.localeCompare(b.type) || docNum(a.doc)-docNum(b.doc) ||
+                             a.doc.localeCompare(b.doc,undefined,{numeric:true});
+      default:        if(ad==null)return 1; if(bd==null)return -1; return bd-ad; // oldest first
+    }
+  });
+  return out;
+}
+
+function fillFilters(all){
+  function counts(arr,key){var o={};arr.forEach(function(i){o[i[key]]=(o[i[key]]||0)+1});return o}
+  function opts(vals,cts,cur){
+    return '<option value="all">All</option>'+vals.map(function(v){
+      return '<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(v)+' ('+cts[v]+')</option>'}).join("");
+  }
+  // campus list from everything
+  var camps=[]; all.forEach(function(i){if(camps.indexOf(i.campus)<0)camps.push(i.campus)}); camps.sort();
+  var cSel=document.getElementById("fCampus");
+  cSel.innerHTML=opts(camps,counts(all,"campus"),view.campus);
+  if(camps.indexOf(view.campus)<0 && view.campus!=="all"){view.campus="all";cSel.value="all"}
+
+  // building list depends on the chosen campus
+  var scope = view.campus==="all" ? all : all.filter(function(i){return i.campus===view.campus});
+  var blds=[]; scope.forEach(function(i){if(blds.indexOf(i.bldg)<0)blds.push(i.bldg)});
+  blds.sort(function(a,b){return bldgRank(a)-bldgRank(b)});
+  var bSel=document.getElementById("fBldg");
+  bSel.innerHTML=opts(blds,counts(scope,"bldg"),view.bldg);
+  if(blds.indexOf(view.bldg)<0 && view.bldg!=="all"){view.bldg="all";bSel.value="all"}
+
+  // type list respects campus + building
+  var tScope = scope.filter(function(i){return view.bldg==="all"||i.bldg===view.bldg});
+  var types=[]; tScope.forEach(function(i){if(types.indexOf(i.type)<0)types.push(i.type)}); types.sort();
+  var tSel=document.getElementById("fType");
+  tSel.innerHTML=opts(types,counts(tScope,"type"),view.type);
+  if(types.indexOf(view.type)<0 && view.type!=="all"){view.type="all";tSel.value="all"}
+
+  document.getElementById("fSort").value=view.sort;
+  var qEl=document.getElementById("fQ"); if(qEl.value!==view.q)qEl.value=view.q;
+  cSel.className=view.campus!=="all"?"act":"";
+  bSel.className=view.bldg!=="all"?"act":"";
+  tSel.className=view.type!=="all"?"act":"";
+  document.getElementById("fReset").className="chip"+(viewActive()||view.sort!==DEFV.sort?" on":"");
+}
+
+function money(n){return n==null?"—":Math.abs(n).toLocaleString("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2})}
+// Compact form for the summary cards: 2,702,000 → $2.7m · 270,200 → $270k
+function compactMoney(n){
+  n=Math.abs(n||0);
+  if(n<1000)return "$"+Math.round(n);
+  var k=Math.round(n/1000);
+  if(k>=1000)return "$"+(Math.round(n/1e5)/10)+"m";
+  return "$"+k.toLocaleString()+"k";
+}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function daysSince(iso){if(!iso)return null;var p=iso.split("-");var d=new Date(+p[0],+p[1]-1,+p[2]);return Math.floor((Date.now()-d.getTime())/86400000)}
+function ageOfRun(){var t=new Date(REVIEW.lastRunISO).getTime();if(isNaN(t))return null;return Math.max(0,Math.round((Date.now()-t)/60000))}
+function ageText(){var m=ageOfRun();if(m==null)return "";
+  if(m<2)return "just now"; if(m<60)return m+" minutes ago";
+  var h=Math.round(m/60); if(h<24)return h+" hour"+(h>1?"s":"")+" ago";
+  var d=Math.round(h/24); return d+" day"+(d>1?"s":"")+" ago";}
+function recUrl(it){
+  if(it.kind==="inv")return "https://app.procore.com/webclients/host/companies/"+CO+"/projects/"+it.pid+"/tools/invoicing/requisitions/"+it.cid+"/"+it.id;
+  if(it.kind==="cco")return "https://app.procore.com/"+it.pid+"/project/commitments/purchase_order_contracts/"+it.cid+"/change_orders/commitment_contract_change_orders/"+it.id;
+  return "https://app.procore.com/webclients/host/companies/"+CO+"/projects/"+it.pid+"/tools/generic-tool/details/"+it.id+"?tool_id="+ICR_TOOL;
+}
+function wfType(it){return it.wf||(it.kind==="inv"?"Billings::Requisition":it.kind==="cco"?"ChangeOrderPackage":"GenericToolItem")}
+function isAffirmative(v){return v==="Yes"||v==="Approve"}
+function needsReason(v){return v==="Reject"||v==="Revise and Resubmit"}
+
+function render(){
+  var all=REVIEW.items.filter(function(i){return i.verdict!=="gone"});
+  var ready=all.filter(function(i){return i.verdict==="clear"||i.verdict==="flagged"});
+  var ungated=all.filter(function(i){return i.verdict==="ungated"});
+  var skipped=all.filter(function(i){return i.verdict==="skipped"});
+  var bin=REVIEW.items.filter(function(i){return i.verdict==="gone"});
+
+  var clear=ready.filter(function(i){return i.verdict==="clear"}).length;
+  var flagged=ready.filter(function(i){return i.verdict==="flagged"}).length;
+  var value=ready.reduce(function(s,i){return s+(i.amt||0)},0);
+  var ages=all.map(function(i){return daysSince(i.due)}).filter(function(a){return a!=null});
+  var oldest=ages.length?Math.max.apply(null,ages):0;
+
+  document.getElementById("sub").textContent =
+    all.length+" awaiting your response · "+REVIEW.suppressed+" suppressed because you cannot respond to them";
+
+  var mins=ageOfRun(), stale=(mins!=null&&mins>180);
+  var fb=document.getElementById("freshbox");
+  fb.className="freshbox"+(stale?" stale":"");
+  document.getElementById("freshtext").innerHTML =
+    '<b>Reviewed '+ageText()+'</b> — '+esc(REVIEW.lastRun)+
+    '<br><span style="color:var(--ink2)">'+(stale
+      ? 'This snapshot is getting old. Procore may have moved on; re-check before acting on anything below.'
+      : 'This is a snapshot, not a live view — Procore has no connector, so nothing refreshes on its own.')+'</span>';
+  var conn=document.getElementById("conn");
+  conn.textContent = stale ? "Snapshot · "+ageText() : "Snapshot · fresh";
+  conn.style.background = stale ? "var(--bad-bg)" : "var(--ok-bg)";
+  conn.style.color = stale ? "var(--bad-fg)" : "var(--ok-fg)";
+
+  document.getElementById("cards").innerHTML=
+    cd("Awaiting you",all.length)+
+    cd("Clear",clear,"var(--ok-fg)")+
+    cd("Flagged",flagged,"var(--bad-fg)")+
+    cd("Gate unknown",ungated.length,"var(--acc-fg)")+
+    cd("Skipped",skipped.length,"var(--warn-fg)")+
+    cd("Decidable",compactMoney(value));
+
+  var b="";
+  var affirmSkipped=Object.keys(marks).filter(function(k){var it=byId(k);return it&&it.verdict==="skipped"&&isAffirmative(marks[k].kind)});
+  if(affirmSkipped.length)
+    b+='<div class="banner" style="background:var(--bad-bg);color:var(--bad-fg);border:1px solid var(--bad-line)">'+
+       affirmSkipped.length+' item'+(affirmSkipped.length>1?'s are':' is')+' marked affirmative despite having no support to review. That answers the cost-completeness gate yes on an item with no verified cost.</div>';
+  document.getElementById("banners").innerHTML=b;
+
+  fillFilters(all);
+
+  var vReady=applyView(ready), vUngated=applyView(ungated), vSkipped=applyView(skipped);
+  var shown=vReady.length+vUngated.length+vSkipped.length, hidden=all.length-shown;
+  function cnt(v,t){return v.length===t.length ? String(t.length) : v.length+" of "+t.length}
+
+  document.getElementById("rows").innerHTML =
+    (hidden>0 ? '<p class="hid">'+hidden+' item'+(hidden>1?'s':'')+' hidden by the current filter. <a href="#" onclick="resetView();return false">Show everything</a></p>' : '')+
+    (vReady.length
+      ? vReady.map(function(i){return itemRow(i)}).join("")
+      : '<div class="empty">'+(viewActive()?"No decidable items match this filter.":"Nothing ready to decide.")+'</div>');
+
+  renderBar();
+
+  document.getElementById("ungatedwrap").innerHTML = vUngated.length
+    ? '<h2>Gate unresolved ('+cnt(vUngated,ungated)+')</h2>'+
+      '<p class="seclead">The arithmetic on these checks out, but Procore will not answer whether you are a responder, so they are not offered as decisions yet.</p>'+
+      vUngated.map(function(i){return itemRow(i)}).join("")
+    : "";
+
+  document.getElementById("skipwrap").innerHTML = (vSkipped.length||!viewActive())
+    ? '<h2 class="tog" onclick="toggleSkipped()">'+(showSkipped?"▾":"▸")+' Not ready for review ('+cnt(vSkipped,skipped)+')</h2>'+
+      '<p class="seclead">Not approved, not rejected. These sit on your gate step with no cost value, no attachment, or both. Rejecting sends them back for the cost information the step asks for.'+
+      (showSkipped?'':' <a href="#" onclick="toggleSkipped();return false">Show them</a>')+'</p>'+
+      (showSkipped ? vSkipped.map(function(i){return itemRow(i)}).join("") : "")
+    : "";
+
+  document.getElementById("binwrap").innerHTML = bin.length
+    ? '<h2>Actioned since the last review ('+bin.length+')</h2>'+bin.map(function(i){
+        return '<div class="binrow"><span style="flex:1;min-width:0">'+esc(i.type)+' · '+esc(i.doc)+'</span><span>'+money(i.amt)+'</span></div>'}).join("")
+    : "";
+}
+function cd(l,v,col){return '<div class="card"><div class="l">'+l+'</div><div class="v"'+(col?' style="color:'+col+'"':'')+'>'+v+'</div></div>'}
+function byId(id){for(var i=0;i<REVIEW.items.length;i++){if(REVIEW.items[i].id===String(id))return REVIEW.items[i]}return null}
+
+function itemRow(it){
+  var m=marks[it.id]||null, cls="row"+(m?(needsReason(m.kind)?" mkr":" mk"):"");
+  var a=daysSince(it.due);
+  var pill,pbg,pfg;
+  if(it.verdict==="flagged"){pill="Flagged";pbg="var(--bad-bg)";pfg="var(--bad-fg)"}
+  else if(it.verdict==="skipped"){pill="Skipped";pbg="var(--warn-bg)";pfg="var(--warn-fg)"}
+  else if(it.verdict==="ungated"){pill="Gate unknown";pbg="var(--acc-bg)";pfg="var(--acc-fg)"}
+  else{pill="Clear";pbg="var(--ok-bg)";pfg="var(--ok-fg)"}
+  var mk=m?'<span class="pill" style="background:'+(needsReason(m.kind)?"var(--bad-bg)":"var(--acc-bg)")+';color:'+(needsReason(m.kind)?"var(--bad-fg)":"var(--acc-fg)")+'">Will '+esc(m.kind.toLowerCase())+'</span>':"";
+
+  var h='<div class="'+cls+'" id="row'+it.id+'">'+
+   '<div class="rh"><span class="pill" style="background:'+pbg+';color:'+pfg+'">'+pill+'</span>'+
+   '<span class="doc">'+esc(it.type)+' · '+esc(it.doc)+'</span>'+mk+
+   '<span class="amt">'+money(it.amt)+'</span></div>'+
+   '<p class="ven">'+esc(it.projLabel)+' · '+esc(it.vendor)+
+     (a!=null?' <span style="color:'+(a>30?"var(--bad-fg)":a>7?"var(--warn-fg)":"var(--ink3)")+'">· step due '+esc(it.due)+', '+a+' days ago</span>':'')+'</p>'+
+   '<p class="head">'+esc(it.head)+'</p>'+
+   '<ul class="f">'+it.facts.map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+
+   '<p class="po">'+esc(it.po)+(it.poWarn?'<br><span style="color:var(--warn-fg)">! '+esc(it.poWarn)+'</span>':'')+'</p>'+
+   '<p class="det" id="det'+it.id+'">'+esc(it.detail)+'</p>'+
+   '<div class="acts">'+
+   '<button onclick="tog(\''+it.id+'\',this)">Show detail</button>';
+
+  if(it.verdict==="ungated"){
+    h+='<button class="acc" onclick="resolveGate(\''+it.id+'\')">Resolve the gate on this ↗</button>'+
+       '<button class="acc" onclick="reviewSupport(\''+it.id+'\')">Read the attached PCIs ↗</button>';
+  } else {
+    it.resp.forEach(function(v){
+      var on = m&&m.kind===v;
+      var caution = it.verdict==="skipped" && isAffirmative(v);
+      var klass = (needsReason(v)?"rj ":"") + (caution?"caution ":"") + (on?"on":"");
+      h+='<button class="'+klass.trim()+'" onclick="mark(\''+it.id+'\',\''+v+'\')" title="'+(caution?"No support was reviewed on this item":"Procore response: "+v)+'">'+(on?"✓ ":"")+esc(v)+'</button>';
+    });
+  }
+
+  h+='<span style="flex:1"></span><a href="'+recUrl(it)+'" target="_blank" rel="noopener">Open in Procore</a></div>';
+
+  if(m) h+='<input type="text" placeholder="'+(needsReason(m.kind)?"Reason (required — goes into the Procore response comment)":"Comment to record with the response (optional)")+'" value="'+esc(m.text||"")+'" oninput="setText(\''+it.id+'\',this.value)">';
+  return h+'</div>';
+}
+
+function tog(id,btn){var d=document.getElementById("det"+id);var open=d.style.display==="block";d.style.display=open?"none":"block";btn.textContent=open?"Show detail":"Hide detail"}
+function toggleSkipped(){showSkipped=!showSkipped;render()}
+function mark(id,kind){
+  if(marks[id]&&marks[id].kind===kind)delete marks[id];
+  else marks[id]={kind:kind,text:(marks[id]&&marks[id].text)||""};
+  saveMarks();render();
+}
+function setText(id,v){if(marks[id]){marks[id].text=v;saveMarks();renderBar()}}
+function clearAll(){marks={};saveMarks();render()}
+function sendRun(){say("Re-run my Procore open items review now and republish the dashboard.")}
+function resolveGate(id){var it=byId(id);
+  say("Work out whether I can respond to Procore change order package "+it.doc+" (id "+it.id+", project id "+it.pid+", commitment "+it.cid+"). The workflows/instances endpoint returns a 400 for workflowable_object_type=ChangeOrderPackage — try the alternative type strings, and if none work, open the record and check whether a Respond button renders in the workflow side panel. Then update the dashboard with what you find. Do not click Respond.");}
+function reviewSupport(id){var it=byId(id);
+  say("Read every PCI attached to Procore change order package "+it.doc+" (id "+it.id+", project id "+it.pid+"), tie each one to a line item, confirm the PCI totals sum to the package grand total, and flag any line without support or any PCI without a line. Then update the dashboard. Do not respond to the item.");}
+function say(t){if(window.cowork&&window.cowork.sendPrompt)window.cowork.sendPrompt(t);else if(window.sendPrompt)window.sendPrompt(t)}
+
+function renderBar(){
+  // drop marks whose item is no longer in the review — an item actioned since the
+  // last run must not linger as a pending decision
+  var orphan=false;
+  Object.keys(marks).forEach(function(k){if(!byId(k)){delete marks[k];orphan=true}});
+  if(orphan)saveMarks();
+
+  var mins=ageOfRun(), stale=(mins!=null&&mins>180);
+  var ks=Object.keys(marks);
+  if(!ks.length){
+    document.getElementById("bar").innerHTML='<p class="note" style="margin-top:18px">Mark responses above. Nothing reaches Procore until you press execute, and nothing is ever responded to without you naming it here.</p>';
+    return;
+  }
+  var missing=[], affirm=[], neg=[], sum=0;
+  ks.forEach(function(k){var it=byId(k),m=marks[k];
+    if(needsReason(m.kind)){neg.push(it); if(!m.text||!m.text.trim())missing.push(it.doc)}
+    else {affirm.push(it); sum+=it.amt||0}
+  });
+
+  var lines=ks.map(function(k,n){
+    var it=byId(k),m=marks[k];
+    return (n+1)+') respond "'+m.kind+'" to '+it.type+' '+it.doc+
+           ' [workflowable_object_type '+wfType(it)+', item_id '+it.id+', project_id '+it.pid+', '+it.projLabel+
+           (it.amt?', '+money(it.amt):'')+']'+
+           (m.text&&m.text.trim()?' — comment: '+m.text.trim():'');
+  });
+
+  var prompt=
+   "Execute my marked Procore responses, one record at a time. This list came from a dashboard snapshot taken "+REVIEW.lastRun+
+   ", so treat it as possibly out of date — I may have already actioned some of these in Procore directly.\n\n"+
+   "For EACH item, in this exact order:\n"+
+   "1. VERIFY IT IS STILL MINE TO ACTION, before touching any UI. GET /rest/v1.0/projects/{project_id}/workflows/instances with "+
+   "filters[workflowable_object_id]={item_id}, filters[workflowable_object_type]={type}, page=1, view=action_card. "+
+   "If it returns no instance, or user_permissions.can_respond is false, or the response named below is not in "+
+   "current_step_occurrence.available_responses, then it has already been actioned or has moved to another step. "+
+   "SKIP it, log it as 'already actioned elsewhere — no click made', and move to the next item. Do not open it, do not click, do not retry.\n"+
+   "2. Only if can_respond is still true: open the record and confirm the item number, campus/building and amount match what I list below. "+
+   "Any mismatch means the data has shifted underneath us — STOP the entire batch and report. Do not guess.\n"+
+   "3. Open the workflow side panel, click Respond, select only the named response, paste my comment verbatim, submit.\n"+
+   "4. Re-query the same workflows/instances endpoint and confirm can_respond is now false or the step has advanced. "+
+   "A click that appears to succeed is not proof — the API is.\n"+
+   "5. If a submit fails or the step does not advance, STOP the batch there. Never retry the same item and never fall back to clicking something else.\n\n"+
+   "Items:\n"+lines.join("\n")+"\n\n"+
+   "Finish by reporting three counts — actioned, skipped as already done, and whatever stopped the batch — then re-run the review and republish the dashboard so this snapshot is current again.";
+
+  var undec=REVIEW.items.length-ks.length;
+  document.getElementById("bar").innerHTML='<div class="bar">'+
+   '<div style="font-size:14px;font-weight:500">'+ks.length+' marked · nothing sent yet</div>'+
+   '<div class="note" style="margin-top:4px;font-variant-numeric:tabular-nums">'+
+     affirm.length+' affirmative ('+money(sum)+') · '+neg.length+' sent back'+
+     (undec>0?' · '+undec+' left alone and will stay in your queue':'')+'</div>'+
+   (missing.length?'<div class="note" style="color:var(--bad-fg);margin-top:6px">Reason required before executing: '+missing.map(esc).join(", ")+'</div>':'')+
+   (stale?'<div class="note" style="color:var(--warn-fg);margin-top:6px">This snapshot is '+ageText()+'. Executing is still safe — each item is re-checked against Procore before any click — but a re-check first would give you a truer picture of what is left.</div>':'')+
+   '<div style="display:flex;gap:8px;margin-top:12px">'+
+   '<button class="go" '+(missing.length?'disabled style="opacity:.5;cursor:not-allowed"':'onclick="go()"')+'>Execute '+ks.length+' response'+(ks.length>1?"s":"")+' in Procore ↗</button>'+
+   '<button onclick="clearAll()">Clear all marks</button></div>'+
+   '<p class="note" style="margin-top:10px"><b>Stale-safe.</b> This page is a snapshot, so before each click the live workflow is re-queried: if you already actioned an item in Procore yourself, it is skipped and logged, never re-clicked or retried. A changed amount stops the whole batch instead.</p>'+
+   '</div>';
+  window.__prompt=prompt;
+}
+function go(){say(window.__prompt)}
+
+render();
+setInterval(function(){
+  var a=document.activeElement;
+  if(a&&(a.tagName==="INPUT"||a.tagName==="SELECT"))return; // don't blow away focus mid-edit
+  render();
+}, 60000);
+</script>
+</body>
+</html>

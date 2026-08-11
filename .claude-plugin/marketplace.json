@@ -13,6 +13,11 @@
       "name": "netsuite-approval-review",
       "source": "netsuite-approval-review",
       "description": "Double-checks the NetSuite bills and change orders in your approval queue and publishes findings to a live dashboard you can approve or reject from."
+    },
+    {
+      "name": "procore-open-items-review",
+      "source": "procore-open-items-review",
+      "description": "Reviews the Procore items actually waiting on your workflow response — change risks, subcontractor invoices and commitment change orders — and publishes findings to a live dashboard you can respond from."
     }
   ]
 }

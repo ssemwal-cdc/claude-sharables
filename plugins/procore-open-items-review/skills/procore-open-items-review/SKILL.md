@@ -36,11 +36,32 @@ const E=String.fromCharCode(61), Q=String.fromCharCode(63), A=String.fromCharCod
 
 Never echo a URL back in a result. Return parsed values only.
 
-## Step 0 — First-run setup
+## Step 0 — Sync assets, then first-run setup
 
-Read `Procore Open Items/_review_log.json` in the connected workspace folder. If it exists with a `config` block carrying `company` and `icrToolId`, skip this step.
+**Do this on every run, before anything else.** The workspace copies of the template and the
+publish script are a *cache* of the plugin's assets. Refresh them, or a plugin update never
+reaches the dashboard — `SKILL.md` updates with the plugin while the HTML your runs actually
+render stays frozen at whatever version was copied the first time.
 
-Otherwise, once:
+```bash
+mkdir -p "<workspace>/Procore Open Items"
+cp "${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/dashboard_template.html" "<workspace>/Procore Open Items/"
+cp "${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/publish_dashboard.py" "<workspace>/Procore Open Items/"
+chmod u+w "<workspace>/Procore Open Items/dashboard_template.html" \
+          "<workspace>/Procore Open Items/publish_dashboard.py"
+```
+
+The `chmod` is required, not tidiness. The plugin's installed assets are read-only and `cp`
+preserves that mode, so without it the publish step fails with
+`PermissionError: [Errno 13] Permission denied`.
+
+This overwrites the workspace copies deliberately. **A design change belongs in the plugin repo,
+never in the workspace copy** — an edit made there is discarded by the next run and reaches
+nobody else. Ship one by editing the repo's `assets/` and pushing; teammates pick it up on their
+next plugin update.
+
+Then read `Procore Open Items/_review_log.json`. If it already carries a `config` block, the rest of this
+step is done — go to Step 1. Otherwise, once:
 
 1. **Confirm Claude in Chrome is connected and Procore is authenticated.** Navigate to the company Open Items tool. Procore login is email + Continue, then SSO with no password — `find` the email field, set it with `form_input`, click **Continue**. Anything beyond that (password, MFA, CAPTCHA) is a hand-off to the user, not a retry.
 
@@ -50,22 +71,7 @@ Otherwise, once:
 
 4. **Map the cost custom fields by label, not by id.** Custom field ids differ per company. `get_page_text` on a change-risk record renders the fields with their human labels; the API returns them as `custom_field_<id>`. Match them up and record the mapping. At Compass these are Cost: Vendor Proposed, Cost: Compass Accepted and Change Reason.
 
-5. **Copy the assets** into the state folder:
-
-   ```bash
-   mkdir -p "<workspace>/Procore Open Items"
-   cp "${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/dashboard_template.html" "<workspace>/Procore Open Items/"
-   cp "${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/publish_dashboard.py" "<workspace>/Procore Open Items/"
-   chmod u+w "<workspace>/Procore Open Items/dashboard_template.html" \
-             "<workspace>/Procore Open Items/publish_dashboard.py"
-   ```
-
-   The `chmod` is required, not tidiness. The plugin's installed assets are
-   read-only, `cp` preserves that mode, and this skill later tells you to edit
-   the template for design changes — which fails with
-   `PermissionError: [Errno 13] Permission denied` without it.
-
-6. **Write the config:**
+5. **Write the config:**
 
    ```json
    {
@@ -85,7 +91,7 @@ Otherwise, once:
    }
    ```
 
-7. **The dashboard is rendered, not published.** There is no artifact to create,
+6. **The dashboard is rendered, not published.** There is no artifact to create,
    update or reconcile against this file — Step 7 renders the HTML as an inline
    widget on every run, so each render replaces the last and there is no id to
    keep in sync. `_review_log.json` is the only persistent store.
@@ -331,7 +337,10 @@ it: one click is the point.
 
 The script prints the headline line.
 
-If the script aborts because the sentinels are missing, **restore the template from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/` — do not rebuild it from memory.** Only edit the template when the user asks for a design change; keep the sentinels intact.
+If the script aborts because the sentinels are missing, **restore the template from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/` — do not rebuild it from memory.** A design change goes in the **plugin repo's** `assets/dashboard_template.html`, not the workspace
+copy — Step 0 overwrites that copy on every run, so an edit made there lasts exactly one run and
+reaches nobody else. Keep the sentinels intact, then push; teammates get it on their next plugin
+update.
 
 **Report in chat with one line only:**
 

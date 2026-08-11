@@ -27,11 +27,32 @@ An instruction to review is never an instruction to execute. A verdict of "clear
 - **Never copy identity between people.** The employee internal id in `config.me` scopes the whole review. Using someone else's shows them a queue that is not theirs.
 - If deeper review would require actions beyond reading, say so in the verdict and ask first.
 
-## Step 0 — First-run setup
+## Step 0 — Sync assets, then first-run setup
 
-Read `NetSuite Approval Checks/_review_log.json` in the connected workspace folder. If it exists and has a `config` block with `me`, `tool` and `account`, skip this step entirely.
+**Do this on every run, before anything else.** The workspace copies of the template and the
+publish script are a *cache* of the plugin's assets. Refresh them, or a plugin update never
+reaches the dashboard — `SKILL.md` updates with the plugin while the HTML your runs actually
+render stays frozen at whatever version was copied the first time.
 
-Otherwise set up, once:
+```bash
+mkdir -p "<workspace>/NetSuite Approval Checks"
+cp "${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/dashboard_template.html" "<workspace>/NetSuite Approval Checks/"
+cp "${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/publish_dashboard.py" "<workspace>/NetSuite Approval Checks/"
+chmod u+w "<workspace>/NetSuite Approval Checks/dashboard_template.html" \
+          "<workspace>/NetSuite Approval Checks/publish_dashboard.py"
+```
+
+The `chmod` is required, not tidiness. The plugin's installed assets are read-only and `cp`
+preserves that mode, so without it the publish step fails with
+`PermissionError: [Errno 13] Permission denied`.
+
+This overwrites the workspace copies deliberately. **A design change belongs in the plugin repo,
+never in the workspace copy** — an edit made there is discarded by the next run and reaches
+nobody else. Ship one by editing the repo's `assets/` and pushing; teammates pick it up on their
+next plugin update.
+
+Then read `NetSuite Approval Checks/_review_log.json`. If it already carries a `config` block, the rest of this
+step is done — go to Step 1. Otherwise, once:
 
 1. **Find the employee internal id.** Query by the user's own email address:
 
@@ -48,22 +69,7 @@ Otherwise set up, once:
 
 4. **Ask which dashboard portlet holds their bills.** Portlet names are per-user saved searches and are frequently non-obvious. Have the user confirm the exact name rather than guessing.
 
-5. **Copy the assets** into the state folder so the publish step can find them:
-
-   ```bash
-   mkdir -p "<workspace>/NetSuite Approval Checks"
-   cp "${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/dashboard_template.html" "<workspace>/NetSuite Approval Checks/"
-   cp "${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/publish_dashboard.py" "<workspace>/NetSuite Approval Checks/"
-   chmod u+w "<workspace>/NetSuite Approval Checks/dashboard_template.html" \
-             "<workspace>/NetSuite Approval Checks/publish_dashboard.py"
-   ```
-
-   The `chmod` is required, not tidiness. The plugin's installed assets are
-   read-only, `cp` preserves that mode, and this skill later tells you to edit
-   the template for design changes — which fails with
-   `PermissionError: [Errno 13] Permission denied` without it.
-
-6. **Write the config** into `_review_log.json`:
+5. **Write the config** into `_review_log.json`:
 
    ```json
    {
@@ -79,7 +85,7 @@ Otherwise set up, once:
    }
    ```
 
-7. **The dashboard is rendered, not published.** There is no artifact to create,
+6. **The dashboard is rendered, not published.** There is no artifact to create,
    update or reconcile against this file — Step 7 renders the HTML as an inline
    widget on every run, so each render replaces the last and there is no id to
    keep in sync. `_review_log.json` is the only persistent store.
@@ -320,7 +326,10 @@ The template already handles, on every open:
 - per-item decision marking with local-storage persistence and the batched execute bar
 - a one-click re-run button, which is the refresh path now that the page never queries NetSuite itself
 
-Only change the template when the user asks for a design change. Then edit the file in place, keep the sentinels intact, and republish.
+A design change goes in the **plugin repo's** `assets/dashboard_template.html`, not the workspace
+copy — Step 0 overwrites that copy on every run, so an edit made there lasts exactly one run and
+reaches nobody else. Keep the sentinels intact, then push; teammates get it on their next plugin
+update.
 
 Then close scratch tabs and leave each record tab open so the user can act if they want to.
 

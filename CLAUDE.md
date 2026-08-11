@@ -265,22 +265,18 @@ skill deviates, say so explicitly rather than quietly normalising it.
   a client command Claude cannot invoke; and the file carrying the instruction
   is itself the stale copy. Point them at marketplace auto-update instead.
 
+
 ---
 
-## Duplicate-skill hazard
+## Skill invocation (verified, 2026-08-11)
 
-Both skills existed as standalone personal/account skills before they were
-packaged into plugins. A user can therefore end up with two copies:
+- The **short** slash name resolves to the plugin's skill while it is
+  unambiguous: `/netsuite-approval-double-check` runs the plugin copy. The
+  namespaced form `/<plugin>:<skill>` always works. Both are fine.
+- A skill's `assets/` travel with the plugin and are visible in the skill
+  panel. `${CLAUDE_PLUGIN_ROOT}` resolves them at run time.
 
-| Copy | Invoked as | Updates on push? |
-|---|---|---|
-| Plugin (this repo) | `/<plugin-name>:<skill-name>` | Yes |
-| Standalone account/personal skill | `/<skill-name>` | **No — frozen** |
-
-The standalone copy answers to the shorter name, so it is the one that tends to
-actually run, and it never receives fixes pushed here. Their frontmatter
-descriptions differ, which is how to tell them apart: the standalone NetSuite
-copy says "Shivam's approval queue", the plugin copy says "your approval queue".
-
-If a user reports a fix not taking effect, check for a standalone copy before
-investigating anything in this repo.
+**Do not warn users about duplicate standalone copies.** An earlier version of
+these notes claimed the short name meant a stale personal skill was shadowing
+the plugin. That was wrong — checked against a live run, the short name loads
+the plugin's own skill, description and assets included.

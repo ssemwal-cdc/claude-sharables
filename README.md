@@ -37,32 +37,21 @@ Two things surprise people here, and neither is a fault:
   `~/.claude/skills/`. Plugin skills are a separate registry — find them under
   the **+** button next to the prompt box → **Plugins**, listed inside their
   plugin.
-- **The slash commands are namespaced by plugin.** The plugin's skills are:
+- **Either slash form works.** The short name resolves while it is
+  unambiguous; the namespaced form always works:
 
   ```
-  /netsuite-approval-review:netsuite-approval-double-check
-  /procore-open-items-review:procore-open-items-review
+  /netsuite-approval-double-check      /netsuite-approval-review:netsuite-approval-double-check
+  /procore-open-items-review           /procore-open-items-review:procore-open-items-review
   ```
-
-  A bare `/netsuite-approval-double-check` is **not** this plugin. If it
-  resolves for you, you still have an older standalone copy of the skill —
-  see below.
 
 You rarely need either. Both skills fire from plain language — "run my approval
 check", "run my Procore review" — which is what their trigger phrases are for.
 If you installed mid-session, run `/reload-plugins` first.
 
-### Do not keep a standalone copy of these skills
-
-These skills also existed as personal skills before they were packaged here. If
-a copy is still enabled on your claude.ai account or sitting in
-`~/.claude/skills/`, you now have two, and **only the plugin copy updates when
-this repo is pushed.** The standalone copy is frozen at whatever it was, and it
-answers to the shorter name, so it is the one most likely to actually run.
-
-Check **Customize → Skills** on claude.ai (or the Desktop sidebar) for entries
-named `netsuite-approval-double-check` or `procore-open-items-review`, and
-remove them. Keep one source of truth: this repo.
+Opening a skill from the panel shows its `assets/` alongside `SKILL.md`. The
+supporting files travel with the plugin and resolve through
+`${CLAUDE_PLUGIN_ROOT}` at run time — nothing extra to install or copy.
 
 ### Cowork and cloud sessions
 

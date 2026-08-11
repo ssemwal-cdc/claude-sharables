@@ -7,12 +7,14 @@ Internal marketplace of Claude plugins for Compass Datacenters.
 Run these two commands in Cowork or Claude Code, once:
 
 ```
-/plugin marketplace add <org>/compass-claude-plugins
+/plugin marketplace add ssemwal-cdc/claude-sharables
 /plugin install netsuite-approval-review@compass-claude-plugins
 ```
 
-Replace `<org>` with the GitHub organisation this repo lives in. If the install
-summary says `Run /reload-plugins to activate.`, run that too.
+The first argument is this repo; the `@compass-claude-plugins` suffix is the
+marketplace name declared in `.claude-plugin/marketplace.json`, which is why
+the two differ. If the install summary says `Run /reload-plugins to activate.`,
+run that too.
 
 After installing, say "run my approval check". First-time setup happens
 automatically and asks you to confirm your own NetSuite identity.

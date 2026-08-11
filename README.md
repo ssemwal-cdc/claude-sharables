@@ -37,53 +37,66 @@ couple of per-company tool and field ids.
 
 ## For maintainers: releasing an update
 
-Push to the default branch. That is the whole release process.
+Push to the default branch. That is the whole release process — version resolves
+from the commit SHA, so every push is a new version.
 
-Teammates pick it up on the next background refresh, or immediately with:
+Teammates get it automatically **only if they have auto-update enabled on this
+marketplace.** It is off by default: Claude Code enables auto-update for
+Anthropic's own marketplaces, not for third-party ones like this. Turn it on
+once, in `/plugin` → **Marketplaces** → `compass-claude-plugins` → **Enable
+auto-update**. Claude Code then refreshes in the background shortly after each
+session starts.
+
+Without that, nothing arrives until someone runs:
 
 ```
-/plugin marketplace update
+/plugin marketplace update compass-claude-plugins
 ```
 
-**Do not add a `version` field to any plugin's `plugin.json`.** Version is
-deliberately omitted so it resolves from the git commit SHA, which means every
-push is automatically a new version. If you add a version string and forget to
-bump it, everyone silently keeps their cached copy and your fix never lands.
+## Adding another plugin or skill
 
-## Adding another plugin
+**See [CLAUDE.md](CLAUDE.md)** for the full layout, the required fields, the
+verification commands, and the traps that have already broken this repo once.
+It is the single source of truth so the two files cannot drift; Claude Code
+loads it automatically when you open this repo as a project.
 
-Both steps are required, and missing the first one fails silently at install
-time rather than at push time:
+The short version: drop the plugin in `plugins/<name>/` with its own
+`.claude-plugin/plugin.json`, register it in `.claude-plugin/marketplace.json`
+with `"source": "./plugins/<name>"`, then run `python3 scripts/validate.py`.
 
-1. Put the plugin in `plugins/<name>/`, with its own
-   `plugins/<name>/.claude-plugin/plugin.json` declaring a `name` and
-   `description` — and no `version`, per the rule above. Skills go in
-   `plugins/<name>/skills/<skill-name>/SKILL.md`; the conventional `skills/`
-   location is picked up automatically, so `plugin.json` needs no `skills` key.
-2. Add an entry to the `plugins` array in `.claude-plugin/marketplace.json`.
-   `source` must be the full path from the repo root **and must start with
-   `./`** — `"./plugins/<name>"`. Keep `name` identical to the one in
-   `plugin.json`.
+## Checks
 
-   Do not use `metadata.pluginRoot` to shorten `source` to a bare folder name.
-   The docs suggest that works; it does not. A bare name fails validation with
-   `source: Invalid input`, and setting `pluginRoot` with a `./<name>` source
-   passes validation but silently ignores the root, so the install then fails
-   with `Source path does not exist`. Verified against Claude Code v2.1.227.
+`scripts/validate.py` enforces everything the two documents above promise —
+manifests resolve, names agree, no `version` fields, no unregistered plugins,
+asset paths portable, and both docs still describing the plugins that actually
+exist. It runs in CI on every push and pull request.
 
-Either existing plugin works as a template for the layout.
+```bash
+python3 scripts/validate.py
+```
 
-Keep everything in this one marketplace — each person can only register one
-marketplace per name, so a second marketplace would replace this one rather
-than sit alongside it.
+## Distribution and access
 
-## Repo visibility
+This repo is currently **public**, so anyone can add the marketplace and both
+plugins are world-readable.
 
-This should be private or internal. Note that a private HTTPS remote can't
-authenticate during the background auto-refresh; it falls back to re-cloning,
-which still works. An SSH remote avoids the fallback.
+If you make it private, access is governed entirely by GitHub permissions —
+there is nothing Claude-specific to grant. `/plugin marketplace add` and
+`/plugin install` use each person's own git credentials, so a teammate can
+install exactly when they could `git clone` the repo themselves. GitHub
+`owner/repo` shorthand clones over SSH by default.
 
-If Compass is on a Team or Enterprise plan, an admin can sync this marketplace
-to everyone from `claude.ai/admin-settings/plugins` so there is nothing for
-teammates to run at all. That route requires the repo to be private or internal
-and the plugin folders to live inside this repo, which is how it is laid out.
+Two things to know before going private:
+
+- **Background auto-update is the weak spot over HTTPS.** The background pull
+  disables git credential helpers, so it cannot authenticate to a private HTTPS
+  remote; it falls back to a full re-clone, which does use stored credentials
+  but can time out. SSH remotes are unaffected. Setting
+  `CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE=1` keeps the working clone
+  when a background pull fails.
+- **Org sync removes the problem entirely, and requires private.** On a Team or
+  Enterprise plan an admin can distribute this marketplace from
+  `claude.ai/admin-settings/plugins`; it reads the repo through the Claude
+  GitHub App and packages each plugin, so teammates need no repo access and run
+  nothing at all. That route requires the repo to be private or internal and
+  the plugin folders to live inside it, which is how this is laid out.

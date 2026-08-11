@@ -287,6 +287,13 @@ cd "<workspace>/NetSuite Approval Checks" && python3 publish_dashboard.py <scrat
 
 Render it as an inline widget with `show_widget`, passing the file's contents.
 
+**Pass the file verbatim.** Read it and hand it over byte for byte — never retype it, never
+summarise it, never "clean it up" on the way through. This is the one weak point in the whole
+arrangement: the old artifact path passed the file *by path*, so the HTML never travelled through a
+model response and could not drift. A widget takes the content inline, which puts the whole layout
+through the tool call. If the rendered dashboard is ever missing a card, a control or a colour, this
+is the first thing to suspect — not the template.
+
 **Do not publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
 widget host exposes `sendPrompt` as a bare global, the artifact host exposes `window.cowork`
 (`callMcpTool`, `askClaude`, `runScheduledTask`) and no `sendPrompt` anywhere. On an artifact the

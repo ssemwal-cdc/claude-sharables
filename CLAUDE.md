@@ -271,6 +271,50 @@ takes the marketplace:
 
 This looks like a typo and is not. Do not "fix" it.
 
+**Updating an installed plugin takes two commands, and the first one looks like
+it was enough.** Verified 2026-08-11. `marketplace update` refreshes the
+*catalog*. It does not touch an installed plugin, but it reports success as
+though it did:
+
+```
+> claude plugin marketplace update compass-claude-plugins
+√ Successfully updated marketplace: compass-claude-plugins
+```
+
+The installed version does not move. The plugin needs a second command, and that
+one **requires the `@marketplace` qualifier** — the bare name fails with an error
+pointing at the wrong problem entirely:
+
+```
+> claude plugin update netsuite-approval-review
+× Failed to update plugin "netsuite-approval-review": Plugin "netsuite-approval-review" not found
+```
+
+It is installed. `claude plugin list` shows it on the next line. This is the same
+repo-vs-marketplace split as above, surfacing in a command the verification
+snippet never exercises — that snippet installs and uninstalls, it never updates.
+
+The sequence that works, from any directory. Plugins install at `user` scope, so
+there is nothing to `cd` into:
+
+```bash
+claude plugin marketplace update compass-claude-plugins
+claude plugin update netsuite-approval-review@compass-claude-plugins
+claude plugin update procore-open-items-review@compass-claude-plugins
+# then restart the app - the CLI says "Restart to apply changes"
+```
+
+Then confirm it landed. The version is the commit SHA, so it should match the tip
+of `main`:
+
+```
+netsuite-approval-review   9ea01d3a5df2 -> 5c242055c130
+```
+
+**Prefer this over the `/plugin` flow.** It is scriptable, it prints the before
+and after versions so you can see whether anything actually shipped, and it
+surfaces the qualifier error rather than failing quietly.
+
 **A full git URL needs the `.git` suffix.**
 `https://github.com/ssemwal-cdc/claude-sharables.git` works. Without `.git`,
 Claude Code treats the URL as a direct link to a hosted `marketplace.json`

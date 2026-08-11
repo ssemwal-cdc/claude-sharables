@@ -18,13 +18,16 @@ For every bill and change order awaiting your approval:
 - publishes a clear or flagged verdict per item to a dashboard, with the
   figures visible without clicking into anything
 
-The dashboard re-queries your live queue every time you open it, so actioned
-items drop away and newly arrived ones surface as unreviewed.
+The dashboard is a snapshot and shows its own age, warning once it passes
+three hours; a re-run button refreshes it in one click. Every record is
+re-verified against the live queue at execute time, immediately before it is
+clicked, so an item actioned since the review is skipped rather than clicked
+twice.
 
 You mark approve / approve with notes / reject per item, then execute them
-together. Execute copies the instruction and shows it — paste it into the
-conversation and send, and the approvals run from your message. Nothing reaches
-NetSuite from the dashboard itself. Execution drives the real NetSuite buttons through your own
+together. Execute sends the instruction straight into the conversation in one
+click. Nothing reaches NetSuite from the dashboard itself — the approvals run
+from that message. Execution drives the real NetSuite buttons through your own
 authenticated browser session, so the approval workflow routes normally and the
 audit trail records you as the approver.
 

@@ -227,6 +227,38 @@ path works in the repo and breaks once installed, because at run time the
 working directory is the user's workspace, not the plugin. The validator
 rejects bare paths.
 
+**The widget host and the artifact host expose disjoint bridges.** Probed live
+from inside each surface, 2026-08-11:
+
+| | `show_widget` | artifact |
+|---|---|---|
+| origin | `https://<hash>.claudemcpcontent.com`, framed | `cowork-artifact://local/<id>` |
+| `sendPrompt` / `openLink` | bare globals, functions | absent everywhere |
+| `callMcpTool` / `askClaude` / `runScheduledTask` | absent | present on `window.cowork` |
+
+Zero overlap, and two different namespacing conventions. The consequence: **an
+artifact cannot send a message to chat.** A dashboard button that hands an
+instruction back to the conversation is inert there, and fails closed — no
+throw, no console output, nothing. `askClaude` is not a substitute; it runs a
+small model in-page and returns to the page, so it cannot start a turn with real
+tool access.
+
+Both dashboards therefore render with `show_widget`, not `create_artifact`. The
+cost is that `callMcpTool` is unavailable, so a page cannot re-query its own
+data — the NetSuite dashboard used to do this on open. That check now lives in
+the execute turn, which is strictly better: an on-open query is already stale by
+the time execute is pressed, while a check in the moment before the click has no
+window at all.
+
+Do not "restore" the artifact path for persistence. A shareable URL was
+considered and rejected — NetSuite and Procore are the systems of record, and
+one-click execute is worth more than a link.
+
+**Per-item marks live in `localStorage`** (`ns_marks_v1`, `pc_marks_v1`,
+`pc_view_v2`) and are the only user state that survives a re-render. Never
+rename those keys for tidiness; it silently discards decisions the user marked
+but has not executed.
+
 **The marketplace name is not the repo name.**
 Repo is `ssemwal-cdc/claude-sharables`; marketplace is `compass-claude-plugins`
 (from `name` in `marketplace.json`). So `add` takes the repo and `install`

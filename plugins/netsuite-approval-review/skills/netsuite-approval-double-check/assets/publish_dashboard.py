@@ -63,6 +63,8 @@ def main():
 
     payload = {
         "lastRun": log.get("lastRunTime") or log.get("lastCompletedRun", ""),
+        "lastRunISO": log.get("lastRunISO", "") or (
+            (log.get("lastRunTime") or "").replace(" ", "T")),
         "config": {"me": cfg["me"], "tool": cfg["tool"], "account": cfg["account"]},
         "items": items,
     }

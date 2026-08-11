@@ -1,13 +1,13 @@
 ---
 name: netsuite-approval-double-check
-description: Financial double-check of the NetSuite bills and change orders sitting in your approval queue, published to a live dashboard artifact. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Downloads each attachment, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: Financial double-check of the NetSuite bills and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Downloads each attachment, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
 Review every bill and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
-Output goes to the `netsuite-approval-queue` artifact, not to chat. Chat gets one headline line.
+Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
 ## Two modes
 
@@ -79,22 +79,15 @@ Otherwise set up, once:
    }
    ```
 
-7. **Do not decide create-vs-update from this file.** `_review_log.json` lives
-   in the connected workspace folder; the artifact lives in the artifact
-   manifest. They are independent stores and disagree in both directions — the
-   folder can change, be renamed or be disconnected while the artifact persists,
-   and the artifact can be deleted while the log survives.
+7. **The dashboard is rendered, not published.** There is no artifact to create,
+   update or reconcile against this file — Step 7 renders the HTML as an inline
+   widget on every run, so each render replaces the last and there is no id to
+   keep in sync. `_review_log.json` is the only persistent store.
 
-   At publish time, resolve it from the artifact side and let it self-heal:
-
-   - Call `update_artifact` with id `netsuite-approval-queue`.
-   - If that fails because no such artifact exists, call `create_artifact` with
-     the same id, then carry on.
-   - If `create_artifact` reports the id already exists, call `update_artifact`
-     instead. That is not an error worth reporting to the user.
-
-   `list_artifacts` answers the question directly if you would rather check
-   first. Never infer artifact existence from the presence of a workspace file.
+   The one thing that does survive between renders is the user's per-item marks,
+   which the template keeps in `localStorage` under `ns_marks_v1`. Never clear it, and
+   never change that key for cosmetic reasons — doing so silently discards
+   decisions the user has already marked but not yet executed.
 
 ## Step 1 — Build the queue
 
@@ -284,7 +277,7 @@ On each run:
 
 ## Step 7 — Publish to the dashboard
 
-The deliverable is the `netsuite-approval-queue` artifact.
+The deliverable is the inline dashboard widget.
 
 **Do not write HTML.** The layout lives in `dashboard_template.html` and is the single source of truth for how the dashboard looks and behaves. Every run publishes by injecting data into it:
 
@@ -292,17 +285,26 @@ The deliverable is the `netsuite-approval-queue` artifact.
 cd "<workspace>/NetSuite Approval Checks" && python3 publish_dashboard.py <scratch>/index.html
 ```
 
-Then call `update_artifact` with id `netsuite-approval-queue` and that file as `html_path`. The script prints the headline line to use in chat.
+Render it as an inline widget with `show_widget`, passing the file's contents.
 
-Why it works this way: the artifact is regenerated on every run, and a page rewritten from prose instructions drifts — a card lost, a colour changed, a behaviour forgotten. Injecting into a fixed template makes the chrome invariant by construction. If the script aborts because the sentinels are missing, **restore the template from `${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/` — do not rebuild it from memory.**
+**Do not publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
+widget host exposes `sendPrompt` as a bare global, the artifact host exposes `window.cowork`
+(`callMcpTool`, `askClaude`, `runScheduledTask`) and no `sendPrompt` anywhere. On an artifact the
+execute button cannot start a turn and fails silently — no error, no console output. As a widget it
+works in one click. The template keeps a clipboard handoff for the artifact case, but do not rely on
+it: one click is the point.
+
+The script prints the headline line to use in chat.
+
+Why it works this way: the dashboard is regenerated on every run, and a page rewritten from prose instructions drifts — a card lost, a colour changed, a behaviour forgotten. Injecting into a fixed template makes the chrome invariant by construction. If the script aborts because the sentinels are missing, **restore the template from `${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/` — do not rebuild it from memory.**
 
 The script also aborts if the identity config is incomplete. Do not work around that by supplying a default; run Step 0.
 
 The template already handles, on every open:
-- re-querying the live pending queue via the configured connector tool and diffing against the published verdicts
-- dropping actioned items into the bin, surfacing new items as unreviewed, flagging amount changes
+- showing how old the snapshot is, and warning visibly once it passes three hours
+- dropping actioned items into the bin and flagging amount changes against the last review
 - per-item decision marking with local-storage persistence and the batched execute bar
-- refusing to query at all if identity is missing, rather than guessing an approver
+- a one-click re-run button, which is the refresh path now that the page never queries NetSuite itself
 
 Only change the template when the user asks for a design change. Then edit the file in place, keep the sentinels intact, and republish.
 
@@ -324,12 +326,30 @@ Before clicking anything, check the instruction names specific documents. If it 
 
 Then, **one record at a time**:
 
-1. Open the record by internal id at `https://<account>.app.netsuite.com/app/accounting/transactions/transaction.nl?id=<id>`.
-2. **Confirm before clicking.** Read the document number, vendor and amount off the page and check all three against the instruction. Any mismatch → stop, do not click, report it.
-3. Click **only** the button named in the instruction. Approve, Approve With Notes, and Reject sit adjacent — read the button label before clicking, not the position.
-4. Notes and reasons come from the user verbatim. Never compose either. If the instruction is missing a required reason for a rejection, stop and ask.
-5. Verify it landed: re-query the pending queue and confirm the item no longer returns. Do not treat the button click as success on its own.
-6. Append the outcome to `actions` in the state file.
+1. **Re-verify it is still yours to action, before opening anything.** Run:
+
+   ```sql
+   SELECT t.id, t.tranid, t.foreigntotal FROM transaction t
+   WHERE t.id = <id> AND t.approvalstatus = 1 AND t.custbody_sna_cdc_next_approver = <me>
+   ```
+
+   No row means it was approved, rejected or rerouted since the snapshot was taken. **Skip it**, log
+   it as `skipped: already actioned elsewhere — no click made`, and move on. Do not open it, do not
+   click, do not retry. If a row comes back but the amount differs from the instruction, **stop the
+   batch** — the record changed underneath the review.
+
+   This check is why the dashboard no longer queries the queue when it opens. A page-load check goes
+   stale between opening the dashboard and pressing execute; this one runs against the record in the
+   moment before it is clicked, so there is no window at all.
+
+   Change orders cannot be queried this way. For those, rely on the on-page confirmation in step 3.
+
+2. Open the record by internal id at `https://<account>.app.netsuite.com/app/accounting/transactions/transaction.nl?id=<id>`.
+3. **Confirm before clicking.** Read the document number, vendor and amount off the page and check all three against the instruction. Any mismatch → stop, do not click, report it.
+4. Click **only** the button named in the instruction. Approve, Approve With Notes, and Reject sit adjacent — read the button label before clicking, not the position.
+5. Notes and reasons come from the user verbatim. Never compose either. If the instruction is missing a required reason for a rejection, stop and ask.
+6. Verify it landed: re-query the pending queue and confirm the item no longer returns. Do not treat the button click as success on its own.
+7. Append the outcome to `actions` in the state file.
 
 **A failure stops the batch.** If any item cannot be confirmed, does not match, or does not leave the queue, stop there. Report what was actioned, what failed and why, and what remains untouched. Never continue past a failure or retry blind.
 

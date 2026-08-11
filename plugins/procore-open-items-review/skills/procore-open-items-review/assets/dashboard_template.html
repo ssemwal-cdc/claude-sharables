@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>Procore open items queue</title>
 <style>
-:root{color-scheme:light;--ink:#141413;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:8px}
+:root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:8px}
 *{box-sizing:border-box}
 body{margin:0;padding:20px;background:var(--bg);color:var(--ink);font:400 15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:980px;margin:0 auto}
@@ -17,10 +17,10 @@ h2{font-size:15px;font-weight:500;margin:26px 0 0}
 .freshbox.stale{border-color:var(--warn-line);background:var(--warn-bg)}
 .freshtext{flex:1;min-width:160px;font-size:13px;line-height:1.45}
 .freshtext b{font-weight:500;font-size:13.5px}
-button.primary{background:var(--ink);border-color:var(--ink);color:#fff;font-size:13px;padding:9px 15px}
-button.primary:hover{background:#000;border-color:#000}
+button.primary{background:var(--ink);border-color:var(--ink);color:var(--inv);font-size:13px;padding:9px 15px}
+button.primary:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:16px 0 22px}
-.card{background:#f1f0ec;border-radius:var(--r);padding:13px 14px}
+.card{background:var(--sunk);border-radius:var(--r);padding:13px 14px}
 .card .l{font-size:12.5px;color:var(--ink2)}
 .card .v{font-size:23px;font-weight:500;margin-top:2px;font-variant-numeric:tabular-nums}
 .row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 17px;margin-bottom:10px}
@@ -33,36 +33,39 @@ button.primary:hover{background:#000;border-color:#000}
 .head{font-size:14px;margin:9px 0 0}
 ul.f{margin:7px 0 0;padding-left:17px;font-size:12.5px;color:var(--ink2);line-height:1.6;font-variant-numeric:tabular-nums}
 ul.f li{margin:1px 0}
-.po{font-size:12.5px;color:var(--ink2);background:#f6f5f2;padding:7px 10px;border-radius:var(--r);margin:9px 0 0;font-variant-numeric:tabular-nums}
+.po{font-size:12.5px;color:var(--ink2);background:var(--surf);padding:7px 10px;border-radius:var(--r);margin:9px 0 0;font-variant-numeric:tabular-nums}
 .det{font-size:13px;color:var(--ink2);line-height:1.7;margin:10px 0 0;display:none}
 .acts{display:flex;gap:8px;align-items:center;margin-top:11px;padding-top:10px;border-top:1px solid var(--line);flex-wrap:wrap}
-button{font:400 12.5px/1 inherit;padding:7px 12px;background:transparent;border:1px solid #c9c8c2;border-radius:var(--r);color:var(--ink);cursor:pointer}
-button:hover{background:#f1f0ec}
-button.on{background:#eceae4;border-color:#9a9992}
+button{font:400 12.5px/1 inherit;padding:7px 12px;background:transparent;border:1px solid var(--ctl);border-radius:var(--r);color:var(--ink);cursor:pointer}
+button:hover{background:var(--sunk)}
+button.on{background:var(--ctl-on);border-color:var(--ctl2)}
 button.rj{border-color:var(--bad-line);color:var(--bad-fg)}
-button.go{border-color:#9a9992;font-size:13px}
+button.go{border-color:var(--ctl2);font-size:13px}
 button.caution{border-color:var(--warn-line);color:var(--warn-fg)}
 button.acc{border-color:var(--acc-line);color:var(--acc-fg)}
-input[type=text]{width:100%;font:400 13px inherit;padding:8px 10px;border:1px solid #c9c8c2;border-radius:var(--r);margin-top:10px;background:#fff;color:var(--ink)}
+input[type=text]{width:100%;font:400 13px inherit;padding:8px 10px;border:1px solid var(--ctl);border-radius:var(--r);margin-top:10px;background:var(--card);color:var(--ink)}
 a{color:var(--acc-fg);text-decoration:none;font-size:12.5px}
 a:hover{text-decoration:underline}
-.bar{background:#f1f0ec;border-radius:12px;padding:15px 17px;margin-top:20px}
+.bar{background:var(--sunk);border-radius:12px;padding:15px 17px;margin-top:20px}
 .note{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
 .banner{border-radius:12px;padding:12px 15px;margin-bottom:14px;font-size:13.5px}
 .empty{text-align:center;padding:34px 20px;color:var(--ink2);font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
-.binrow{background:#f1f0ec;border-radius:var(--r);padding:11px 14px;margin-top:8px;display:flex;gap:10px;align-items:center;color:var(--ink3);font-size:13.5px}
+.binrow{background:var(--sunk);border-radius:var(--r);padding:11px 14px;margin-top:8px;display:flex;gap:10px;align-items:center;color:var(--ink3);font-size:13.5px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .tog{cursor:pointer;user-select:none}
 .seclead{font-size:12.5px;color:var(--ink3);margin:4px 0 10px}
 .toolbar{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin:16px 0 0}
 .fgrp{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto}
 .tbl{font-size:12px;color:var(--ink3)}
-select{font:400 12.5px/1 inherit;padding:7px 26px 7px 9px;border:1px solid #c9c8c2;border-radius:var(--r);background:#fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%235f5e5a' stroke-width='1.4'/%3E%3C/svg%3E") no-repeat right 8px center/11px;color:var(--ink);cursor:pointer;-webkit-appearance:none;appearance:none}
+select{font:400 12.5px/1 inherit;padding:7px 26px 7px 9px;border:1px solid var(--ctl);border-radius:var(--r);background:var(--card) url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%235f5e5a' stroke-width='1.4'/%3E%3C/svg%3E") no-repeat right 8px center/11px;color:var(--ink);cursor:pointer;-webkit-appearance:none;appearance:none}
 select.act{border-color:var(--acc-line);background-color:var(--acc-bg);color:var(--acc-fg)}
 input.search{width:auto;flex:1;min-width:130px;margin-top:0;font-size:12.5px;padding:7px 10px}
-.chip{font-size:12px;padding:5px 10px;border-radius:var(--r);background:#f1f0ec;color:var(--ink2);cursor:pointer;border:1px solid transparent}
+.chip{font-size:12px;padding:5px 10px;border-radius:var(--r);background:var(--sunk);color:var(--ink2);cursor:pointer;border:1px solid transparent}
 .chip.on{background:var(--acc-bg);color:var(--acc-fg);border-color:var(--acc-line)}
 .hid{font-size:12.5px;color:var(--warn-fg);margin:9px 0 0}
+@media (prefers-color-scheme:dark){:root{--ink:#eceae4;--ink2:#a6a49d;--ink3:#9a978d;--line:#35342f;--bg:#191816;--card:#22201d;--surf:#272521;--sunk:#2d2a26;--ctl:#46433d;--ctl2:#6b6860;--ctl-on:#37342e;--inv:#191816;--ink-hi:#ffffff;--ok-bg:#16301d;--ok-fg:#79c78c;--ok-line:#2b5436;--bad-bg:#381d1b;--bad-fg:#ef8b84;--bad-line:#61302c;--warn-bg:#31260f;--warn-fg:#dfb25e;--warn-line:#57431e;--acc-bg:#16283c;--acc-fg:#7db3ed;--acc-line:#2a4868}
+select{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%23a6a49d' stroke-width='1.4'/%3E%3C/svg%3E")}
+}
 </style>
 </head>
 <body>
@@ -378,19 +381,22 @@ function mark(id,kind){
 }
 function setText(id,v){if(marks[id]){marks[id].text=v;saveMarks();renderBar()}}
 function clearAll(){marks={};saveMarks();render()}
-function sendRun(){say("Re-run my Procore open items review now and republish the dashboard.")}
+function sendRun(){say("Re-run my Procore open items review now.")}
 function resolveGate(id){var it=byId(id);
   say("Work out whether I can respond to Procore change order package "+it.doc+" (id "+it.id+", project id "+it.pid+", commitment "+it.cid+"). The workflows/instances endpoint returns a 400 for workflowable_object_type=ChangeOrderPackage — try the alternative type strings, and if none work, open the record and check whether a Respond button renders in the workflow side panel. Then update the dashboard with what you find. Do not click Respond.");}
 function reviewSupport(id){var it=byId(id);
   say("Read every PCI attached to Procore change order package "+it.doc+" (id "+it.id+", project id "+it.pid+"), tie each one to a line item, confirm the PCI totals sum to the package grand total, and flag any line without support or any PCI without a line. Then update the dashboard. Do not respond to the item.");}
 function say(t){
-  // Try a host bridge first. Costs nothing, and takes over automatically if one ever appears.
+  // Two hosts with disjoint surfaces, both probed live. The widget host exposes sendPrompt as a
+  // bare global — that is the path this dashboard takes, and the execute button is one click.
+  // The artifact host exposes window.cowork (callMcpTool, askClaude, runScheduledTask) and no
+  // sendPrompt anywhere, so it cannot start a turn. The cowork branch is a hedge in case the two
+  // surfaces ever converge on that namespace; it matches nothing today.
   if(window.cowork&&window.cowork.sendPrompt){window.cowork.sendPrompt(t);return}
   if(window.sendPrompt){window.sendPrompt(t);return}
-  // The artifact host does expose window.cowork, but only callMcpTool, askClaude and
-  // runScheduledTask — no sendPrompt — so the page cannot start a turn. Hand the instruction back
-  // to be pasted. Shown even when the copy succeeds, on purpose: you should read exactly what you
-  // are authorising, and it then runs from your message rather than from this page.
+  // Reached only when this page is opened as an artifact. Hand the instruction back to be pasted.
+  // Shown even when the copy succeeds, on purpose: you should read exactly what you are
+  // authorising, and it then runs from your message rather than from this page.
   if(navigator.clipboard&&navigator.clipboard.writeText)
     navigator.clipboard.writeText(t).then(function(){handoff(t,true)},function(){handoff(t,false)});
   else handoff(t,false);

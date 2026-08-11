@@ -1,13 +1,13 @@
 ---
 name: procore-open-items-review
-description: Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard artifact. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
+description: Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
 ---
 
 # Procore Open Items Review
 
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 
-Output goes to the `procore-open-items-queue` artifact, not to chat. Chat gets one headline line.
+Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
 ## Two modes
 
@@ -85,22 +85,15 @@ Otherwise, once:
    }
    ```
 
-7. **Do not decide create-vs-update from this file.** `_review_log.json` lives
-   in the connected workspace folder; the artifact lives in the artifact
-   manifest. They are independent stores and disagree in both directions — the
-   folder can change, be renamed or be disconnected while the artifact persists,
-   and the artifact can be deleted while the log survives.
+7. **The dashboard is rendered, not published.** There is no artifact to create,
+   update or reconcile against this file — Step 7 renders the HTML as an inline
+   widget on every run, so each render replaces the last and there is no id to
+   keep in sync. `_review_log.json` is the only persistent store.
 
-   At publish time, resolve it from the artifact side and let it self-heal:
-
-   - Call `update_artifact` with id `procore-open-items-queue`.
-   - If that fails because no such artifact exists, call `create_artifact` with
-     the same id, then carry on.
-   - If `create_artifact` reports the id already exists, call `update_artifact`
-     instead. That is not an error worth reporting to the user.
-
-   `list_artifacts` answers the question directly if you would rather check
-   first. Never infer artifact existence from the presence of a workspace file.
+   The one thing that does survive between renders is the user's per-item marks,
+   which the template keeps in `localStorage` under `pc_marks_v1`. Never clear it, and
+   never change that key for cosmetic reasons — doing so silently discards
+   decisions the user has already marked but not yet executed.
 
 There is no user id to configure. The queue endpoint and the permission gate are both scoped to the authenticated session, so the review is automatically the signed-in person's own — this is the one place Procore is simpler than NetSuite.
 
@@ -313,7 +306,16 @@ On each run:
 cd "<workspace>/Procore Open Items" && python3 publish_dashboard.py <scratch>/index.html
 ```
 
-Then `update_artifact` with id `procore-open-items-queue` and that file as `html_path`. The script prints the headline line.
+Render it as an inline widget with `show_widget`, passing the file's contents.
+
+**Do not publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
+widget host exposes `sendPrompt` as a bare global, the artifact host exposes `window.cowork`
+(`callMcpTool`, `askClaude`, `runScheduledTask`) and no `sendPrompt` anywhere. On an artifact the
+execute button cannot start a turn and fails silently — no error, no console output. As a widget it
+works in one click. The template keeps a clipboard handoff for the artifact case, but do not rely on
+it: one click is the point.
+
+The script prints the headline line.
 
 If the script aborts because the sentinels are missing, **restore the template from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/` — do not rebuild it from memory.** Only edit the template when the user asks for a design change; keep the sentinels intact.
 

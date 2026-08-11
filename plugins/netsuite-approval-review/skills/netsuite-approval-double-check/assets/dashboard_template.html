@@ -5,15 +5,22 @@
 <title>NetSuite approval queue</title>
 <!-- layout template v1 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <style>
-:root{color-scheme:light;--ink:#141413;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:8px}
+:root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:8px}
 *{box-sizing:border-box}
 body{margin:0;padding:20px;background:var(--bg);color:var(--ink);font:400 15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
 .wrap{max-width:980px;margin:0 auto}
 h1{font-size:22px;font-weight:500;margin:0}
 .sub{font-size:13px;color:var(--ink2);margin:3px 0 0}
 .pill{font-size:12px;padding:3px 9px;border-radius:var(--r);white-space:nowrap}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.freshbox{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:16px 0 0}
+.freshbox.stale{border-color:var(--warn-line);background:var(--warn-bg)}
+.freshtext{flex:1;min-width:160px;font-size:13px;line-height:1.45}
+.freshtext b{font-weight:500;font-size:13.5px}
+button.primary{background:var(--ink);border-color:var(--ink);color:var(--inv);font-size:13px;padding:9px 15px}
+button.primary:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:20px 0 22px}
-.card{background:#f1f0ec;border-radius:var(--r);padding:13px 14px}
+.card{background:var(--sunk);border-radius:var(--r);padding:13px 14px}
 .card .l{font-size:12.5px;color:var(--ink2)}
 .card .v{font-size:23px;font-weight:500;margin-top:2px;font-variant-numeric:tabular-nums}
 .row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 17px;margin-bottom:10px}
@@ -26,36 +33,43 @@ h1{font-size:22px;font-weight:500;margin:0}
 .head{font-size:14px;margin:9px 0 0}
 ul.f{margin:7px 0 0;padding-left:17px;font-size:12.5px;color:var(--ink2);line-height:1.6;font-variant-numeric:tabular-nums}
 ul.f li{margin:1px 0}
-.po{font-size:12.5px;color:var(--ink2);background:#f6f5f2;padding:7px 10px;border-radius:var(--r);margin:9px 0 0;font-variant-numeric:tabular-nums}
+.po{font-size:12.5px;color:var(--ink2);background:var(--surf);padding:7px 10px;border-radius:var(--r);margin:9px 0 0;font-variant-numeric:tabular-nums}
 .det{font-size:13px;color:var(--ink2);line-height:1.7;margin:10px 0 0;display:none}
 .acts{display:flex;gap:8px;align-items:center;margin-top:11px;padding-top:10px;border-top:1px solid var(--line);flex-wrap:wrap}
-button{font:400 12.5px/1 inherit;padding:7px 12px;background:transparent;border:1px solid #c9c8c2;border-radius:var(--r);color:var(--ink);cursor:pointer}
-button:hover{background:#f1f0ec}
-button.on{background:#eceae4;border-color:#9a9992}
+button{font:400 12.5px/1 inherit;padding:7px 12px;background:transparent;border:1px solid var(--ctl);border-radius:var(--r);color:var(--ink);cursor:pointer}
+button:hover{background:var(--sunk)}
+button.on{background:var(--ctl-on);border-color:var(--ctl2)}
 button.rj{border-color:var(--bad-line);color:var(--bad-fg)}
-button.go{border-color:#9a9992;font-size:13px}
-input[type=text]{width:100%;font:400 13px inherit;padding:8px 10px;border:1px solid #c9c8c2;border-radius:var(--r);margin-top:10px;background:#fff;color:var(--ink)}
+button.go{border-color:var(--ctl2);font-size:13px}
+input[type=text]{width:100%;font:400 13px inherit;padding:8px 10px;border:1px solid var(--ctl);border-radius:var(--r);margin-top:10px;background:var(--card);color:var(--ink)}
 a{color:var(--acc-fg);text-decoration:none;font-size:12.5px}
 a:hover{text-decoration:underline}
-.bar{background:#f1f0ec;border-radius:12px;padding:15px 17px;margin-top:20px}
+.bar{background:var(--sunk);border-radius:12px;padding:15px 17px;margin-top:20px}
 .note{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
 .banner{border-radius:12px;padding:12px 15px;margin-bottom:14px;font-size:13.5px}
 .empty{text-align:center;padding:34px 20px;color:var(--ink2);font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
-.binrow{background:#f1f0ec;border-radius:var(--r);padding:11px 14px;margin-top:8px;display:flex;gap:10px;align-items:center;color:var(--ink3);font-size:13.5px}
+.binrow{background:var(--sunk);border-radius:var(--r);padding:11px 14px;margin-top:8px;display:flex;gap:10px;align-items:center;color:var(--ink3);font-size:13.5px}
 h2{font-size:15px;font-weight:500;margin:22px 0 0}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-color-scheme:dark){:root{--ink:#eceae4;--ink2:#a6a49d;--ink3:#9a978d;--line:#35342f;--bg:#191816;--card:#22201d;--surf:#272521;--sunk:#2d2a26;--ctl:#46433d;--ctl2:#6b6860;--ctl-on:#37342e;--inv:#191816;--ink-hi:#ffffff;--ok-bg:#16301d;--ok-fg:#79c78c;--ok-line:#2b5436;--bad-bg:#381d1b;--bad-fg:#ef8b84;--bad-line:#61302c;--warn-bg:#31260f;--warn-fg:#dfb25e;--warn-line:#57431e;--acc-bg:#16283c;--acc-fg:#7db3ed;--acc-line:#2a4868}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
 <h2 class="sr">NetSuite approval queue dashboard. Each item pending your approval is listed with its verdict from the last review, its aging, and the funding purchase order context. Decisions are marked per item and executed together.</h2>
 
-<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+<div class="top">
   <div>
     <h1>Approval queue</h1>
-    <p class="sub" id="sub">Loading live queue…</p>
+    <p class="sub" id="sub">…</p>
   </div>
-  <span class="pill" id="conn" style="background:#f1f0ec;color:var(--ink2)">Checking</span>
+  <span class="pill" id="conn" style="background:var(--warn-bg);color:var(--warn-fg)">Snapshot</span>
+</div>
+
+<div class="freshbox" id="freshbox">
+  <div class="freshtext" id="freshtext"></div>
+  <button class="primary" onclick="sendRun()">Re-run the check now ↗</button>
 </div>
 
 <div class="cards" id="cards"></div>
@@ -64,7 +78,7 @@ h2{font-size:15px;font-weight:500;margin:22px 0 0}
 <div id="bar"></div>
 <div id="binwrap"></div>
 
-<p class="note" style="margin-top:22px">Verdicts are written by the netsuite-approval-double-check skill. The queue state above is re-queried live from NetSuite on every open. Change orders cannot be queried for pending status and are shown as of the last review only.</p>
+<p class="note" style="margin-top:22px">Verdicts are written by the netsuite-approval-double-check skill. This page is a snapshot and never queries NetSuite by itself. Every record is re-verified against the live queue at execute time, immediately before it is clicked.</p>
 </div>
 
 <script>
@@ -84,22 +98,16 @@ function ageDays(s){var d=parseNsDate(s);if(!d)return null;return Math.max(0,Mat
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function recUrl(id){return "https://"+ACCT+".app.netsuite.com/app/accounting/transactions/transaction.nl?id="+id}
 
-var live=null, liveErr=null;
+// This page never queries NetSuite. The widget host exposes no callMcpTool, and an on-open
+// query would be stale by the time execute is pressed anyway. Freshness is enforced in the
+// execute turn instead, which re-verifies each record immediately before clicking it.
+var live=null;
 
-async function loadLive(){
-  if(!ME||!TOOL){liveErr=!ME?"this dashboard has not been set up with your NetSuite employee id":"this dashboard has not been told which NetSuite connector to use";render();return}
-  var sql="SELECT t.id, t.type, t.tranid, t.trandate, t.foreigntotal, t.custbody3 AS po_ref FROM transaction t WHERE t.approvalstatus = 1 AND t.custbody_sna_cdc_next_approver = "+ME;
-  try{
-    var r=await window.cowork.callMcpTool(TOOL,{sqlQuery:sql,description:"Live pending-approval queue for the approval dashboard"});
-    if(r.isError){liveErr="connector returned an error";render();return}
-    var p=r.structuredContent;
-    if(!p&&r.content&&r.content[0]&&r.content[0].text){try{p=JSON.parse(r.content[0].text)}catch(e){p=null}}
-    if(!p||!p.data){liveErr="could not parse the connector response";render();return}
-    live={};
-    p.data.forEach(function(row){live[row.id]={id:row.id,tranid:row.tranid,trandate:row.trandate,amt:Math.abs(row.foreigntotal),po_ref:row.po_ref,type:row.type}});
-    render();
-  }catch(e){liveErr=String(e&&e.message||e);render();}
-}
+function ageOfRun(){var t=new Date(REVIEW.lastRunISO).getTime();if(isNaN(t))return null;return Math.max(0,Math.round((Date.now()-t)/60000))}
+function ageText(){var m=ageOfRun();if(m==null)return "";
+  if(m<2)return "just now"; if(m<60)return m+" minutes ago";
+  var h=Math.round(m/60); if(h<24)return h+" hour"+(h>1?"s":"")+" ago";
+  var d=Math.round(h/24); return d+" day"+(d>1?"s":"")+" ago";}
 
 function classify(it){
   if(it.type==="Change Order")return{state:it.verdict,stale:true};
@@ -130,10 +138,19 @@ function render(){
   var ages=rows.map(function(r){return ageDays(r.it.trandate)}).concat(newItems.map(function(n){return ageDays(n.trandate)})).filter(function(a){return a!=null});
   var oldest=ages.length?Math.max.apply(null,ages):0;
 
-  document.getElementById("sub").textContent="Reviewed "+REVIEW.lastRun+(live?" · queue re-checked live just now":liveErr?" · live check failed":" · checking live queue…");
+  document.getElementById("sub").textContent=pending+" pending your approval";
+  var mins=ageOfRun(), stale=(mins!=null&&mins>180);
+  var fb=document.getElementById("freshbox");
+  fb.className="freshbox"+(stale?" stale":"");
+  document.getElementById("freshtext").innerHTML=
+    '<b>Reviewed '+ageText()+'</b> — '+esc(REVIEW.lastRun)+
+    '<br><span style="color:var(--ink2)">'+(stale
+      ? 'This snapshot is getting old. NetSuite may have moved on; re-run before acting on anything below.'
+      : 'This is a snapshot, not a live view. Each record is re-verified in NetSuite at execute time, immediately before it is clicked.')+'</span>';
   var conn=document.getElementById("conn");
-  if(live){conn.textContent="Live";conn.style.background="var(--ok-bg)";conn.style.color="var(--ok-fg)"}
-  else if(liveErr){conn.textContent="Live check failed";conn.style.background="var(--bad-bg)";conn.style.color="var(--bad-fg)"}
+  conn.textContent=stale?"Snapshot · "+ageText():"Snapshot · fresh";
+  conn.style.background=stale?"var(--bad-bg)":"var(--ok-bg)";
+  conn.style.color=stale?"var(--bad-fg)":"var(--ok-fg)";
 
   document.getElementById("cards").innerHTML=
    cd("Pending",pending)+cd("Clear",clear,"var(--ok-fg)")+cd("Flagged",flagged,"var(--bad-fg)")+
@@ -141,16 +158,13 @@ function render(){
    cd("In queue",total?"$"+(Math.round(total/100)/10)+"k":"$0");
 
   var b="";
-  if(liveErr)b+='<div class="banner" style="background:var(--bad-bg);color:var(--bad-fg);border:1px solid var(--bad-line)">Live queue check failed ('+esc(liveErr)+'). Everything below is as of the last review and may be out of date. Re-run the check rather than acting on this.</div>';
-  var stuck=Object.keys(marks).filter(function(k){return live&&live[k]});
-  if(stuck.length&&live)b+='<div class="banner" style="background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-line)">'+stuck.length+' item(s) are marked but still pending in NetSuite. If you already ran an execute, the click did not land — check before re-running.</div>';
   document.getElementById("banners").innerHTML=b;
 
   var html="";
   rows.sort(function(a,b2){var o={changed:0,flagged:1,clear:2};return (o[a.c.state]-o[b2.c.state])});
   newItems.forEach(function(n){html+=newRow(n)});
   rows.forEach(function(r){html+=itemRow(r.it,r.c)});
-  document.getElementById("rows").innerHTML=html||(live?'<div class="empty">Nothing pending your approval right now.</div>':"");
+  document.getElementById("rows").innerHTML=html||'<div class="empty">Nothing pending your approval right now.</div>';
 
   renderBar();
   document.getElementById("binwrap").innerHTML=bin.length?
@@ -214,13 +228,16 @@ function setText(id,v){if(marks[id]){marks[id].text=v;saveMarks();renderBar()}}
 function clearAll(){marks={};saveMarks();render()}
 function sendRun(){say("Run my NetSuite approval check now")}
 function say(t){
-  // Try a host bridge first. Costs nothing, and takes over automatically if one ever appears.
+  // Two hosts with disjoint surfaces, both probed live. The widget host exposes sendPrompt as a
+  // bare global — that is the path this dashboard takes, and the execute button is one click.
+  // The artifact host exposes window.cowork (callMcpTool, askClaude, runScheduledTask) and no
+  // sendPrompt anywhere, so it cannot start a turn. The cowork branch is a hedge in case the two
+  // surfaces ever converge on that namespace; it matches nothing today.
   if(window.cowork&&window.cowork.sendPrompt){window.cowork.sendPrompt(t);return}
   if(window.sendPrompt){window.sendPrompt(t);return}
-  // The artifact host does expose window.cowork, but only callMcpTool, askClaude and
-  // runScheduledTask — no sendPrompt — so the page cannot start a turn. Hand the instruction back
-  // to be pasted. Shown even when the copy succeeds, on purpose: you should read exactly what you
-  // are authorising, and it then runs from your message rather than from this page.
+  // Reached only when this page is opened as an artifact. Hand the instruction back to be pasted.
+  // Shown even when the copy succeeds, on purpose: you should read exactly what you are
+  // authorising, and it then runs from your message rather than from this page.
   if(navigator.clipboard&&navigator.clipboard.writeText)
     navigator.clipboard.writeText(t).then(function(){handoff(t,true)},function(){handoff(t,false)});
   else handoff(t,false);
@@ -270,7 +287,6 @@ function renderBar(){
 function go(){say(window.__prompt)}
 
 render();
-loadLive();
 </script>
 </body>
 </html>

@@ -41,7 +41,7 @@ in-browser, so nothing lands in your downloads folder.
 
 ## The dashboard
 
-Verdicts publish to a `procore-open-items-queue` artifact: summary cards, a
+Verdicts render as an inline dashboard widget in the conversation: summary cards, a
 fact strip per item you can judge without expanding anything, and sort and
 filter controls — campus, then building, then type, plus search.
 
@@ -50,10 +50,10 @@ set, so invoices offer Approve / Revise and Resubmit while change risks at a
 cost gate offer Yes / Reject. Marking an affirmative response on an item with
 no support raises a warning.
 
-You mark responses per item, then execute them together. Execute copies the
-instruction and shows it — paste it into the conversation and send, and the
-responses run from your message. Nothing reaches Procore from the dashboard
-itself.
+You mark responses per item, then execute them together. Execute sends the
+instruction straight into the conversation in one click. Nothing reaches Procore
+from the dashboard itself — the responses run from that message, and each item is
+re-verified as still yours to action immediately before it is clicked.
 
 ## Requirements
 

@@ -235,9 +235,16 @@ skill deviates, say so explicitly rather than quietly normalising it.
     needs the NetSuite MCP connector
   - `procore-open-items-review` — skill `procore-open-items-review`;
     needs Claude in Chrome signed in to Procore, and has no connector
-- **Visibility: public.** The README's distribution notes discuss the private
-  case because org-wide sync requires it; the repo is not private today. Do not
-  write prose that asserts it is. Flag the mismatch if it becomes relevant.
+- **Visibility: public, and that is a decision — not an oversight.** Shivam
+  distributes by handing teammates the install commands and asking them to
+  enable auto-update. Public is the only setting where that route needs no
+  GitHub account per teammate and has no silent update failure. Org-wide admin
+  sync was considered and explicitly rejected. Do not propose going private, and
+  do not "fix" prose that says public. The reasoning is in README.md under
+  *Distribution: why this repo is public*.
+- **Because it is public, nothing sensitive may land here.** No tokens, no
+  company ids, no endpoints, no real documents in fixtures or examples. If a
+  ported skill carries any of those, stop and raise it before committing.
 - No CI beyond `.github/workflows/validate.yml`, which runs `scripts/validate.py`.
 
 ---

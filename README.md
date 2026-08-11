@@ -100,28 +100,50 @@ exist. It runs in CI on every push and pull request.
 python3 scripts/validate.py
 ```
 
-## Distribution and access
+## Distribution: why this repo is public
 
-This repo is currently **public**, so anyone can add the marketplace and both
-plugins are world-readable.
+**Distribution is by link.** Send a teammate the two commands at the top of
+this README, ask them to enable auto-update, and they are done. There is no
+admin step and no access to grant.
 
-If you make it private, access is governed entirely by GitHub permissions —
-there is nothing Claude-specific to grant. `/plugin marketplace add` and
-`/plugin install` use each person's own git credentials, so a teammate can
-install exactly when they could `git clone` the repo themselves. GitHub
-`owner/repo` shorthand clones over SSH by default.
+The repo is public **on purpose**, because that is the only setting under which
+the link-and-auto-update route has no per-person setup and no silent failure
+mode:
 
-Two things to know before going private:
+| Repo | Teammate needs a GitHub account? | Auto-update |
+|---|---|---|
+| **Public** — what we do | No, anonymous clone | Just works |
+| Private over SSH | Yes, plus repo access | Works only if their key is in `ssh-agent` |
+| Private over HTTPS | Yes, plus repo access | Degrades — see below |
 
-- **Background auto-update is the weak spot over HTTPS.** The background pull
-  disables git credential helpers, so it cannot authenticate to a private HTTPS
-  remote; it falls back to a full re-clone, which does use stored credentials
-  but can time out. SSH remotes are unaffected. Setting
-  `CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE=1` keeps the working clone
-  when a background pull fails.
-- **Org sync removes the problem entirely, and requires private.** On a Team or
-  Enterprise plan an admin can distribute this marketplace from
-  `claude.ai/admin-settings/plugins`; it reads the repo through the Claude
-  GitHub App and packages each plugin, so teammates need no repo access and run
-  nothing at all. That route requires the repo to be private or internal and
-  the plugin folders to live inside it, which is how this is laid out.
+Going private would cost a GitHub account and a repo grant per teammate, and
+would make updates unreliable: the background refresh **disables git credential
+helpers** for its `git pull`, so it cannot authenticate to a private HTTPS
+remote. It falls back to re-cloning the whole marketplace, which can time out.
+The result is a teammate who silently stops receiving updates — exactly the
+failure the no-`version` rule exists to prevent. SSH remotes avoid it, but only
+while every teammate keeps a key loaded in `ssh-agent`.
+
+The tradeoff accepted in exchange: both plugins are **world-readable**. They
+describe approval gates and cost-field mappings; they carry no credentials,
+endpoints, or customer data. Keep it that way — never commit a token, a company
+id, or a real document into this repo.
+
+<details>
+<summary>The one route that would beat public, and why it is not used</summary>
+
+On a Team or Enterprise plan an admin can distribute a marketplace from
+`claude.ai/admin-settings/plugins`. It reads the repo through the Claude GitHub
+App and packages each plugin, so teammates need no GitHub account, no repo
+access, and run nothing at all — not even the auto-update toggle.
+
+It is unused here because it requires an admin to own distribution, and this
+marketplace is deliberately self-serve. It also requires the repo be private or
+internal, so adopting it later means flipping visibility. The `git-subdir`
+sources this repo uses are supported by that route, so no rework would be
+needed. Note that the repo is owned by a personal account rather than the
+Compass organization, and whether org sync accepts a personally-owned private
+repo is not documented — moving the repo into the org would be the first step,
+not flipping visibility.
+
+</details>

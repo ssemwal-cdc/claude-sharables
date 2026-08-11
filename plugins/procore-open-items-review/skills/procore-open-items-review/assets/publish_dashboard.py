@@ -10,7 +10,7 @@ the dashboard cannot drift between runs.
 
 Usage:  python3 publish_dashboard.py [<output path>]
 """
-import json, os, re, sys
+import json, os, re, sys, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LOG = os.path.join(HERE, "_review_log.json")
@@ -121,6 +121,22 @@ def main():
     assert len(out) - len(tpl) == len(blob) - (b - a)
 
     open(OUT, "w", encoding="utf-8").write(out)
+
+    # Keep a short rolling archive of what was actually rendered. Two uses: diff a bad render
+    # against the last good one to see what changed, and re-render from disk without re-running
+    # the whole review, which costs connector queries and attachment downloads.
+    #
+    # Seven weekday slots, overwritten in place, rather than dated files. The workspace folder is
+    # usually cloud-synced, where creating and overwriting work but deleting is typically blocked,
+    # so anything that accumulates can never be cleaned up. Best-effort: never fail a publish.
+    try:
+        arc = os.path.join(HERE, "renders")
+        os.makedirs(arc, exist_ok=True)
+        slot = datetime.date.today().strftime("%a").lower()
+        with open(os.path.join(arc, slot + ".html"), "w", encoding="utf-8") as fh:
+            fh.write(out)
+    except OSError as exc:
+        print("note: render archive not written (%s)" % exc, file=sys.stderr)
 
     n = len(items)
     flagged = sum(1 for i in items if i["verdict"] == "flagged")

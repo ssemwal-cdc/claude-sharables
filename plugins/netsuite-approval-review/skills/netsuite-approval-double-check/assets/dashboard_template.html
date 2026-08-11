@@ -213,7 +213,36 @@ function mark(id,kind){
 function setText(id,v){if(marks[id]){marks[id].text=v;saveMarks();renderBar()}}
 function clearAll(){marks={};saveMarks();render()}
 function sendRun(){say("Run my NetSuite approval check now")}
-function say(t){if(window.cowork&&window.cowork.sendPrompt)window.cowork.sendPrompt(t);else if(window.sendPrompt)window.sendPrompt(t)}
+function say(t){
+  // Try a host bridge first. Costs nothing, and takes over automatically if one ever appears.
+  if(window.cowork&&window.cowork.sendPrompt){window.cowork.sendPrompt(t);return}
+  if(window.sendPrompt){window.sendPrompt(t);return}
+  // The artifact host does expose window.cowork, but only callMcpTool, askClaude and
+  // runScheduledTask — no sendPrompt — so the page cannot start a turn. Hand the instruction back
+  // to be pasted. Shown even when the copy succeeds, on purpose: you should read exactly what you
+  // are authorising, and it then runs from your message rather than from this page.
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(t).then(function(){handoff(t,true)},function(){handoff(t,false)});
+  else handoff(t,false);
+}
+function handoff(t,copied){
+  closeHandoff();
+  var d=document.createElement("div");d.id="handoff";
+  d.style.cssText="position:fixed;inset:0;z-index:99;background:rgba(20,20,19,.45);display:flex;align-items:center;justify-content:center;padding:24px";
+  d.innerHTML='<div style="background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.18);max-width:640px;width:100%;padding:20px">'+
+   '<div style="font-size:15px;font-weight:600">'+(copied?"Copied — paste it into chat and send":"Copy this, then paste it into chat")+'</div>'+
+   '<p class="note" style="margin:4px 0 12px">Nothing has reached NetSuite yet. The approval runs from your message, not from this page.</p>'+
+   '<textarea readonly style="width:100%;height:170px;box-sizing:border-box;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:10px;resize:vertical"></textarea>'+
+   '<div style="display:flex;gap:8px;margin-top:12px"><button class="go" onclick="recopy()">Copy again</button><button onclick="closeHandoff()">Close</button></div></div>';
+  d.addEventListener("click",function(e){if(e.target===d)closeHandoff()});
+  document.body.appendChild(d);
+  // Assigned as a value, never as markup — the instruction carries vendor names and free-text notes.
+  var ta=d.querySelector("textarea");ta.value=t;ta.focus();ta.select();
+}
+function recopy(){var ta=document.querySelector("#handoff textarea");if(!ta)return;ta.focus();ta.select();
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(ta.value);else document.execCommand("copy")}
+function closeHandoff(){var o=document.getElementById("handoff");if(o)o.parentNode.removeChild(o)}
+document.addEventListener("keydown",function(e){if(e.key==="Escape")closeHandoff()});
 
 function renderBar(){
   var byId={}; REVIEW.items.forEach(function(i){byId[i.id]=i});

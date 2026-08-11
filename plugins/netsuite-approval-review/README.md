@@ -22,7 +22,9 @@ The dashboard re-queries your live queue every time you open it, so actioned
 items drop away and newly arrived ones surface as unreviewed.
 
 You mark approve / approve with notes / reject per item, then execute them
-together. Execution drives the real NetSuite buttons through your own
+together. Execute copies the instruction and shows it — paste it into the
+conversation and send, and the approvals run from your message. Nothing reaches
+NetSuite from the dashboard itself. Execution drives the real NetSuite buttons through your own
 authenticated browser session, so the approval workflow routes normally and the
 audit trail records you as the approver.
 

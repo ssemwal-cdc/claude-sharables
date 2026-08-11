@@ -50,7 +50,10 @@ set, so invoices offer Approve / Revise and Resubmit while change risks at a
 cost gate offer Yes / Reject. Marking an affirmative response on an item with
 no support raises a warning.
 
-You mark responses per item, then execute them together.
+You mark responses per item, then execute them together. Execute copies the
+instruction and shows it — paste it into the conversation and send, and the
+responses run from your message. Nothing reaches Procore from the dashboard
+itself.
 
 ## Requirements
 

@@ -54,7 +54,14 @@ Otherwise set up, once:
    mkdir -p "<workspace>/NetSuite Approval Checks"
    cp "${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/dashboard_template.html" "<workspace>/NetSuite Approval Checks/"
    cp "${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/publish_dashboard.py" "<workspace>/NetSuite Approval Checks/"
+   chmod u+w "<workspace>/NetSuite Approval Checks/dashboard_template.html" \
+             "<workspace>/NetSuite Approval Checks/publish_dashboard.py"
    ```
+
+   The `chmod` is required, not tidiness. The plugin's installed assets are
+   read-only, `cp` preserves that mode, and this skill later tells you to edit
+   the template for design changes — which fails with
+   `PermissionError: [Errno 13] Permission denied` without it.
 
 6. **Write the config** into `_review_log.json`:
 
@@ -72,7 +79,22 @@ Otherwise set up, once:
    }
    ```
 
-7. **Create the artifact** on the first publish: call `create_artifact` with id `netsuite-approval-queue` instead of `update_artifact`.
+7. **Do not decide create-vs-update from this file.** `_review_log.json` lives
+   in the connected workspace folder; the artifact lives in the artifact
+   manifest. They are independent stores and disagree in both directions — the
+   folder can change, be renamed or be disconnected while the artifact persists,
+   and the artifact can be deleted while the log survives.
+
+   At publish time, resolve it from the artifact side and let it self-heal:
+
+   - Call `update_artifact` with id `netsuite-approval-queue`.
+   - If that fails because no such artifact exists, call `create_artifact` with
+     the same id, then carry on.
+   - If `create_artifact` reports the id already exists, call `update_artifact`
+     instead. That is not an error worth reporting to the user.
+
+   `list_artifacts` answers the question directly if you would rather check
+   first. Never infer artifact existence from the presence of a workspace file.
 
 ## Step 1 — Build the queue
 

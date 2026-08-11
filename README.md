@@ -57,7 +57,7 @@ supporting files travel with the plugin and resolve through
 
 **These plugins work in Cowork.** Install them once as above and run them from
 a Cowork session the same way — verified against both plugins on
-2026-08-11, including their dashboard artifacts and their `assets/`.
+2026-08-11, including their inline dashboard widgets and their `assets/`.
 
 If you are running a plugin in a **cloud session against a repository** rather
 than in Cowork, that case is different: declare the plugin in that repo's

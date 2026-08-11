@@ -61,8 +61,15 @@ time rather than at push time:
    `plugins/<name>/skills/<skill-name>/SKILL.md`; the conventional `skills/`
    location is picked up automatically, so `plugin.json` needs no `skills` key.
 2. Add an entry to the `plugins` array in `.claude-plugin/marketplace.json`.
-   `source` is relative to `metadata.pluginRoot` (`./plugins`), so it is just
-   the folder name. Keep `name` identical to the one in `plugin.json`.
+   `source` must be the full path from the repo root **and must start with
+   `./`** — `"./plugins/<name>"`. Keep `name` identical to the one in
+   `plugin.json`.
+
+   Do not use `metadata.pluginRoot` to shorten `source` to a bare folder name.
+   The docs suggest that works; it does not. A bare name fails validation with
+   `source: Invalid input`, and setting `pluginRoot` with a `./<name>` source
+   passes validation but silently ignores the root, so the install then fails
+   with `Source path does not exist`. Verified against Claude Code v2.1.227.
 
 Either existing plugin works as a template for the layout.
 

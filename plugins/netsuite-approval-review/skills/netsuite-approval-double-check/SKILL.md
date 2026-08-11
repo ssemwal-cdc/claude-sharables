@@ -318,7 +318,7 @@ Add a second line only if something blocked the run — a login redirect, a miss
 
 ## Step 8 — Execute decisions (only on explicit instruction)
 
-The user marks decisions in the dashboard and presses execute, which sends an instruction naming each document. That instruction, or an equivalent one typed directly, is the only thing that authorises a click.
+The user marks decisions in the dashboard and presses execute, which copies an instruction naming each document and shows it for them to paste into chat. That pasted instruction, or an equivalent one typed directly, is the only thing that authorises a click.
 
 Before clicking anything, check the instruction names specific documents. If it says "approve everything" or "approve the clear ones," stop and ask which.
 

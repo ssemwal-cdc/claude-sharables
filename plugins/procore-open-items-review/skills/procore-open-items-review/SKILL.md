@@ -329,7 +329,7 @@ Add a second line only if something blocked the run. Never put verdicts in chat.
 
 ## Step 8 — Execute responses (only on explicit instruction)
 
-The user marks responses on the dashboard and presses execute, which sends an instruction naming each item. That, or an equivalent typed directly, is the only thing that authorises a click.
+The user marks responses on the dashboard and presses execute, which copies an instruction naming each item and shows it for them to paste into chat. That pasted instruction, or an equivalent typed directly, is the only thing that authorises a click.
 
 **The dashboard is a snapshot.** The user may have actioned an item in Procore directly since the last run. So for **each** item, in this order:
 

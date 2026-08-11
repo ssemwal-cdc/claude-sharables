@@ -28,6 +28,30 @@ first-time setup automatically the first time you use it — NetSuite asks you
 to confirm your NetSuite identity, Procore asks for your company id and a
 couple of per-company tool and field ids.
 
+### Where the skills show up
+
+Two things surprise people here, and neither is a fault:
+
+- **They are not in the Skills tab.** That tab lists personal skills from
+  `~/.claude/skills/`. Plugin skills are a separate registry — find them under
+  the **+** button next to the prompt box → **Plugins**, listed inside their
+  plugin.
+- **The slash commands are namespaced by plugin.** `/netsuite-approval-double-check`
+  does not exist. The real names are:
+
+  ```
+  /netsuite-approval-review:netsuite-approval-double-check
+  /procore-open-items-review:procore-open-items-review
+  ```
+
+You rarely need either. Both skills fire from plain language — "run my approval
+check", "run my Procore review" — which is what their trigger phrases are for.
+If you installed mid-session, run `/reload-plugins` first.
+
+Note that plugins installed in the desktop app do **not** carry into Cowork or
+other cloud sessions. To use them there, declare them in a repository's
+`.claude/settings.json` under `enabledPlugins` so they install at session start.
+
 ## Available plugins
 
 | Plugin | What it does | Needs |

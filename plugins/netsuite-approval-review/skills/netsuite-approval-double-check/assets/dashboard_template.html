@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NetSuite approval queue</title>
+<!-- layout template v1 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<style>
+:root{color-scheme:light;--ink:#141413;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:8px}
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:var(--bg);color:var(--ink);font:400 15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto}
+h1{font-size:22px;font-weight:500;margin:0}
+.sub{font-size:13px;color:var(--ink2);margin:3px 0 0}
+.pill{font-size:12px;padding:3px 9px;border-radius:var(--r);white-space:nowrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:20px 0 22px}
+.card{background:#f1f0ec;border-radius:var(--r);padding:13px 14px}
+.card .l{font-size:12.5px;color:var(--ink2)}
+.card .v{font-size:23px;font-weight:500;margin-top:2px;font-variant-numeric:tabular-nums}
+.row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 17px;margin-bottom:10px}
+.row.mk{border-width:2px;border-color:var(--acc-line)}
+.row.mkr{border-width:2px;border-color:var(--bad-line)}
+.rh{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.doc{font-size:15px;font-weight:500;flex:1;min-width:130px}
+.amt{font-size:15px;font-weight:500;font-variant-numeric:tabular-nums}
+.ven{font-size:13px;color:var(--ink2);margin:5px 0 0}
+.head{font-size:14px;margin:9px 0 0}
+ul.f{margin:7px 0 0;padding-left:17px;font-size:12.5px;color:var(--ink2);line-height:1.6;font-variant-numeric:tabular-nums}
+ul.f li{margin:1px 0}
+.po{font-size:12.5px;color:var(--ink2);background:#f6f5f2;padding:7px 10px;border-radius:var(--r);margin:9px 0 0;font-variant-numeric:tabular-nums}
+.det{font-size:13px;color:var(--ink2);line-height:1.7;margin:10px 0 0;display:none}
+.acts{display:flex;gap:8px;align-items:center;margin-top:11px;padding-top:10px;border-top:1px solid var(--line);flex-wrap:wrap}
+button{font:400 12.5px/1 inherit;padding:7px 12px;background:transparent;border:1px solid #c9c8c2;border-radius:var(--r);color:var(--ink);cursor:pointer}
+button:hover{background:#f1f0ec}
+button.on{background:#eceae4;border-color:#9a9992}
+button.rj{border-color:var(--bad-line);color:var(--bad-fg)}
+button.go{border-color:#9a9992;font-size:13px}
+input[type=text]{width:100%;font:400 13px inherit;padding:8px 10px;border:1px solid #c9c8c2;border-radius:var(--r);margin-top:10px;background:#fff;color:var(--ink)}
+a{color:var(--acc-fg);text-decoration:none;font-size:12.5px}
+a:hover{text-decoration:underline}
+.bar{background:#f1f0ec;border-radius:12px;padding:15px 17px;margin-top:20px}
+.note{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
+.banner{border-radius:12px;padding:12px 15px;margin-bottom:14px;font-size:13.5px}
+.empty{text-align:center;padding:34px 20px;color:var(--ink2);font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+.binrow{background:#f1f0ec;border-radius:var(--r);padding:11px 14px;margin-top:8px;display:flex;gap:10px;align-items:center;color:var(--ink3);font-size:13.5px}
+h2{font-size:15px;font-weight:500;margin:22px 0 0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h2 class="sr">NetSuite approval queue dashboard. Each item pending your approval is listed with its verdict from the last review, its aging, and the funding purchase order context. Decisions are marked per item and executed together.</h2>
+
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+  <div>
+    <h1>Approval queue</h1>
+    <p class="sub" id="sub">Loading live queue…</p>
+  </div>
+  <span class="pill" id="conn" style="background:#f1f0ec;color:var(--ink2)">Checking</span>
+</div>
+
+<div class="cards" id="cards"></div>
+<div id="banners"></div>
+<div id="rows"></div>
+<div id="bar"></div>
+<div id="binwrap"></div>
+
+<p class="note" style="margin-top:22px">Verdicts are written by the netsuite-approval-double-check skill. The queue state above is re-queried live from NetSuite on every open. Change orders cannot be queried for pending status and are shown as of the last review only.</p>
+</div>
+
+<script>
+var ACCT="", ME=null, TOOL="";
+var REVIEW=/*__REVIEW_DATA__*/{"lastRun":"","items":[]}/*__END__*/;
+ACCT=(REVIEW.config&&REVIEW.config.account)||"";
+ME=(REVIEW.config&&REVIEW.config.me)||null;
+TOOL=(REVIEW.config&&REVIEW.config.tool)||"";
+
+var KEY="ns_marks_v1", marks={};
+try{marks=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){marks={}}
+function saveMarks(){try{localStorage.setItem(KEY,JSON.stringify(marks))}catch(e){}}
+
+var money=function(n){return Math.abs(n).toLocaleString("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2})};
+function parseNsDate(s){if(!s)return null;var p=String(s).split("/");if(p.length!==3)return null;return new Date(+p[2],+p[0]-1,+p[1])}
+function ageDays(s){var d=parseNsDate(s);if(!d)return null;return Math.max(0,Math.floor((Date.now()-d.getTime())/86400000))}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function recUrl(id){return "https://"+ACCT+".app.netsuite.com/app/accounting/transactions/transaction.nl?id="+id}
+
+var live=null, liveErr=null;
+
+async function loadLive(){
+  if(!ME||!TOOL){liveErr=!ME?"this dashboard has not been set up with your NetSuite employee id":"this dashboard has not been told which NetSuite connector to use";render();return}
+  var sql="SELECT t.id, t.type, t.tranid, t.trandate, t.foreigntotal, t.custbody3 AS po_ref FROM transaction t WHERE t.approvalstatus = 1 AND t.custbody_sna_cdc_next_approver = "+ME;
+  try{
+    var r=await window.cowork.callMcpTool(TOOL,{sqlQuery:sql,description:"Live pending-approval queue for the approval dashboard"});
+    if(r.isError){liveErr="connector returned an error";render();return}
+    var p=r.structuredContent;
+    if(!p&&r.content&&r.content[0]&&r.content[0].text){try{p=JSON.parse(r.content[0].text)}catch(e){p=null}}
+    if(!p||!p.data){liveErr="could not parse the connector response";render();return}
+    live={};
+    p.data.forEach(function(row){live[row.id]={id:row.id,tranid:row.tranid,trandate:row.trandate,amt:Math.abs(row.foreigntotal),po_ref:row.po_ref,type:row.type}});
+    render();
+  }catch(e){liveErr=String(e&&e.message||e);render();}
+}
+
+function classify(it){
+  if(it.type==="Change Order")return{state:it.verdict,stale:true};
+  if(live===null)return{state:it.verdict,stale:true};
+  var l=live[it.id];
+  if(!l)return{state:"gone",stale:false};
+  if(Math.abs(l.amt-it.amt)>0.005)return{state:"changed",stale:false,newAmt:l.amt};
+  return{state:it.verdict,stale:false};
+}
+
+function render(){
+  var reviewed={}; REVIEW.items.forEach(function(i){reviewed[i.id]=i});
+  var rows=[], bin=[], newItems=[];
+
+  REVIEW.items.forEach(function(it){
+    var c2=classify(it);
+    if(c2.state==="gone"){bin.push(it); if(marks[it.id]){delete marks[it.id];saveMarks()} }
+    else rows.push({it:it,c:c2});
+  });
+
+  if(live){Object.keys(live).forEach(function(k){if(!reviewed[k])newItems.push(live[k])})}
+
+  var pending=rows.length+newItems.length;
+  var clear=rows.filter(function(r){return r.c.state==="clear"}).length;
+  var flagged=rows.filter(function(r){return r.c.state==="flagged"}).length;
+  var changed=rows.filter(function(r){return r.c.state==="changed"}).length;
+  var total=rows.reduce(function(s,r){return s+r.it.amt},0)+newItems.reduce(function(s,n){return s+n.amt},0);
+  var ages=rows.map(function(r){return ageDays(r.it.trandate)}).concat(newItems.map(function(n){return ageDays(n.trandate)})).filter(function(a){return a!=null});
+  var oldest=ages.length?Math.max.apply(null,ages):0;
+
+  document.getElementById("sub").textContent="Reviewed "+REVIEW.lastRun+(live?" · queue re-checked live just now":liveErr?" · live check failed":" · checking live queue…");
+  var conn=document.getElementById("conn");
+  if(live){conn.textContent="Live";conn.style.background="var(--ok-bg)";conn.style.color="var(--ok-fg)"}
+  else if(liveErr){conn.textContent="Live check failed";conn.style.background="var(--bad-bg)";conn.style.color="var(--bad-fg)"}
+
+  document.getElementById("cards").innerHTML=
+   cd("Pending",pending)+cd("Clear",clear,"var(--ok-fg)")+cd("Flagged",flagged,"var(--bad-fg)")+
+   cd("Unreviewed",newItems.length+changed,"var(--warn-fg)")+cd("Oldest",oldest?oldest+"d":"–")+
+   cd("In queue",total?"$"+(Math.round(total/100)/10)+"k":"$0");
+
+  var b="";
+  if(liveErr)b+='<div class="banner" style="background:var(--bad-bg);color:var(--bad-fg);border:1px solid var(--bad-line)">Live queue check failed ('+esc(liveErr)+'). Everything below is as of the last review and may be out of date. Re-run the check rather than acting on this.</div>';
+  var stuck=Object.keys(marks).filter(function(k){return live&&live[k]});
+  if(stuck.length&&live)b+='<div class="banner" style="background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-line)">'+stuck.length+' item(s) are marked but still pending in NetSuite. If you already ran an execute, the click did not land — check before re-running.</div>';
+  document.getElementById("banners").innerHTML=b;
+
+  var html="";
+  rows.sort(function(a,b2){var o={changed:0,flagged:1,clear:2};return (o[a.c.state]-o[b2.c.state])});
+  newItems.forEach(function(n){html+=newRow(n)});
+  rows.forEach(function(r){html+=itemRow(r.it,r.c)});
+  document.getElementById("rows").innerHTML=html||(live?'<div class="empty">Nothing pending your approval right now.</div>':"");
+
+  renderBar();
+  document.getElementById("binwrap").innerHTML=bin.length?
+   '<h2>Actioned since the last review ('+bin.length+')</h2>'+bin.map(function(it){
+     return '<div class="binrow"><span style="flex:1;min-width:0">'+esc(it.type)+' · '+esc(it.doc)+' — '+esc(it.vendor)+'</span><span style="font-variant-numeric:tabular-nums">'+money(it.amt)+'</span></div>'+
+            '<p class="note">'+(it.verdict==="flagged"?"was flagged":"was cleared")+' on the last run, no longer pending — actioned in NetSuite</p>'}).join(""):"";
+}
+function cd(l,v,col){return '<div class="card"><div class="l">'+l+'</div><div class="v"'+(col?' style="color:'+col+'"':'')+'>'+v+'</div></div>'}
+
+function newRow(n){
+  var a=ageDays(n.trandate);
+  return '<div class="row" style="border-color:var(--warn-line)">'+
+  '<div class="rh"><span class="pill" style="background:var(--warn-bg);color:var(--warn-fg)">Not yet reviewed</span>'+
+  '<span class="doc">'+esc(n.type==="VendBill"?"Bill":n.type)+' · '+esc(n.tranid)+'</span>'+
+  '<span class="amt">'+money(n.amt)+'</span></div>'+
+  '<p class="ven">arrived since the last review'+(a!=null?' · dated '+esc(n.trandate)+' ('+a+'d)':'')+(n.po_ref?' · '+esc(n.po_ref):'')+'</p>'+
+  '<p class="head">No verdict yet — no math or support check has run against this item</p>'+
+  '<div class="acts"><button onclick="sendRun()">Run the check on this ↗</button>'+
+  '<a href="'+recUrl(n.id)+'" target="_blank" rel="noopener">Open record</a></div></div>'
+}
+
+function itemRow(it,c2){
+  var m=marks[it.id]||null, cls="row"+(m?(m.kind==="reject"?" mkr":" mk"):"");
+  var a=ageDays(it.trandate);
+  var pill,pbg,pfg;
+  if(c2.state==="changed"){pill="Amount changed — re-review";pbg="var(--warn-bg)";pfg="var(--warn-fg)"}
+  else if(c2.state==="flagged"){pill="Flagged";pbg="var(--bad-bg)";pfg="var(--bad-fg)"}
+  else{pill="Clear";pbg="var(--ok-bg)";pfg="var(--ok-fg)"}
+  var mk=m?'<span class="pill" style="background:'+(m.kind==="reject"?"var(--bad-bg)":"var(--acc-bg)")+';color:'+(m.kind==="reject"?"var(--bad-fg)":"var(--acc-fg)")+'">'+(m.kind==="reject"?"Will reject":m.kind==="notes"?"Will approve with notes":"Will approve")+'</span>':"";
+  var h='<div class="'+cls+'" id="row'+it.id+'">'+
+  '<div class="rh"><span class="pill" style="background:'+pbg+';color:'+pfg+'">'+pill+'</span>'+
+  '<span class="doc">'+esc(it.type)+' · '+esc(it.doc)+'</span>'+mk+
+  '<span class="amt">'+money(it.amt)+'</span></div>'+
+  '<p class="ven">'+esc(it.vendor)+(a!=null?' <span style="color:'+(a>14?"var(--bad-fg)":"var(--ink3)")+'">· '+a+' days pending</span>':'')+
+  (c2.stale?' <span style="color:var(--warn-fg)">· as of last review, not live-checked</span>':'')+'</p>';
+  if(c2.state==="changed")h+='<p class="head" style="color:var(--warn-fg)">Amount is now '+money(c2.newAmt)+', was '+money(it.amt)+' when reviewed. The verdict below no longer applies.</p>';
+  h+='<p class="head">'+esc(it.head)+'</p>'+
+  '<ul class="f">'+it.facts.map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+
+  '<p class="po">'+esc(it.po)+(it.poWarn?'<br><span style="color:var(--warn-fg)">! '+esc(it.poWarn)+'</span>':'')+'</p>'+
+  '<p class="det" id="det'+it.id+'">'+esc(it.detail)+'</p>'+
+  '<div class="acts">'+
+  '<button onclick="tog('+it.id+',this)">Show detail</button>'+
+  '<button class="'+(m&&m.kind==="approve"?"on":"")+'" onclick="mark('+it.id+',\'approve\')">'+(m&&m.kind==="approve"?"✓ ":"")+'Approve</button>'+
+  '<button class="'+(m&&m.kind==="notes"?"on":"")+'" onclick="mark('+it.id+',\'notes\')">'+(m&&m.kind==="notes"?"✓ ":"")+'With notes</button>'+
+  '<span style="flex:1"></span>'+
+  '<a href="'+recUrl(it.id)+'" target="_blank" rel="noopener">Open record</a>'+
+  '<button class="rj '+(m&&m.kind==="reject"?"on":"")+'" onclick="mark('+it.id+',\'reject\')">'+(m&&m.kind==="reject"?"✓ ":"")+'Reject</button>'+
+  '</div>';
+  if(m&&m.kind==="notes")h+='<input type="text" placeholder="Note to record with the approval" value="'+esc(m.text||"")+'" oninput="setText('+it.id+',this.value)">';
+  if(m&&m.kind==="reject")h+='<input type="text" placeholder="Reason for rejection (required)" value="'+esc(m.text||"")+'" oninput="setText('+it.id+',this.value)">';
+  return h+'</div>'
+}
+
+function tog(id,btn){var d=document.getElementById("det"+id);var open=d.style.display==="block";d.style.display=open?"none":"block";btn.textContent=open?"Show detail":"Hide detail"}
+function mark(id,kind){
+  if(marks[id]&&marks[id].kind===kind)delete marks[id];
+  else marks[id]={kind:kind,text:(marks[id]&&marks[id].text)||""};
+  saveMarks();render();
+}
+function setText(id,v){if(marks[id]){marks[id].text=v;saveMarks();renderBar()}}
+function clearAll(){marks={};saveMarks();render()}
+function sendRun(){say("Run my NetSuite approval check now")}
+function say(t){if(window.cowork&&window.cowork.sendPrompt)window.cowork.sendPrompt(t);else if(window.sendPrompt)window.sendPrompt(t)}
+
+function renderBar(){
+  var byId={}; REVIEW.items.forEach(function(i){byId[i.id]=i});
+  var ks=Object.keys(marks).filter(function(k){return byId[k]});
+  if(!ks.length){document.getElementById("bar").innerHTML='<p class="note" style="margin-top:18px">Mark decisions above. Nothing reaches NetSuite until you press execute.</p>';return}
+  var ap=[],rj=[],missing=[];
+  ks.forEach(function(k){var it=byId[k],m=marks[k];
+    if(m.kind==="reject"){rj.push(it);if(!m.text||!m.text.trim())missing.push(it.doc)}else ap.push(it)});
+  var apSum=ap.reduce(function(s,i){return s+i.amt},0), rjSum=rj.reduce(function(s,i){return s+i.amt},0);
+  var lines=ks.map(function(k){var it=byId[k],m=marks[k];
+    var verb=m.kind==="reject"?"reject":m.kind==="notes"?"approve with notes":"approve";
+    return verb+" "+it.type.toLowerCase()+" "+it.doc+" ("+it.vendor+", "+money(it.amt)+", internal id "+it.id+")"+(m.text&&m.text.trim()?" — "+(m.kind==="reject"?"reason":"note")+": "+m.text.trim():"")});
+  var prompt="Execute my marked NetSuite approval decisions, one record at a time: "+lines.join("; ")+
+   ". For each: confirm the document number, vendor and amount on the record match before clicking, click the named button only, then re-query the pending queue to confirm the item left it. Stop and report if any item fails rather than continuing.";
+  var undec=REVIEW.items.length-ks.length;
+  document.getElementById("bar").innerHTML='<div class="bar">'+
+   '<div style="font-size:14px;font-weight:500">'+ks.length+' decided · nothing sent yet</div>'+
+   '<div class="note" style="margin-top:4px;font-variant-numeric:tabular-nums">'+ap.length+' to approve ('+money(apSum)+') · '+rj.length+' to reject ('+money(rjSum)+')'+(undec>0?' · '+undec+' left undecided and will stay pending':'')+'</div>'+
+   (missing.length?'<div class="note" style="color:var(--bad-fg);margin-top:6px">Reason required before executing: '+missing.map(esc).join(", ")+'</div>':'')+
+   '<div style="display:flex;gap:8px;margin-top:12px">'+
+   '<button class="go" '+(missing.length?'disabled style="opacity:.5;cursor:not-allowed"':'onclick="go()"')+'>Execute '+ks.length+' decision'+(ks.length>1?"s":"")+' in NetSuite ↗</button>'+
+   '<button onclick="clearAll()">Clear all marks</button></div></div>';
+  window.__prompt=prompt;
+}
+function go(){say(window.__prompt)}
+
+render();
+loadLive();
+</script>
+</body>
+</html>

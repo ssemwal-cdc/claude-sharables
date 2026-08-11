@@ -20,7 +20,7 @@ every rule below exists because breaking it produced a real, observed failure.
 | What arrived | What to do |
 |---|---|
 | A whole plugin folder or zip (has its own `.claude-plugin/plugin.json`) | Copy it into `plugins/` verbatim. Do not rewrite its files. |
-| A bare skill (a `SKILL.md`, maybe with `assets/`) | Decide: new plugin, or new skill inside an existing one. **Ask the user which** — do not guess. A skill only belongs in an existing plugin if it shares that plugin's data source and setup. |
+| A bare skill (a `SKILL.md`, maybe with `assets/`) | New plugin, or new skill inside an existing one? Apply the [prerequisite test](#the-prerequisite-test) — it is decidable, so do not guess and do not ask unless it genuinely ties. |
 | A zip with junk (`__MACOSX/`, `.DS_Store`, `._*`) | Strip it before copying. |
 
 Copy, then prove the copy is faithful:
@@ -118,6 +118,67 @@ Pushing to the default branch **is** the release. There is no other step.
 
 ---
 
+## The prerequisite test
+
+**A plugin is the unit a teammate can switch off. A skill is not.** Every
+enable / disable / uninstall / scope control takes a *plugin* name, and the one
+setting that can silence an individual skill does not apply here — *"Plugin
+skills are not affected by `skillOverrides`. Manage those through `/plugin`
+instead."* So whatever goes in a plugin, everyone who installs it takes all of,
+with no way to drop the part they cannot run.
+
+That makes the boundary a **prerequisite** boundary. Deciding where a new skill
+goes:
+
+1. **List its external prerequisites** — what a teammate must already have set
+   up *outside* the plugin: MCP connectors, browser-authenticated sites, CLI
+   binaries, credentials, tenant access. List prerequisites only. Not the
+   topic, the department, or the data domain.
+2. **Compare that set to each existing plugin's set, exactly.**
+   Identical → the skill **joins** that plugin. Any difference at all → **new
+   plugin**. That is the whole decision.
+3. **Forcing override — always a new plugin** if the skill ships `.mcp.json`,
+   `hooks/`, `bin/`, `monitors/`, `.lsp.json`, or a root `settings.json` that
+   should not apply to the candidate plugin's other skills. Those activate on
+   *plugin enable*, not on skill invocation, so they fire for every user of
+   every other skill in that plugin.
+4. **Also a new plugin** if a different subset of the team should be able to
+   have it ("only Finance sees this") — prerequisites are the usual proxy, but
+   audience counts on its own.
+
+**Not reasons to split**, explicitly rejected: different topic or department;
+different data domain; a different dashboard; "it feels unrelated"; the plugin
+would then hold more than one skill; one-thing-per-folder tidiness.
+
+Pre-decided, so these need no thought:
+
+| New skill | Goes |
+|---|---|
+| Reads NetSuite via the MCP connector | **inside** `plugins/netsuite-approval-review/skills/<name>/` |
+| Driven through Claude in Chrome against Procore | **inside** `plugins/procore-open-items-review/skills/<name>/` |
+| Needs a connector neither plugin needs (Monday, M365, …) | **new plugin**, new marketplace entry |
+
+Adding a skill to an existing plugin does **not** touch `marketplace.json` —
+`skills/` is discovered automatically. Update that plugin's README and the
+repo README row.
+
+**Naming:** once a plugin is a prerequisite bucket, `netsuite-approval-review`
+reads oddly as the home of a second NetSuite skill. **Do not rename** — the
+name must match the folder and the marketplace entry, and teammates installed
+by name, so renaming forces everyone to uninstall and reinstall. Treat the two
+existing names as "the NetSuite bucket" and "the Procore bucket", and name any
+*future* plugin after its prerequisite (`monday-tools`) rather than its first
+task.
+
+**When the catalog passes ~4 plugins** and teammates are running four-plus
+install commands, publish a dependency-only bundle plugin — a manifest of
+nothing but `{name, description, dependencies: [...]}` using **bare string**
+entries, which track whatever version the marketplace provides and need no git
+tags. One install command, every plugin still independently disableable. Do not
+build it at two plugins.
+
+---
+
 ## Traps (proven, not guessed)
 
 Verified against Claude Code v2.1.227 by reproducing each failure.
@@ -209,10 +270,12 @@ claude plugin list        # Version: 7ca6a2ea2c70
 Both existing plugins follow one shape. Match it when porting, and if a new
 skill deviates, say so explicitly rather than quietly normalising it.
 
-- **One skill per plugin so far**, named the same as its plugin (except
-  `netsuite-approval-review` → `netsuite-approval-double-check`). The `skills/`
-  layout is used regardless, so a second skill can be added without moving
-  anything.
+- **A plugin is a prerequisite bucket, not one skill.** Both plugins happen to
+  hold one skill today; that is an accident of having ported two skills with
+  two different prerequisites, not a rule. Multi-skill plugins are the
+  documented standard layout and the ecosystem norm. Use
+  [the prerequisite test](#the-prerequisite-test) — never "one skill per
+  plugin".
 - **Frontmatter** is `name` + `description` only. `description` carries the
   trigger phrases — it is what decides whether the skill fires, so it is long
   and specific on purpose. Do not trim it for tidiness.

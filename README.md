@@ -62,7 +62,8 @@ loads it automatically when you open this repo as a project.
 
 The short version: drop the plugin in `plugins/<name>/` with its own
 `.claude-plugin/plugin.json`, register it in `.claude-plugin/marketplace.json`
-with `"source": "./plugins/<name>"`, then run `python3 scripts/validate.py`.
+with a `git-subdir` source pointing at `plugins/<name>`, then run
+`python3 scripts/validate.py`.
 
 ## Checks
 

@@ -67,14 +67,21 @@ plugins/<plugin-name>/
 ```json
 {
   "name": "<plugin-name>",
-  "source": "./plugins/<plugin-name>",
+  "source": {
+    "source": "git-subdir",
+    "url": "https://github.com/ssemwal-cdc/claude-sharables.git",
+    "path": "plugins/<plugin-name>"
+  },
   "description": "..."
 }
 ```
 
-`source` is a path from the repo root and **must start with `./`**. See
-[Traps](#traps-proven-not-guessed) — this is the one that has already broken
-this repo once.
+**Use `git-subdir`, not a relative path.** `path` is a bare repo-relative path
+— no leading `./`. Do not pin `sha` or `version`; leaving it unpinned is what
+makes every push ship.
+
+A relative-path source (`"./plugins/<name>"`) installs fine from the CLI and
+then fails everywhere else. See [Traps](#traps-proven-not-guessed).
 
 ### 5. Update the docs
 
@@ -115,9 +122,29 @@ Pushing to the default branch **is** the release. There is no other step.
 
 Verified against Claude Code v2.1.227 by reproducing each failure.
 
-**`source` must start with `./`.**
-A bare folder name (`"source": "netsuite-approval-review"`) passes a JSON
-syntax check and fails at install with:
+**Relative-path sources install from the CLI and fail from the desktop app.**
+This is the subtle one. `"source": "./plugins/<name>"` works perfectly in the
+terminal, so it looks correct. It then fails in the Claude desktop app's
+Settings → Plugins browser, where the catalog lists both plugins but clicking
+install returns only:
+
+> Plugin couldn't be installed. Try again.
+
+Cause, from Anthropic's docs on the equivalent URL-based case: a surface that
+holds `marketplace.json` **without a clone of the repo** has nothing for a
+relative path to point at — *"URL-based marketplaces only download the
+`marketplace.json` file itself. They don't download plugin files from the
+server. Relative paths in the marketplace entry reference files on the remote
+server that were not downloaded."* The CLI works only because `marketplace add`
+clones the whole repository.
+
+`git-subdir` entries are self-contained — they carry their own `url` and
+`path`, so they resolve with or without a local clone, and they are supported
+by org sync too. `scripts/validate.py` rejects a relative-path string.
+
+**A bare folder name is invalid outright.**
+`"source": "netsuite-approval-review"` passes a JSON syntax check and fails at
+install with:
 
 > This plugin's marketplace entry is invalid: source: Invalid input
 

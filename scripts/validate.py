@@ -64,6 +64,8 @@ entries = mkt.get("plugins", [])
 if not entries:
     fail("marketplace.json has no plugins array, or it is empty")
 
+REPO_URL = "https://github.com/ssemwal-cdc/claude-sharables.git"
+
 registered = {}
 for e in entries:
     name = e.get("name")
@@ -71,21 +73,44 @@ for e in entries:
     if not name:
         fail(f"marketplace entry missing 'name': {e}")
         continue
-    if not isinstance(src, str):
-        fail(f"[{name}] 'source' must be a relative-path string, got {type(src).__name__}")
-        continue
-    if not src.startswith("./"):
-        fail(
-            f"[{name}] source {src!r} must start with './' — a bare folder name "
-            f"fails install with 'source: Invalid input'"
-        )
-        continue
+
     if "version" in e:
         fail(
             f"[{name}] marketplace entry sets 'version'. Remove it: version must "
             f"resolve from the commit SHA or pushes stop shipping."
         )
-    registered[name] = src
+
+    # Sources must be git-subdir objects. A bare relative-path string still installs
+    # from the CLI, but only because the CLI clones the whole repo; surfaces that
+    # hold marketplace.json alone cannot resolve it. See CLAUDE.md.
+    if isinstance(src, str):
+        fail(
+            f"[{name}] source is the relative-path string {src!r}. Use a git-subdir "
+            f"object instead — a relative path only resolves where the whole repo has "
+            f"been cloned, so the desktop/settings install path cannot use it."
+        )
+        continue
+    if not isinstance(src, dict):
+        fail(f"[{name}] 'source' must be a git-subdir object, got {type(src).__name__}")
+        continue
+    if src.get("source") != "git-subdir":
+        fail(f"[{name}] source type is {src.get('source')!r}; this repo uses 'git-subdir'")
+        continue
+    if src.get("url") != REPO_URL:
+        fail(f"[{name}] source url is {src.get('url')!r}; expected {REPO_URL}")
+    path = src.get("path", "")
+    if not path or path.startswith("/") or path.startswith("./"):
+        fail(
+            f"[{name}] source path {path!r} must be a bare repo-relative path "
+            f"like 'plugins/<name>' — no leading './' or '/'"
+        )
+        continue
+    if "version" in src or "sha" in src:
+        fail(
+            f"[{name}] source pins a version/sha. Leave it unpinned so the plugin "
+            f"tracks the default branch and every push ships."
+        )
+    registered[name] = "./" + path
 
 # ------------------------------------------------------------------- plugins
 on_disk = sorted(

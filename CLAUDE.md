@@ -276,6 +276,11 @@ skill deviates, say so explicitly rather than quietly normalising it.
 - A skill's `assets/` travel with the plugin and are visible in the skill
   panel. `${CLAUDE_PLUGIN_ROOT}` resolves them at run time.
 
+- **Cowork works.** Both plugins run in Cowork sessions, artifacts and assets
+  included. Do not write that plugins are machine-level and cannot reach
+  Cowork — that was asserted from a docs passage about personal skills in
+  `~/.claude/skills/` and is wrong for installed plugins.
+
 **Do not warn users about duplicate standalone copies.** An earlier version of
 these notes claimed the short name meant a stale personal skill was shadowing
 the plugin. That was wrong — checked against a live run, the short name loads

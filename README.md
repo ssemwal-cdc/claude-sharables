@@ -53,18 +53,15 @@ Opening a skill from the panel shows its `assets/` alongside `SKILL.md`. The
 supporting files travel with the plugin and resolve through
 `${CLAUDE_PLUGIN_ROOT}` at run time — nothing extra to install or copy.
 
-### Cowork and cloud sessions
+### Cowork
 
-Plugins installed in the desktop app are **machine-level and do not reach
-Cowork**. Cowork sessions — interactive and scheduled — load the skills enabled
-for your **claude.ai account**, synced at session start, not anything installed
-on your machine. Plugins enabled only in your user settings do not transfer.
+**These plugins work in Cowork.** Install them once as above and run them from
+a Cowork session the same way — verified against both plugins on
+2026-08-11, including their dashboard artifacts and their `assets/`.
 
-- **For Cowork**: enable the skill for your claude.ai account under
-  **Customize**. (Mind the section above: enable it once, in one place.)
-- **For cloud sessions on a repository**: declare the plugin in that repo's
-  `.claude/settings.json` under `enabledPlugins`, and it installs at session
-  start.
+If you are running a plugin in a **cloud session against a repository** rather
+than in Cowork, that case is different: declare the plugin in that repo's
+`.claude/settings.json` under `enabledPlugins` so it installs at session start.
 
 ## Available plugins
 

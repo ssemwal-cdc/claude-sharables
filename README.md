@@ -4,7 +4,8 @@ Internal marketplace of Claude plugins for Compass Datacenters.
 
 ## For teammates: installing
 
-Register the marketplace once in Cowork or Claude Code:
+Register the marketplace once, in the Claude desktop app or the Claude Code
+CLI (see [Cowork](#cowork-and-cloud-sessions) below — it works differently):
 
 ```
 /plugin marketplace add ssemwal-cdc/claude-sharables
@@ -36,21 +37,45 @@ Two things surprise people here, and neither is a fault:
   `~/.claude/skills/`. Plugin skills are a separate registry — find them under
   the **+** button next to the prompt box → **Plugins**, listed inside their
   plugin.
-- **The slash commands are namespaced by plugin.** `/netsuite-approval-double-check`
-  does not exist. The real names are:
+- **The slash commands are namespaced by plugin.** The plugin's skills are:
 
   ```
   /netsuite-approval-review:netsuite-approval-double-check
   /procore-open-items-review:procore-open-items-review
   ```
 
+  A bare `/netsuite-approval-double-check` is **not** this plugin. If it
+  resolves for you, you still have an older standalone copy of the skill —
+  see below.
+
 You rarely need either. Both skills fire from plain language — "run my approval
 check", "run my Procore review" — which is what their trigger phrases are for.
 If you installed mid-session, run `/reload-plugins` first.
 
-Note that plugins installed in the desktop app do **not** carry into Cowork or
-other cloud sessions. To use them there, declare them in a repository's
-`.claude/settings.json` under `enabledPlugins` so they install at session start.
+### Do not keep a standalone copy of these skills
+
+These skills also existed as personal skills before they were packaged here. If
+a copy is still enabled on your claude.ai account or sitting in
+`~/.claude/skills/`, you now have two, and **only the plugin copy updates when
+this repo is pushed.** The standalone copy is frozen at whatever it was, and it
+answers to the shorter name, so it is the one most likely to actually run.
+
+Check **Customize → Skills** on claude.ai (or the Desktop sidebar) for entries
+named `netsuite-approval-double-check` or `procore-open-items-review`, and
+remove them. Keep one source of truth: this repo.
+
+### Cowork and cloud sessions
+
+Plugins installed in the desktop app are **machine-level and do not reach
+Cowork**. Cowork sessions — interactive and scheduled — load the skills enabled
+for your **claude.ai account**, synced at session start, not anything installed
+on your machine. Plugins enabled only in your user settings do not transfer.
+
+- **For Cowork**: enable the skill for your claude.ai account under
+  **Customize**. (Mind the section above: enable it once, in one place.)
+- **For cloud sessions on a repository**: declare the plugin in that repo's
+  `.claude/settings.json` under `enabledPlugins`, and it installs at session
+  start.
 
 ## Available plugins
 

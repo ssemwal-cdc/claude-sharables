@@ -264,3 +264,23 @@ skill deviates, say so explicitly rather than quietly normalising it.
   update` in its `SKILL.md`. `SKILL.md` is a prompt, not a script; `/plugin` is
   a client command Claude cannot invoke; and the file carrying the instruction
   is itself the stale copy. Point them at marketplace auto-update instead.
+
+---
+
+## Duplicate-skill hazard
+
+Both skills existed as standalone personal/account skills before they were
+packaged into plugins. A user can therefore end up with two copies:
+
+| Copy | Invoked as | Updates on push? |
+|---|---|---|
+| Plugin (this repo) | `/<plugin-name>:<skill-name>` | Yes |
+| Standalone account/personal skill | `/<skill-name>` | **No — frozen** |
+
+The standalone copy answers to the shorter name, so it is the one that tends to
+actually run, and it never receives fixes pushed here. Their frontmatter
+descriptions differ, which is how to tell them apart: the standalone NetSuite
+copy says "Shivam's approval queue", the plugin copy says "your approval queue".
+
+If a user reports a fix not taking effect, check for a standalone copy before
+investigating anything in this repo.

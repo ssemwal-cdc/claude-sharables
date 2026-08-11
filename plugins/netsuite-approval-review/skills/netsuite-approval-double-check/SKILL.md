@@ -282,7 +282,7 @@ The deliverable is the inline dashboard widget.
 **Do not write HTML.** The layout lives in `dashboard_template.html` and is the single source of truth for how the dashboard looks and behaves. Every run publishes by injecting data into it:
 
 ```bash
-cd "<workspace>/NetSuite Approval Checks" && python3 publish_dashboard.py <scratch>/index.html
+cd "<workspace>/NetSuite Approval Checks" && python3 publish_dashboard.py
 ```
 
 Render it as an inline widget with `show_widget`, passing the file's contents.
@@ -293,6 +293,13 @@ arrangement: the old artifact path passed the file *by path*, so the HTML never 
 model response and could not drift. A widget takes the content inline, which puts the whole layout
 through the tool call. If the rendered dashboard is ever missing a card, a control or a colour, this
 is the first thing to suspect — not the template.
+
+The script writes `index.html` beside the state file and keeps the last seven renders in
+`renders/<weekday>.html`. Both matter when a render goes wrong: diff today against the last good
+one to see what actually changed, and **re-render from `index.html` rather than re-running the
+review** — the review costs connector queries and attachment downloads, the render costs nothing.
+Do not write a cleanup step for `renders/`; the folder is usually cloud-synced, where deleting is
+typically blocked, which is why the slots are overwritten in place rather than accumulated.
 
 **Do not publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
 widget host exposes `sendPrompt` as a bare global, the artifact host exposes `window.cowork`

@@ -254,6 +254,18 @@ Do not "restore" the artifact path for persistence. A shareable URL was
 considered and rejected — NetSuite and Procore are the systems of record, and
 one-click execute is worth more than a link.
 
+**The widget port is confirmed working end to end**, NetSuite, 2026-08-12. The dashboard
+renders inline in the conversation and pressing execute puts the instruction straight into chat as
+a new message — one click, no clipboard. So `window.sendPrompt` on the widget host takes a bare
+string and really does post. The clipboard handoff in the template is now only the artifact-host
+fallback and should never be reached in normal use.
+
+**Do not let an agent refuse to render because the file looks big.** A 120 KB Procore dashboard was
+handed over as a file instead, on the reasoning that it might truncate — which cost one-click
+execute entirely to avoid a risk that had not happened. The truncation guard exists precisely to
+catch that case after the fact. Render first, believe the guard, fall back only on an observed
+failure.
+
 **Per-item marks live in `localStorage`** (`ns_marks_v1`, `pc_marks_v1`,
 `pc_view_v2`) and are the only user state that survives a re-render. Never
 rename those keys for tidiness; it silently discards decisions the user marked

@@ -28,7 +28,6 @@ An instruction to review is never an instruction to execute. A verdict of "clear
 - If deeper review would require actions beyond reading, say so in the verdict and ask first.
 - **This skill owns exactly one state file:** `NetSuite Approval Checks/_netsuite_review_log.json`. Never read or write the Procore skill's log, and never let Procore records into yours. Both files used to share the name `_review_log.json` and both folders sit under the same parent, so this went wrong in practice. If you find foreign records in your log, move them to a `_quarantined` block, say so in chat, and carry on — never merge them into `items`, and never act on them.
 
-
 ## Step 0 — Sync assets, then first-run setup
 
 **Do this on every run, before anything else.** The workspace copies of the template and the
@@ -301,6 +300,17 @@ arrangement: the old artifact path passed the file *by path*, so the HTML never 
 model response and could not drift. A widget takes the content inline, which puts the whole layout
 through the tool call. If the rendered dashboard is ever missing a card, a control or a colour, this
 is the first thing to suspect — not the template.
+
+**Always attempt the render. Never pre-judge it by size.** A large queue makes a large file — that
+is normal, not a warning sign. Refusing to render leaves the user with no dashboard at all and
+silently gives up one-click execute, which is strictly worse than a dashboard that might turn out
+short. The template carries its own integrity guard: a marker as its last element, checked from
+`<head>` as soon as the DOM parses, which raises a visible banner if anything was lost in transit.
+Trust it. Render first, then act on what it actually reports.
+
+**Fall back only after an observed failure.** If the rendered widget shows the incomplete-render
+banner, then hand over `index.html` directly and say plainly why. Handing over the file *instead of*
+attempting the widget is not the cautious choice — it is the one that definitely loses the feature.
 
 The script writes `index.html` beside the state file and keeps the last seven renders in
 `renders/<weekday>.html`. Both matter when a render goes wrong: diff today against the last good

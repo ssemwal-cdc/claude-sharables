@@ -314,25 +314,35 @@ cd "<workspace>/Procore Open Items" && python3 publish_dashboard.py
 ```
 
 **Render `index.html` as an inline widget with `show_widget`, passing its contents.** That is the
-complete dashboard, every item with its response buttons. A 99 KB render carrying 43 items has been
-confirmed working in a single call, so do not hesitate over a large queue.
+complete dashboard, every item with its response buttons.
 
-`show_widget` takes content **inline only** — schema read live, the properties are
-`loading_messages`, `title` and `widget_code`, with no path, file or src among them. Handing it a
-path does not error; it renders the path string and reports success. So the document does travel
-through the tool call, but no size limit is documented anywhere and none has been observed.
+**A 99 KB render carrying 43 items is confirmed working in a single call.** That is the largest
+anyone has attempted, not the largest that works — no limit is documented in the tool and none has
+been observed. Do not read it as a ceiling, and do not treat a file a few kilobytes larger as
+obviously beyond it.
 
-**Any threshold you have in mind is invented.** You cannot tell in advance whether a render will
-succeed, which is exactly what the integrity guard is for: a marker as the last element, checked
-from `<head>` as the DOM parses, raising a red banner if anything was lost. **Reading part of the
-file and extrapolating the cost is not an observed failure; only that banner is.**
+`show_widget` takes content **inline only** — the properties are `loading_messages`, `title` and
+`widget_code`, with no path, file or src. Handing it a path does not error; it renders the path
+string and reports success.
 
-**If the banner does fire**, re-render with `widget.html` instead. The publish script writes it
-alongside `index.html`, carrying full detail only for items with a verdict of `clear` or `flagged`
-and folding the rest to display-only rows — about a fifth smaller. It is the escalation, not the
-default, because folded rows carry no response buttons. If that fails too, hand over `index.html`
-as a file and say so with the byte count. Never fall back silently, and never present the file as
-though it had been the plan.
+**Do not estimate whether it will fit. You cannot, and three separate runs have got this wrong.**
+Each declined to render a file that renders fine, one after reading 929 of its 1849 lines and
+extrapolating the rest. Statements like "at N bytes it does not fit in a single tool call" are
+predictions written as facts; nothing in the tool reports a capacity, so there is nothing to base
+them on.
+
+The template carries an integrity guard for exactly this question: a marker as its last element,
+checked from `<head>` as the DOM parses, raising a red banner if anything was lost. **Only that
+banner is a failure.** The asymmetry is the point — a truncated render costs one turn and a
+re-render, while refusing to try costs the user one-click execute entirely, which is the whole
+reason for rendering this way.
+
+**Handing over a file without having attempted the render is a failure of this step.** If you do it,
+say that plainly rather than presenting it as a considered choice. If the banner does fire,
+re-render with `widget.html`, which the publish script writes alongside `index.html` carrying full
+detail only for `clear` and `flagged` items — about a fifth smaller, at the cost of response buttons
+on the folded rows. Only if that also fails does the file become the deliverable, and then say so
+with the byte count.
 
 **Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
 widget host exposes `sendPrompt` as a bare global; the artifact host exposes `window.cowork`

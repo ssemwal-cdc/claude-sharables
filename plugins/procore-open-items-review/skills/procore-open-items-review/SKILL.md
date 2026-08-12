@@ -319,12 +319,17 @@ publish script writes two files. `index.html` is the complete dashboard and the 
 and a response to give — while everything skipped or ungated folds down to a display-only row. On a
 real queue that is a fifth smaller, because the unactionable items are close to half the payload.
 
-Why two files: a widget's HTML travels inline through a tool call, so the whole dashboard has to be
-reproduced faithfully to render at all. Past roughly 90 KB that stops being reliable, and a run that
-correctly doubts itself hands over a file instead — which costs one-click execute, the entire point
-of rendering this way. `widget.html` exists to stay under that. **Render it rather than judging the
-size yourself**, and if it is somehow still too large, say so with the byte count rather than
-falling back silently.
+Why two files: `show_widget` takes its content **inline only** — schema read live, the properties
+are `loading_messages`, `title` and `widget_code`, with no path, file or src among them. Handing it
+a path does not error; it renders the path string and reports success. So the whole document really
+does travel through the tool call, and a smaller file is the only lever there is.
+
+**Render it rather than judging the size yourself.** No limit is documented anywhere in the tool, so
+any threshold you have in mind is invented. You cannot tell in advance whether a render will
+succeed — which is precisely what the integrity guard is for. **Reading part of the file and
+extrapolating the cost is not an observed failure; only the red banner is.** If a render genuinely
+fails, say so with the byte count. Never fall back silently, and never present the file as though it
+had been the plan.
 
 **Folded rows carry no response buttons here.** That is deliberate: an item with no cost, at a step
 that demands one, is not something to action from a trimmed view. To act on one, open `index.html`.

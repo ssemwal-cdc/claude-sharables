@@ -313,11 +313,21 @@ On each run:
 cd "<workspace>/Procore Open Items" && python3 publish_dashboard.py
 ```
 
-**Render it as an inline widget with `show_widget`, passing the file's contents. Always attempt
-this, whatever the file size.** A large queue makes a large file; that is normal and not a reason
-to hesitate. Handing the user a file or an artifact *instead of* attempting the render is a failure
-of this step, not a cautious alternative — it silently costs them one-click execute, which is the
-entire point of rendering this way.
+**Render `widget.html` as an inline widget with `show_widget`, passing its contents.** The
+publish script writes two files. `index.html` is the complete dashboard and the record.
+`widget.html` carries only the items with a verdict of `clear` or `flagged` — the ones with a cost
+and a response to give — while everything skipped or ungated folds down to a display-only row. On a
+real queue that is a fifth smaller, because the unactionable items are close to half the payload.
+
+Why two files: a widget's HTML travels inline through a tool call, so the whole dashboard has to be
+reproduced faithfully to render at all. Past roughly 90 KB that stops being reliable, and a run that
+correctly doubts itself hands over a file instead — which costs one-click execute, the entire point
+of rendering this way. `widget.html` exists to stay under that. **Render it rather than judging the
+size yourself**, and if it is somehow still too large, say so with the byte count rather than
+falling back silently.
+
+**Folded rows carry no response buttons here.** That is deliberate: an item with no cost, at a step
+that demands one, is not something to action from a trimmed view. To act on one, open `index.html`.
 
 **Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
 widget host exposes `sendPrompt` as a bare global; the artifact host exposes `window.cowork`

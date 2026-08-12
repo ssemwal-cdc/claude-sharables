@@ -132,6 +132,32 @@ def main():
 
     open(OUT, "w", encoding="utf-8").write(out)
 
+    # A widget carries its HTML inline through a tool call, so the whole dashboard has to be
+    # reproduced byte for byte to render. Past roughly 90 KB that stops being reliable and the
+    # render gets refused, which costs one-click execute entirely. So write a second, smaller
+    # file carrying only what the user can actually act on: items with a verdict of clear or
+    # flagged, which are the ones with a cost and a response to give. Everything else becomes a
+    # count and a one-line row, and index.html keeps the complete record.
+    ACTIONABLE = ("clear", "flagged")
+    slim, folded = [], []
+    for i in items:
+        if i.get("verdict") in ACTIONABLE:
+            slim.append(i)
+        else:
+            # display-only: enough for a one-line row and a link, nothing more. No resp, so
+            # they carry no buttons here - an item with no cost at a step that demands one is
+            # not something to action from a trimmed view. index.html keeps the full record.
+            folded.append({k: i.get(k) for k in
+                           ("key", "id", "pid", "cid", "kind", "wf", "type", "doc", "vendor",
+                            "projLabel", "amt", "due", "verdict")})
+    wpayload = dict(payload)
+    wpayload["items"] = slim + folded
+    wout = tpl[:a] + json.dumps(wpayload, ensure_ascii=False, indent=1) + tpl[b:]
+    WIDGET = os.path.join(os.path.dirname(os.path.abspath(OUT)), "widget.html")
+    open(WIDGET, "w", encoding="utf-8").write(wout)
+    print("wrote %s  (%d KB vs %d KB full; %d actionable, %d folded)" % (
+        WIDGET, len(wout) // 1024, len(out) // 1024, len(slim), len(folded)))
+
     # Keep a short rolling archive of what was actually rendered. Two uses: diff a bad render
     # against the last good one to see what changed, and re-render from disk without re-running
     # the whole review, which costs connector queries and attachment downloads.

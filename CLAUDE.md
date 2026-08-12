@@ -290,6 +290,18 @@ not an observed failure.
 not the default, because folding rows costs their response buttons and nothing
 yet justifies paying that.
 
+**The render is unverifiable from the agent's side, which is why it keeps being
+declined.** `show_widget` returns `Content rendered and shown to the user`
+whatever it rendered — the path test proved it says that while showing a line of
+text. The integrity guard raises its banner to the *user*, not to the caller. So
+an agent asked to render a large file is being asked to take an unobservable
+risk with someone's approval queue, and refusing looks like the careful choice.
+
+Four rounds of rewording did not shift that, and the note above about not
+trusting this tool's success message probably reinforced it. The fix is not more
+reassurance: it is to close the loop by asking the user to report the banner, one
+sentence after the render. Both skills now do that.
+
 **Do not let an agent refuse to render because the file looks big.** A 120 KB Procore dashboard was
 handed over as a file instead, on the reasoning that it might truncate — which cost one-click
 execute entirely to avoid a risk that had not happened. The truncation guard exists precisely to

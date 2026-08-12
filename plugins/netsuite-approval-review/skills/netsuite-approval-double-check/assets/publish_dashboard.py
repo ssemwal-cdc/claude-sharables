@@ -13,7 +13,17 @@ Usage:  python3 publish_dashboard.py [<output path>]
 import json, os, sys, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-LOG = os.path.join(HERE, "_review_log.json")
+LOG = os.path.join(HERE, "_netsuite_review_log.json")
+_LEGACY = os.path.join(HERE, "_review_log.json")
+# Both skills used to name this file _review_log.json, differing only by parent folder,
+# with both folders under the same Downloads parent. An agent resolving it by bare name
+# could read or write the other system's state - which happened. Distinct names make that
+# impossible rather than unlikely. Migrate in place on first sight of the old name.
+if not os.path.exists(LOG) and os.path.exists(_LEGACY):
+    try:
+        os.rename(_LEGACY, LOG)
+    except OSError:
+        LOG = _LEGACY  # cloud-synced folders can refuse the move; keep working
 TPL = os.path.join(HERE, "dashboard_template.html")
 OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "index.html")
 

@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: Financial double-check of the NetSuite bills and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Downloads each attachment, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Downloads each attachment, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
-Review every bill and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
+Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
 Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
@@ -26,6 +26,8 @@ An instruction to review is never an instruction to execute. A verdict of "clear
 - **Never hand-write or regenerate the dashboard HTML.** See Step 7. The layout is a file on disk; runs inject data into it and nothing else.
 - **Never copy identity between people.** The employee internal id in `config.me` scopes the whole review. Using someone else's shows them a queue that is not theirs.
 - If deeper review would require actions beyond reading, say so in the verdict and ask first.
+- **This skill owns exactly one state file:** `NetSuite Approval Checks/_netsuite_review_log.json`. Never read or write the Procore skill's log, and never let Procore records into yours. Both files used to share the name `_review_log.json` and both folders sit under the same parent, so this went wrong in practice. If you find foreign records in your log, move them to a `_quarantined` block, say so in chat, and carry on — never merge them into `items`, and never act on them.
+
 
 ## Step 0 — Sync assets, then first-run setup
 
@@ -51,7 +53,7 @@ never in the workspace copy** — an edit made there is discarded by the next ru
 nobody else. Ship one by editing the repo's `assets/` and pushing; teammates pick it up on their
 next plugin update.
 
-Then read `NetSuite Approval Checks/_review_log.json`. If it already carries a `config` block, the rest of this
+Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already carries a `config` block, the rest of this
 step is done — go to Step 1. Otherwise, once:
 
 1. **Find the employee internal id.** Query by the user's own email address:
@@ -69,7 +71,7 @@ step is done — go to Step 1. Otherwise, once:
 
 4. **Ask which dashboard portlet holds their bills.** Portlet names are per-user saved searches and are frequently non-obvious. Have the user confirm the exact name rather than guessing.
 
-5. **Write the config** into `_review_log.json`:
+5. **Write the config** into `_netsuite_review_log.json`:
 
    ```json
    {
@@ -88,7 +90,7 @@ step is done — go to Step 1. Otherwise, once:
 6. **The dashboard is rendered, not published.** There is no artifact to create,
    update or reconcile against this file — Step 7 renders the HTML as an inline
    widget on every run, so each render replaces the last and there is no id to
-   keep in sync. `_review_log.json` is the only persistent store.
+   keep in sync. `_netsuite_review_log.json` is the only persistent store.
 
    The one thing that does survive between renders is the user's per-item marks,
    which the template keeps in `localStorage` under `ns_marks_v1`. Never clear it, and
@@ -240,7 +242,7 @@ Three checks that have found real issues:
 
 ## Step 6 — State file
 
-Maintain `NetSuite Approval Checks/_review_log.json`:
+Maintain `NetSuite Approval Checks/_netsuite_review_log.json`:
 
 ```json
 {
@@ -371,9 +373,38 @@ Then, **one record at a time**:
 3. **Confirm before clicking.** Read the document number, vendor and amount off the page and check all three against the instruction. Any mismatch → stop, do not click, report it.
 4. Click **only** the button named in the instruction. Approve, Approve With Notes, and Reject sit adjacent — read the button label before clicking, not the position.
 5. Notes and reasons come from the user verbatim. Never compose either. If the instruction is missing a required reason for a rejection, stop and ask.
-6. Verify it landed: re-query the pending queue and confirm the item no longer returns. Do not treat the button click as success on its own.
-7. Append the outcome to `actions` in the state file.
+6. **Verify it landed — against the record, not the queue.** Query that one record:
 
-**A failure stops the batch.** If any item cannot be confirmed, does not match, or does not leave the queue, stop there. Report what was actioned, what failed and why, and what remains untouched. Never continue past a failure or retry blind.
+   ```sql
+   SELECT id, approvalstatus,
+          custbody_sna_cdc_next_approver     AS next_appr,
+          custbody_sna_cdc_previous_approver AS prev_appr,
+          custbody_sna_cdc_app_count         AS app_count
+   FROM transaction WHERE id = <id>
+   ```
 
-When the batch finishes, re-run Step 7 so actioned items move to the bin, and report in chat: how many were actioned, how many confirmed out of the queue, and anything that failed.
+   It advanced if `prev_appr` is now the user and `next_appr` is somebody else, with `app_count`
+   incremented by one. On a final-step approval `approvalstatus` moves to 2 instead.
+
+   **`approvalstatus` on its own proves nothing.** It stays at 1 while the record sits at the
+   *next* person's step, which reads identically to never having moved. Observed live: two bills
+   were approved, advanced to the next approver, and both still returned `approvalstatus = 1`.
+
+7. **The connector lags the UI by minutes, so unchanged means "not yet", not "failed".** Wait and
+   re-check rather than concluding. **Never re-click on an unchanged reading** — the UI has
+   already taken the first click, so a second one is a double approval. This is the single most
+   likely way for this skill to cause real damage.
+
+8. **Append the outcome to `actions` only after observing it.** Record what the verification
+   query actually returned, never what the click was meant to achieve. An entry written ahead of
+   its verification is a fabrication, and afterwards it is indistinguishable from a real one —
+   which destroys the value of the log at exactly the moment it matters.
+
+**A failure stops the batch.** If an item cannot be confirmed or does not match, stop there. A
+record that has not propagated yet is **not** a failure — do not report it as one and do not
+retry it. Report what was actioned, what is still propagating, what genuinely failed and why,
+and what remains untouched. Never continue past a real failure or retry blind.
+
+When the batch finishes, re-run Step 7 so actioned items move to the bin, and report in chat: how
+many were actioned, how many were confirmed advanced, how many are still propagating, and
+anything that failed.

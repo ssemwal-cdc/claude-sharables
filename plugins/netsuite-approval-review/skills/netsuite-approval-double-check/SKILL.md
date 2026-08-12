@@ -292,25 +292,30 @@ The deliverable is the inline dashboard widget.
 cd "<workspace>/NetSuite Approval Checks" && python3 publish_dashboard.py
 ```
 
-Render it as an inline widget with `show_widget`, passing the file's contents.
+**Render it as an inline widget with `show_widget`, passing the file's contents. Always attempt
+this, whatever the file size.** A large queue makes a large file; that is normal and not a reason
+to hesitate. Handing the user a file or an artifact *instead of* attempting the render is a failure
+of this step, not a cautious alternative — it silently costs them one-click execute, which is the
+entire point of rendering this way.
+
+**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
+widget host exposes `sendPrompt` as a bare global; the artifact host exposes `window.cowork`
+(`callMcpTool`, `askClaude`, `runScheduledTask`) and no `sendPrompt` anywhere. On an artifact the
+execute button cannot start a turn and fails silently — no error, no console output. As a widget it
+works in one click, confirmed on a live run. The template keeps a clipboard handoff for the
+artifact case; it is a fallback, not a plan.
+
+**Fall back only after an observed failure.** The template carries its own integrity guard: a
+marker as its last element, checked from `<head>` as soon as the DOM parses, which raises a visible
+red banner if anything was lost in transit. Trust it. If that banner actually appears, hand over
+`index.html` directly and say why. A prediction that it *might* appear is not a reason to skip the
+render.
 
 **Pass the file verbatim.** Read it and hand it over byte for byte — never retype it, never
-summarise it, never "clean it up" on the way through. This is the one weak point in the whole
-arrangement: the old artifact path passed the file *by path*, so the HTML never travelled through a
-model response and could not drift. A widget takes the content inline, which puts the whole layout
-through the tool call. If the rendered dashboard is ever missing a card, a control or a colour, this
-is the first thing to suspect — not the template.
-
-**Always attempt the render. Never pre-judge it by size.** A large queue makes a large file — that
-is normal, not a warning sign. Refusing to render leaves the user with no dashboard at all and
-silently gives up one-click execute, which is strictly worse than a dashboard that might turn out
-short. The template carries its own integrity guard: a marker as its last element, checked from
-`<head>` as soon as the DOM parses, which raises a visible banner if anything was lost in transit.
-Trust it. Render first, then act on what it actually reports.
-
-**Fall back only after an observed failure.** If the rendered widget shows the incomplete-render
-banner, then hand over `index.html` directly and say plainly why. Handing over the file *instead of*
-attempting the widget is not the cautious choice — it is the one that definitely loses the feature.
+summarise it, never "clean it up" on the way through. The old artifact path passed the file by
+path, so the HTML never travelled through a model response; a widget takes the content inline,
+which puts the layout through the tool call. If a rendered dashboard is missing a card, a control
+or a colour, suspect this before suspecting the template.
 
 The script writes `index.html` beside the state file and keeps the last seven renders in
 `renders/<weekday>.html`. Both matter when a render goes wrong: diff today against the last good
@@ -318,13 +323,6 @@ one to see what actually changed, and **re-render from `index.html` rather than 
 review** — the review costs connector queries and attachment downloads, the render costs nothing.
 Do not write a cleanup step for `renders/`; the folder is usually cloud-synced, where deleting is
 typically blocked, which is why the slots are overwritten in place rather than accumulated.
-
-**Do not publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
-widget host exposes `sendPrompt` as a bare global, the artifact host exposes `window.cowork`
-(`callMcpTool`, `askClaude`, `runScheduledTask`) and no `sendPrompt` anywhere. On an artifact the
-execute button cannot start a turn and fails silently — no error, no console output. As a widget it
-works in one click. The template keeps a clipboard handoff for the artifact case, but do not rely on
-it: one click is the point.
 
 The script prints the headline line to use in chat.
 

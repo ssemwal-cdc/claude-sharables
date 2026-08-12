@@ -332,11 +332,21 @@ failure.** The asymmetry is the whole argument — a truncated render costs one 
 while declining to try costs the user one-click execute, which is the reason for rendering this way
 at all.
 
-**Handing over a file without having attempted the render is a failure of this step**, and three
-separate runs have done it, one after reading 929 of a file's 1849 lines and extrapolating the rest.
-If it happens, say so plainly rather than presenting the file as the deliverable. Only after the
-banner has actually fired does `index.html` become the fallback, and then report the byte count with
-it.
+**You cannot see whether the render worked, so ask.** `show_widget` returns `Content rendered and
+shown to the user` regardless of what it rendered — it says that even when handed a file path and
+shown a line of text. That is the real reason this step keeps getting declined: with no way to
+verify, refusing feels safer than a silent failure. It is not, and the missing feedback is a person.
+After rendering, add one line:
+
+> If a red banner appears at the top of the dashboard, tell me and I'll re-render a smaller version.
+
+That converts an unverifiable gamble into a checkable claim, and costs one sentence. **Render, then
+say that.** Do not weigh the file size instead — three separate runs have done that and declined,
+one after reading 929 of a file's 1849 lines and extrapolating the rest.
+
+**Handing over a file without having attempted the render is a failure of this step.** If it
+happens, say so plainly rather than presenting the file as the deliverable. `index.html` becomes the
+fallback only after the user reports the banner, and then report the byte count with it.
 
 `index.html` remains the complete dashboard — every item with its response buttons — and is what to
 open to action a folded row.

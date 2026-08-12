@@ -305,6 +305,15 @@ execute button cannot start a turn and fails silently — no error, no console o
 works in one click, confirmed on a live run. The template keeps a clipboard handoff for the
 artifact case; it is a fallback, not a plan.
 
+**You cannot see whether the render worked, so ask.** `show_widget` returns `Content rendered and
+shown to the user` regardless of what it rendered — it says that even when handed a file path and
+shown a line of text. With no way to verify, declining can feel safer than a silent failure; it is
+not, and the missing feedback is a person. After rendering, add one line:
+
+> If a red banner appears at the top of the dashboard, tell me and I'll re-render a smaller version.
+
+That turns an unverifiable gamble into a checkable claim for the cost of one sentence.
+
 **Fall back only after an observed failure.** The template carries its own integrity guard: a
 marker as its last element, checked from `<head>` as soon as the DOM parses, which raises a visible
 red banner if anything was lost in transit. Trust it. If that banner actually appears, hand over

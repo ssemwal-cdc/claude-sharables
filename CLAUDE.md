@@ -271,6 +271,48 @@ takes the marketplace:
 
 This looks like a typo and is not. Do not "fix" it.
 
+**The NetSuite connector lags the UI by minutes after an approval, and the
+obvious success check reads that lag as failure.** Found in production, 2026-08-12.
+
+Step 8 used to verify an approval by re-querying the pending queue and checking
+the item no longer returned. Two things break that:
+
+- `approvalstatus` stays `1` after a successful approval, because the record is
+  now pending the *next* approver. Observed: two bills approved and routed
+  onward, both still reading `approvalstatus = 1`.
+- The connector takes minutes to catch up, so even a correct query returns stale
+  rows straight after the click.
+
+Together they produce a false failure on work that succeeded — which stops the
+batch, logs a failure that did not happen, and invites a re-run that would
+approve twice. Verify the **record**, not the queue:
+
+```sql
+SELECT id, approvalstatus,
+       custbody_sna_cdc_next_approver     AS next_appr,
+       custbody_sna_cdc_previous_approver AS prev_appr,
+       custbody_sna_cdc_app_count         AS app_count
+FROM transaction WHERE id = <id>
+```
+
+Advanced means `prev_appr` is now the user, `next_appr` is someone else, and
+`app_count` went up by one. Unchanged means *not yet*, never *failed* — wait and
+re-check, and never re-click on it.
+
+The same lag is why an outcome must never be written to `actions` before it is
+observed. A pre-written entry is a fabrication and later reads exactly like a
+real one.
+
+**The two skills used to share a state filename, and it cost real
+cross-contamination.** Both called it `_review_log.json`, differing only by
+parent folder, with both folders under the same workspace parent. An agent
+running both in one session resolved the bare name against the wrong folder and
+wrote NetSuite records into the Procore log. They are now
+`_netsuite_review_log.json` and `_procore_review_log.json`, each publish script
+migrates the old name in place, and each skill carries an Absolute rule that it
+owns exactly one file and quarantines foreign records rather than merging them.
+Never give two skills the same state filename, however different their folders.
+
 **Updating an installed plugin takes two commands, and the first one looks like
 it was enough.** Verified 2026-08-11. `marketplace update` refreshes the
 *catalog*. It does not touch an installed plugin, but it reports success as

@@ -273,10 +273,22 @@ looks like it worked and quietly shows the user a line of text instead of a
 dashboard. Do not try it, and do not trust the success message on this tool as
 evidence that the right thing rendered.
 
-The consequence for the dashboards: the whole document really does have to go
-through the tool call, so payload size is a genuine constraint rather than a
-matter of nerve. That is why `publish_dashboard.py` writes a slim `widget.html`
-beside the full `index.html`.
+The whole document therefore has to go through the tool call. **That is not the
+same as a size limit, and the difference cost two rounds of work.** Confirmed
+2026-08-12: the complete Procore dashboard — 99 KB, 43 items — rendered in a
+single call. Two runs before that had refused it on size grounds without
+attempting it, one reading 929 of 1849 lines and extrapolating the rest.
+
+So there is no known ceiling, and every threshold anyone has proposed for this
+tool has been invented, including by these notes. Render first. The template
+carries a guard that turns a truncated render into a red banner precisely so the
+question can be settled by observation rather than by estimate — an estimate is
+not an observed failure.
+
+`publish_dashboard.py` still writes a slim `widget.html` beside the full
+`index.html`. It is a fallback for a queue that one day genuinely does not fit,
+not the default, because folding rows costs their response buttons and nothing
+yet justifies paying that.
 
 **Do not let an agent refuse to render because the file looks big.** A 120 KB Procore dashboard was
 handed over as a file instead, on the reasoning that it might truncate — which cost one-click

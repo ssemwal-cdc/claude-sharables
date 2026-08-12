@@ -260,6 +260,24 @@ a new message — one click, no clipboard. So `window.sendPrompt` on the widget 
 string and really does post. The clipboard handoff in the template is now only the artifact-host
 fallback and should never be reached in normal use.
 
+**`show_widget` takes content inline only, and handing it a path fails silently.**
+Schema read live, 2026-08-12: three properties — `loading_messages` (array of
+strings, the only required one), `title`, `widget_code`. No path, no file, no
+src. Nothing in the description mentions a byte, character, line or token limit
+either, so there is no documented ceiling to design against.
+
+Passing a file path where the content goes **does not error**. It returns
+"Content rendered and shown to the user" and renders the path string itself. So
+the obvious optimisation — hand over a path and skip reproducing the HTML —
+looks like it worked and quietly shows the user a line of text instead of a
+dashboard. Do not try it, and do not trust the success message on this tool as
+evidence that the right thing rendered.
+
+The consequence for the dashboards: the whole document really does have to go
+through the tool call, so payload size is a genuine constraint rather than a
+matter of nerve. That is why `publish_dashboard.py` writes a slim `widget.html`
+beside the full `index.html`.
+
 **Do not let an agent refuse to render because the file looks big.** A 120 KB Procore dashboard was
 handed over as a file instead, on the reasoning that it might truncate — which cost one-click
 execute entirely to avoid a risk that had not happened. The truncation guard exists precisely to

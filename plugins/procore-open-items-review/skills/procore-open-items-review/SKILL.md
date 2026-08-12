@@ -313,26 +313,26 @@ On each run:
 cd "<workspace>/Procore Open Items" && python3 publish_dashboard.py
 ```
 
-**Render `widget.html` as an inline widget with `show_widget`, passing its contents.** The
-publish script writes two files. `index.html` is the complete dashboard and the record.
-`widget.html` carries only the items with a verdict of `clear` or `flagged` — the ones with a cost
-and a response to give — while everything skipped or ungated folds down to a display-only row. On a
-real queue that is a fifth smaller, because the unactionable items are close to half the payload.
+**Render `index.html` as an inline widget with `show_widget`, passing its contents.** That is the
+complete dashboard, every item with its response buttons. A 99 KB render carrying 43 items has been
+confirmed working in a single call, so do not hesitate over a large queue.
 
-Why two files: `show_widget` takes its content **inline only** — schema read live, the properties
-are `loading_messages`, `title` and `widget_code`, with no path, file or src among them. Handing it
-a path does not error; it renders the path string and reports success. So the whole document really
-does travel through the tool call, and a smaller file is the only lever there is.
+`show_widget` takes content **inline only** — schema read live, the properties are
+`loading_messages`, `title` and `widget_code`, with no path, file or src among them. Handing it a
+path does not error; it renders the path string and reports success. So the document does travel
+through the tool call, but no size limit is documented anywhere and none has been observed.
 
-**Render it rather than judging the size yourself.** No limit is documented anywhere in the tool, so
-any threshold you have in mind is invented. You cannot tell in advance whether a render will
-succeed — which is precisely what the integrity guard is for. **Reading part of the file and
-extrapolating the cost is not an observed failure; only the red banner is.** If a render genuinely
-fails, say so with the byte count. Never fall back silently, and never present the file as though it
-had been the plan.
+**Any threshold you have in mind is invented.** You cannot tell in advance whether a render will
+succeed, which is exactly what the integrity guard is for: a marker as the last element, checked
+from `<head>` as the DOM parses, raising a red banner if anything was lost. **Reading part of the
+file and extrapolating the cost is not an observed failure; only that banner is.**
 
-**Folded rows carry no response buttons here.** That is deliberate: an item with no cost, at a step
-that demands one, is not something to action from a trimmed view. To act on one, open `index.html`.
+**If the banner does fire**, re-render with `widget.html` instead. The publish script writes it
+alongside `index.html`, carrying full detail only for items with a verdict of `clear` or `flagged`
+and folding the rest to display-only rows — about a fifth smaller. It is the escalation, not the
+default, because folded rows carry no response buttons. If that fails too, hand over `index.html`
+as a file and say so with the byte count. Never fall back silently, and never present the file as
+though it had been the plan.
 
 **Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
 widget host exposes `sendPrompt` as a bare global; the artifact host exposes `window.cowork`

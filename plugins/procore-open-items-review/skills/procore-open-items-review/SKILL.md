@@ -313,36 +313,33 @@ On each run:
 cd "<workspace>/Procore Open Items" && python3 publish_dashboard.py
 ```
 
-**Render `index.html` as an inline widget with `show_widget`, passing its contents.** That is the
-complete dashboard, every item with its response buttons.
+**Render `widget.html` as an inline widget with `show_widget`, passing its contents.** The publish
+script writes it alongside `index.html`. It carries full detail for every item with a verdict of
+`clear` or `flagged` — the ones with a cost and a response to give — and folds skipped and ungated
+items to display-only rows. Roughly a fifth smaller, and on a real queue that is the difference
+between a render that happens and one that gets talked out of.
 
-**A 99 KB render carrying 43 items is confirmed working in a single call.** That is the largest
-anyone has attempted, not the largest that works — no limit is documented in the tool and none has
-been observed. Do not read it as a ceiling, and do not treat a file a few kilobytes larger as
-obviously beyond it.
+Render it and do not deliberate about the size. `show_widget` takes content inline only — the
+properties are `loading_messages`, `title` and `widget_code`, with no path, file or src, and handing
+it a path renders the path string while reporting success. But **no capacity is documented anywhere
+in the tool**, so a sentence of the form "at N bytes it will not fit" is a prediction written as a
+fact, with nothing to base it on. A 99 KB render of 43 items is known to have worked in one call;
+that is the largest anyone has attempted, not the largest that works.
 
-`show_widget` takes content **inline only** — the properties are `loading_messages`, `title` and
-`widget_code`, with no path, file or src. Handing it a path does not error; it renders the path
-string and reports success.
+The template carries an integrity guard for exactly this: a marker as its last element, checked from
+`<head>` as the DOM parses, raising a red banner if anything was lost. **Only that banner is a
+failure.** The asymmetry is the whole argument — a truncated render costs one turn and a re-render,
+while declining to try costs the user one-click execute, which is the reason for rendering this way
+at all.
 
-**Do not estimate whether it will fit. You cannot, and three separate runs have got this wrong.**
-Each declined to render a file that renders fine, one after reading 929 of its 1849 lines and
-extrapolating the rest. Statements like "at N bytes it does not fit in a single tool call" are
-predictions written as facts; nothing in the tool reports a capacity, so there is nothing to base
-them on.
+**Handing over a file without having attempted the render is a failure of this step**, and three
+separate runs have done it, one after reading 929 of a file's 1849 lines and extrapolating the rest.
+If it happens, say so plainly rather than presenting the file as the deliverable. Only after the
+banner has actually fired does `index.html` become the fallback, and then report the byte count with
+it.
 
-The template carries an integrity guard for exactly this question: a marker as its last element,
-checked from `<head>` as the DOM parses, raising a red banner if anything was lost. **Only that
-banner is a failure.** The asymmetry is the point — a truncated render costs one turn and a
-re-render, while refusing to try costs the user one-click execute entirely, which is the whole
-reason for rendering this way.
-
-**Handing over a file without having attempted the render is a failure of this step.** If you do it,
-say that plainly rather than presenting it as a considered choice. If the banner does fire,
-re-render with `widget.html`, which the publish script writes alongside `index.html` carrying full
-detail only for `clear` and `flagged` items — about a fifth smaller, at the cost of response buttons
-on the folded rows. Only if that also fails does the file become the deliverable, and then say so
-with the byte count.
+`index.html` remains the complete dashboard — every item with its response buttons — and is what to
+open to action a folded row.
 
 **Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
 widget host exposes `sendPrompt` as a bare global; the artifact host exposes `window.cowork`

@@ -133,6 +133,8 @@ Three item types appear:
 
 A fourth type means the tooling has changed — report it rather than inventing a review procedure.
 
+`item_type` is the queue's word for the record, and it is **not** always the type the workflow endpoint wants. For CCOs it is not — see Step 2.
+
 **Do not scrape the grid.** It is virtualised and yields roughly 46 of 75 rows. `get_page_text` returns nothing useful on this page either.
 
 **`assignee_id` is always the user on this payload.** It does not mean they can act. That is Step 2.
@@ -159,7 +161,20 @@ Returns an array with one instance. The discriminator:
 
 Also capture from `[0].current_step_occurrence`: `name` (the step), `due_at`, and `available_responses`. **Response verbs vary by step** and drive the dashboard buttons — invoices at FA Review offer Approve / Revise and Resubmit, change risks at a cost gate offer Yes / Reject. Never assume a fixed triplet.
 
-**Known gap:** `ChangeOrderPackage` returns a 400 from this endpoint. Those items cannot be gated. Mark them `ungated`, review their arithmetic anyway, and offer no response buttons — see Step 6.
+**CCOs need a different type *and* a different id.** `ChangeOrderPackage` returns a 400 here, as do the other package-style type strings and the record's own `CommitmentContractChangeOrder`. The 400 points at a company-level `workflows/tools` endpoint that an ordinary account gets a 403 on, which makes this look like a permissions problem. It is not. **The workflow is not attached to the package at all** — it is attached to the underlying commitment change order, which carries its own id.
+
+So gate a CCO with:
+
+```
+filters[workflowable_object_type]=CommitmentChangeOrder
+filters[workflowable_object_id]=<commitment change order id>
+```
+
+**Resolve that id by opening the package record.** `.../change_orders/commitment_contract_change_orders/<package_id>` redirects to the change order, and the id it lands on is the one this query wants. It is a different number from the package id — do not assume they match. Record it in the log as `wfId`; the dashboard needs it, because the execute instruction has to compose the same pair.
+
+An API field may carry that id and would save a browser round trip per CCO. Nobody has confirmed which one, so the redirect is the method until someone does.
+
+**If you cannot resolve the id, mark the item `ungated`** and offer no response buttons, as before. **Never fall back to querying with the package id.** It 400s, and the execute instruction reads a lookup that returns no instance as "already actioned elsewhere" — so a wrong id does not surface as an error, it silently skips a live item and logs it as done.
 
 ## Step 3 — Read the record
 
@@ -268,7 +283,7 @@ Four outcomes:
 - **clear** — figures tie, support is adequate.
 - **flagged** — a specific number is wrong or unsupported. Say which, with figures.
 - **skipped** — not ready for review. **Not approved, not rejected, not a criticism.** Either no attachment at all, or support present but unreadable. This is a deliberate third state: an item with nothing to check against must not be given a verdict.
-- **ungated** — the arithmetic was checked but Procore would not confirm the user is a responder (currently all CCOs). No response buttons are offered.
+- **ungated** — the arithmetic was checked but Procore would not confirm the user is a responder. Since the CCO recipe in Step 2 this should be rare: it means a CCO whose commitment change order id could not be resolved. No response buttons are offered.
 
 Items where `can_respond` is `false` are **suppressed**, not skipped — they collapse to a single count.
 
@@ -287,6 +302,7 @@ Maintain `Procore Open Items/_procore_review_log.json`:
   "items": {
     "<item_type>:<item_id>": {
       "itemId": "17074361", "projectId": "2992760", "commitmentId": "15453968",
+      "wfId": "CCOs only - the commitment change order id from Step 2, omit for ICRs and invoices",
       "kind": "inv", "type": "Invoice", "docNo": "#2 · 536994-TOF (PR-02)",
       "project": "ORD I - Building 1", "counterparty": "Power Construction Company, LLC.",
       "amount": 891991, "dueDate": "2026-08-02", "step": "FA Review",

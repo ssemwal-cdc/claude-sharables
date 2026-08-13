@@ -387,6 +387,38 @@ already been approved. A page load reads the UI and has no lag. Still pending �
 click Approve and log that the note was lost. Already advanced → click nothing,
 log it as approved without a note.
 
+**A CCO's workflow hangs off the commitment change order, not the package — which
+closed a gap the skill had given up on.** Found by a teammate running the plugin,
+2026-08-13. Step 2 used to say `ChangeOrderPackage` returns a 400, *"Those items
+cannot be gated"*, so every CCO rendered `ungated` with no response buttons for
+everybody.
+
+The 400 is real, and so is the same 400 on every other package-style type string
+and on the record's own `CommitmentContractChangeOrder`. What made it look
+unsolvable is where the error points: a company-level `workflows/tools` endpoint
+that an ordinary account gets a 403 on, which reads as a permissions wall. It is
+not one. The workflow simply is not attached to that object. Querying
+`workflowable_object_type=CommitmentChangeOrder` with the **commitment change
+order id** returns the instance immediately.
+
+That id is not the package id. The package record redirects to the change order,
+and the id it lands on is the one the query wants — so it costs a browser round
+trip per CCO. An API field may carry it; nobody has confirmed which, so the
+redirect is the method and the skill says so rather than guessing.
+
+**The dangerous part is the failure mode, not the 400.** The execute instruction
+treats a lookup returning no instance as *already actioned elsewhere* and skips
+the item. So a wrong id does not raise an error — it silently logs a live item as
+done. That is why `publish_dashboard.py` demotes a CCO with no `wfId` to
+`ungated` and prints a warning, rather than falling back to the package id.
+`ungated` items render Resolve-the-gate instead of response buttons, so an
+unresolved id cannot reach the execute list at all. Keep that guard if the
+lookup is ever changed.
+
+The type is per item now (`wf`) with `wfId` beside it, because the queue's
+`item_type` and the workflow endpoint's type are not the same thing and the old
+kind-keyed constant assumed they were.
+
 **Per-item marks live in `localStorage`** (`ns_marks_v1`, `pc_marks_v1`,
 `pc_view_v2`) and are the only user state that survives a re-render. Never
 rename those keys for tidiness; it silently discards decisions the user marked

@@ -30,7 +30,10 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "index.html")
 S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 
 VERDICTS = ("clear", "flagged", "skipped", "ungated")
-WF = {"icr": "GenericToolItem", "inv": "Billings::Requisition", "cco": "ChangeOrderPackage"}
+# The type the workflows/instances endpoint wants, which is NOT always the queue's item_type.
+# A CCO's workflow hangs off the underlying commitment change order, not the package, and that
+# object has its own id - carried per item as wfId. See Step 2 of SKILL.md.
+WF = {"icr": "GenericToolItem", "inv": "Billings::Requisition", "cco": "CommitmentChangeOrder"}
 
 
 def split_project(name):
@@ -64,7 +67,7 @@ def main():
             sys.exit("ABORT: config.%s missing from _review_log.json (%s). "
                      "Run the first-time setup before publishing." % (key, hint))
 
-    items, bad = [], []
+    items, bad, ungated = [], [], []
     for key, it in (log.get("items") or {}).items():
         kind = it.get("kind", "icr")
         verdict = it.get("verdict", "skipped")
@@ -72,13 +75,23 @@ def main():
             bad.append("%s has verdict %r" % (key, verdict))
         campus, bldg = split_project(it.get("project", ""))
         amt = it.get("amount", None)
+        # A CCO can only be gated through its commitment change order id. Without one there is no
+        # query that works, and guessing the package id is worse than not offering the buttons:
+        # workflows/instances 400s on it, and the execute instruction reads "no instance" as
+        # "already actioned elsewhere", so a live item would be silently logged as done.
+        wf_id = str(it.get("wfId", "") or "")
+        if kind == "cco" and not wf_id:
+            if verdict not in ("skipped", "ungated"):
+                ungated.append(key)
+            verdict = "ungated"
         items.append({
             "key": key,
             "id": str(it.get("itemId", "")),
             "pid": str(it.get("projectId", "")),
             "cid": str(it.get("commitmentId", "") or ""),
             "kind": kind,
-            "wf": WF.get(kind, "GenericToolItem"),
+            "wf": it.get("wfType") or WF.get(kind, "GenericToolItem"),
+            "wfId": wf_id or str(it.get("itemId", "")),
             "type": it.get("type", kind.upper()),
             "doc": it.get("docNo", ""),
             "vendor": it.get("counterparty", ""),
@@ -100,6 +113,11 @@ def main():
     if bad:
         sys.exit("ABORT: unknown verdict(s) - " + "; ".join(bad) +
                  ". Allowed: " + ", ".join(VERDICTS))
+
+    if ungated:
+        print("WARNING: no wfId, so demoted to ungated with no response buttons: " +
+              ", ".join(ungated) + ". Resolve each one's commitment change order id "
+              "(Step 2) and re-publish to make them respondable.")
 
     thin = [i["doc"] for i in items if not i["head"] or not i["facts"]]
     if thin:

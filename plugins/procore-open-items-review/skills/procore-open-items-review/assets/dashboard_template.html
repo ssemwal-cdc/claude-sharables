@@ -269,7 +269,11 @@ function recUrl(it){
   if(it.kind==="cco")return "https://app.procore.com/"+it.pid+"/project/commitments/purchase_order_contracts/"+it.cid+"/change_orders/commitment_contract_change_orders/"+it.id;
   return "https://app.procore.com/webclients/host/companies/"+CO+"/projects/"+it.pid+"/tools/generic-tool/details/"+it.id+"?tool_id="+ICR_TOOL;
 }
-function wfType(it){return it.wf||(it.kind==="inv"?"Billings::Requisition":it.kind==="cco"?"ChangeOrderPackage":"GenericToolItem")}
+// The workflow endpoint's type is not always the queue's item_type: a CCO's workflow hangs off the
+// underlying commitment change order, which also has its own id. Hence wfId, distinct from the
+// record id used for links. See Step 2 of SKILL.md.
+function wfType(it){return it.wf||(it.kind==="inv"?"Billings::Requisition":it.kind==="cco"?"CommitmentChangeOrder":"GenericToolItem")}
+function wfIdOf(it){return it.wfId||it.id}
 function isAffirmative(v){return v==="Yes"||v==="Approve"}
 function needsReason(v){return v==="Reject"||v==="Revise and Resubmit"}
 
@@ -404,7 +408,7 @@ function setText(id,v){if(marks[id]){marks[id].text=v;saveMarks();renderBar()}}
 function clearAll(){marks={};saveMarks();render()}
 function sendRun(){say("Re-run my Procore open items review now.")}
 function resolveGate(id){var it=byId(id);
-  say("Work out whether I can respond to Procore change order package "+it.doc+" (id "+it.id+", project id "+it.pid+", commitment "+it.cid+"). The workflows/instances endpoint returns a 400 for workflowable_object_type=ChangeOrderPackage — try the alternative type strings, and if none work, open the record and check whether a Respond button renders in the workflow side panel. Then update the dashboard with what you find. Do not click Respond.");}
+  say("Resolve the workflow gate for Procore change order package "+it.doc+" (package id "+it.id+", project id "+it.pid+", commitment "+it.cid+"). The workflow is not attached to the package, which is why ChangeOrderPackage returns a 400. Open the record at the commitment_contract_change_orders URL for that package id and note the commitment change order id it redirects to. Then query workflows/instances for project "+it.pid+" with filters[workflowable_object_type]=CommitmentChangeOrder and filters[workflowable_object_id] set to that change order id, page=1, view=action_card. Save the id as wfId on the item in the log so the dashboard can compose it, and update the dashboard with can_respond, the step name, due date and available responses. Do not click Respond.");}
 function reviewSupport(id){var it=byId(id);
   say("Read every PCI attached to Procore change order package "+it.doc+" (id "+it.id+", project id "+it.pid+"), tie each one to a line item, confirm the PCI totals sum to the package grand total, and flag any line without support or any PCI without a line. Then update the dashboard. Do not respond to the item.");}
 function say(t){
@@ -463,7 +467,9 @@ function renderBar(){
   var lines=ks.map(function(k,n){
     var it=byId(k),m=marks[k];
     return (n+1)+') respond "'+m.kind+'" to '+it.type+' '+it.doc+
-           ' [workflowable_object_type '+wfType(it)+', item_id '+it.id+', project_id '+it.pid+', '+it.projLabel+
+           ' [workflowable_object_type '+wfType(it)+', workflowable_object_id '+wfIdOf(it)+
+           (wfIdOf(it)!==it.id?', record id '+it.id+' (different - use it to open the record, never for the lookup)':'')+
+           ', project_id '+it.pid+', '+it.projLabel+
            (it.amt?', '+money(it.amt):'')+']'+
            (m.text&&m.text.trim()?' — comment: '+m.text.trim():'');
   });
@@ -473,7 +479,7 @@ function renderBar(){
    ", so treat it as possibly out of date — I may have already actioned some of these in Procore directly.\n\n"+
    "For EACH item, in this exact order:\n"+
    "1. VERIFY IT IS STILL MINE TO ACTION, before touching any UI. GET /rest/v1.0/projects/{project_id}/workflows/instances with "+
-   "filters[workflowable_object_id]={item_id}, filters[workflowable_object_type]={type}, page=1, view=action_card. "+
+   "filters[workflowable_object_id]={workflowable_object_id}, filters[workflowable_object_type]={type}, page=1, view=action_card. "+
    "If it returns no instance, or user_permissions.can_respond is false, or the response named below is not in "+
    "current_step_occurrence.available_responses, then it has already been actioned or has moved to another step. "+
    "SKIP it, log it as 'already actioned elsewhere — no click made', and move to the next item. Do not open it, do not click, do not retry.\n"+

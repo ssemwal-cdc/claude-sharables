@@ -26,7 +26,16 @@ An instruction to review is never an instruction to execute. A verdict of "clear
 - **Never hand-write or regenerate the dashboard HTML.** See Step 7. The layout is a file on disk; runs inject data into it and nothing else.
 - **Never copy identity between people.** The employee internal id in `config.me` scopes the whole review. Using someone else's shows them a queue that is not theirs.
 - If deeper review would require actions beyond reading, say so in the verdict and ask first.
+- **Every approval carries the note `Approved by Claude`, unless the user supplied their own for that document — theirs replaces it verbatim.** Those two are the only text this skill types into a note field, and approvals route through Approve With Notes so it can be attached; see Step 8. Do not ask permission for the default and do not vary its wording. Rejection reasons are different: they always come from the user and are never defaulted.
 - **This skill owns exactly one state file:** `NetSuite Approval Checks/_netsuite_review_log.json`. Never read or write the Procore skill's log, and never let Procore records into yours. Both files used to share the name `_review_log.json` and both folders sit under the same parent, so this went wrong in practice. If you find foreign records in your log, move them to a `_quarantined` block, say so in chat, and carry on — never merge them into `items`, and never act on them.
+
+## What this review is, and what it is not
+
+The user is **one approver among several, and not the accountant of record.** An approval here advances a workflow step to the next approver. It does not clear an accounting or legal obligation, and it is not the last check the figures will get.
+
+So do not stall an authorised batch to raise the size of the amounts, the number of documents, or how an auditor might read it later. The `Approved by Claude` note is there precisely so the trail is honest about what performed the click — recording nothing would be the weaker position, since an unannotated approval reads as though the user made it by hand.
+
+The checks that do matter are mechanical, and Step 8 already has them: the document is still theirs to action, the figures match the instruction, the record has not moved underneath the review. Those still stop the batch, every time.
 
 ## Step 0 — Sync assets, then first-run setup
 
@@ -298,7 +307,7 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`:
   },
   "actions": [
     {"id": "...", "docNo": "...", "action": "approve|approve with notes|reject",
-     "text": "note or reason as the user gave it", "at": "2026-08-11 14:22",
+     "text": "the note actually submitted - the user's words, or 'Approved by Claude', or '' if the fallback dropped it", "at": "2026-08-11 14:22",
      "result": "confirmed left queue|failed: <why>"}
   ]
 }
@@ -421,9 +430,45 @@ Then, **one record at a time**:
 
 2. Open the record by internal id at `https://<account>.app.netsuite.com/app/accounting/transactions/transaction.nl?id=<id>`.
 3. **Confirm before clicking.** Read the document number, vendor and amount off the page and check all three against the instruction. Any mismatch → stop, do not click, report it.
-4. Click **only** the button named in the instruction. Approve, Approve With Notes, and Reject sit adjacent — read the button label before clicking, not the position.
-5. Notes and reasons come from the user verbatim. Never compose either. If the instruction is missing a required reason for a rejection, stop and ask.
-6. **Verify it landed — against the record, not the queue.** Query that one record:
+4. **Choose the button.** Approve, Approve With Notes and Reject sit adjacent — read the label
+   before clicking, never the position.
+
+   - An **affirmative** instruction, whether it says "approve" or "approve with notes", goes
+     through **Approve With Notes** — that is the only way the note in step 5 can be attached.
+     Plain **Approve** is reached only via the fallback in step 6.
+   - A **rejection** goes through **Reject**, exactly as named.
+   - **Never substitute across the two.** An approve instruction must never reach Reject, and a
+     reject instruction must never reach either approve button.
+5. **Enter the note.** Approve With Notes loads a **normal page in the same tab** — it is not a
+   popup and not a dialog. Read that page rather than assuming its layout, fill the note field,
+   submit.
+
+   - The user gave a note for this item → enter it **verbatim**.
+   - They did not, and the response is affirmative → enter exactly `Approved by Claude`.
+   - A rejection is missing its required reason → **stop and ask.** Never default a rejection
+     reason; a rejection needs a reason a person wrote.
+
+   Those two are the only strings this skill ever types into a note field. Compose nothing else —
+   no summary of the review, no figures, no reasoning.
+
+6. **If the notes page never arrives or the tab stops responding, the outcome is unknown — not
+   failed.** Seen in practice: the tab froze straight after the click and dropped out of the
+   automation group. Do not click anything in that tab, and **never re-click the button.**
+
+   **The gate: read the page, never the connector.** Abandon the frozen tab, open the record fresh
+   in a new tab, and read its approval state off the page.
+
+   - **Still pending and still yours** → the click did not land. Click plain **Approve**, and log
+     that the note did not make it.
+   - **Advanced** → the click landed and only the note was lost. **Click nothing.** Log it as
+     approved without a note.
+   - **Cannot be read** → stop the batch.
+
+   **Do not gate this on SuiteQL.** The connector lags the UI by minutes, so an unchanged reading
+   means *not yet*, never *failed* — gating a fallback click on it would eventually approve a bill
+   twice, which is exactly the damage the never-re-click rule below exists to prevent. A page load
+   reads the UI and has no lag.
+7. **Verify it landed — against the record, not the queue.** Query that one record:
 
    ```sql
    SELECT id, approvalstatus,
@@ -440,12 +485,12 @@ Then, **one record at a time**:
    *next* person's step, which reads identically to never having moved. Observed live: two bills
    were approved, advanced to the next approver, and both still returned `approvalstatus = 1`.
 
-7. **The connector lags the UI by minutes, so unchanged means "not yet", not "failed".** Wait and
+8. **The connector lags the UI by minutes, so unchanged means "not yet", not "failed".** Wait and
    re-check rather than concluding. **Never re-click on an unchanged reading** — the UI has
    already taken the first click, so a second one is a double approval. This is the single most
    likely way for this skill to cause real damage.
 
-8. **Append the outcome to `actions` only after observing it.** Record what the verification
+9. **Append the outcome to `actions` only after observing it.** Record what the verification
    query actually returned, never what the click was meant to achieve. An entry written ahead of
    its verification is a fabrication, and afterwards it is indistinguishable from a real one —
    which destroys the value of the log at exactly the moment it matters.

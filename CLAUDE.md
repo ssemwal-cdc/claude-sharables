@@ -352,9 +352,9 @@ to keep it — reasoning that an auditor might question who reviewed the figures
 That hesitation came from the wording being improvised: an agent that made up the
 text has something to second-guess. Specifying it removes the question.
 
-Every affirmative Procore response now carries `Approved by Claude`, and a
-comment the user supplies for that item replaces it verbatim. Nothing else is
-ever typed into a comment box. **This is a better default than blank** — a
+Every affirmative response in **both** skills now carries `Approved by Claude`,
+and a comment the user supplies for that item replaces it verbatim. Nothing else
+is ever typed into a comment or note field. **This is a better default than blank** — a
 response recorded with no comment reads as though the user clicked it, while the
 attribution says what actually did. Rejection reasons are still required from the
 user and never defaulted, because that is the case where boilerplate would be
@@ -364,18 +364,28 @@ Both skills also now state that the user is one reviewer among several and not
 the accountant of record, so an authorised batch is not stalled over amounts or
 audit exposure. The mechanical checks are unchanged and still stop the batch.
 
-**The attribution default is Procore-only for now, and that asymmetry is
-deliberate.** NetSuite attaches a note through its **Approve With Notes** button,
-and that button froze a tab mid-batch: the renderer locked, the tab dropped out
-of the automation group, and the note was never typed. The run verified two ways
-that nothing had been approved and correctly refused to re-click. Until that is
-solved, NetSuite has no default note. Do not "restore symmetry" by adding one.
+**Both skills default the note. NetSuite routes every approval through Approve
+With Notes so it can attach one** — a deliberate exception to "click only the
+button named in the instruction". Plain Approve is reached only as the fallback
+below. Reject is never substituted for either, in any direction.
 
-When it is solved, the fallback gate must be **a fresh page load, never
-SuiteQL.** The connector lag documented above means an unchanged reading is *not
-yet*, never *failed* — so gating a retry on a connector read would eventually
-click twice on a bill that had already been approved. A page load reads the UI
-and has no lag.
+**Approve With Notes is a same-tab page navigation, not a popup.** A tab froze
+once immediately after that click — renderer locked, tab dropped out of the
+automation group, note never typed — and the run correctly verified two ways and
+refused to re-click. That freeze got diagnosed as a blocking native dialog, and a
+`window.prompt` override was designed on that reasoning. **It was wrong.** The
+button just loads an ordinary page in the same tab; there is no popup and no
+native dialog, so the freeze was a transient hang and the override would have
+overridden nothing. It was never built only because the design was checked
+against the live UI first. Do not reintroduce it.
+
+So a freeze is an **unknown** outcome, never a failed one. Recovery is a fallback
+to plain Approve, gated on **a fresh page load, never SuiteQL.** The connector lag
+documented above means an unchanged reading is *not yet*, never *failed* — gating
+the fallback on a connector read would eventually click twice on a bill that had
+already been approved. A page load reads the UI and has no lag. Still pending →
+click Approve and log that the note was lost. Already advanced → click nothing,
+log it as approved without a note.
 
 **Per-item marks live in `localStorage`** (`ns_marks_v1`, `pc_marks_v1`,
 `pc_view_v2`) and are the only user state that survives a re-render. Never

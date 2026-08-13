@@ -308,6 +308,75 @@ execute entirely to avoid a risk that had not happened. The truncation guard exi
 catch that case after the fact. Render first, believe the guard, fall back only on an observed
 failure.
 
+**NetSuite runs pdf.js in-page, so neither skill downloads attachments now.**
+Tested live 2026-08-13 against bill 2532506 before any file was changed, which is
+the order worth keeping — the question "will CSP allow it" is answerable in a
+chat in ten minutes and gates the whole design. It does allow it: `import()` from
+cdnjs inside an `*.app.netsuite.com` tab loads, the worker fetches as text and
+assigns as a blob URL exactly as Procore's recipe does, and a credentialed
+same-origin fetch of `/core/media/media.nl?...` returns the PDF. Nothing reaches
+disk.
+
+The reason NetSuite loads pdf.js in the *record* tab, rather than a scratch tab
+like Procore, is that the media URL needs the session cookie — so the fetch must
+be same-origin, so pdf.js has to be wherever that origin is.
+
+**Do not port Procore's `items.map(z => z.str).join(' ')` to NetSuite.** It
+flattens the page and destroys column alignment, which is what the quantity x
+rate and line-tie checks read. NetSuite rebuilds rows from pdf.js geometry
+instead — bucket by y, sort by x, pad by a character width derived from
+`item.width / str.length`. Checked against `pdftotext -layout` on a 3-page
+utility invoice: same three columns, same figures. Both tools merge left and
+right columns on a two-column page when rows share a y-coordinate, so that is a
+parsing constraint to split on an x-threshold, not a regression to fix.
+
+**`getDocument({data: arrayBuffer})` throws `InvalidPDFException` on valid
+bytes.** Right content type, right `%PDF-1.6` header, 1,126,323 bytes, and it
+still throws. `new Uint8Array(ab)` fixes it immediately. Procore's recipe always
+wrapped, which looked like style and is load-bearing — both skills now carry a
+comment saying so, because the wrap is exactly the kind of thing a later pass
+removes as redundant, and the error it produces sends you debugging the download
+instead of the call.
+
+**Extracted PDF rows can trip the query-string output filter.** Returning a whole
+page came back `[BLOCKED: Cookie/query string data]` — the payment stub's barcode
+rows and a 30-digit remittance string read as query-string data. Dropping rows
+matching `/^[\s01]{12,}$/` and `/\d{20,}/` clears it at a cost of 15 of 60 rows,
+all stub noise, no figures. Long returns also truncate, so pages come back one
+per call. Procore already documented this filter for JavaScript source; this is
+the same filter reached from a direction the note did not cover.
+
+**An approval comment is now a specified default, not something composed.** A run
+invented "Approved by Claude", then stopped a 15-item $61.2M batch to ask whether
+to keep it — reasoning that an auditor might question who reviewed the figures.
+That hesitation came from the wording being improvised: an agent that made up the
+text has something to second-guess. Specifying it removes the question.
+
+Every affirmative Procore response now carries `Approved by Claude`, and a
+comment the user supplies for that item replaces it verbatim. Nothing else is
+ever typed into a comment box. **This is a better default than blank** — a
+response recorded with no comment reads as though the user clicked it, while the
+attribution says what actually did. Rejection reasons are still required from the
+user and never defaulted, because that is the case where boilerplate would be
+actively harmful.
+
+Both skills also now state that the user is one reviewer among several and not
+the accountant of record, so an authorised batch is not stalled over amounts or
+audit exposure. The mechanical checks are unchanged and still stop the batch.
+
+**The attribution default is Procore-only for now, and that asymmetry is
+deliberate.** NetSuite attaches a note through its **Approve With Notes** button,
+and that button froze a tab mid-batch: the renderer locked, the tab dropped out
+of the automation group, and the note was never typed. The run verified two ways
+that nothing had been approved and correctly refused to re-click. Until that is
+solved, NetSuite has no default note. Do not "restore symmetry" by adding one.
+
+When it is solved, the fallback gate must be **a fresh page load, never
+SuiteQL.** The connector lag documented above means an unchanged reading is *not
+yet*, never *failed* — so gating a retry on a connector read would eventually
+click twice on a bill that had already been approved. A page load reads the UI
+and has no lag.
+
 **Per-item marks live in `localStorage`** (`ns_marks_v1`, `pc_marks_v1`,
 `pc_view_v2`) and are the only user state that survives a re-render. Never
 rename those keys for tidiness; it silently discards decisions the user marked

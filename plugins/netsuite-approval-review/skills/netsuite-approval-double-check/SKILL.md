@@ -151,36 +151,69 @@ The line-level quantity x rate is the first math check and it is free — do it 
 
 **Do not click NetSuite's `download` link.** It fails silently under automation — no network request, no file, no error. Clicking `preview` opens a popup that freezes CDP screenshots on that tab. Both are dead ends.
 
-Instead, get the file's authenticated URL from the connector and save it as a blob from inside the page:
+Instead, get the file's authenticated URL from the connector and extract the text **inside the page**, without downloading anything:
 
 ```sql
 SELECT id, name, filetype, filesize, url FROM file WHERE id IN (<ap_file ids>)
 ```
 
-The `url` column returns a path like `/core/media/media.nl?id=<id>&c=<account>&h=<hash>&_xt=.pdf`. Then, in any authenticated NetSuite tab, define the helper once:
+The `url` column returns a path like `/core/media/media.nl?id=<id>&c=<account>&h=<hash>&_xt=.pdf`.
+
+**Setup, once per run.** Run this in any authenticated NetSuite tab — the fetch has to be same-origin so the session cookie rides along, which is why pdf.js is loaded here rather than in a scratch tab. NetSuite's CSP permits the import; verified live.
 
 ```javascript
-window.__dl = async function(u, fn){
-  const r = await fetch(u, {credentials:'include'});
-  const bl = await r.blob();
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(bl); a.download = fn;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 60000);
-  return 'triggered ' + fn + ' ' + bl.size;
+const m = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
+window.__pj = m;
+const wt = await (await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs')).text();
+m.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([wt], {type:'text/javascript'}));
+
+window.__open = async function(u){
+  const b = await (await fetch(u, {credentials:'include'})).arrayBuffer();
+  // new Uint8Array is REQUIRED - a raw ArrayBuffer throws InvalidPDFException on valid bytes
+  window.__doc = await m.getDocument({data:new Uint8Array(b)}).promise;
+  return window.__doc.numPages;
+};
+
+window.__page = async function(n){
+  const c = await (await window.__doc.getPage(n)).getTextContent();
+  const it = c.items.filter(z => z.str.trim());
+  if (!it.length) return '';
+  let tw = 0, tc = 0;
+  it.forEach(z => { if (z.width > 0 && z.str.length) { tw += z.width; tc += z.str.length; } });
+  const cw = tc ? tw / tc : 5;                    // char width, derived per document
+  const rows = new Map();                          // bucket by y, 3pt tolerance = one visual row
+  it.forEach(z => { const y = Math.round(z.transform[5] / 3) * 3;
+                    if (!rows.has(y)) rows.set(y, []);
+                    rows.get(y).push(z); });
+  return [...rows.keys()].sort((a,b) => b - a).map(y => {
+    let s = '';
+    rows.get(y).sort((a,b) => a.transform[4] - b.transform[4]).forEach(z => {
+      const col = Math.round(z.transform[4] / cw);
+      if (col > s.length) s += ' '.repeat(col - s.length);
+      s += z.str;
+    });
+    return s.replace(/\s+$/, '');
+  }).filter(r => r.trim() && !/^[\s01]{12,}$/.test(r) && !/\d{20,}/.test(r)).join('\n');
 };
 'ready'
 ```
 
-Then call `await window.__dl('<path>', 'NS_<docno>_<vendor>.pdf')` per file, with ~1.5s between calls. Files land in the connected downloads folder within about 10 seconds. Verify with a directory listing before parsing; if the folder is cloud-synced, allow a little lag.
+Then `await window.__open('<path>')` for the page count, and `await window.__page(n)` — **one page per call**.
+
+This rebuilds the column layout from pdf.js geometry, and that is the point of it. Verified against `pdftotext -layout` on a 3-page utility invoice: description, basis and amount landed in the same three columns. A naive `items.map(z => z.str).join(' ')` flattens the table and would silently break the quantity x rate checks in step 4. **Do not simplify it to that.**
+
+Three things are not optional:
+
+- **`new Uint8Array(b)` is mandatory.** Handing `getDocument` the ArrayBuffer directly throws `InvalidPDFException` on bytes that are provably fine — right content type, right `%PDF` header — which reads like a corrupt download and sends you debugging the fetch instead. The wrap looks redundant. It is not.
+- **Return one page per call.** A whole document truncates.
+- **Keep the row filter.** Barcode rows and long digit strings read as query-string data to the output filter, and one of them turns the entire result into `[BLOCKED: Cookie/query string data]`. On the test invoice the filter dropped 15 of 60 rows — all payment-stub noise, no figures.
 
 Notes:
-- Use a `NS_` filename prefix so the run's artifacts are easy to spot and re-use.
-- If a file with that name already exists from an earlier run, reuse it instead of re-downloading.
+- **Nothing is written to disk.** The bytes stay in the page as an ArrayBuffer, so there is no downloads folder to poll, no cleanup, and no stale file from an earlier run to accidentally re-read.
 - **No attachment at all → flag the item.** Non-PDF attachments are unusual; handle them the same way and note the type.
 - Multiple attachments → check the one referenced by the AP INVOICE / CHANGE ORDER ATTACHMENT field, and mention the others.
-
-Extract text with `pdftotext -layout <file> -`. The layout flag preserves the column alignment that invoice tables depend on.
+- Few or no characters extracted means a scanned PDF. Say "support is a scanned image, text not extractable" rather than treating it as empty.
+- **On a two-column page, left and right rows sharing a y-coordinate merge into one line.** `pdftotext -layout` does the same, so this is not a regression — but do not split such a line on whitespace to recover the columns. Split on an x-threshold, or take the figures off the record instead.
 
 ## Step 4 — Verify
 
@@ -259,7 +292,7 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`:
       "poContext": "PO15039 - contract $216,000 - billed to date $76,500 - remaining $139,500",
       "poWarning": "optional, e.g. a duplicate PO worth naming",
       "detail": "the full paragraph of reasoning",
-      "attachmentFile": "NS_....pdf",
+      "attachmentFile": "the attachment's NetSuite file name and id, e.g. 'ComEd Aug 2026.pdf (3741744)'",
       "poRef": "PO15039"
     }
   },
@@ -276,7 +309,7 @@ These field names are the contract with `publish_dashboard.py`. Do not rename th
 `head`, `facts`, `poContext` and `detail` are what the dashboard renders, so write them for a reader who is skimming. `facts` should be the two or three lines that carry the specific figures — a reader should be able to judge the item without expanding anything.
 
 On each run:
-- Items already logged as **clear** and unchanged (same amount): do not re-download or re-analyze. Carry the entry forward.
+- Items already logged as **clear** and unchanged (same amount): do not re-fetch or re-analyze the attachment. Carry the entry forward.
 - Items previously **flagged**: re-check in full. The vendor may have replaced the attachment.
 - Items whose amount changed since last review: treat as new.
 - Brand-new items: full review.
@@ -329,7 +362,7 @@ or a colour, suspect this before suspecting the template.
 The script writes `index.html` beside the state file and keeps the last seven renders in
 `renders/<weekday>.html`. Both matter when a render goes wrong: diff today against the last good
 one to see what actually changed, and **re-render from `index.html` rather than re-running the
-review** — the review costs connector queries and attachment downloads, the render costs nothing.
+review** — the review costs connector queries and attachment extraction, the render costs nothing.
 Do not write a cleanup step for `renders/`; the folder is usually cloud-synced, where deleting is
 typically blocked, which is why the slots are overwritten in place rather than accumulated.
 

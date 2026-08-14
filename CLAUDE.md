@@ -468,7 +468,22 @@ rename those keys for tidiness; it silently discards decisions the user marked
 but has not executed.
 
 **The teammate-facing onboarding sheet lives at `docs/onboarding.html`.** It is
-the source for a published artifact Shivam shares; keep the two in step. Written
+the source for a published artifact Shivam shares:
+
+```
+https://claude.ai/code/artifact/89376c0d-dab5-45f2-9e9a-be989624016d
+```
+
+**They do not sync themselves, and the failure is silent.** Editing the file
+changes nothing teammates see; republishing *without* passing that URL mints a
+*second* artifact while everyone keeps reading the first. So after any edit to
+the file, republish with the URL passed explicitly. The URL is recorded here
+precisely so a later session — which will not have the original publish in its
+context — can still update in place rather than forking the link.
+
+If the manual step ever proves too easy to forget, the repo is public and
+GitHub Pages over `docs/` would make pushing to `main` the only step. That trades
+the claude.ai link for a `github.io` one; nobody has needed it yet. Written
 for someone who has never touched any of this, so it is deliberately
 click-by-click: profile (bottom left) → Settings → Plugins → Add → Add
 marketplace, auto sync left checked, then first run in a **Cowork** chat on Opus

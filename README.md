@@ -7,7 +7,20 @@ Internal marketplace of Claude plugins for Compass Datacenters.
 **Start here: [`docs/onboarding.html`](docs/onboarding.html)** — the start-to-finish
 setup sheet, written for someone who has never touched any of this. Browser,
 connector, install, first run, and scheduling, with a "done when" check on every
-step. Open it in a browser, or use the published copy Shivam shares.
+step.
+
+The shareable copy teammates get is the published artifact:
+
+```
+https://claude.ai/code/artifact/89376c0d-dab5-45f2-9e9a-be989624016d
+```
+
+**That URL is the one to update, not a new one.** The file above is the source;
+the artifact is a rendering of it. They do not sync themselves. After editing
+`docs/onboarding.html`, republish it **with that URL passed explicitly** —
+publishing without it mints a second artifact, and teammates keep reading the old
+link. Keeping the URL written here is what makes that possible from a session
+that wasn't the one which first published it.
 
 The rest of this section is the short version for people who only need the
 commands.

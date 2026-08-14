@@ -161,6 +161,45 @@ Returns an array with one instance. The discriminator:
 
 Also capture from `[0].current_step_occurrence`: `name` (the step), `due_at`, and `available_responses`. **Response verbs vary by step** and drive the dashboard buttons — invoices at FA Review offer Approve / Revise and Resubmit, change risks at a cost gate offer Yes / Reject. Never assume a fixed triplet.
 
+**Run the whole gate as one in-page fan-out, not one tool call per item.** The queue is routinely 70+ items and most of them are noise, so issuing this serially spends the bulk of the run learning what to ignore. From a tab on `app.procore.com`, where the session cookie already applies:
+
+```javascript
+// Query strings are built from char codes - see "The query-string output filter".
+const E=String.fromCharCode(61), Q=String.fromCharCode(63), A=String.fromCharCode(38);
+window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}]
+  const out=[], q=rows.slice();
+  await Promise.all(Array.from({length: Math.min(cap||8, q.length)}, async function(){
+    while(q.length){
+      const r=q.shift();
+      const u='/rest/v1.0/projects/'+r.pid+'/workflows/instances'+
+              Q+'filters[workflowable_object_id]'+E+r.id+
+              A+'filters[workflowable_object_type]'+E+r.type+
+              A+'page'+E+'1'+A+'view'+E+'action_card';
+      try{
+        const res=await fetch(u,{headers:{Accept:'application/json'}});
+        if(!res.ok){ out.push({key:r.key, state:'failed', code:res.status}); continue; }
+        const j=await res.json();
+        if(!j||!j.length){ out.push({key:r.key, state:'empty'}); continue; }
+        const s=j[0].current_step_occurrence||{};
+        out.push({key:r.key, state:'ok', can:!!(j[0].user_permissions||{}).can_respond,
+                  step:s.name||'', due:s.due_at||'', resp:s.available_responses||[]});
+      }catch(e){ out.push({key:r.key, state:'failed', code:String(e).slice(0,60)}); }
+    }
+  }));
+  return out;
+};
+```
+
+**Cap concurrency at 8–10.** A 429 from rate limiting is a `failed`, not an `empty`.
+
+**The three states are the safety property, and they are not interchangeable.** A request that fails and returns nothing looks exactly like an item with no workflow instance — which Step 8 defines as *already actioned elsewhere, skip it*. Fanning out makes that failure silent and plural, so:
+
+- `ok` → gate on `can`, exactly as above.
+- `empty` → the API genuinely returned no instance. Treat as before.
+- `failed` → **report it by name and exclude it from the run.** Never count it as suppressed, never treat it as actionable, never let it reach the dashboard as either. If more than a couple fail, stop and report rather than publishing a partial queue as though it were complete.
+
+Return only those fields. The full `action_card` payload is not needed and is the reason this step used to dominate the run.
+
 **CCOs need a different type *and* a different id.** `ChangeOrderPackage` returns a 400 here, as do the other package-style type strings and the record's own `CommitmentContractChangeOrder`. The 400 points at a company-level `workflows/tools` endpoint that an ordinary account gets a 403 on, which makes this look like a permissions problem. It is not. **The workflow is not attached to the package at all** — it is attached to the underlying commitment change order, which carries its own id.
 
 So gate a CCO with:
@@ -174,9 +213,15 @@ filters[workflowable_object_id]=<commitment change order id>
 
 An API field may carry that id and would save a browser round trip per CCO. Nobody has confirmed which one, so the redirect is the method until someone does.
 
+**A same-page `fetch` may resolve all of them at once — but only accept it if it really redirected.** `await fetch(packageUrl, {redirect:'follow'})` then reading `response.url` costs one call for every CCO in the run, instead of a browser round trip each. It works only if Procore answers that route with an HTTP 3xx; if the route resolves client-side, `response.url` comes back as the URL you sent — **the package id** — and querying with the package id is precisely what silently skips a live item.
+
+So accept the result **only** when `response.url` differs from the request URL *and* the id it yields returns a workflow instance. Anything else → fall back to opening the record. If neither works, `ungated`.
+
 **If you cannot resolve the id, mark the item `ungated`** and offer no response buttons, as before. **Never fall back to querying with the package id.** It 400s, and the execute instruction reads a lookup that returns no instance as "already actioned elsewhere" — so a wrong id does not surface as an error, it silently skips a live item and logs it as done.
 
 ## Step 3 — Read the record
+
+**Fan these out per endpoint family, not per item** — three calls for the whole run rather than one per actionable item. Same worker-pool shape as Step 2, and the same `ok` / `empty` / `failed` rule: a record that failed to load is reported by name and excluded, never quietly reviewed as though it came back thin.
 
 **ICR — `GenericToolItem`**
 
@@ -195,6 +240,14 @@ GET /rest/v1.1/requisitions/<item_id>    project_id=<project_id>  view=extended
 `summary` is a complete AIA G702: `original_contract_sum`, `net_change_by_change_orders`, `contract_sum_to_date`, `total_completed_and_stored_to_date`, `total_retainage`, `total_earned_less_retainage`, `less_previous_certificates_for_payment`, `current_payment_due`, `balance_to_finish_including_retainage`, `formatted_period`.
 
 `items[]` is the G703 line by line. Also `vendor_name`, `invoice_number`, `previous_requisition_id`, `commitment_id`, `attachments[]`.
+
+**This is the largest payload in either skill, and most of its weight is per-line nesting rather than the G703 itself.** So reduce it in the page — but reduce the *nesting*, not the rows.
+
+In the same tab, compute the six G702 identities from Step 5 and return **the residuals**, each as `left - right`. Fixed arithmetic is more reliable done in JS than read off 50 KB of nested JSON, so this is a tightening of the check, not a shortcut around it.
+
+Then return the G703 **as flat rows** — one line each carrying description, scheduled value, previous, this period, completed-to-date, retainage. Nothing nested.
+
+**Do not return the residuals alone.** Step 5 is not only the six identities: a duplicated line, a zero-quantity line, a description that does not match the scope, retainage that moved when nothing else did — all of those are things this review exists to notice, and every one of them survives a residual of `0.00`. A reducer only finds what it was written to look for. The rows are what let the reviewer find what nobody specified.
 
 **CCO — `ChangeOrderPackage`**
 
@@ -235,10 +288,16 @@ let t=''; for(let i=1;i<=d.numPages;i++){const p=await d.getPage(i);const c=awai
 
 Steps 2→3 must land inside the 60-second window — one tool call each, nothing batched between.
 
+**The window is per window, not per file, so batch inside it.** Navigate several `app.procore.com` tabs at once, take all their presigned URLs from a **single** `tabs_context_mcp`, then extract them all in one scratch-tab call with `Promise.all`. Three calls per batch instead of three per attachment. Keep batches to 4–6 so the 60 seconds is never the binding constraint.
+
+**Distinguish an expired link from a scanned page. This one bites silently.** If a presigned URL expires mid-batch the fetch fails and yields no text — and "no text" is already defined below as *"support is a scanned image."* So an overrun batch quietly converts live invoices into `skipped` verdicts that nobody ordered. In the extraction, record the fetch outcome per file:
+
+- fetch failed, or a non-PDF/expired-signature response → **expired or unreachable.** Re-navigate for a fresh URL and retry that file. Never call it scanned.
+- fetch succeeded, PDF parsed, few or no characters → **genuinely a scanned image.**
+
 Notes:
-- Run several `app.procore.com` tabs in parallel to collect several presigned URLs per round trip.
 - Do not pass a presigned URL to a sandbox web fetcher; it exceeds the URL length limit.
-- Few or no characters extracted means a scanned PDF. Say "support is a scanned image, text not extractable" rather than treating it as empty.
+- Few or no characters extracted **from a successful fetch** means a scanned PDF. Say "support is a scanned image, text not extractable" rather than treating it as empty.
 - Close scratch tabs at the end; leave each reviewed record's tab open.
 
 ## Step 5 — Verify
@@ -426,7 +485,7 @@ The user marks responses on the dashboard and presses execute, which copies an i
 
 **The dashboard is a snapshot.** The user may have actioned an item in Procore directly since the last run. So for **each** item, in this order:
 
-1. **Verify it is still theirs to action, before touching any UI.** Re-query the Step 2 endpoint. If it returns no instance, or `can_respond` is false, or the named response is not in `available_responses`, then it has already been actioned or moved on: **skip it, log it as "already actioned elsewhere — no click made", and continue.** Do not open it, do not click, do not retry. This is the check that prevents a double-response loop.
+1. **Verify it is still theirs to action, before touching any UI.** Re-query the Step 2 endpoint. If it returns no instance, or `can_respond` is false, or the named response is not in `available_responses`, then it has already been actioned or moved on: **skip it, log it as "already actioned elsewhere — no click made", and continue.** Do not open it, do not click, do not retry. This is the check that prevents a double-response loop. **Never batch it**, however tempting it looks next to the fan-outs in Steps 2–4: its whole value is running in the moment before that item's click, and one up-front sweep is cheaper and reintroduces the staleness bug it exists to close.
 2. Only if `can_respond` is still true: open the record and confirm the item number, campus/building and amount against the instruction. **Any mismatch stops the whole batch.**
 3. Open the workflow side panel, click Respond, select only the named response, fill the comment box by the rule below, submit.
    - The user gave a comment for this item → **paste it verbatim.**

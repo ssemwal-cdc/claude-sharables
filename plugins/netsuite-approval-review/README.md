@@ -57,6 +57,11 @@ and the plugin stops and asks if one is missing.
 
 - A NetSuite MCP connector connected in Cowork (read-only is sufficient and
   preferred — the plugin never writes through the connector)
+- **After connecting it, check your NetSuite role in the browser.** The connector
+  signs in under its own account, and connecting it can leave your browser
+  session on that role instead of yours. The approval queue and the approve
+  buttons are both role-scoped, so the wrong role shows a queue that isn't yours,
+  or a record with no buttons on it. Switch back to your normal role.
 - Claude in Chrome, signed in to NetSuite
 - A connected workspace folder for state (attachments are never downloaded)
 

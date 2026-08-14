@@ -64,6 +64,17 @@ next plugin update.
 Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already carries a `config` block, the rest of this
 step is done — go to Step 1. Otherwise, once:
 
+0. **Two browser-side things to say before anything else, because both fail silently later.**
+
+   - **Tell the user to choose "Always allow on this site"** at Chrome's permission prompt, not
+     "Allow once". Once per site for NetSuite. On "allow once" they get re-prompted on effectively
+     every action, and a run that stops for a prompt nobody is watching looks like a hang.
+   - **Ask the user to confirm which NetSuite role their browser is in.** The MCP connector signs in
+     under its own account and role, and connecting it can leave the browser session on that role
+     rather than theirs. The approval queue and the approve buttons are both role-scoped, so the
+     wrong role shows a queue that is not theirs, or a record with no buttons on it. If they are not
+     in their normal role, have them switch back before continuing.
+
 1. **Find the employee internal id.** Query by the user's own email address:
 
    ```sql
@@ -465,6 +476,11 @@ Then, **one record at a time**:
 
 2. Open the record by internal id at `https://<account>.app.netsuite.com/app/accounting/transactions/transaction.nl?id=<id>`.
 3. **Confirm before clicking.** Read the document number, vendor and amount off the page and check all three against the instruction. Any mismatch → stop, do not click, report it.
+
+   **If the record opens but the approval buttons are absent, suspect the browser's NetSuite role
+   before anything else.** The connector signs in under its own account, and a browser left on that
+   role sees the record without the buttons. Ask the user to check their role rather than reporting
+   the item as unactionable — and never click anything while the role is in doubt.
 4. **Choose the button.** Approve, Approve With Notes and Reject sit adjacent — read the label
    before clicking, never the position.
 

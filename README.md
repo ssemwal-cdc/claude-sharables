@@ -4,8 +4,19 @@ Internal marketplace of Claude plugins for Compass Datacenters.
 
 ## For teammates: installing
 
+**Start here: [`docs/onboarding.html`](docs/onboarding.html)** — the start-to-finish
+setup sheet, written for someone who has never touched any of this. Browser,
+connector, install, first run, and scheduling, with a "done when" check on every
+step. Open it in a browser, or use the published copy Shivam shares.
+
+The rest of this section is the short version for people who only need the
+commands.
+
 Register the marketplace once, in the Claude desktop app or the Claude Code
-CLI (see [Cowork](#cowork-and-cloud-sessions) below — it works differently):
+CLI (see [Cowork](#cowork) below — it works differently). In the desktop app:
+**profile (bottom left) → Settings → Plugins → Add → Add marketplace**, enter
+`ssemwal-cdc/claude-sharables`, and leave **auto sync** checked so updates
+arrive on their own. Or from a chat:
 
 ```
 /plugin marketplace add ssemwal-cdc/claude-sharables
@@ -82,11 +93,18 @@ once, in `/plugin` → **Marketplaces** → `compass-claude-plugins` → **Enabl
 auto-update**. Claude Code then refreshes in the background shortly after each
 session starts.
 
-Without that, nothing arrives until someone runs:
+Without that, nothing arrives until someone runs the two-command update from a
+terminal — the CLI form, not the `/plugin` one, because it prints the before and
+after versions and surfaces the qualifier error instead of failing quietly:
 
 ```
-/plugin marketplace update compass-claude-plugins
+claude plugin marketplace update compass-claude-plugins
+claude plugin update netsuite-approval-review@compass-claude-plugins
+claude plugin update procore-open-items-review@compass-claude-plugins
 ```
+
+Then restart the computer. Observed on Windows: an app restart is not always
+enough for a plugin change to show up.
 
 ## Adding another plugin or skill
 

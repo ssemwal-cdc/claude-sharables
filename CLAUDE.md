@@ -467,6 +467,34 @@ costed as small savings. Neither is worth the trade.
 rename those keys for tidiness; it silently discards decisions the user marked
 but has not executed.
 
+**The teammate-facing onboarding sheet lives at `docs/onboarding.html`.** It is
+the source for a published artifact Shivam shares; keep the two in step. Written
+for someone who has never touched any of this, so it is deliberately
+click-by-click: profile (bottom left) → Settings → Plugins → Add → Add
+marketplace, auto sync left checked, then first run in a **Cowork** chat on Opus
+5 / High effort. Every step ends in a "done when" check, which is the device that
+makes it followable — keep that if you edit it.
+
+Facts it carries that are not obvious from the skills:
+
+- **The NetSuite connector needs a separate, Claude-enabled NetSuite account**, a
+  second one issued on top of the user's usual login. A normal NetSuite login is
+  *not* connector access, and people who only have one account assume it is. If
+  the connector is not listed, they were never provisioned — email invite from
+  Compass, otherwise IT. Approvals must still come from their *normal* account,
+  since that is whose name lands on them.
+- **Restart the computer, not the app.** Observed on Windows: an app restart is
+  not reliably enough for a plugin install or update to show up. Updates land on
+  the next reboot, which for most people is the following morning, so auto sync
+  plus a normal work rhythm needs no commands at all.
+- **Nothing runs with the machine off or Chrome closed.** Both plugins drive the
+  real browser session, and a missed scheduled window does not queue up — hence
+  more than one fire time, with the idempotency gate stopping the later ones once
+  a day has succeeded.
+- **`/plugin` and `claude plugin` are different things.** The first is typed in a
+  chat, the second in a terminal. A sheet that says "terminal" and then shows
+  `/plugin` is wrong, and `README.md` used to make exactly that mistake.
+
 **The marketplace name is not the repo name.**
 Repo is `ssemwal-cdc/claude-sharables`; marketplace is `compass-claude-plugins`
 (from `name` in `marketplace.json`). So `add` takes the repo and `install`

@@ -73,6 +73,11 @@ re-verified as still yours to action immediately before it is clicked.
 - No connector. Procore has no MCP connector, so the dashboard is a snapshot
   with a prominent re-check control rather than a live view. It says so plainly
   and ages its own timestamp.
+- **The machine on and Chrome open whenever it runs.** Everything here goes
+  through your real browser session, so a scheduled run needs the computer awake,
+  Chrome running, and you still signed in to Procore. A missed window does not
+  queue up and run later — which is why the schedule is worth giving more than
+  one fire time.
 
 ## First run
 

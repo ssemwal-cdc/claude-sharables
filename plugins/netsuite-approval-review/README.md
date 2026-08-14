@@ -58,13 +58,21 @@ and the plugin stops and asks if one is missing.
 - A NetSuite MCP connector connected in Cowork. The plugin only ever reads
   through it — approvals go through the real NetSuite buttons in your browser, so
   the workflow routes normally and the audit trail records you.
-- **After connecting it, check your NetSuite role in the browser.** The connector
-  signs in under its own account, and connecting it can leave your browser
-  session on that role instead of yours. The approval queue and the approve
-  buttons are both role-scoped, so the wrong role shows a queue that isn't yours,
-  or a record with no buttons on it. Switch back to your normal role.
+- **The connector runs on a separate, Claude-enabled NetSuite account** — a second
+  account issued on top of your usual one. **A normal NetSuite login is not
+  connector access.** If you were never given a second account you do not have
+  this yet: check your email for a Compass invitation to add the NetSuite MCP
+  connector, and contact IT if there isn't one.
+- **Keep the browser on your normal account when approving.** The Claude-enabled
+  account is for reading. Both the queue and the approve buttons are role-scoped,
+  so in the wrong account you'll see a queue that isn't yours, or a record with no
+  buttons on it.
 - Claude in Chrome, signed in to NetSuite
 - A connected workspace folder for state (attachments are never downloaded)
+- **The machine on and Chrome open whenever it runs.** Claude works through your
+  real browser session, so a scheduled run needs the computer awake, Chrome
+  running, and you still signed in. A missed window does not queue up and run
+  later — which is why the schedule is worth giving more than one fire time.
 
 ## First run
 

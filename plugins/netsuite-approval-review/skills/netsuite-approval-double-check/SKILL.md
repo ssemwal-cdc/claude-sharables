@@ -261,9 +261,15 @@ Three things are not optional:
 
 Notes:
 - **Nothing is written to disk.** The bytes stay in the page as an ArrayBuffer, so there is no downloads folder to poll, no cleanup, and no stale file from an earlier run to accidentally re-read.
-- **No attachment at all → flag the item.** Non-PDF attachments are unusual; handle them the same way and note the type.
+- **No attachment at all → flag the item.**
+- **Sniff the bytes before parsing; never hand a non-PDF to pdf.js.** This line used to read *"Non-PDF attachments are unusual; handle them the same way and note the type"* — which instructed exactly the wrong thing. Handing a workbook to `getDocument` throws `InvalidPDFException`, the same error a corrupt download gives, so a perfectly good spreadsheet came back logged as unreadable support. Reported from production on the Procore side, where the identical recipe produced the identical failure.
+
+  Use the same first-four-bytes sniff and the same six outcomes as Step 4 of the Procore skill — `text`, `spreadsheet`, `image`, `scanned`, `expired`, `unsupported` — and keep them distinct. **`scanned` means the bytes were a PDF, it parsed, and it yielded almost nothing.** A parse that threw is never `scanned`; it is `spreadsheet`, `image` or `unsupported`, named by what the bytes actually were.
+
+  Non-PDF support is **not** unusual here either — that assumption is what made this cheap to leave broken.
 - Multiple attachments → check the one referenced by the AP INVOICE / CHANGE ORDER ATTACHMENT field, and mention the others.
-- Few or no characters extracted means a scanned PDF. Say "support is a scanned image, text not extractable" rather than treating it as empty.
+- **Images and scanned pages: look at them.** NetSuite renders the file in the tab, so read it visually rather than extracting text. A visual read counts as parsed text for the tie-outs. If no visual read is available, fall back to OCR and **cap the verdict** — an OCR-derived figure never produces a clean approval recommendation, is labelled `read by OCR, not independently verified`, and goes in front of the user. A misread digit in a seven-figure line is worse than an honest skip.
+- **Say which outcome caused a skip**, in that outcome's own words. "Unreadable" alone is what let entire formats go unread without anyone noticing.
 - **On a two-column page, left and right rows sharing a y-coordinate merge into one line.** `pdftotext -layout` does the same, so this is not a regression — but do not split such a line on whitespace to recover the columns. Split on an x-threshold, or take the figures off the record instead.
 
 ## Step 4 — Verify

@@ -287,26 +287,83 @@ The worker must be fetched as text and turned into a blob URL — pointing `work
 2. Call `tabs_context_mcp`. That tab's URL is now the presigned `s3.amazonaws.com` link, and it **is** readable in the tool result.
 3. In the S3 scratch tab (same origin, no CORS wall), fetch that URL and extract text:
 
+**Sniff the bytes before choosing a reader.** Support is not always a PDF, and handing pdf.js
+anything else throws `InvalidPDFException` — the same error a corrupt download gives, which is how
+a perfectly good spreadsheet used to be logged as unreadable. The first four bytes settle it:
+
 ```javascript
-const b = await (await fetch(u)).arrayBuffer();   // u rebuilt from char codes
-// new Uint8Array is REQUIRED - a raw ArrayBuffer throws InvalidPDFException on valid bytes
-const d = await window.__pj.getDocument({data:new Uint8Array(b)}).promise;
-let t=''; for(let i=1;i<=d.numPages;i++){const p=await d.getPage(i);const c=await p.getTextContent();t+=' '+c.items.map(z=>z.str).join(' ');}
+// Sniff first, parse second. The type picks the reader; a parse that failed must never be
+// reported as "scanned", and ONLY an S3 error body means the link expired.
+window.__sniff = function(ab){
+  const u = new Uint8Array(ab), h = Array.from(u.slice(0, 12));
+  const is = (...s) => s.every((v, i) => h[i] === v);
+  if (is(0x25,0x50,0x44,0x46)) return 'pdf';                                  // %PDF
+  if (is(0x50,0x4B,0x03,0x04)) return 'zip';                                  // xlsx/docx - a ZIP
+  if (is(0xD0,0xCF,0x11,0xE0)) return 'ole2';                                 // legacy .xls/.doc
+  if (is(0x89,0x50,0x4E,0x47)) return 'image';                                // PNG
+  if (is(0xFF,0xD8,0xFF))      return 'image';                                // JPEG
+  if (is(0x47,0x49,0x46,0x38)) return 'image';                                // GIF
+  if (is(0x49,0x49,0x2A,0x00) || is(0x4D,0x4D,0x00,0x2A)) return 'image';     // TIFF
+  if (is(0x52,0x49,0x46,0x46)) return 'image';                                // RIFF (WEBP)
+  if (is(0x3C,0x3F,0x78,0x6D) || is(0x3C,0x45,0x72,0x72)) return 's3error';   // <?xml / <Err
+  // printable ASCII with separators reads as CSV/plain text; anything else is genuinely unknown
+  const s = u.slice(0, 512), pr = s.filter(c => c === 9 || c === 10 || c === 13 ||
+                                                (c >= 32 && c < 127)).length;
+  return (pr / s.length > 0.95) ? 'text' : 'unknown';
+};
 ```
+
+Then dispatch on the result. Only the `pdf` branch is the recipe that was already here:
+
+```javascript
+const r = await fetch(u);                          // u rebuilt from char codes
+const b = await r.arrayBuffer();
+const kind = window.__sniff(b);
+if (kind === 'pdf') {
+  // new Uint8Array is REQUIRED - a raw ArrayBuffer throws InvalidPDFException on valid bytes
+  const d = await window.__pj.getDocument({data:new Uint8Array(b)}).promise;
+  let t=''; for(let i=1;i<=d.numPages;i++){const p=await d.getPage(i);const c=await p.getTextContent();t+=' '+c.items.map(z=>z.str).join(' ');}
+  // a PDF that parsed but yielded almost nothing is the ONLY thing that means "scanned"
+  return {state: t.trim().length > 40 ? 'text' : 'scanned', text: t};
+}
+return {state: kind};                              // never guess; the caller branches
+```
+
+Return the byte length and `kind` alongside, never the URL.
 
 Steps 2→3 must land inside the 60-second window — one tool call each, nothing batched between.
 
 **The window is per window, not per file, so batch inside it.** Navigate several `app.procore.com` tabs at once, take all their presigned URLs from a **single** `tabs_context_mcp`, then extract them all in one scratch-tab call with `Promise.all`. Three calls per batch instead of three per attachment. Keep batches to 4–6 so the 60 seconds is never the binding constraint.
 
-**Distinguish an expired link from a scanned page. This one bites silently.** If a presigned URL expires mid-batch the fetch fails and yields no text — and "no text" is already defined below as *"support is a scanned image."* So an overrun batch quietly converts live invoices into `skipped` verdicts that nobody ordered. In the extraction, record the fetch outcome per file:
+**Six outcomes per attachment, and they are not interchangeable.** This is the same safety property as the Step 2 fan-out's `ok`/`empty`/`failed`, reached from a different direction, and it went wrong here in exactly the way that note warns about. The old rule had only two states and read *"fetch failed, **or a non-PDF** … → expired, retry it."* That clause was written for S3's expired-signature XML, but a spreadsheet is also "a non-PDF", so genuine Excel support routed into the retry branch, re-fetched the same bytes, failed identically, and ended up `skipped` — sometimes described as *"a scanned image"*, about a spreadsheet. **Never collapse these back into "readable / not readable".**
 
-- fetch failed, or a non-PDF/expired-signature response → **expired or unreachable.** Re-navigate for a fresh URL and retry that file. Never call it scanned.
-- fetch succeeded, PDF parsed, few or no characters → **genuinely a scanned image.**
+| Outcome | What it means | What to do |
+|---|---|---|
+| `text` | parsed to characters | review it normally |
+| `spreadsheet` | `zip` with `xl/` entries, or `ole2` | read it as a workbook — see below |
+| `image` | PNG/JPEG/GIF/TIFF/WEBP | visual read — see below |
+| `scanned` | **was a PDF**, parsed, ~no characters | visual read; if that fails, say "support is a scanned image, text not extractable" |
+| `expired` | `s3error`, or the fetch itself threw | re-navigate for a fresh URL and retry — **at most twice**, then report it unreachable |
+| `unsupported` | a real file of a type with no reader | name the actual type. Never call it scanned, never call it expired |
+
+**A retry is only ever legitimate for `expired`.** The old loop had no exit and no type check, so a format it could never parse was retried forever. Bound it at two attempts, and only ever re-fetch when the bytes said `s3error` or the fetch threw — a file that parsed as the wrong type will parse as the wrong type again.
+
+**Images and scanned pages: look at them.** Chrome renders the file, so navigate the record tab to the presigned URL and read it visually rather than extracting text. For a `scanned` PDF, render the page to a canvas in the scratch tab first (`page.render({canvasContext, viewport})`) so there is something to look at. A visual read is treated like parsed text for the tie-outs — it is Claude reading a rendered document, not a guess.
+
+**If no visual read is available, fall back to OCR — and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. Then **an OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties: report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. A misread digit in an eight-figure line is worse than an honest skip, and OCR on a table is exactly where that happens. This cap is deliberate — if it ever feels too noisy, the fix is to get the visual read working, not to relax the cap.
 
 Notes:
 - Do not pass a presigned URL to a sandbox web fetcher; it exceeds the URL length limit.
-- Few or no characters extracted **from a successful fetch** means a scanned PDF. Say "support is a scanned image, text not extractable" rather than treating it as empty.
+- **Check the extension too, but trust the bytes.** `attachments[].filename` gives a cheap hint before fetching; a `.pdf` that sniffs as `zip` is mislabelled, not a PDF, and the bytes win.
 - Close scratch tabs at the end; leave each reviewed record's tab open.
+
+**Provenance, since this repo distinguishes proven from designed.** Three different standards apply here, and conflating them is how a designed guess starts reading like an observed fact:
+
+- **Proven in production:** the `pdf` path and the `new Uint8Array` requirement.
+- **Unit-tested, not yet run in a browser:** `__sniff` itself. All thirteen magic-number cases pass — PDF, ZIP, OLE2, PNG, JPEG, GIF, TIFF both endians, RIFF, two shapes of S3 error body, CSV, and random binary. So the classifier is right about bytes; that is not the same as the branches around it working end to end.
+- **Designed only:** the `spreadsheet` and `image` branches, written from a failure report rather than a reproduction. Confirm the first of each end to end and correct this line once they are.
+
+**The workbook reader is deliberately not built yet.** cdnjs is the only host CSP is proven to allow, SheetJS may not be served from it, and that is a ten-minute live question that gates the design — so `spreadsheet` currently produces an honest, specifically-worded skip rather than a guess at a parser. That ordering is the same one the NetSuite pdf.js work used, and the reason it landed right the first time.
 
 ## Step 5 — Verify
 
@@ -349,7 +406,9 @@ Four outcomes:
 
 - **clear** — figures tie, support is adequate.
 - **flagged** — a specific number is wrong or unsupported. Say which, with figures.
-- **skipped** — not ready for review. **Not approved, not rejected, not a criticism.** Either no attachment at all, or support present but unreadable. This is a deliberate third state: an item with nothing to check against must not be given a verdict.
+- **skipped** — not ready for review. **Not approved, not rejected, not a criticism.** Either no attachment at all, or support that could not be read. This is a deliberate third state: an item with nothing to check against must not be given a verdict.
+
+  **A skip must name which of the Step 4 outcomes caused it**, in the words that outcome uses — "support is a scanned image, text not extractable", "support is a .xlsx and the workbook reader was unavailable", "the attachment link expired twice". *"Unreadable"* on its own is what hid this bug for weeks: it reads identically whether the file was a scan, a spreadsheet, or a link that timed out, so nobody could tell that whole formats were never being read at all. If a skip cannot name its cause, that is a defect in Step 4, not a property of the item.
 - **ungated** — the arithmetic was checked but Procore would not confirm the user is a responder. Since the CCO recipe in Step 2 this should be rare: it means a CCO carrying no `holder.id` that the record redirect could not resolve either, or one whose lines name several different commitment change orders. No response buttons are offered. Say which of the two it was — they need different things from the user.
 
 Items where `can_respond` is `false` are **suppressed**, not skipped — they collapse to a single count.

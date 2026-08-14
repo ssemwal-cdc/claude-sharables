@@ -515,6 +515,57 @@ scanned image"*. An overrun batch therefore converts live invoices into `skipped
 verdicts nobody ordered. Only a **successful fetch** that parsed and yielded
 nothing is a scan; a failed or expired fetch is re-navigated and retried.
 
+**Both skills read every attachment as a PDF, and everything else fell into the
+wrong bucket.** Reported from production 2026-08-14: PDFs review fine, Excel and
+image support comes back unreviewed. It is not a limitation — it is one missing
+type check, and the misfiling is what hid it.
+
+Neither skill sniffed the bytes. `getDocument` throws `InvalidPDFException` on a
+workbook, which is the same error a corrupt download gives, and both skills then
+read that error through a two-state rule that had no room for it. Procore's said
+*"fetch failed, **or a non-PDF** … → expired, retry it"* — a clause written for
+S3's expired-signature XML, which a spreadsheet also satisfies. So Excel support
+was re-fetched, failed identically, and landed as `skipped`, sometimes described
+as *"a scanned image"*. The retry had no exit and no type check, so a format that
+could never parse was retried forever. NetSuite was blunter still: *"Non-PDF
+attachments are unusual; handle them the same way and note the type"* — an
+instruction to feed a workbook to pdf.js, resting on an assumption about
+frequency that was simply wrong.
+
+**This is the same bug class as the CCO `wfId` and the fan-out's `empty` vs
+`failed`** — a distinct failure folded into a category that means something else,
+so it never surfaces. The principle was already written down twice and had just
+never been applied to file formats. Six outcomes now, kept distinct: `text`,
+`spreadsheet`, `image`, `scanned`, `expired`, `unsupported`. **`scanned` is the
+narrow one** — the bytes were a PDF, it parsed, and it yielded almost nothing.
+Anything that threw is named by what the bytes were.
+
+Two rules that fall out and should not be relaxed:
+
+- **A retry is only legitimate for `expired`.** Bounded at two. A file that
+  parsed as the wrong type will parse as the wrong type again.
+- **A skip must name which outcome caused it.** *"Unreadable"* is what hid this:
+  it reads identically whether the file was a scan, a workbook, or a link that
+  timed out, so entire formats went unread with nothing in the log to show it.
+
+**Images get looked at, not OCR'd, where there is any choice.** Chrome renders the
+file, so navigating to it and reading it visually is both more accurate and free
+of any CDN. OCR is the fallback only, and **an OCR-derived figure never produces a
+`clear` verdict** even when the arithmetic ties — it is labelled
+`read by OCR, not independently verified` and left flagged for a human. A misread
+digit in an eight-figure line is worse than an honest skip, and a table is exactly
+where OCR misreads. If that cap ever feels noisy, fix the visual read; do not relax
+the cap.
+
+**The sniff table is designed, not yet observed** — written from a failure report
+rather than a reproduction, which is the opposite of how the rest of these notes
+were earned. Confirm the first `spreadsheet` and first `image` end to end and
+correct the provenance note in Step 4 once they are. The Excel *reader* is
+deliberately not built yet: cdnjs is the only host CSP is proven to allow, SheetJS
+may not be served there, and that is a ten-minute live question that gates the
+design — the same order the NetSuite pdf.js work used, and the reason it landed
+right first time.
+
 **Reduce the nesting, never the rows.** Computing the six G702 identities in the
 page and returning residuals is a *tightening* — fixed arithmetic is more
 reliable in JS than read off 50 KB of nested JSON. But returning residuals

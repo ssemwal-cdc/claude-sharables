@@ -55,8 +55,9 @@ and the plugin stops and asks if one is missing.
 
 ## Requirements
 
-- A NetSuite MCP connector connected in Cowork (read-only is sufficient and
-  preferred — the plugin never writes through the connector)
+- A NetSuite MCP connector connected in Cowork. The plugin only ever reads
+  through it — approvals go through the real NetSuite buttons in your browser, so
+  the workflow routes normally and the audit trail records you.
 - **After connecting it, check your NetSuite role in the browser.** The connector
   signs in under its own account, and connecting it can leave your browser
   session on that role instead of yours. The approval queue and the approve

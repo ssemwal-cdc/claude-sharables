@@ -66,9 +66,11 @@ step is done — go to Step 1. Otherwise, once:
 
 0. **Two browser-side things to say before anything else, because both fail silently later.**
 
-   - **Tell the user to choose "Always allow on this site"** at Chrome's permission prompt, not
-     "Allow once". Once per site for NetSuite. On "allow once" they get re-prompted on effectively
-     every action, and a run that stops for a prompt nobody is watching looks like a hang.
+   - **Warn them about the site-access prompt before it appears.** The first time this skill acts on
+     NetSuite, Claude in Chrome asks the user whether to allow access to that site, offering a
+     once-only option and an always option. **Tell them to pick the always option.** On once-only
+     they are re-prompted on effectively every action, and a run that stops for a prompt nobody is
+     watching looks like a hang.
    - **Ask the user to confirm which NetSuite role their browser is in.** The MCP connector signs in
      under its own account and role, and connecting it can leave the browser session on that role
      rather than theirs. The approval queue and the approve buttons are both role-scoped, so the

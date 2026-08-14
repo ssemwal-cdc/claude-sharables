@@ -593,6 +593,51 @@ the probe was mine and it was wrong. A run that had quietly caught the exception
 and reported four clean CDN results would have left a broken `page.render` in the
 skill to be discovered later, by a scanned invoice, in production.
 
+**The workbook reader is settled, and the simplest loader won.** Probed live
+2026-08-14: `await import()` of the cdnjs UMD build populates `globalThis.XLSX` on
+the first attempt, and a workbook round-trips through `read` and `sheet_to_csv`.
+Four fallbacks sat behind it — blob import, XHTML-namespaced `<script>`,
+`new Function`, ESM from SheetJS's own CDN — and **none was reached, so none is
+known to work.** Do not add one back as a safety net; an untested fallback is not a
+safety net.
+
+The probe is also why this took two rounds rather than one, and the reason is worth
+keeping: **reachability is not executability.** The first probe used `fetch` on five
+CDNs and all five returned 200, which says `connect-src` allows them and says
+nothing about `script-src`. cdnjs was the only host with any evidence for
+*executing* code, and that evidence was the pdf.js recipe already doing it in
+production. Anyone extending this to a new library should test the import, not the
+fetch.
+
+cdnjs pins 0.18.5, which predates SheetJS's prototype-pollution and ReDoS fixes.
+Accepted deliberately: parsing happens in the S3 scratch tab, which holds no
+Procore session, and the output is data that is never executed. `cdn.sheetjs.com`
+serves a current build and fetches fine, but executing from it is untested for
+exactly the reason above.
+
+**The output filter has a second trigger nobody knew about, and it silently
+rewrites values.** `LIB.version` — the literal string `0.18.5` — came back as
+`[BLOCKED: JWT token]`. Not secret, not a token; the dotted-numeric shape matched a
+credential classifier. The existing note covers `[BLOCKED: Cookie/query string
+data]` and reads as though that were the only filter on the path. It is not.
+
+This matters because both skills return **figures**, and dotted identifiers are
+everywhere in construction data — spec sections, phase codes, drawing revisions. So
+the rule in both skills is now: **a `[BLOCKED: …]` string is never a value.** Re-return
+the field in another shape and read it again; never let the marker reach a verdict,
+a comment or the dashboard, and never read it as the field being empty. A redaction
+that reads as an empty field is the same silent-misfile shape as everything else in
+these notes.
+
+**`computer` is the only visual read in the browser tool set.** Confirmed against
+the live list 2026-08-14. `get_page_text` and `read_page` extract text, `find`
+locates text, `read_console_messages` and `read_network_requests` read logs, and
+`upload_image` / `file_upload` are inputs rather than reads. So a scanned invoice or
+a photographed proposal is read by screenshotting with `computer`, and **no text
+extractor will ever return anything for one** — reaching for them is precisely what
+produced "support present but unreadable". Good news for the OCR cap: with a real
+visual read available, OCR should be a rare fallback rather than the normal path.
+
 **The sniff table is designed, not yet observed** — written from a failure report
 rather than a reproduction, which is the opposite of how the rest of these notes
 were earned. Confirm the first `spreadsheet` and first `image` end to end and

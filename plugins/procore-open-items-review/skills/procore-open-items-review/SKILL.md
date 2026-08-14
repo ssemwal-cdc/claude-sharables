@@ -340,15 +340,50 @@ Steps 2→3 must land inside the 60-second window — one tool call each, nothin
 | Outcome | What it means | What to do |
 |---|---|---|
 | `text` | parsed to characters | review it normally |
-| `spreadsheet` | `zip` with `xl/` entries, or `ole2` | read it as a workbook — see below |
-| `image` | PNG/JPEG/GIF/TIFF/WEBP | visual read — see below |
-| `scanned` | **was a PDF**, parsed, ~no characters | visual read; if that fails, say "support is a scanned image, text not extractable" |
+| `spreadsheet` | `zip` with `xl/` entries, or `ole2` | read it as a workbook with SheetJS — see below |
+| `image` | PNG/JPEG/GIF/TIFF/WEBP | visual read with `computer` — see below |
+| `scanned` | **was a PDF**, parsed, ~no characters | rasterise, then visual read; if that fails, say "support is a scanned image, text not extractable" |
 | `expired` | `s3error`, or the fetch itself threw | re-navigate for a fresh URL and retry — **at most twice**, then report it unreachable |
 | `unsupported` | a real file of a type with no reader | name the actual type. Never call it scanned, never call it expired |
 
 **A retry is only ever legitimate for `expired`.** The old loop had no exit and no type check, so a format it could never parse was retried forever. Bound it at two attempts, and only ever re-fetch when the bytes said `s3error` or the fetch threw — a file that parsed as the wrong type will parse as the wrong type again.
 
+**Reading a workbook.** Confirmed live in the scratch tab 2026-08-14: a plain dynamic `import()` of the cdnjs UMD build loads SheetJS and populates `globalThis.XLSX` on the first attempt — the same host and the same call shape the pdf.js recipe already uses. Four fallback loaders were probed behind it (blob import, XHTML-namespaced `<script>`, `new Function`, ESM from SheetJS's own CDN) and **none was reached**, so none of them is known to work. Do not "restore" one as a fallback on the assumption that it does.
+
+```javascript
+// once per run, beside the pdf.js setup
+await import('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+
+// per workbook. Same Uint8Array wrap the PDF path needs, and the same whole-unit
+// size budget as the NetSuite page reader - never split a sheet across returns.
+window.__sheets = function(ab, from){
+  const wb = XLSX.read(new Uint8Array(ab), {type:'array'});
+  let out = '', n = from || 0;
+  for (; n < wb.SheetNames.length; n++){
+    const nm = wb.SheetNames[n];
+    const rows = XLSX.utils.sheet_to_csv(wb.Sheets[nm], {blankrows:false})
+      .split('\n')
+      .filter(r => r.replace(/,/g,'').trim() && !/\d{20,}/.test(r))
+      .join('\n');
+    const block = '--- sheet ' + (n+1) + ': ' + nm + ' ---\n' + rows;
+    if (out && out.length + block.length > 4000) break;
+    out += (out ? '\n\n' : '') + block;
+  }
+  return {text: out, next: n >= wb.SheetNames.length ? null : n, sheets: wb.SheetNames.length};
+};
+```
+
+Call it again with `next` until it returns `null`, exactly like the NetSuite page reader.
+
+- **Read every sheet, including hidden ones.** A superseded figure or a working column is precisely what gets hidden rather than deleted, and `SheetNames` lists hidden sheets. Never take sheet 1 and stop.
+- **`sheet_to_csv` returns the cached computed value, not the formula.** A cell whose formula was never evaluated by Excel comes back **blank** — report that as a blank, never as zero. A zero is a figure; a blank is a missing one, and they mean opposite things in a tie-out.
+- **Keep the long-digit row filter**, same reason as the PDF path: one barcode-ish row turns the whole result into `[BLOCKED: …]`.
+- **A `text` sniff (CSV, plain text) needs no library** — return it directly.
+- **cdnjs pins 0.18.5, which predates SheetJS's prototype-pollution and ReDoS fixes.** It is what that host serves, and it parses attachments from vendors. The blast radius is small on purpose: parsing happens in the S3 scratch tab, which carries no Procore session, and the output is treated as data, never executed. `cdn.sheetjs.com` serves a current build and **fetches** fine, but whether `script-src` permits *executing* from that host is untested — the probe short-circuited before reaching it. Settle that before moving, rather than assuming reachability implies executability. That distinction is the whole reason this step was probed twice.
+
 **Images and scanned pages: look at them.** Chrome renders the file, so navigate the record tab to the presigned URL and read it visually rather than extracting text. A visual read is treated like parsed text for the tie-outs — it is Claude reading a rendered document, not a guess.
+
+**The visual read is `computer`, and it is the only tool that gives one.** Confirmed against the live tool list 2026-08-14. `get_page_text` and `read_page` extract text, `find` locates text, `read_console_messages` and `read_network_requests` read logs; `upload_image` and `file_upload` are inputs, not reads. So a scanned invoice or a photographed proposal is read by screenshotting the viewport with `computer` — **none of the text extractors will ever return anything for one**, and reaching for them is what produced "support present but unreadable".
 
 **The scratch tab is an XML document, and that breaks `document.createElement`.** Confirmed live 2026-08-14: `document.createElement('canvas').getContext` is *not a function* there, and `document.contentType` reports `application/xml`. The S3 bucket listing was chosen precisely because it returns XML — that is what makes it attachable, unlike a PDF — so this is a permanent property of the tab, not a glitch. On an XML document `createElement` produces a **null-namespace** element rather than an `HTMLCanvasElement`, so it has no 2D context and nothing to render into.
 
@@ -373,10 +408,13 @@ Notes:
 **Provenance, since this repo distinguishes proven from designed.** Three different standards apply here, and conflating them is how a designed guess starts reading like an observed fact:
 
 - **Proven in production:** the `pdf` path and the `new Uint8Array` requirement.
-- **Unit-tested, not yet run in a browser:** `__sniff` itself. All thirteen magic-number cases pass — PDF, ZIP, OLE2, PNG, JPEG, GIF, TIFF both endians, RIFF, two shapes of S3 error body, CSV, and random binary. So the classifier is right about bytes; that is not the same as the branches around it working end to end.
-- **Designed only:** the `spreadsheet` and `image` branches, written from a failure report rather than a reproduction. Confirm the first of each end to end and correct this line once they are.
+- **Probed live in the scratch tab, 2026-08-14:** SheetJS loads from cdnjs by plain `import()`; a workbook round-trips through `read` and `sheet_to_csv`; `OffscreenCanvas` and XHTML-namespaced canvas both give a 2D context; `computer` is the only visual read in the tool set.
+- **Unit-tested, not yet run in a browser:** `__sniff` and `__sheets`. All thirteen magic-number cases pass — PDF, ZIP, OLE2, PNG, JPEG, GIF, TIFF both endians, RIFF, two shapes of S3 error body, CSV, and random binary. `__sheets` was run against a stubbed workbook and returns sheets whole rather than split, includes the hidden sheet, drops a barcode row while keeping the real row beside it, and preserves the figures. So the classifier is right about bytes and the reader is right about sheets; neither is the same as the branches firing on a real queue.
+- **Still not observed:** a real Procore `.xlsx` and a real image attachment, end to end. The round-trip proved the library on a workbook this code wrote itself. Confirm the first of each against an actual attachment and correct this line once they are.
 
-**The workbook reader is deliberately not built yet.** cdnjs is the only host CSP is proven to allow, SheetJS may not be served from it, and that is a ten-minute live question that gates the design — so `spreadsheet` currently produces an honest, specifically-worded skip rather than a guess at a parser. That ordering is the same one the NetSuite pdf.js work used, and the reason it landed right the first time.
+**The harness silently rewrites values it misclassifies, and that is a reporting hazard, not a cosmetic one.** Observed 2026-08-14: `LIB.version`, whose value is the literal string `0.18.5`, came back as `[BLOCKED: JWT token]`. Nothing about it is secret — the dotted-numeric shape simply matched a credential classifier. The existing note about `[BLOCKED: Cookie/query string data]` covers query strings; this is a **second, differently-triggered filter** on the same path.
+
+The consequence for this skill is direct: it returns figures, and dotted identifiers are ordinary in construction — spec sections like `09.21.16`, phase codes, drawing revisions. **A `[BLOCKED: …]` string is never a value.** If one appears where a figure or identifier should be, re-return that field in a different shape (spaced out, or split across keys) and read it again. Never let the marker itself reach a verdict, a comment or the dashboard, and never treat it as evidence the underlying field was empty.
 
 ## Step 5 — Verify
 

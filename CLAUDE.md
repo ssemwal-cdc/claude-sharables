@@ -419,6 +419,49 @@ The type is per item now (`wf`) with `wfId` beside it, because the queue's
 `item_type` and the workflow endpoint's type are not the same thing and the old
 kind-keyed constant assumed they were.
 
+**Both skills fan out their reads now, and the fan-out has one failure mode that
+governs the whole design.** Procore's gate used to issue one GET per queue item
+across a ~73 item queue, ~41 of them only to learn the item was noise; NetSuite
+re-read each record page with `get_page_text` when Step 1a's bulk query already
+carried most of those fields. The dominant cost in both was **round trips**, not
+the size of any one response.
+
+Turning *N* sequential requests into *N* concurrent ones changes what a failure
+looks like. A request that fails and returns nothing is indistinguishable from an
+item with no workflow instance — which both skills define as *already actioned
+elsewhere, skip it*. So a blip silently suppresses a live item and logs it as
+done, plurally and quietly. Same bug class as a CCO resolving to the wrong
+`wfId`.
+
+Hence every fan-out returns one of **three** states per item — `ok`, `empty`
+(the API genuinely returned nothing), `failed` (with the code). A `failed` is
+named and excluded; it is never folded into the suppressed count. A 429 from
+rate limiting is a `failed`, not an `empty`, which is why concurrency is capped
+at 8–10 rather than let rip. **Never collapse those three back into a boolean.**
+
+**Batching attachment extraction collides with the scanned-PDF branch.** The
+presigned window is per window, not per file, so batching inside it is free — but
+an expired link yields no text, and "no text" already means *"support is a
+scanned image"*. An overrun batch therefore converts live invoices into `skipped`
+verdicts nobody ordered. Only a **successful fetch** that parsed and yielded
+nothing is a scan; a failed or expired fetch is re-navigated and retried.
+
+**Reduce the nesting, never the rows.** Computing the six G702 identities in the
+page and returning residuals is a *tightening* — fixed arithmetic is more
+reliable in JS than read off 50 KB of nested JSON. But returning residuals
+*alone* was proposed and rejected: a duplicated line, a zero-quantity line, a
+description that does not match the scope all survive a residual of `0.00`. A
+reducer only finds what it was written to look for, and this review exists to
+catch what nobody specified. So the G703 still comes back, flattened.
+
+**Two checks are never batched, and both now say so in place** — because they are
+what an optimisation pass reaches for next. The **pre-click** re-verification's
+entire value is running in the moment before that item's click. The **post-click**
+verification catches more than connector lag: an unexpected record state, a
+response that routed wrongly, a frozen tab. Sweeping once at the end means every
+remaining click has already landed before any of that is visible. Both were
+costed as small savings. Neither is worth the trade.
+
 **Per-item marks live in `localStorage`** (`ns_marks_v1`, `pc_marks_v1`,
 `pc_view_v2`) and are the only user state that survives a re-render. Never
 rename those keys for tidiness; it silently discards decisions the user marked

@@ -146,13 +146,28 @@ Review **every** item regardless of dollar amount. There is no threshold.
 
 ## Step 2 — Read each record
 
-`get_page_text` on each record tab returns the full field set. Capture:
+The full field set is this:
 
 - Reference no. / document no., vendor, date, **AMOUNT**, internal id
 - MEMO, subsidiary, approval group, requestor
-- The attachment filename (AP INVOICE or CHANGE ORDER ATTACHMENT field)
+- The attachment file id (AP INVOICE or CHANGE ORDER ATTACHMENT field)
 - Every **line** in the Items sublist: quantity, rate, amount, description
 - For change orders: **CHANGE ORDER AMOUNT** and **PREVIOUSLY APPROVED AMOUNT**
+
+**Do not `get_page_text` each record to collect it.** A record page is thousands of tokens and Step 1a already returned most of these in one query — document no., vendor, date, amount, internal id, memo and the attachment file ids. Query the rest in bulk instead, keyed on every id at once:
+
+```sql
+SELECT tl.transaction, tl.quantity, tl.rate, tl.foreignamount, tl.memo AS line_memo
+FROM transactionline tl
+WHERE tl.transaction IN (<all ids from step 1>)
+ORDER BY tl.transaction, tl.linesequencenumber
+```
+
+Add subsidiary, approval group and requestor as columns to the Step 1a query rather than reading them off the page — they are the fields 1a does not already carry.
+
+**Confirm field parity once, on a real bill, before relying on this.** Compare what the two queries return against what `get_page_text` gives for the same record. Every field in the list above must be present. A bulk query that silently returns fewer fields means the review is checking less than it used to, which is worse than the round trips it saved. If a field cannot be resolved this way, read that one from the page and say so.
+
+**Keep opening the record tabs.** The cost being avoided here is `get_page_text`, not the tab. Each record's tab is a deliverable — the user acts on it directly after the review — so the ctrl-click from Step 1b stays exactly as it is.
 
 The line-level quantity x rate is the first math check and it is free — do it before touching the PDF.
 
@@ -207,14 +222,28 @@ window.__page = async function(n){
 'ready'
 ```
 
-Then `await window.__open('<path>')` for the page count, and `await window.__page(n)` — **one page per call**.
+Then `await window.__open('<path>')` for the page count, and `await window.__pages(from)` to pull as many **whole** pages as fit in one return:
+
+```javascript
+window.__pages = async function(from){
+  let out='', n=from;
+  for(; n<=window.__doc.numPages; n++){
+    const p = await window.__page(n);
+    if (out && out.length + p.length > 4000) break;   // whole pages only, never split one
+    out += (out?'\n\n':'') + '--- page '+n+' ---\n' + p;
+  }
+  return {text: out, next: n > window.__doc.numPages ? null : n};
+};
+```
+
+Call it again with `next` until it returns `null`. Most 2–3 page invoices come back in one call; a single oversized page still returns alone and uncut, which is the old one-per-call behaviour — so this degrades gracefully rather than truncating.
 
 This rebuilds the column layout from pdf.js geometry, and that is the point of it. Verified against `pdftotext -layout` on a 3-page utility invoice: description, basis and amount landed in the same three columns. A naive `items.map(z => z.str).join(' ')` flattens the table and would silently break the quantity x rate checks in step 4. **Do not simplify it to that.**
 
 Three things are not optional:
 
 - **`new Uint8Array(b)` is mandatory.** Handing `getDocument` the ArrayBuffer directly throws `InvalidPDFException` on bytes that are provably fine — right content type, right `%PDF` header — which reads like a corrupt download and sends you debugging the fetch instead. The wrap looks redundant. It is not.
-- **Return one page per call.** A whole document truncates.
+- **Never split a page across returns.** A whole document truncates, but that is a size limit rather than a count limit — hence the budget above. Splitting mid-page is what actually loses figures, because a row cut in half stops tying to anything.
 - **Keep the row filter.** Barcode rows and long digit strings read as query-string data to the output filter, and one of them turns the entire result into `[BLOCKED: Cookie/query string data]`. On the test invoice the filter dropped 15 of 60 rows — all payment-stub noise, no figures.
 
 Notes:
@@ -245,6 +274,8 @@ Calibration decisions already established — apply these rather than re-flaggin
 ## Step 5 — Cross-check against the real PO and history
 
 This is where the review earns its keep. Always do it.
+
+**Pull every PO in the run in one query**, not one per item. The `IN` below is the point of the query, not a template — collect the referenced PO numbers across all items first, then issue it once. The billing-history pull that follows is the same shape: one query with an `OR` across the engagements, sorted, rather than one per vendor.
 
 **Pull the real PO** referenced on the invoice or in `custbody3`:
 
@@ -426,6 +457,10 @@ Then, **one record at a time**:
    stale between opening the dashboard and pressing execute; this one runs against the record in the
    moment before it is clicked, so there is no window at all.
 
+   **Never batch this check, however tempting it looks next to the fan-outs in Steps 1–3.** Hoisting
+   it into one up-front sweep is cheaper and reintroduces exactly the staleness bug this step exists
+   to close. It runs per item, immediately before that item's click, always.
+
    Change orders cannot be queried this way. For those, rely on the on-page confirmation in step 3.
 
 2. Open the record by internal id at `https://<account>.app.netsuite.com/app/accounting/transactions/transaction.nl?id=<id>`.
@@ -494,6 +529,8 @@ Then, **one record at a time**:
    query actually returned, never what the click was meant to achieve. An entry written ahead of
    its verification is a fabrication, and afterwards it is indistinguishable from a real one —
    which destroys the value of the log at exactly the moment it matters.
+
+**The post-click verification stays per item too.** It is tempting to click all N and reconcile once at the end, since the connector lag means an immediate re-query mostly reads "not yet" anyway. Do not. The check catches more than lag — a record in an unexpected state, a response that routed somewhere it should not have, the frozen-tab case in step 6 — and a single end-of-run sweep means every remaining click has already landed before any of that is visible. On a batch worth millions that is not a saving.
 
 **A failure stops the batch.** If an item cannot be confirmed or does not match, stop there. A
 record that has not propagated yet is **not** a failure — do not report it as one and do not

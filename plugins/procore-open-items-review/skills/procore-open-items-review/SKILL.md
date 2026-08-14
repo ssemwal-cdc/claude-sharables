@@ -159,7 +159,7 @@ Returns an array with one instance. The discriminator:
 - `true` → the user is a current-step responder. **Review it.**
 - `false` → distribution only. **Suppress it** — count it, don't describe it.
 
-Also capture from `[0].current_step_occurrence`: `name` (the step), `due_at`, and `available_responses`. **Response verbs vary by step** and drive the dashboard buttons — invoices at FA Review offer Approve / Revise and Resubmit, change risks at a cost gate offer Yes / Reject. Never assume a fixed triplet.
+Also capture from `[0].current_step_occurrence`: `name` (the step), `due_at`, and `available_responses`. **Response verbs vary by step** and drive the dashboard buttons — invoices and change order packages at Financial Analyst Review offer Approve / Revise and Resubmit, change risks at a cost gate offer Yes / Reject. Never assume a fixed triplet, and in particular do not assume a change order takes the change risk's Yes / Reject pair because both are change work.
 
 **Run the whole gate as one in-page fan-out, not one tool call per item.** The queue is routinely 70+ items and most of them are noise, so issuing this serially spends the bulk of the run learning what to ignore. From a tab on `app.procore.com`, where the session cookie already applies:
 
@@ -209,15 +209,21 @@ filters[workflowable_object_type]=CommitmentChangeOrder
 filters[workflowable_object_id]=<commitment change order id>
 ```
 
-**Resolve that id by opening the package record.** `.../change_orders/commitment_contract_change_orders/<package_id>` redirects to the change order, and the id it lands on is the one this query wants. It is a different number from the package id — do not assume they match. Record it in the log as `wfId`; the dashboard needs it, because the execute instruction has to compose the same pair.
+**That id is on the package payload, at `line_items[].holder.id`.** Confirmed live 2026-08-14 against five packages, every one of which then gated as actionable at Financial Analyst Review. So there is no browser round trip to pay and no redirect to chase: the Step 3 CCO read already returns it.
 
-An API field may carry that id and would save a browser round trip per CCO. Nobody has confirmed which one, so the redirect is the method until someone does.
+**This inverts the order for CCOs, and only for CCOs.** ICRs and invoices are gated first and read afterwards, so the gate can throw away the noise before anything expensive happens. A CCO cannot work that way — the read is what produces the lookup id, so it has to come first. Fetch the change order packages ahead of the gate, take their holder ids, then run the Step 2 fan-out over the whole queue at once. The wasted reads are bounded by the number of CCOs in the queue, which is small; the alternative is no gate at all.
 
-**A same-page `fetch` may resolve all of them at once — but only accept it if it really redirected.** `await fetch(packageUrl, {redirect:'follow'})` then reading `response.url` costs one call for every CCO in the run, instead of a browser round trip each. It works only if Procore answers that route with an HTTP 3xx; if the route resolves client-side, `response.url` comes back as the URL you sent — **the package id** — and querying with the package id is precisely what silently skips a live item.
+`holder` is a per-line field, so **dedupe it across `line_items[]`**:
 
-So accept the result **only** when `response.url` differs from the request URL *and* the id it yields returns a workflow instance. Anything else → fall back to opening the record. If neither works, `ungated`.
+- **Exactly one distinct `holder.id`** → that is the `wfId`. Record it in the log; the dashboard needs it, because the execute instruction has to compose the same type and id pair.
+- **More than one** → a package spanning several commitment change orders. One queue row cannot stand in for several workflow instances, and there is no basis for choosing among them, so **do not pick one**: mark the item `ungated`, name the ids, and leave it to the user.
+- **None, or no `holder` on the payload** → fall back to opening the package record. `.../change_orders/commitment_contract_change_orders/<package_id>` redirects to the change order, and the id it lands on is the one this query wants.
 
-**If you cannot resolve the id, mark the item `ungated`** and offer no response buttons, as before. **Never fall back to querying with the package id.** It 400s, and the execute instruction reads a lookup that returns no instance as "already actioned elsewhere" — so a wrong id does not surface as an error, it silently skips a live item and logs it as done.
+The resolved id is a different number from the package id in every case. Never assume they match.
+
+**If you cannot resolve the id, mark the item `ungated`** and offer no response buttons. **Never fall back to querying with the package id.** It 400s, and the execute instruction reads a lookup that returns no instance as "already actioned elsewhere" — so a wrong id does not surface as an error, it silently skips a live item and logs it as done.
+
+**Cross-check the first CCO of a run against the UI.** That silent failure is exactly why: a wrong id yields a plausible empty result rather than an error, so the gate cannot detect its own miss. Open the change order record and read its workflow panel — a genuinely actionable item shows a live **Respond** button with the user named against the current step's role. Confirmed on CE #019, which rendered Respond with the user as Financial Analyst while the gate returned `can_respond` true at Financial Analyst Review. **Look, do not click**; review mode never touches that button. One record per run is enough — this confirms the recipe, not each item.
 
 ## Step 3 — Read the record
 
@@ -256,6 +262,8 @@ GET /rest/v1.0/change_order_packages/<item_id>    project_id=<project_id>
 ```
 
 `number`, `title`, `status`, `executed`, `grand_total`, `line_items[]`, `attachments[]`, `contract_id`.
+
+**Run this one before the Step 2 gate, not after it.** `line_items[].holder.id` is the commitment change order id the gate needs, so for CCOs this read is a prerequisite of the gate rather than a consequence of passing it. Capture `holder.id` per line here and dedupe it as Step 2 describes.
 
 ## Step 4 — Read the attached support without downloading it
 
@@ -342,7 +350,7 @@ Four outcomes:
 - **clear** — figures tie, support is adequate.
 - **flagged** — a specific number is wrong or unsupported. Say which, with figures.
 - **skipped** — not ready for review. **Not approved, not rejected, not a criticism.** Either no attachment at all, or support present but unreadable. This is a deliberate third state: an item with nothing to check against must not be given a verdict.
-- **ungated** — the arithmetic was checked but Procore would not confirm the user is a responder. Since the CCO recipe in Step 2 this should be rare: it means a CCO whose commitment change order id could not be resolved. No response buttons are offered.
+- **ungated** — the arithmetic was checked but Procore would not confirm the user is a responder. Since the CCO recipe in Step 2 this should be rare: it means a CCO carrying no `holder.id` that the record redirect could not resolve either, or one whose lines name several different commitment change orders. No response buttons are offered. Say which of the two it was — they need different things from the user.
 
 Items where `can_respond` is `false` are **suppressed**, not skipped — they collapse to a single count.
 
@@ -361,7 +369,7 @@ Maintain `Procore Open Items/_procore_review_log.json`:
   "items": {
     "<item_type>:<item_id>": {
       "itemId": "17074361", "projectId": "2992760", "commitmentId": "15453968",
-      "wfId": "CCOs only - the commitment change order id from Step 2, omit for ICRs and invoices",
+      "wfId": "CCOs only - the commitment change order id, from line_items[].holder.id; omit for ICRs and invoices",
       "kind": "inv", "type": "Invoice", "docNo": "#2 · 536994-TOF (PR-02)",
       "project": "ORD I - Building 1", "counterparty": "Power Construction Company, LLC.",
       "amount": 891991, "dueDate": "2026-08-02", "step": "FA Review",

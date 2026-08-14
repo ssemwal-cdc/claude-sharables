@@ -117,7 +117,8 @@ def main():
     if ungated:
         print("WARNING: no wfId, so demoted to ungated with no response buttons: " +
               ", ".join(ungated) + ". Resolve each one's commitment change order id "
-              "(Step 2) and re-publish to make them respondable.")
+              "from line_items[].holder.id on the package payload (Step 2) and "
+              "re-publish to make them respondable.")
 
     thin = [i["doc"] for i in items if not i["head"] or not i["facts"]]
     if thin:

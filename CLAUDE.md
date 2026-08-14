@@ -401,10 +401,47 @@ not one. The workflow simply is not attached to that object. Querying
 `workflowable_object_type=CommitmentChangeOrder` with the **commitment change
 order id** returns the instance immediately.
 
-That id is not the package id. The package record redirects to the change order,
-and the id it lands on is the one the query wants — so it costs a browser round
-trip per CCO. An API field may carry it; nobody has confirmed which, so the
-redirect is the method and the skill says so rather than guessing.
+That id is not the package id. **It is `line_items[].holder.id` on the package
+payload** — confirmed 2026-08-14 against five packages, all five of which then
+gated as actionable at Financial Analyst Review. That closes the open question
+this note carried for a day: the first version said an API field might hold the
+id, nobody had confirmed which, and the browser redirect was the method until
+someone did. Someone did.
+
+Two consequences worth keeping.
+
+**The read now precedes the gate, for CCOs only.** Every other item type is
+gated first so the fan-out can discard the noise cheaply, and inverting that for
+one type looks like an inconsistency to tidy up. It is not: the read is what
+produces the lookup id, so a CCO cannot be gated before it is read. The wasted
+reads are bounded by the CCO count, which is small, and the alternative is no
+gate at all.
+
+**A package can span several commitment change orders**, since `holder` is per
+line rather than per package. Dedupe across the lines: one id is the answer,
+several means there is no single workflow instance the queue's one row stands
+for, and the skill reports the ids and leaves it `ungated` rather than choosing.
+Choosing would be a guess with the silent failure mode described below.
+
+The `fetch(packageUrl, {redirect:'follow'})` trick the skill briefly carried is
+**gone, deliberately.** It read `response.url` to resolve all the ids in one
+call, and was hedged about because a client-side route resolution returns the URL
+you sent — the package id — which is precisely the wrong id. `holder.id` gets the
+same saving with none of that, so the hedge is dead weight. Do not reintroduce it.
+
+The independent check on all of this is the UI, and it is worth keeping because
+the failure mode is silent: open the change order record and a genuinely
+actionable item renders a live **Respond** button naming the user against the
+current step's role. Observed on CE #019 — Respond shown, user named as Financial
+Analyst, gate returning `can_respond` true at Financial Analyst Review. Two
+independent sources agreeing is what makes the recipe trustworthy; the gate alone
+cannot detect its own miss.
+
+**CCOs at Financial Analyst Review offer Approve / Revise and Resubmit**, the
+invoice verbs, not the change risk's Yes / Reject. Worth stating because the
+wrong guess is the intuitive one — a change order and a change risk are both
+change work, so the pairing reads as though it should follow the subject matter.
+It follows the step.
 
 **The dangerous part is the failure mode, not the 400.** The execute instruction
 treats a lookup returning no instance as *already actioned elsewhere* and skips
@@ -620,6 +657,22 @@ netsuite-approval-review   9ea01d3a5df2 -> 5c242055c130
 **Prefer this over the `/plugin` flow.** It is scriptable, it prints the before
 and after versions so you can see whether anything actually shipped, and it
 surfaces the qualifier error rather than failing quietly.
+
+**A stale install presents as a bug in the repo, and it is worth recognising on
+sight.** Reported 2026-08-14: `publish_dashboard.py` was hardcoding
+`cco -> ChangeOrderPackage`, the type that 400s — except the repo had shipped
+`CommitmentChangeOrder` the day before. Both observations were correct. Procore's
+Step 0 copies the plugin's assets over the workspace copies on *every* run, so
+the workspace always mirrors **the installed plugin**, never the repo. An install
+that predates the fix therefore keeps restoring the old file, and the natural
+reading — "the workspace copy is stale, fix it upstream" — points at a file that
+is already right.
+
+So when a fix that is provably in `main` does not appear in a run, check the
+installed version against the tip of `main` before editing anything. The tell is
+that `SKILL.md` describes behaviour the assets do not have: prose and assets ship
+in the same commit, so they cannot disagree in the repo, only across an install
+boundary. The fix is the two-command update above, then a restart.
 
 **A full git URL needs the `.git` suffix.**
 `https://github.com/ssemwal-cdc/claude-sharables.git` works. Without `.git`,

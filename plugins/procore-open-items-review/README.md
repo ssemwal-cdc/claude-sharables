@@ -101,12 +101,14 @@ appearing to work.
 
 ## Known limits
 
-- **Change order packages cost an extra lookup.** The workflows endpoint returns
-  a 400 for `ChangeOrderPackage`, because the workflow belongs to the underlying
-  commitment change order rather than to the package. That record has its own id,
-  found by opening the package, so change orders now gate and respond like
-  anything else — it just costs one more step per item. If the id cannot be
-  resolved, the item is shown with its arithmetic verified but no response
-  buttons, and a button to go resolve the gate.
+- **Change order packages are read before they are gated.** The workflows
+  endpoint returns a 400 for `ChangeOrderPackage`, because the workflow belongs
+  to the underlying commitment change order rather than to the package. That
+  record has its own id, carried on the package payload at
+  `line_items[].holder.id`, so change orders gate and respond like anything else
+  — it just means the package has to be fetched before the gate runs rather than
+  after it. If the id cannot be resolved, or the package spans several change
+  orders so there is no single id to use, the item is shown with its arithmetic
+  verified but no response buttons, and a button to go resolve the gate.
 - The open items grid is virtualised and cannot be scraped; everything comes
   from the REST API.

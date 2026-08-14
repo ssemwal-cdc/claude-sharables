@@ -557,6 +557,42 @@ digit in an eight-figure line is worse than an honest skip, and a table is exact
 where OCR misreads. If that cap ever feels noisy, fix the visual read; do not relax
 the cap.
 
+**`javascript_tool` can be denied by Cowork's permission classifier, and that is
+the one failure that stops both skills dead.** Hit 2026-08-14 running the CDN
+probe: the call was blocked before it reached the page, in auto mode, with the tab
+already open and correct. Everything load-bearing in both skills goes through that
+tool — the Procore gate fan-out, every attachment read, the NetSuite bulk query —
+so a denial is not a degraded run, it is no run.
+
+Two things follow. **The agent was right to stop rather than route around it**, and
+right to reject the sandbox as a substitute: the sandbox is a different network and
+CORS environment, so a result from there would not have answered the question it
+was asked. Refusing to launder a denial through a different execution context is
+the correct instinct; keep it.
+
+And **it is worse on a schedule than in a chat.** The site-access prompt already
+has a note above about picking the *always* option because a run stalling on a
+prompt nobody is watching reads as a hang. This is the same shape one layer up, in
+the permission classifier rather than the browser, and it fires on the first
+`javascript_tool` call of every run. Approve it once, or add a rule for
+`mcp__claude-in-chrome__javascript_tool`, before relying on a scheduled window.
+
+**The bucket-root scratch tab is an XML document, and `document.createElement` does
+not work there.** Also 2026-08-14, found because the probe's canvas check threw:
+`document.contentType` is `application/xml`, so `createElement('canvas')` yields a
+null-namespace element with no `getContext`. The XML content type is exactly why
+that tab was chosen — it is attachable where a PDF is not — so this is permanent.
+Use `OffscreenCanvas`, or `createElementNS` with the XHTML namespace, and never
+move the tab to an HTML page: it has to stay same-origin with the presigned link or
+the fetch hits the CORS wall. NetSuite is unaffected, since it runs pdf.js in the
+record tab, which is ordinary HTML. Do not normalise the two.
+
+Worth noting how this surfaced: it was an incidental error in a probe written to
+ask about something else, disclosed rather than smoothed over. The canvas line in
+the probe was mine and it was wrong. A run that had quietly caught the exception
+and reported four clean CDN results would have left a broken `page.render` in the
+skill to be discovered later, by a scanned invoice, in production.
+
 **The sniff table is designed, not yet observed** — written from a failure report
 rather than a reproduction, which is the opposite of how the rest of these notes
 were earned. Confirm the first `spreadsheet` and first `image` end to end and

@@ -348,7 +348,20 @@ Steps 2→3 must land inside the 60-second window — one tool call each, nothin
 
 **A retry is only ever legitimate for `expired`.** The old loop had no exit and no type check, so a format it could never parse was retried forever. Bound it at two attempts, and only ever re-fetch when the bytes said `s3error` or the fetch threw — a file that parsed as the wrong type will parse as the wrong type again.
 
-**Images and scanned pages: look at them.** Chrome renders the file, so navigate the record tab to the presigned URL and read it visually rather than extracting text. For a `scanned` PDF, render the page to a canvas in the scratch tab first (`page.render({canvasContext, viewport})`) so there is something to look at. A visual read is treated like parsed text for the tie-outs — it is Claude reading a rendered document, not a guess.
+**Images and scanned pages: look at them.** Chrome renders the file, so navigate the record tab to the presigned URL and read it visually rather than extracting text. A visual read is treated like parsed text for the tie-outs — it is Claude reading a rendered document, not a guess.
+
+**The scratch tab is an XML document, and that breaks `document.createElement`.** Confirmed live 2026-08-14: `document.createElement('canvas').getContext` is *not a function* there, and `document.contentType` reports `application/xml`. The S3 bucket listing was chosen precisely because it returns XML — that is what makes it attachable, unlike a PDF — so this is a permanent property of the tab, not a glitch. On an XML document `createElement` produces a **null-namespace** element rather than an `HTMLCanvasElement`, so it has no 2D context and nothing to render into.
+
+This bites the moment a `scanned` PDF needs rasterising for a visual read. Two ways round it, both namespace-independent:
+
+```javascript
+const c = new OffscreenCanvas(v.width, v.height);              // preferred - no DOM at all
+// or, if a real element is needed:
+// document.createElementNS('http://www.w3.org/1999/xhtml','canvas')
+await page.render({canvasContext: c.getContext('2d'), viewport: v}).promise;
+```
+
+**Do not "fix" this by moving the scratch tab to an HTML page.** The tab has to be same-origin with the presigned S3 link or the fetch hits the CORS wall, which is the whole reason the bucket root is used. NetSuite has no equivalent problem — it runs pdf.js in the record tab, which is ordinary HTML, so `createElement` works there. The asymmetry is real; do not normalise the two.
 
 **If no visual read is available, fall back to OCR — and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. Then **an OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties: report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. A misread digit in an eight-figure line is worse than an honest skip, and OCR on a table is exactly where that happens. This cap is deliberate — if it ever feels too noisy, the fix is to get the visual read working, not to relax the cap.
 

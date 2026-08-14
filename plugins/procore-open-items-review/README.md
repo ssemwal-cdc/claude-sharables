@@ -39,6 +39,17 @@ viewer exposes no text and cannot be scripted, and the storage host blocks
 cross-origin reads. The plugin routes around all three and extracts PDF text
 in-browser, so nothing lands in your downloads folder.
 
+## Every response it makes says so
+
+A response executed by the plugin carries the comment **"Approved by Claude"**,
+recorded in Procore's audit trail against that item. If you type your own comment
+for an item, yours is used instead, verbatim.
+
+This is deliberate. A response recorded with no comment reads as though you
+clicked it by hand; the attribution keeps the trail honest about what actually
+performed the click. Rejection reasons are never defaulted — those always come
+from you, and the plugin stops and asks if one is missing.
+
 ## The dashboard
 
 Verdicts render as an inline dashboard widget in the conversation: summary cards, a
@@ -85,9 +96,12 @@ appearing to work.
 
 ## Known limits
 
-- **Change order packages cannot be gate-checked.** The workflows endpoint
-  returns a 400 for `ChangeOrderPackage`, so whether you can respond is unknown.
-  They are shown with their arithmetic verified but no response buttons, and a
-  button to go resolve the gate.
+- **Change order packages cost an extra lookup.** The workflows endpoint returns
+  a 400 for `ChangeOrderPackage`, because the workflow belongs to the underlying
+  commitment change order rather than to the package. That record has its own id,
+  found by opening the package, so change orders now gate and respond like
+  anything else — it just costs one more step per item. If the id cannot be
+  resolved, the item is shown with its arithmetic verified but no response
+  buttons, and a button to go resolve the gate.
 - The open items grid is virtualised and cannot be scraped; everything comes
   from the REST API.

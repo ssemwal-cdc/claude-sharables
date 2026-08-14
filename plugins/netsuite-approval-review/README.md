@@ -31,12 +31,34 @@ from that message. Execution drives the real NetSuite buttons through your own
 authenticated browser session, so the approval workflow routes normally and the
 audit trail records you as the approver.
 
+## Support is read without downloading anything
+
+NetSuite's own `download` link does nothing under automation, and `preview` opens
+a popup that freezes the tab. The plugin instead fetches the attachment from
+inside your authenticated NetSuite tab and extracts the text there, so nothing
+lands in your downloads folder and there are no stale files between runs.
+
+Invoice tables keep their column alignment, because the text is rebuilt from the
+PDF's own geometry rather than flattened into a single line — which is what the
+quantity x rate and line-tie checks read.
+
+## Every approval it makes says so
+
+An approval executed by the plugin carries the note **"Approved by Claude"**,
+recorded in NetSuite against that document. If you type your own note for an
+item, yours is used instead, verbatim.
+
+This is deliberate. An approval recorded with no note reads as though you clicked
+it by hand; the attribution keeps the trail honest about what actually performed
+the click. Rejection reasons are never defaulted — those always come from you,
+and the plugin stops and asks if one is missing.
+
 ## Requirements
 
 - A NetSuite MCP connector connected in Cowork (read-only is sufficient and
   preferred — the plugin never writes through the connector)
 - Claude in Chrome, signed in to NetSuite
-- A connected workspace folder for state and downloaded attachments
+- A connected workspace folder for state (attachments are never downloaded)
 
 ## First run
 

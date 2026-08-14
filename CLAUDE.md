@@ -468,22 +468,35 @@ rename those keys for tidiness; it silently discards decisions the user marked
 but has not executed.
 
 **The teammate-facing onboarding sheet lives at `docs/onboarding.html`.** It is
-the source for a published artifact Shivam shares:
+served to teammates by **GitHub Pages** from `docs/` on `main`:
 
 ```
-https://claude.ai/code/artifact/89376c0d-dab5-45f2-9e9a-be989624016d
+https://ssemwal-cdc.github.io/claude-sharables/
 ```
 
-**They do not sync themselves, and the failure is silent.** Editing the file
-changes nothing teammates see; republishing *without* passing that URL mints a
-*second* artifact while everyone keeps reading the first. So after any edit to
-the file, republish with the URL passed explicitly. The URL is recorded here
-precisely so a later session — which will not have the original publish in its
-context — can still update in place rather than forking the link.
+**The page is the file.** Edit, push, done — there is no publish step and no
+second copy to drift. It replaced a published claude.ai artifact precisely
+because that arrangement had two silent failure modes: editing the file changed
+nothing teammates saw, and republishing without passing the existing URL minted a
+*second* artifact while everyone kept reading the first.
 
-If the manual step ever proves too easy to forget, the repo is public and
-GitHub Pages over `docs/` would make pushing to `main` the only step. That trades
-the claude.ai link for a `github.io` one; nobody has needed it yet. Written
+Three consequences worth keeping in mind:
+
+- **`docs/` is the website.** Anything added there is publicly served. Nothing
+  sensitive goes in that folder, and the same rule as the rest of this repo
+  applies with less margin for error.
+- **`docs/onboarding.html` must stay a complete HTML document** — doctype,
+  `<head>`, `<meta charset="utf-8">`. Pages serves the file verbatim. It was
+  originally written as an artifact *fragment*, because the artifact host wraps
+  content in its own skeleton at publish time; served raw without that wrapper,
+  every em dash, arrow and middot in it becomes mojibake.
+- **That also means it can no longer be published as an artifact as-is.** Handing
+  the file to `show_widget` or an artifact publish would nest a second `<html>`.
+  Strip the wrapper first, or just send the Pages link — which is the point of
+  the move.
+
+`docs/index.html` is a redirect to `onboarding.html` so the bare URL works;
+Pages has no directory index and would otherwise 404 on the short link. Written
 for someone who has never touched any of this, so it is deliberately
 click-by-click: profile (bottom left) → Settings → Plugins → Add → Add
 marketplace, auto sync left checked, then first run in a **Cowork** chat on Opus

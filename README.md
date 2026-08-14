@@ -9,18 +9,23 @@ setup sheet, written for someone who has never touched any of this. Browser,
 connector, install, first run, and scheduling, with a "done when" check on every
 step.
 
-The shareable copy teammates get is the published artifact:
+Send teammates this link:
 
 ```
-https://claude.ai/code/artifact/89376c0d-dab5-45f2-9e9a-be989624016d
+https://ssemwal-cdc.github.io/claude-sharables/
 ```
 
-**That URL is the one to update, not a new one.** The file above is the source;
-the artifact is a rendering of it. They do not sync themselves. After editing
-`docs/onboarding.html`, republish it **with that URL passed explicitly** —
-publishing without it mints a second artifact, and teammates keep reading the old
-link. Keeping the URL written here is what makes that possible from a session
-that wasn't the one which first published it.
+That is GitHub Pages serving `docs/` from `main`, so **the page is the file** —
+edit `docs/onboarding.html`, push, and the live page updates itself. There is
+nothing to re-publish and no second copy to drift out of step.
+
+Two things follow from that:
+
+- **Everything in `docs/` is served publicly.** The folder is the website. Do not
+  put anything there you would not hand to a stranger.
+- **`docs/onboarding.html` is a complete HTML document** — doctype, `<head>`,
+  `charset`. It has to be: Pages serves the file verbatim, and without the
+  charset declaration every dash and arrow in it renders as mojibake.
 
 The rest of this section is the short version for people who only need the
 commands.

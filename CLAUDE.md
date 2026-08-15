@@ -194,6 +194,23 @@ whoever wrote the advice.
 
 ---
 
+## Two other files worth knowing about
+
+**`prose.md`** holds findings and retrospectives rather than rules — and, more
+usefully, **the standing list of what has not actually been observed yet.** A
+good deal of recent work is mock-verified and shipped but has never been watched
+running on real data. Read it before citing anything recent as established.
+
+**`scripts/test_skill_code.py`** runs the executable code the skills carry —
+the pdf.js layout extractor, the size-budgeted page reads, the Procore gate's
+three-state fan-out, and the CCO ungated demotion. It extracts each one **from
+`SKILL.md` itself**, so it tests what an agent will actually paste rather than a
+copy that can drift. Run it after touching any of that code; it is fast and needs
+only `node`. It is mutation-tested — collapsing a 429 into `empty` makes it fail,
+which is the whole point of it existing.
+
+---
+
 ## Traps (proven, not guessed)
 
 Verified against Claude Code v2.1.227 by reproducing each failure.

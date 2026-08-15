@@ -577,6 +577,32 @@ the permission classifier rather than the browser, and it fires on the first
 `javascript_tool` call of every run. Approve it once, or add a rule for
 `mcp__claude-in-chrome__javascript_tool`, before relying on a scheduled window.
 
+**Skip-all-approvals is the one mode where `javascript_tool` does not work, and
+that is the opposite of what everyone assumes.** Measured 2026-08-15 across all
+three: manual **works**, auto **works**, skip-all (`bypassPermissions`) is
+**blocked**. So the most permissive setting is the only one that breaks both
+plugins outright.
+
+This matters because reaching for skip-all is the obvious move when a permission
+problem is getting in the way, and it makes the problem worse while looking like it
+should help. It also strips every other check at the same moment — on a browser
+signed into Procore and NetSuite with real approval authority, which is exactly
+where the docs say not to use it: *"Only use this mode in isolated environments
+like containers or VMs where Claude Code can't cause damage."*
+
+The likely mechanism is the `requiresUserInteraction` flag, or an equivalent
+Cowork-side rule that withholds live browser tools precisely when the surrounding
+checks have been switched off. Not confirmed, and it does not need to be: **auto is
+the answer for both modes**, scheduled and interactive. Do not chase this further,
+and do not recommend skip-all as a workaround for anything.
+
+**Auto allows a DOM read but blocked a five-CDN fetch, which is what makes the
+destination the suspect.** The passing test made no network call of its own, though
+the tab navigation did — so it does not isolate execution from destination as
+cleanly as intended. The contrast is still the signal: same tool, same mode, no
+fetch passes and a multi-host fetch does not. Hence `autoMode.environment` naming
+the domains, rather than a blanket tool allow.
+
 **The bucket-root scratch tab is an XML document, and `document.createElement` does
 not work there.** Also 2026-08-14, found because the probe's canvas check threw:
 `document.contentType` is `application/xml`, so `createElement('canvas')` yields a

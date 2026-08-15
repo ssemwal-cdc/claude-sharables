@@ -577,40 +577,55 @@ the permission classifier rather than the browser, and it fires on the first
 `javascript_tool` call of every run. Approve it once, or add a rule for
 `mcp__claude-in-chrome__javascript_tool`, before relying on a scheduled window.
 
-**What the auto-mode classifier blocks is the destination, not the tool.** Measured
-2026-08-15, before any `autoMode` configuration was in place:
+**The classifier never blocked the plugin. It blocked a diagnostic probe that the
+plugin does not resemble — and two rounds of notes were written before anyone
+checked that.** Full matrix, auto mode, 2026-08-15:
 
-| | no-network DOM read | multi-host CDN fetch |
+| snippet | `autoMode` config | result |
 |---|---|---|
-| manual | not tested | **works** |
-| auto | **works** | **blocked** |
-| skip-all (`bypassPermissions`) | not tested | **blocked** |
+| DOM read, no network | none | works |
+| 5 URLs across 4 hosts (cdnjs, jsdelivr, unpkg, cdn.sheetjs.com) | none | **blocked** |
+| 3 URLs, cdnjs only | none | **works** |
+| 3 URLs, cdnjs only | configured | works |
 
-Same tool, same tab, same session. A snippet that touches no network passes in
-auto; one that fetches from several external hosts does not. That is what makes
-`autoMode.environment` naming the domains the right lever, rather than a blanket
-`permissions.allow` on the tool — an allow rule resolves *before* the classifier
-and would switch the gate off everywhere, on every site, to fix a problem that is
-about three specific hosts.
+The control run is the one that matters: **cdnjs-only passes with no configuration
+at all.** So the `autoMode.environment` block was not what changed the outcome —
+the host list was. What the classifier objected to was a single call fanning out
+across four unrelated CDNs, which is shaped like probing, not like work.
 
-The verbatim denial is **"Permission for this action was denied by the Claude Code
-auto mode classifier. Reason: Blocked by classifier."** That fixed string is the
-documented default from v2.1.208 on — the classifier scores severity internally
-rather than writing an explanation — so **do not read it as a clue and do not go
-looking for a better one.** The fix is chosen from what the call was reaching for,
-not from the reason text.
+**Both skills only ever fetch cdnjs** — pdf.js and SheetJS both live there. The
+four-host sweep existed solely to find out which CDNs were reachable. So there is
+**no observed case of the classifier blocking anything either plugin actually
+does**, and the scheduled-run hang this was all chasing has never been reproduced.
 
-An earlier version of this note recorded auto as working. That was wrong: the
-run it rested on was in skip-all, misremembered as auto, and the one auto result
-it did have was the DOM read. Two cells of a three-by-two matrix are still
-untested and are marked as such rather than inferred.
+An onboarding section was written for that hang and then removed unshipped. It
+survived only because the commit that added it carried the confound in its message
+and held it off `main`. Do not re-add it without a reproduction.
 
-**Do not recommend skip-all as a workaround.** It is blocked here too, so it does
-not even solve the problem it looks like it should — and it strips every other
-check at the same moment, on a browser signed into Procore and NetSuite with real
-approval authority. The docs scope it out explicitly: *"Only use this mode in
-isolated environments like containers or VMs where Claude Code can't cause
-damage."* **Auto is the answer for both scheduled and interactive runs.**
+Two earlier versions of this note were wrong in opposite directions — first "auto
+works", then "auto blocks the fetch" — because both generalised from a probe to the
+workflow. **A test that fails in a way the real thing cannot is not evidence about
+the real thing.** If a permission question comes up again, test the operation the
+skill actually performs.
+
+The verbatim denial, for the record, is **"Permission for this action was denied by
+the Claude Code auto mode classifier. Reason: Blocked by classifier."** That fixed
+string is the documented default from v2.1.208 on — the classifier scores severity
+internally rather than writing an explanation — so **do not mine it for clues.**
+Three rounds were spent asking for wording that was never going to carry any.
+
+`autoMode.environment` naming the domains is still worth setting, and the
+`docs/onboarding.html` history has the block. It is correct context rather than a
+fix for a demonstrated problem, so present it that way. It is also the right lever
+in preference to `permissions.allow`, which resolves *before* the classifier and
+would switch the gate off on every site in every session.
+
+**Do not recommend skip-all as a workaround.** Our one observation there was the
+same confounded four-host probe, so it says nothing about the mode — but the docs
+are independent and blunt: *"Only use this mode in isolated environments like
+containers or VMs where Claude Code can't cause damage."* That is exactly the
+opposite of a browser signed into Procore and NetSuite with live approval
+authority. **Auto is the answer for scheduled and interactive runs alike.**
 
 **`javascript_tool` can serialise a returned Promise as `{}`.** Observed the same
 day: an `(async () => {…})()` IIFE returned the literal empty object, because the

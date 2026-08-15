@@ -36,8 +36,23 @@ not approved, not rejected, and not given a verdict it hasn't earned.
 
 Procore attachments sit behind a 60-second presigned S3 link. The browser's PDF
 viewer exposes no text and cannot be scripted, and the storage host blocks
-cross-origin reads. The plugin routes around all three and extracts PDF text
+cross-origin reads. The plugin routes around all three and reads the file
 in-browser, so nothing lands in your downloads folder.
+
+It checks what the file actually is before reading it, rather than assuming:
+
+- **PDFs** are parsed for text.
+- **Spreadsheets** (`.xlsx`, `.xls`, `.csv`) are read sheet by sheet, hidden
+  sheets included — a superseded figure is exactly the thing that gets hidden
+  rather than deleted.
+- **Images**, and PDFs that turn out to be scans, are *looked at* rather than
+  run through text extraction, which returns nothing useful for them.
+
+**A file it can't read is named, not silently skipped.** That distinction is the
+point. Previously anything that wasn't a PDF was reported as "support present but
+unreadable" — which reads identically whether the file was a scan, a spreadsheet
+or a link that timed out, so entire formats went unreviewed with nothing in the
+log to show it. Now the reason is specific enough to act on.
 
 ## Every response it makes says so
 

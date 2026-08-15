@@ -42,6 +42,13 @@ Invoice tables keep their column alignment, because the text is rebuilt from the
 PDF's own geometry rather than flattened into a single line — which is what the
 quantity x rate and line-tie checks read.
 
+Support that isn't a PDF is handled as what it is, not forced through the PDF
+reader. Spreadsheets are read sheet by sheet including hidden ones; images and
+scanned pages are looked at rather than text-extracted, since extraction returns
+nothing useful for them. **A file that can't be read is named rather than filed
+as "unreadable"** — that word covered a scan, a workbook and an expired link
+equally well, which is how whole formats went unreviewed without anyone noticing.
+
 ## Every approval it makes says so
 
 An approval executed by the plugin carries the note **"Approved by Claude"**,

@@ -533,7 +533,21 @@ Three consequences worth keeping in mind:
   the move.
 
 `docs/index.html` is a redirect to `onboarding.html` so the bare URL works;
-Pages has no directory index and would otherwise 404 on the short link. Written
+Pages has no directory index and would otherwise 404 on the short link.
+
+**Editing the sheet works normally; fetching the published page does not.** The
+sandbox's egress proxy blocks `github.io` (along with `claude.com`,
+`support.claude.com` and `chromewebstore.google.com`), so `WebFetch` on the live
+URL returns `EGRESS_BLOCKED`. Do not read that as the site being broken, and do
+not conclude from a green Pages deploy that the page renders — the deploy proves
+GitHub built the file, nothing more.
+
+What *is* checkable locally, and worth checking after any edit: the file decodes
+as UTF-8, the markup has no unclosed tags, `<meta charset>` is present, `body`
+sets its own `background` from a token, and every `var(--…)` used is defined on
+bare `:root` — that last one is what stops the page rendering one theme's text on
+the other theme's ground for anyone on the default "system" setting. Anything
+genuinely visual has to be eyeballed by the user; ask rather than assume. Written
 for someone who has never touched any of this, so it is deliberately
 click-by-click: profile (bottom left) → Settings → Plugins → Add → Add
 marketplace, auto sync left checked, then first run in a **Cowork** chat on Opus

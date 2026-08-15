@@ -177,6 +177,21 @@ entries, which track whatever version the marketplace provides and need no git
 tags. One install command, every plugin still independently disableable. Do not
 build it at two plugins.
 
+**The reason a bundle is worth anything: auto sync does not install new
+plugins.** It keeps *already-installed* plugins current, which is why a push to
+`main` reaches everyone who has the plugin. A plugin nobody has installed yet
+just appears in their catalog and sits there. So every new plugin is another
+announcement plus another `/plugin install` for every teammate, and that cost is
+what the bundle removes — not the updating, which already works.
+
+**`scripts/validate.py` will reject the bundle as written.** Lines 146–155 fail
+any plugin with no `skills/` directory or an empty one, and a dependency-only
+manifest has neither. So the bundle needs a validator carve-out *before* it can
+ship — check for a `dependencies` key and skip the skills requirement for that
+case. Nobody has needed it yet, but the instruction above and the validator
+currently disagree, and the failure lands on whoever tries it rather than on
+whoever wrote the advice.
+
 ---
 
 ## Traps (proven, not guessed)

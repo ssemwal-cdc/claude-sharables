@@ -577,31 +577,50 @@ the permission classifier rather than the browser, and it fires on the first
 `javascript_tool` call of every run. Approve it once, or add a rule for
 `mcp__claude-in-chrome__javascript_tool`, before relying on a scheduled window.
 
-**Skip-all-approvals is the one mode where `javascript_tool` does not work, and
-that is the opposite of what everyone assumes.** Measured 2026-08-15 across all
-three: manual **works**, auto **works**, skip-all (`bypassPermissions`) is
-**blocked**. So the most permissive setting is the only one that breaks both
-plugins outright.
+**What the auto-mode classifier blocks is the destination, not the tool.** Measured
+2026-08-15, before any `autoMode` configuration was in place:
 
-This matters because reaching for skip-all is the obvious move when a permission
-problem is getting in the way, and it makes the problem worse while looking like it
-should help. It also strips every other check at the same moment — on a browser
-signed into Procore and NetSuite with real approval authority, which is exactly
-where the docs say not to use it: *"Only use this mode in isolated environments
-like containers or VMs where Claude Code can't cause damage."*
+| | no-network DOM read | multi-host CDN fetch |
+|---|---|---|
+| manual | not tested | **works** |
+| auto | **works** | **blocked** |
+| skip-all (`bypassPermissions`) | not tested | **blocked** |
 
-The likely mechanism is the `requiresUserInteraction` flag, or an equivalent
-Cowork-side rule that withholds live browser tools precisely when the surrounding
-checks have been switched off. Not confirmed, and it does not need to be: **auto is
-the answer for both modes**, scheduled and interactive. Do not chase this further,
-and do not recommend skip-all as a workaround for anything.
+Same tool, same tab, same session. A snippet that touches no network passes in
+auto; one that fetches from several external hosts does not. That is what makes
+`autoMode.environment` naming the domains the right lever, rather than a blanket
+`permissions.allow` on the tool — an allow rule resolves *before* the classifier
+and would switch the gate off everywhere, on every site, to fix a problem that is
+about three specific hosts.
 
-**Auto allows a DOM read but blocked a five-CDN fetch, which is what makes the
-destination the suspect.** The passing test made no network call of its own, though
-the tab navigation did — so it does not isolate execution from destination as
-cleanly as intended. The contrast is still the signal: same tool, same mode, no
-fetch passes and a multi-host fetch does not. Hence `autoMode.environment` naming
-the domains, rather than a blanket tool allow.
+The verbatim denial is **"Permission for this action was denied by the Claude Code
+auto mode classifier. Reason: Blocked by classifier."** That fixed string is the
+documented default from v2.1.208 on — the classifier scores severity internally
+rather than writing an explanation — so **do not read it as a clue and do not go
+looking for a better one.** The fix is chosen from what the call was reaching for,
+not from the reason text.
+
+An earlier version of this note recorded auto as working. That was wrong: the
+run it rested on was in skip-all, misremembered as auto, and the one auto result
+it did have was the DOM read. Two cells of a three-by-two matrix are still
+untested and are marked as such rather than inferred.
+
+**Do not recommend skip-all as a workaround.** It is blocked here too, so it does
+not even solve the problem it looks like it should — and it strips every other
+check at the same moment, on a browser signed into Procore and NetSuite with real
+approval authority. The docs scope it out explicitly: *"Only use this mode in
+isolated environments like containers or VMs where Claude Code can't cause
+damage."* **Auto is the answer for both scheduled and interactive runs.**
+
+**`javascript_tool` can serialise a returned Promise as `{}`.** Observed the same
+day: an `(async () => {…})()` IIFE returned the literal empty object, because the
+bridge serialised the pending Promise before the fetches resolved. It is not an
+empty result, it is a **null** result, and reading it as "everything came back
+empty" would be the same misfile as every other bug in these notes.
+
+Both skills already use the safe shape — **top-level `await`**, and named async
+functions on `window` that are then awaited by a later call. That is load-bearing,
+not style. Do not tidy either into a self-invoking async IIFE.
 
 **The bucket-root scratch tab is an XML document, and `document.createElement` does
 not work there.** Also 2026-08-14, found because the probe's canvas check threw:

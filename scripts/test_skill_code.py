@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the executable code that lives inside the skills.
 
-`validate.py` checks the repo's shape. This checks the behaviour of the four
+`validate.py` checks the repo's shape. This checks the behaviour of the six
 pieces of real logic the skills carry, and it extracts each one **from
 `SKILL.md` itself** rather than from a copy - so what runs here is exactly what
 an agent will paste into a page.
@@ -19,6 +19,13 @@ Covered:
   4. publish_dashboard   - a CCO without a resolved wfId is demoted to `ungated`
                            with no response buttons, rather than falling back to
                            the package id.
+  5. Procore  `__sniff`  - attachment bytes are classified before parsing. A
+                           workbook or an image must never sniff as `pdf`, and an
+                           expired S3 body must be its own state - folding those
+                           together is what left whole formats unread.
+  6. Procore  `__sheets` - workbook reads are budgeted by whole sheets, include
+                           hidden sheets, and drop long-digit rows without taking
+                           the real row beside them.
 
 Usage:  python3 scripts/test_skill_code.py
 Needs node on PATH for 1-3; those are skipped with a notice if it is missing.
@@ -190,6 +197,110 @@ global.fetch = async function(u){
     check("gate: can_respond is read correctly", r["canRespondHonoured"])
 
 
+# ------------------------------------------------------------- 5. byte sniffing
+def test_sniff():
+    body = js_block(os.path.join(PC, "SKILL.md"), "__sniff")
+    harness = r"""
+var window = {};
+""" + body + r"""
+const buf = a => new Uint8Array(a).buffer;
+// pad past the 512-byte printable-ASCII probe so the magic number is what decides
+const pad = a => buf(a.concat(Array(600).fill(0x41)));
+const asc = s => buf([...Buffer.from(s)]);
+const cases = [
+  ['pdf',      pad([0x25,0x50,0x44,0x46,0x2D,0x31,0x2E,0x36]), 'pdf'],
+  ['xlsx',     pad([0x50,0x4B,0x03,0x04,0x14,0x00,0x06,0x00]), 'zip'],
+  ['xls',      pad([0xD0,0xCF,0x11,0xE0,0xA1,0xB1,0x1A,0xE1]), 'ole2'],
+  ['png',      pad([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A]), 'image'],
+  ['jpeg',     pad([0xFF,0xD8,0xFF,0xE0,0x00,0x10,0x4A,0x46]), 'image'],
+  ['gif',      pad([0x47,0x49,0x46,0x38,0x39,0x61,0x01,0x00]), 'image'],
+  ['tiff-le',  pad([0x49,0x49,0x2A,0x00,0x08,0x00,0x00,0x00]), 'image'],
+  ['tiff-be',  pad([0x4D,0x4D,0x00,0x2A,0x00,0x00,0x00,0x08]), 'image'],
+  ['webp',     pad([0x52,0x49,0x46,0x46,0x24,0x00,0x00,0x00]), 'image'],
+  ['s3-xml',   asc('<?xml version="1.0"?><Error><Code>AccessDenied</Code></Error>'), 's3error'],
+  ['s3-bare',  asc('<Error><Code>ExpiredToken</Code></Error>'), 's3error'],
+  ['csv',      asc('Description,Scheduled Value\nElectrical,10849586.00\n'), 'text'],
+  ['binary',   buf([0x00,0x01,0x02,0x03,0xDE,0xAD,0xBE,0xEF,0x7F,0x80,0x91,0xA2]), 'unknown'],
+];
+const bad = cases.filter(([n,b,want]) => window.__sniff(b) !== want).map(([n]) => n);
+console.log(JSON.stringify({
+  bad: bad,
+  total: cases.length,
+  // the three that carry the safety property, called out separately
+  xlsxNotPdf:   window.__sniff(cases[1][1]) !== 'pdf',
+  imageNotPdf:  window.__sniff(cases[3][1]) !== 'pdf',
+  expiredIsOwn: window.__sniff(cases[9][1]) === 's3error',
+}));
+"""
+    rc, out, err = run_node(harness)
+    if rc != 0:
+        check("sniff runs", False, err.splitlines()[0] if err else "non-zero exit")
+        return
+    r = json.loads(out)
+    check("sniff: all %d magic-number cases" % r["total"], not r["bad"],
+          "wrong: %s" % ", ".join(r["bad"]))
+    # These three are the bug this was written for: a workbook or an image fed to
+    # pdf.js throws, and the old two-state rule read that throw as "expired, retry"
+    # or as "a scanned image" - so whole formats went unread. They must never sniff
+    # as `pdf`, and an expired link must be its own state rather than a non-PDF.
+    check("sniff: a workbook is never `pdf`", r["xlsxNotPdf"])
+    check("sniff: an image is never `pdf`", r["imageNotPdf"])
+    check("sniff: an expired S3 body is `s3error`, not a non-PDF", r["expiredIsOwn"])
+
+
+# ---------------------------------------------------------- 6. workbook reading
+def test_sheets():
+    body = js_block(os.path.join(PC, "SKILL.md"), "__sheets")
+    # drop the CDN loader line - not runnable outside a browser, and node would
+    # try to resolve the URL as a module specifier. XLSX is stubbed below instead.
+    body = "\n".join(l for l in body.split("\n") if not l.startswith("await import("))
+    harness = r"""
+var window = {};
+const SHEETS = {
+  'Summary':   'Description,Amount\nElectrical labour,10849586\n,\nTotal,10849586\n',
+  'Detail':    'Line,Value\n' + Array.from({length:400},(_,i)=>'L'+i+','+(i*1000)).join('\n') + '\n',
+  'Hidden WS': 'Note,Val\nbarcode,000000000000000000000123456789012345\nReal,42\n'
+};
+global.XLSX = {
+  read: () => ({SheetNames: Object.keys(SHEETS), Sheets: SHEETS}),
+  utils: {sheet_to_csv: ws => ws}
+};
+""" + body + r"""
+let n = 0, calls = 0, all = '', split = false;
+do {
+  const r = window.__sheets(new ArrayBuffer(8), n);
+  calls++;
+  // a call carrying part of a sheet without its header would mean a split
+  if ((r.text.match(/--- sheet /g) || []).length === 0) split = true;
+  all += r.text + '\n';
+  n = r.next;
+} while (n !== null && calls < 10);
+console.log(JSON.stringify({
+  calls: calls,
+  neverSplit: !split,
+  hiddenIncluded: /--- sheet 3: Hidden WS ---/.test(all),
+  longDigitDropped: !/000000000000000000000123456789012345/.test(all),
+  realRowKept: /Real,42/.test(all),
+  blankRowDropped: !/\n,\n/.test(all),
+  figuresIntact: /Electrical labour,10849586/.test(all),
+}));
+"""
+    rc, out, err = run_node(harness)
+    if rc != 0:
+        check("sheets runs", False, err.splitlines()[0] if err else "non-zero exit")
+        return
+    r = json.loads(out)
+    check("sheets: terminates", r["calls"] < 10, "ran %s calls" % r["calls"])
+    check("sheets: budgets whole sheets, never splits one", r["neverSplit"])
+    # A superseded figure is exactly the thing that gets hidden rather than deleted,
+    # so taking sheet 1 and stopping would miss the case this check exists for.
+    check("sheets: hidden sheets are read", r["hiddenIncluded"])
+    check("sheets: long-digit row dropped", r["longDigitDropped"])
+    check("sheets: the real row beside it survives", r["realRowKept"])
+    check("sheets: blank rows dropped", r["blankRowDropped"])
+    check("sheets: figures intact", r["figuresIntact"])
+
+
 # ------------------------------------------------------ 4. CCO ungated demotion
 def test_cco_demotion():
     d = tempfile.mkdtemp()
@@ -243,8 +354,11 @@ def main():
         test_extractor()
         test_page_budget()
         test_gate_states()
+        test_sniff()
+        test_sheets()
     else:
-        print("  SKIP  node not on PATH - extractor, page budget and gate states not run")
+        print("  SKIP  node not on PATH - extractor, page budget, gate states, "
+              "sniff and sheets not run")
     test_cco_demotion()
     print()
     if failures:

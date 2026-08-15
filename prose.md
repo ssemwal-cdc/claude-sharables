@@ -62,7 +62,34 @@ concurrent requests at the live API.
 actionable + suppressed + failed should equal the queue length. Any `failed`
 items should be **named**, never folded into the suppressed count.
 
-### 6. Small unknowns
+### 6. The attachment sniff, on real non-PDF support
+
+Added 2026-08-15 after a report that Excel and image support came back
+unreviewed. The classifier and the workbook reader are covered by
+`scripts/test_skill_code.py` — 13 magic-number cases, and `__sheets` against a
+stubbed workbook. Two things that testing cannot reach:
+
+- **No real Procore `.xlsx` has been read.** The round-trip proved SheetJS on a
+  workbook *this code wrote itself*, in the scratch tab, via a live `import()`
+  from cdnjs. A vendor's actual bid schedule is a different thing: merged cells,
+  multiple sheets, formulas whose cached values may be absent.
+- **No real image or scanned PDF has been read visually.** `computer` is
+  confirmed to exist and to return a rendered view, but no review has yet gone
+  through the navigate-then-look path, and the `scanned` → rasterise → look
+  branch has never fired at all.
+
+**To clear it:** run a review over an item with Excel support and one with image
+support — the $25.6M B3 NRC package, six attachments over fourteen scope groups,
+is the natural candidate. Confirm the verdict names the format when it skips,
+and that a workbook's figures actually reach the tie-out.
+
+**The specific regression to watch for:** a skip whose reason is vague. The bug
+this replaced said "support present but unreadable", which reads the same whether
+the file was a scan, a workbook, or a link that timed out — which is exactly how
+whole formats went unread for weeks with nothing in the log to show it. If a skip
+cannot name which of the six outcomes caused it, that is the same bug returning.
+
+### 7. Small unknowns
 
 - Whether the desktop app's plugin list shows a commit-hash version. The
   onboarding sheet says "both plugins appear in your installed list" because
@@ -70,6 +97,39 @@ items should be **named**, never folded into the suppressed count.
 - Whether Cowork sessions need the per-conversation connector toggle
   (**+ → Connectors**). Anthropic's docs say connectors are per-conversation;
   the step was removed from the sheet as not matching observed behaviour.
+
+---
+
+## Retrospective: four rounds spent on a bug that did not exist
+
+2026-08-15. A `javascript_tool` call was reported blocked. Four rounds of probes
+followed, two wrong versions of a CLAUDE.md note, and an onboarding section
+written and then deleted unshipped. The actual answer: the run had been in
+skip-all rather than auto. Nothing was ever wrong.
+
+Three things made it expensive, and only the first is about permissions.
+
+**The mode was reported from memory, and no tool can check it.** An agent cannot
+read its own permission mode — there is no tool that returns it. So the single
+fact the whole investigation turned on was unverifiable by anyone except the
+person at the keyboard, in the moment, and it was misremembered. Everything
+converged within one run of pinning it down, and nothing converged before.
+
+**A diagnostic was treated as evidence about the workflow.** The denied probe
+fetched five URLs across four CDNs; both skills only ever fetch cdnjs. Two
+successive theories — "auto blocks the fetch", then "the classifier objects to
+the host list" — were built by generalising from a shape the real thing never
+takes.
+
+**A confounded comparison looked like a result.** The before/after runs differed
+in the settings *and* in the host list, and the "after" was read as proof the
+settings fixed it. The user's own instinct to re-run the control is what caught
+it. Change one variable, or the comparison says nothing.
+
+What went right is worth keeping too: the onboarding section reached the branch
+and never `main`, because the commit that added it carried the unresolved
+confound in its own message. Writing the doubt down at the moment of committing
+is what stopped a fabricated troubleshooting step from shipping to teammates.
 
 ---
 

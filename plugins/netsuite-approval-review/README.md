@@ -62,14 +62,23 @@ and the plugin stops and asks if one is missing.
 
 ## Requirements
 
-- A NetSuite MCP connector connected in Cowork. The plugin only ever reads
-  through it — approvals go through the real NetSuite buttons in your browser, so
-  the workflow routes normally and the audit trail records you.
+- Claude in Chrome, signed in to NetSuite. **This is the only hard requirement.**
+- **A NetSuite MCP connector is optional and makes the review faster and
+  broader.** With it, the queue and every record's lines come back in two bulk
+  queries instead of a tab per record, and each item is additionally cross-checked
+  against its funding purchase order and the engagement's billing history to catch
+  duplicates, sequence gaps and over-commitment. Without it the review runs from
+  the dashboard portlets and the record pages, and every arithmetic check, every
+  attachment read and every approval is identical — those never used the connector.
 - **The connector runs on a separate, Claude-enabled NetSuite account** — a second
   account issued on top of your usual one. **A normal NetSuite login is not
-  connector access.** If you were never given a second account you do not have
-  this yet: check your email for a Compass invitation to add the NetSuite MCP
-  connector, and contact IT if there isn't one.
+  connector access.** If you were never given a second account, you don't have
+  this: check your email for a Compass invitation to add the NetSuite MCP
+  connector, and contact IT if there isn't one. Worth doing, but don't wait on it
+  to start using the plugin.
+- The plugin only ever *reads* through the connector — approvals go through the
+  real NetSuite buttons in your browser, so the workflow routes normally and the
+  audit trail records you.
 - **Keep the browser on your normal account when approving.** The Claude-enabled
   account is for reading. Both the queue and the approve buttons are role-scoped,
   so in the wrong account you'll see a queue that isn't yours, or a record with no

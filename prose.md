@@ -89,7 +89,30 @@ the file was a scan, a workbook, or a link that timed out — which is exactly h
 whole formats went unread for weeks with nothing in the log to show it. If a skip
 cannot name which of the six outcomes caused it, that is the same bug returning.
 
-### 7. Small unknowns
+### 7. NetSuite browser mode
+
+Added 2026-08-15. The skill now runs without the MCP connector: queue from the
+dashboard portlets, record fields via `get_page_text`, the attachment URL read off
+the record page, and Step 5's PO/billing-history cross-check simply not performed.
+None of it has been run.
+
+The queue and record-page halves are reverts to methods that worked before the
+bulk queries replaced them, so they are the low-risk part. **The unobserved piece
+is the attachment URL DOM read** — whether the AP INVOICE / CHANGE ORDER
+ATTACHMENT field actually renders as an `a[href*="media.nl"]` on every record type,
+or as something else on some of them.
+
+**To clear it:** open one bill and one change order with the connector switched off
+and confirm the selector returns the four parameters, then that the fetch and
+pdf.js path is byte-identical to the connector route from there on.
+
+**The thing to check is a silence, not an error.** Step 5 is skipped with nothing
+said about it, deliberately — a caveat would print on every item of every run for
+someone who cannot get provisioned. So confirm the verdicts read as complete
+statements of what *was* checked rather than as connector-mode verdicts with a hole
+in them.
+
+### 8. Small unknowns
 
 - Whether the desktop app's plugin list shows a commit-hash version. The
   onboarding sheet says "both plugins appear in your installed list" because

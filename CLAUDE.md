@@ -1007,7 +1007,8 @@ skill deviates, say so explicitly rather than quietly normalising it.
 - Marketplace name: `compass-claude-plugins`
 - Plugins currently registered:
   - `netsuite-approval-review` — skill `netsuite-approval-double-check`;
-    needs the NetSuite MCP connector
+    needs Claude in Chrome signed in to NetSuite; the NetSuite MCP connector is
+    optional and adds bulk queries plus the PO and billing-history cross-check
   - `procore-open-items-review` — skill `procore-open-items-review`;
     needs Claude in Chrome signed in to Procore, and has no connector
 - **Visibility: public, and that is a decision — not an oversight.** Shivam

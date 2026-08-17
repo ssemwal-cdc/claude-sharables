@@ -128,7 +128,7 @@ a{color:var(--accent)}
   <h2>Before you start</h2>
   <ul class="tight">
     <li>The <strong>Claude desktop app</strong> — install it if you don't have it, signed in with your Compass account.</li>
-    <li><strong>Google Chrome.</strong></li>
+    <li><strong>Google Chrome</strong>, plus a <strong>Claude browser extension</strong> you'll install into it in step 1. Having used Claude in a Chrome tab is not the same thing and doesn't count.</li>
     <li>A Procore login, a NetSuite login, or both. <strong>Install only the plugins you need</strong> — Procore-only people skip step 2 entirely, and install one plugin instead of two in step 3.</li>
   </ul>
 </section>
@@ -136,21 +136,29 @@ a{color:var(--accent)}
 <hr class="rule">
 
 <section>
-  <div class="step-head"><span class="num">1</span><h2>Claude in Chrome</h2></div>
+  <div class="step-head"><span class="num">1</span><h2>Install the Claude Chrome extension <span class="chip">everyone</span></h2></div>
   <div class="phase">
     <b>Steps 1–2 · in your browser</b>
-    <span>Chrome is only a set-up step.</span>
-    <em>Claude in Chrome is just an extension — it lets Claude click through Procore and NetSuite on your behalf. You never type instructions into Chrome. Get it signed in, then leave it alone.</em>
+    <span>This is a Chrome extension you install. Not a website.</span>
+    <em>It lets Claude click through Procore and NetSuite on your behalf. You never type instructions into Chrome — get it installed and signed in, then leave it alone.</em>
   </div>
+
+  <div class="note warn">
+    <strong>Don't skip this because you've "used Claude in Chrome" before.</strong>
+    <p style="margin-top:8px">Opening <code>claude.ai</code> in a Chrome tab is <strong>not</strong> this. Neither is the Claude desktop app. What you need here is a separate <strong>browser extension</strong>, installed from the Chrome Web Store, that gives Claude the ability to <em>operate</em> your browser — open tabs, read pages, click buttons.</p>
+    <p style="margin-top:8px">If you have never deliberately installed a Claude extension into Chrome, <strong>you don't have it</strong>, and nothing else in this guide will work until you do. Both plugins depend on it entirely.</p>
+    <p style="margin-top:8px">How to be sure: look for the Claude icon in Chrome's toolbar, next to the address bar. No icon there means it isn't installed, whatever else you've used Claude for.</p>
+  </div>
+
   <p class="muted">Both plugins drive your real browser session, so approvals route normally and the audit trail records <em>you</em>.</p>
   <ol class="tight">
     <li><strong>Use Google Chrome.</strong> Not Edge, not Safari.</li>
     <li><strong>Sign in to Chrome with your Compass profile</strong> — the profile icon at the top right of the window. Everything below has to happen inside that profile.</li>
-    <li>Still in that profile, install the extension: <a href="https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn?hl=en-US">Claude on the Chrome Web Store</a>.</li>
+    <li><strong>Install the extension</strong>, still in that profile: <a href="https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn?hl=en-US">Claude on the Chrome Web Store</a>. You should end up clicking a blue <strong>Add to Chrome</strong> button and accepting the permissions prompt. If you don't see that button, you're either already installed or in the wrong profile.</li>
     <li><strong>Click the extension and sign in again</strong> with your Compass login. Signing in to Chrome and signing in to the extension are two separate steps — you do both.</li>
     <li>In that same profile, sign in to <strong>Procore</strong> and <strong>NetSuite</strong>.</li>
   </ol>
-  <div class="done"><b>Done when</b><span>The extension shows you signed in, and Procore and NetSuite both load in that profile without asking you to log in again.</span></div>
+  <div class="done"><b>Done when</b><span>There's a Claude icon in Chrome's toolbar, clicking it shows you signed in, and Procore and NetSuite both load in that profile without asking you to log in again.</span></div>
 </section>
 
 <section>

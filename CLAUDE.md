@@ -903,6 +903,21 @@ that predates the fix therefore keeps restoring the old file, and the natural
 reading — "the workspace copy is stale, fix it upstream" — points at a file that
 is already right.
 
+**A rendered dashboard is a snapshot of the template, so an old chat replays old
+instructions — and that reads as a stale install.** Cost a wrong diagnosis
+2026-08-15. A resolve-the-gate button was quoted saying *"try the alternative type
+strings"*, wording removed in `7100c5d`, so the install was called out as
+predating that commit. It was not: the install was `5767839`, which contains
+`7100c5d`. The button was in a dashboard **rendered before that update** and still
+sitting in an older conversation.
+
+Both are stale-copy problems, and the fix differs. A stale install needs the
+two-command update. A stale *dashboard* just needs a re-render — running the
+review again is enough, and updating changes nothing about the old widget, which
+will keep offering its old instruction forever. **Check the version before
+concluding either**, and note that clicking a button in an old chat is not
+evidence about the installed plugin at all.
+
 So when a fix that is provably in `main` does not appear in a run, check the
 installed version against the tip of `main` before editing anything. The tell is
 that `SKILL.md` describes behaviour the assets do not have: prose and assets ship

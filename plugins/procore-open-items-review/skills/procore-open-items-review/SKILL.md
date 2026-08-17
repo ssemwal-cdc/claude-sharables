@@ -147,8 +147,12 @@ This is what makes the review worth reading. Most of the queue is distribution-o
 GET /rest/v1.0/projects/<project_id>/workflows/instances
       filters[workflowable_object_id]=<item_id>
       filters[workflowable_object_type]=<item_type>
-      page=1  view=action_card
+      page=1  per_page=100  view=action_card
 ```
+
+**`per_page=100` is required, not tidiness.** Reported from a live run 2026-08-15: on the default page size the endpoint **hid instances outright** — a live workflow returned nothing. The likely mechanism is that the page window is applied before the filters rather than after, so on a project carrying many workflow instances the one you filtered for simply is not on page 1.
+
+That matters far more than a missing row normally would, because of where the result goes: an empty response is `empty`, and Step 8 reads `empty` as *already actioned elsewhere, skip it.* **So a page-size default silently converts actionable items into ones logged as done** — the same failure shape as querying a CCO with the package id. It is cheap to prevent and expensive to detect, so always send it.
 
 Returns an array with one instance. The discriminator:
 
@@ -174,7 +178,8 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
       const u='/rest/v1.0/projects/'+r.pid+'/workflows/instances'+
               Q+'filters[workflowable_object_id]'+E+r.id+
               A+'filters[workflowable_object_type]'+E+r.type+
-              A+'page'+E+'1'+A+'view'+E+'action_card';
+              A+'page'+E+'1'+A+'per_page'+E+'100'+     // per_page is load-bearing - see above
+              A+'view'+E+'action_card';
       try{
         const res=await fetch(u,{headers:{Accept:'application/json'}});
         if(!res.ok){ out.push({key:r.key, state:'failed', code:res.status}); continue; }
@@ -200,7 +205,15 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 
 Return only those fields. The full `action_card` payload is not needed and is the reason this step used to dominate the run.
 
-**CCOs need a different type *and* a different id.** `ChangeOrderPackage` returns a 400 here, as do the other package-style type strings and the record's own `CommitmentContractChangeOrder`. The 400 points at a company-level `workflows/tools` endpoint that an ordinary account gets a 403 on, which makes this look like a permissions problem. It is not. **The workflow is not attached to the package at all** — it is attached to the underlying commitment change order, which carries its own id.
+**CCOs need a different type *and* a different id.** `ChangeOrderPackage` returns a 400 here, as do the other package-style type strings and the record's own `CommitmentContractChangeOrder`. **The workflow is not attached to the package at all** — it is attached to the underlying commitment change order, which carries its own id.
+
+**The 400 body names the fix, and it is worth reading rather than dismissing.** It points at a company-level `workflows/tools` endpoint. On **v1.0** that endpoint 403s for an ordinary account, which is what made this look like a permissions wall — it is not one. **On v2.0 it works:**
+
+```
+GET /rest/v2.0/companies/<company>/workflows/tools
+```
+
+That returns the valid tool and type strings. Reach for it rather than guessing whenever a type string is rejected — in particular if a **fourth `item_type`** ever appears in the queue, this is how to find what the workflow endpoint calls it, instead of trying candidates. Reported from a live run 2026-08-15; the v1.0/v2.0 split is the whole reason the pointer looked useless.
 
 So gate a CCO with:
 
@@ -221,7 +234,14 @@ filters[workflowable_object_id]=<commitment change order id>
 
 The resolved id is a different number from the package id in every case. Never assume they match.
 
-**If you cannot resolve the id, mark the item `ungated`** and offer no response buttons. **Never fall back to querying with the package id.** It 400s, and the execute instruction reads a lookup that returns no instance as "already actioned elsewhere" — so a wrong id does not surface as an error, it silently skips a live item and logs it as done.
+**If you cannot resolve the id, mark the item `ungated`** and offer no response buttons. **Never fall back to querying with the package id.**
+
+The reason is sharper than it first looks, and the two failures are not the same shape:
+
+- **Wrong *type*** (`ChangeOrderPackage`) → **400**. Loud. You cannot miss it.
+- **Right type, wrong *id*** (`CommitmentChangeOrder` with the package id) → **200 with zero rows.** Silent, and byte-for-byte indistinguishable from *"no workflow instance exists"* — which Step 8 defines as *already actioned elsewhere, skip it.*
+
+So the package id does not fail safely. It produces a clean, successful, empty response that reads as "already done", and the item is logged as actioned without anything ever being clicked. **This is the single failure that made CCOs look ungated in the first place**, and it is why the guard is a hard rule rather than a preference. Confirmed from a live run 2026-08-15 — an earlier version of this line claimed the package id 400s, which was wrong and made the danger sound louder than it is.
 
 **Cross-check the first CCO of a run against the UI.** That silent failure is exactly why: a wrong id yields a plausible empty result rather than an error, so the gate cannot detect its own miss. Open the change order record and read its workflow panel — a genuinely actionable item shows a live **Respond** button with the user named against the current step's role. Confirmed on CE #019, which rendered Respond with the user as Financial Analyst while the gate returned `can_respond` true at Financial Analyst Review. **Look, do not click**; review mode never touches that button. One record per run is enough — this confirms the recipe, not each item.
 

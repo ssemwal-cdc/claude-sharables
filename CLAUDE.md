@@ -475,6 +475,33 @@ wrong guess is the intuitive one — a change order and a change risk are both
 change work, so the pairing reads as though it should follow the subject matter.
 It follows the step.
 
+**The wrong id does not 400 — it returns 200 with zero rows, and that is worse.**
+Corrected from a live run 2026-08-15; the earlier note here said it 400s. Two
+different failures, and only one of them is loud:
+
+- wrong **type** (`ChangeOrderPackage`) → **400**, unmissable
+- right type, wrong **id** (the package id) → **200, empty**, indistinguishable
+  from *no workflow instance exists*
+
+Since that is exactly what the execute step reads as *already actioned elsewhere*,
+the package id produces a clean success that logs a live item as done. **This is
+what made CCOs look ungated to begin with.**
+
+**Two more from the same run, both worth keeping.**
+
+`per_page=100` is **required** on `workflows/instances`. On the default page size
+the endpoint hid live instances outright — most likely the page window is applied
+before the filters, so on a project with many instances the filtered one is not on
+page 1. It now rides on every gate query, for every item type, because an empty
+response becomes `empty` becomes *skip it*.
+
+And **the 400 body's pointer is real, just version-shifted.** It names a
+company-level `workflows/tools` endpoint; **v1.0 403s for an ordinary account**,
+which is what made it read as a permissions wall, but
+`/rest/v2.0/companies/<company>/workflows/tools` **works** and lists the valid
+type strings. That is the tool to reach for if a fourth `item_type` ever appears,
+instead of guessing candidates.
+
 **The dangerous part is the failure mode, not the 400.** The execute instruction
 treats a lookup returning no instance as *already actioned elsewhere* and skips
 the item. So a wrong id does not raise an error — it silently logs a live item as

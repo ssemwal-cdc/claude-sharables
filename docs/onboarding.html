@@ -69,7 +69,7 @@ pre{
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:13.5px; line-height:1.65;
 }
 code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.9em}
-p code,li code,td code{background:var(--surface-2); padding:1.5px 5px; border-radius:3px; color:var(--ink)}
+p code,li code,td code,.note code{background:var(--surface-2); padding:1.5px 5px; border-radius:3px; color:var(--ink)}
 
 .done{
   display:flex; gap:10px; align-items:flex-start;
@@ -231,7 +231,7 @@ claude plugin install procore-open-items-review@compass-claude-plugins</pre>
     </table>
   </div>
   <div class="note warn"><strong>It will ask permission to use each site — pick <em>always</em>, not <em>just once</em>.</strong> This is Claude asking, not Chrome. You'll see it for Procore, for NetSuite, and once more the first time it opens an attachment. Choose "just once" and you'll be asked again on nearly every action — and a review sitting on a prompt you aren't watching just looks frozen.</div>
-  <div class="note"><strong>Use the same folder every time.</strong> It's where your review history lives, and how a scheduled run knows whether it already ran today. Switch folders and it starts from scratch.</div>
+  <div class="note"><strong>Where your work is saved.</strong> The folder you pick gets a <code>NetSuite Approval Checks</code> folder, a <code>Procore Open Items</code> folder, or both — created on the first run. Each holds your review history, the ids you confirm above, and the dashboard itself. <strong>Use the same folder every time</strong> — it's how a scheduled run knows whether it already ran today. Point at a different folder, or rename or delete this one, and the next run treats you as brand new and asks the setup questions over again.</div>
   <p class="muted">Nothing is shared between people — your ids and state stay local to your install. After this first run, setup is done and you won't be asked any of it again.</p>
   <div class="done"><b>Done when</b><span>A dashboard appears inline in the conversation, listing the items waiting on you.</span></div>
 </section>

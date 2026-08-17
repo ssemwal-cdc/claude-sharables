@@ -810,6 +810,12 @@ Facts it carries that are not obvious from the skills:
   the connector is not listed, they were never provisioned — email invite from
   Compass, otherwise IT. Approvals must still come from their *normal* account,
   since that is whose name lands on them.
+- **The connector is optional, and the sheet says so at step 2.** It was written
+  as a required step, which told unprovisioned teammates to wait on IT when they
+  could have started that day. What it adds is stated positively — faster queries
+  and the PO/billing-history cross-check — rather than the browser route being
+  described as lacking something. That framing is deliberate and matches the
+  skill's own rule: state what was checked, never what was not.
 - **Restart the computer, not the app.** Observed on Windows: an app restart is
   not reliably enough for a plugin install or update to show up. Updates land on
   the next reboot, which for most people is the following morning, so auto sync

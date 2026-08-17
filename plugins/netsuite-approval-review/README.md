@@ -13,8 +13,9 @@ For every bill and change order awaiting your approval:
   professional-services invoices
 - judges whether the support actually identifies what was done, for what
   period, at what rate
-- pulls the real funding purchase order and the engagement's billing history
-  to catch duplicates, missing intermediate applications, and over-commitment
+- with a NetSuite connector available, additionally pulls the real funding
+  purchase order and the engagement's billing history to catch duplicates,
+  missing intermediate applications, and over-commitment
 - publishes a clear or flagged verdict per item to a dashboard, with the
   figures visible without clicking into anything
 
@@ -94,11 +95,17 @@ and the plugin stops and asks if one is missing.
 
 Say "run my approval check". Setup happens once, automatically:
 
-1. Looks up your NetSuite employee internal id from your email and asks you to
-   confirm the name it found
-2. Records which connector it is calling
-3. Asks which dashboard portlet holds your bills
+1. Checks whether a NetSuite connector is available, and records which one
+2. Asks which dashboard portlet holds your bills
+3. If a connector is available: looks up your NetSuite employee internal id from
+   your email and asks you to confirm the name it found. Without one this is
+   skipped — the portlets are saved searches already scoped to whoever is signed
+   in, so the queue is yours with no id to configure
 4. Copies its template and publish script into your workspace folder
+
+The connector check runs on **every** review, not just the first, so getting
+provisioned later needs no reconfiguration — and a connector that stops resolving
+doesn't stop the review.
 
 Nothing is shared between people. Your employee id, connector and state stay
 local to your install.

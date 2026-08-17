@@ -154,22 +154,29 @@ a{color:var(--accent)}
 </section>
 
 <section>
-  <div class="step-head"><span class="num">2</span><h2>NetSuite connector <span class="chip">NetSuite only</span></h2></div>
+  <div class="step-head"><span class="num">2</span><h2>NetSuite connector <span class="chip">NetSuite only · optional</span></h2></div>
   <p class="muted">Only use Procore? Skip to step 3.</p>
+  <p><strong>This step is optional.</strong> The NetSuite review works without it — connect it if you have it, and if you don't, go straight to step 3 and set it up later. Nothing here blocks you.</p>
   <ol class="tight">
     <li>Click your <strong>profile</strong> at the bottom left, then <strong>Settings → Connectors</strong>.</li>
     <li>Find <strong>NetSuite</strong> in the list and connect it.</li>
-    <li><strong>Not listed?</strong> Then you haven't set it up yet. Check your email for a Compass invitation to add the NetSuite MCP connector. If you can't find one, contact IT.</li>
-    <li><strong>Go back to NetSuite in Chrome and check whose account you're in.</strong> It must be your normal one — see below.</li>
+    <li><strong>Not listed?</strong> You haven't been set up for it — see below. Carry on to step 3 regardless.</li>
+    <li><strong>If you did connect it:</strong> go back to NetSuite in Chrome and check whose account you're in. It must be your normal one — see below.</li>
   </ol>
-  <p class="muted">The plugin only reads through the connector. Approvals go through the real NetSuite buttons in your browser, so the workflow routes normally and the audit trail records you.</p>
+
+  <div class="note">
+    <strong>What it adds, if you have it</strong>
+    <p style="margin-top:8px">The review gets faster, and it gains one extra check: each bill is tied back to its funding purchase order and the engagement's billing history, which is what catches duplicate payments, a missing intermediate application, and billing past the committed amount. Verdicts from a connected run say so — they name the PO and the history they were checked against.</p>
+    <p style="margin-top:8px">Everything else is the same either way. The figures, the attached support, the approvals — all of that runs through your browser and never touched the connector.</p>
+  </div>
+
   <div class="note warn">
     <strong>Your normal NetSuite login is not the same thing as connector access.</strong>
-    <p style="margin-top:8px">The connector runs on a <strong>separate, Claude-enabled NetSuite account</strong> — a second account issued on top of your usual one. Having a NetSuite login does not mean you have this.</p>
-    <p style="margin-top:8px"><strong>Only ever been given one NetSuite account?</strong> Then you don't have connector access yet, and this step can't be completed. Check your email for a Compass invitation to add the NetSuite MCP connector. If there isn't one, contact IT.</p>
-    <p style="margin-top:8px"><strong>Got both accounts?</strong> Then keep the browser on your <em>normal</em> one when approving — that's whose name goes on the approval. In the wrong account you'll see a queue that isn't yours, or a bill with no approve buttons.</p>
+    <p style="margin-top:8px">The connector runs on a <strong>separate, Claude-enabled NetSuite account</strong> — a second account issued on top of your usual one. Having a NetSuite login does not mean you have this, which is why people are surprised not to find it in the list.</p>
+    <p style="margin-top:8px"><strong>Only ever been given one NetSuite account?</strong> Then you don't have it yet. Check your email for a Compass invitation to add the NetSuite MCP connector, and contact IT if there isn't one — but <strong>don't wait on it</strong>. Finish the setup and start using the plugin today; it picks the connector up on its own once you have it, with nothing to reconfigure.</p>
+    <p style="margin-top:8px"><strong>Got both accounts?</strong> Keep the browser on your <em>normal</em> one when approving — that's whose name goes on the approval. Connecting the connector can leave the browser session on <em>its</em> account, and in the wrong one you'll see a queue that isn't yours, or a bill with no approve buttons.</p>
   </div>
-  <div class="done"><b>Done when</b><span>The connector shows connected, and NetSuite in Chrome shows <em>your</em> name and role — not the connector's.</span></div>
+  <div class="done"><b>Done when</b><span>Either the connector shows connected and NetSuite in Chrome shows <em>your</em> name and role — not the connector's — or you've established you don't have it and you're moving on to step 3.</span></div>
 </section>
 
 <section>
@@ -217,7 +224,7 @@ claude plugin install procore-open-items-review@compass-claude-plugins</pre>
       <tr><th>Run this</th><th>It asks you to confirm</th></tr>
       <tr>
         <td><strong>NetSuite</strong><br><code>/netsuite-approval-double-check</code></td>
-        <td>Your NetSuite identity, which connector it's calling, and which dashboard portlet holds your bills.</td>
+        <td>Which dashboard portlet holds your bills, and — if you connected one in step 2 — your NetSuite identity and which connector it's calling.</td>
       </tr>
       <tr>
         <td><strong>Procore</strong><br><code>/procore-open-items-review</code></td>

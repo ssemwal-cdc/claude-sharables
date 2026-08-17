@@ -13,8 +13,11 @@
   --danger:#9E2C2C;
   --code-bg:#132322; --code-ink:#DCEDEA;
 }
+/* GitHub Pages serves this file raw and nothing sets data-theme, so the theme is
+   whatever the reader's OS says. No [data-theme] blocks here on purpose — they
+   would imply a toggle that does not exist. See CLAUDE.md. */
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
+  :root{
     --bg:#0E1414; --surface:#161E1D; --surface-2:#1C2625;
     --ink:#E3EAE9; --muted:#93A2A0; --line:#26312F;
     --accent:#54BFB2; --accent-soft:#17302E;
@@ -22,14 +25,6 @@
     --danger:#E38585;
     --code-bg:#0A1010; --code-ink:#D3E4E1;
   }
-}
-:root[data-theme="dark"]{
-  --bg:#0E1414; --surface:#161E1D; --surface-2:#1C2625;
-  --ink:#E3EAE9; --muted:#93A2A0; --line:#26312F;
-  --accent:#54BFB2; --accent-soft:#17302E;
-  --warn:#D9A052; --warn-soft:#2A2216;
-  --danger:#E38585;
-  --code-bg:#0A1010; --code-ink:#D3E4E1;
 }
 *{box-sizing:border-box}
 body{
@@ -84,7 +79,7 @@ p code,li code,td code,.note code{background:var(--surface-2); padding:1.5px 5px
   background:var(--accent); color:var(--bg); border-radius:5px; padding:18px 20px;
   display:flex; flex-direction:column; gap:5px;
 }
-.phase b{font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; opacity:.75}
+.phase b{font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; opacity:.85}
 .phase span{font-size:17px; font-weight:650; letter-spacing:-.01em}
 .phase em{font-style:normal; opacity:.85; font-size:14.5px}
 .note.warn{background:var(--warn-soft); border-color:transparent}
@@ -118,7 +113,7 @@ a{color:var(--accent)}
   <h2>What you get for the 15 minutes</h2>
   <p><strong>Set it up once and the review happens without you.</strong> On whatever schedule you pick, it works through your approval queue before you've opened it — reading the attached support, re-deriving the math, and tying the figures back to the purchase order and the billing history.</p>
   <ul class="tight">
-    <li><strong>Every item arrives with a verdict.</strong> Clear, or flagged with the specific figure that's wrong — so you're checking one line, not the whole document.</li>
+    <li><strong>Every item arrives with a verdict.</strong> Clear, or flagged with the specific figure that's wrong — so you're checking one line, not the whole document. A figure it could only read by OCR is never marked clear, even when the arithmetic ties: it's labelled <em>read by OCR, not independently verified</em> and left flagged for you.</li>
     <li><strong>Some come back as "not ready to review", and that's deliberate.</strong> An item with nothing to check against isn't approved, isn't rejected, and isn't given a verdict it hasn't earned. It tells you <em>why</em> — no support attached, the support is a scanned image, the link expired — so you know whether to chase the vendor or just look at it yourself.</li>
     <li><strong>It reads more than PDFs.</strong> Spreadsheets are read sheet by sheet, hidden ones included. Images and scanned pages are <em>looked at</em> rather than run through text extraction, which returns nothing useful for them.</li>
     <li><strong>The noise is gone.</strong> Most of a Procore queue is distribution-only. You see what's actually yours to action, and a count of what wasn't.</li>
@@ -233,18 +228,31 @@ claude plugin install procore-open-items-review@compass-claude-plugins</pre>
   <div class="note warn"><strong>It will ask permission to use each site — pick <em>always</em>, not <em>just once</em>.</strong> This is Claude asking, not Chrome. You'll see it for Procore, for NetSuite, and once more the first time it opens an attachment. Choose "just once" and you'll be asked again on nearly every action — and a review sitting on a prompt you aren't watching just looks frozen.</div>
   <div class="note"><strong>Where your work is saved.</strong> The folder you pick gets a <code>NetSuite Approval Checks</code> folder, a <code>Procore Open Items</code> folder, or both — created on the first run. Each holds your review history, the ids you confirm above, and the dashboard itself. <strong>Use the same folder every time</strong> — it's how a scheduled run knows whether it already ran today. Point at a different folder, or rename or delete this one, and the next run treats you as brand new and asks the setup questions over again.</div>
   <p class="muted">Nothing is shared between people — your ids and state stay local to your install. After this first run, setup is done and you won't be asked any of it again.</p>
-  <div class="done"><b>Done when</b><span>A dashboard appears inline in the conversation, listing the items waiting on you.</span></div>
+  <div class="done"><b>Done when</b><span>A dashboard appears inline in the conversation, listing the items waiting on you. <strong>If a red banner appears</strong> across the top, the dashboard got cut off on the way to the chat — your figures are fine; say so and it re-renders a smaller version.</span></div>
 </section>
 
 <section>
   <div class="step-head"><span class="num">5</span><h2>Using it day to day</h2></div>
-  <p>Once the schedule in step 6 below is running, you don't start anything. The review has already happened and the dashboard is waiting for you — provided your machine was on and Chrome was open when it fired.</p>
+  <p><strong>For now, you start each review yourself</strong> — the same command from step 4. Once the schedule in step 6 is running, you don't: the review has already happened and the dashboard is waiting, provided your machine was on and Chrome open when it fired.</p>
   <ol class="tight">
     <li>Read the dashboard. Each item shows a verdict, the figures behind it, and a link to the record.</li>
-    <li>Mark the ones you want to action — <strong>Approve</strong>, <strong>With notes</strong>, or <strong>Reject</strong>.</li>
+    <li>Mark the ones you want to action. The buttons depend on the system — see below.</li>
     <li>Press <strong>Execute</strong>. That puts an instruction into the chat in one click.</li>
     <li>The approvals then run through your own browser session, one record at a time.</li>
   </ol>
+  <div class="tbl">
+    <table>
+      <tr><th>Marking an item</th><th>The buttons you'll see</th></tr>
+      <tr>
+        <td><strong>NetSuite</strong></td>
+        <td><strong>Approve</strong>, <strong>With notes</strong>, or <strong>Reject</strong>.</td>
+      </tr>
+      <tr>
+        <td><strong>Procore</strong></td>
+        <td>Whatever that item's workflow step offers — usually <strong>Approve</strong> or <strong>Yes</strong>, and <strong>Reject</strong> or <strong>Revise and Resubmit</strong>. There's no "With notes", and a negative response asks you for a reason.</td>
+      </tr>
+    </table>
+  </div>
   <div class="note">
     <strong>Every approval it makes says so.</strong> Approvals carry the note <code>Approved by Claude</code> in the audit trail. Type your own note for an item and yours is used instead, word for word. Rejection reasons are never filled in for you — it stops and asks.
   </div>
@@ -358,10 +366,14 @@ claude plugin update procore-open-items-review@compass-claude-plugins</pre>
 </section>
 
 <section>
-  <h2>Three things that will confuse you</h2>
+  <h2>Four things that will confuse you</h2>
   <div class="tbl">
     <table>
       <tr><th>What you see</th><th>What it means</th></tr>
+      <tr>
+        <td>It stops and says the <strong>session expired</strong></td>
+        <td>Chrome was closed, or you were signed out of Procore or NetSuite. Reopen Chrome in your Compass profile, sign back in to both, and run it again. It never logs in for you.</td>
+      </tr>
       <tr>
         <td><code>Plugin "netsuite-approval-review" not found</code></td>
         <td>You left off <code>@compass-claude-plugins</code> on the update command. The plugin <em>is</em> installed; the bare name isn't enough.</td>

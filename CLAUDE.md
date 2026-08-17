@@ -766,6 +766,15 @@ marketplace, auto sync left checked, then first run in a **Cowork** chat on Opus
 5 / High effort. Every step ends in a "done when" check, which is the device that
 makes it followable — keep that if you edit it.
 
+**The page carries no `[data-theme]` blocks, deliberately.** It had both halves of
+the artifact host's three-state pattern — a `:root[data-theme="dark"]` block and a
+`:root:not([data-theme="light"])` guard on the dark media query — and on Pages both
+are dead, because nothing sets the attribute and there is no toggle to set it.
+Removed 2026-08-17, leaving a plain `prefers-color-scheme` query and a comment in
+the file saying why. The rule above mandating all three states is correct *for
+artifacts*; this file stopped being one when it moved to Pages. Do not restore them
+from that rule.
+
 Facts it carries that are not obvious from the skills:
 
 - **The NetSuite connector needs a separate, Claude-enabled NetSuite account**, a

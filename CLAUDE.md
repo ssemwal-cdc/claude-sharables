@@ -810,7 +810,18 @@ Facts it carries that are not obvious from the skills:
   the connector is not listed, they were never provisioned — email invite from
   Compass, otherwise IT. Approvals must still come from their *normal* account,
   since that is whose name lands on them.
-- **The connector is optional, and the sheet says so at step 2.** It was written
+- - **An expired connector session is a third state, and it must not be silent.**
+  The say-nothing rule covers the never-provisioned case only, where a caveat is an
+  apology on a loop for something the reader cannot fix. A stale session is seconds
+  to fix and restores the cross-check, so the run says it once near the headline and
+  never again. Collapsing the two is the tempting simplification; do not.
+- **A failed connector call is never an empty result.** Step 1a is what finds bills
+  pending approval, so an auth failure read as "no rows" reports an **empty approval
+  queue** and the user closes the tab believing nothing is waiting. An error, an auth
+  challenge, or any non-result-set response means switch that run to the browser
+  route — same three-state rule as the Procore gate, reached from a different
+  direction, and the highest-consequence instance of it in either skill.
+**The connector is optional, and the sheet says so at step 2.** It was written
   as a required step, which told unprovisioned teammates to wait on IT when they
   could have started that day. What it adds is stated positively — faster queries
   and the PO/billing-history cross-check — rather than the browser route being

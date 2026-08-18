@@ -107,6 +107,12 @@ The connector check runs on **every** review, not just the first, so getting
 provisioned later needs no reconfiguration — and a connector that stops resolving
 doesn't stop the review.
 
+**If your connector session has expired**, the review notices, runs without it, and
+tells you once so you can reconnect — a stale session is a few seconds to fix and
+worth knowing about, unlike never having been provisioned. What it will never do is
+report an empty approval queue because a query failed to answer. A call that errors
+is treated as no connector, not as "nothing pending".
+
 Nothing is shared between people. Your employee id, connector and state stay
 local to your install.
 

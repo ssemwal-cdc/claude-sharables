@@ -88,7 +88,25 @@ step is done — go to Step 1. Otherwise, once:
 
 2. **Record the connector tool name — or establish that there isn't one.** Use the fully-qualified name of the NetSuite SuiteQL tool you are actually calling in this session (it looks like `mcp__<server id>__ns_runCustomSuiteQL`). The server id differs per connection, so never copy it from documentation or another install — read it from the tool you just used.
 
-   **The connector is an accelerator, not a requirement.** If no NetSuite SuiteQL tool is available in this session, the review still runs — set `config.mode` to `"browser"` and follow the browser column in the table below. Check for the tool before asking; a person who was never provisioned a Claude-enabled NetSuite account often believes their ordinary login is connector access, so *"do you have the connector?"* is not a reliable question. If you do have to ask and the answer is no, **just proceed.** Do not describe the browser route as reduced, degraded, limited, or a fallback, and do not offer to fix it — set the mode and carry on as though it were the plan.
+   **The connector is an accelerator, not a requirement.** The review runs either way. Check for the tool before asking; a person who was never provisioned a Claude-enabled NetSuite account often believes their ordinary login is connector access, so *"do you have the connector?"* is not a reliable question.
+
+   **There are three states here, not two, and the middle one is the easiest to get wrong.**
+
+   | What you find | Mode | What you say |
+   |---|---|---|
+   | No NetSuite SuiteQL tool in the session | `browser` | **Nothing.** Carry on as though it were the plan. |
+   | Tool present but unauthenticated, or its calls error | `browser` **for this run** | **One line, once** — see below. |
+   | Tool present and answering | `connector` | Nothing needed. |
+
+   **A "not provisioned" silence is right; an "expired session" silence is not.** The say-nothing rule exists because someone who was never provisioned can do nothing about it, so a caveat on every item forever is an apology on a loop. **An expired connector is the opposite: a thirty-second fix that restores the faster route and the cross-check.** Staying quiet there costs them something they could have had. So say it once, plainly, near the headline — *"the NetSuite connector needs reconnecting; reviewed without it"* — and never again in that run. Not per item, not in a verdict, not in the dashboard.
+
+   **Never let a failed connector call read as an empty result.** This is the single dangerous outcome in the whole mode question. Step 1a's query is what finds bills pending approval, so an auth failure silently reinterpreted as "no rows" reports **an empty approval queue** — the user concludes there is nothing waiting on them and closes the tab. An errored call is `failed`, never `empty`. If a SuiteQL call returns an error, an auth challenge, or anything that is not a result set, **treat it as no connector and switch this run to `browser` mode** rather than believing the shape of what came back. Same rule as the Procore gate's three states, reached from a different direction.
+
+   **If it dies mid-run**, after Step 1a already succeeded: finish the remaining steps on the browser route, say the one line, and do not re-issue the failed query hoping it recovers. Do not discard the work already done — the queue and figures you have are valid; it is only the cross-check you lose.
+
+   **Re-detect on every run** rather than trusting `config.mode`. Someone provisioned later is lifted automatically, someone whose session expires keeps working, and someone who reconnects is back on the fast route with nothing to reconfigure.
+
+   Beyond that one line for the expired case: do not describe the browser route as reduced, degraded, limited, or a fallback, and do not offer to fix a connector that was never there.
 
 3. **Find the account id** from the NetSuite URL the user's browser is on, or from the connector. It appears in record URLs as `https://<account>.app.netsuite.com/`.
 
@@ -165,6 +183,8 @@ ORDER BY t.trandate
 ```
 
 `approvalstatus = 1` means Pending Approval. `custbodyap_invoice` is the internal file ID of the vendor's invoice PDF — this is the key that makes attachment retrieval reliable.
+
+**Zero rows here is a claim, so make sure it is a true one.** This query is the only thing that finds pending bills, so "no rows" and "the call failed" produce the same visible outcome — an empty queue — and only one of them means the user has nothing waiting. **An error, an auth challenge, or any response that is not a result set is a failure, not an empty queue.** Switch the run to the browser route per Step 0 and read the bills off the portlet instead. Never report an empty NetSuite queue on the strength of a call that did not answer.
 
 Two data quirks that will bite:
 - **`foreigntotal` is negative on vendor bills** (e.g. `-12800`). Take the absolute value everywhere.

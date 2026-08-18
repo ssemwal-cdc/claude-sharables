@@ -33,7 +33,14 @@ Approve / Revise and Resubmit, through the `CommitmentChangeOrder` join — the
 first real-data confirmation of the CCO recipe, and of the step-not-subject verb
 pairing. The ids came from `wfId`s already recorded in the log, so the
 `line_items[].holder.id` read is still unobserved, and execute mode still has
-not been walked. The same run also surfaced the Step 0 mount gap (see the sync
+not been walked.
+
+*Partially observed, 2026-08-15 (NetSuite):* one approval completed live —
+record 2534442, executed by navigating the Approve button's own URL after the
+button no-opped five times (Step 8.6). It routed and recorded normally, which
+confirms the URL recovery but not the ordinary path: **Approve With Notes
+remains unwalked** (item 2), so no approval has yet gone through the primary
+route with a note attached. The same run also surfaced the Step 0 mount gap (see the sync
 ladder), so its dashboard was rendered from workspace copies synced a day
 earlier — the gate results stand regardless, since the gate runs from `SKILL.md`,
 which ships with the plugin.
@@ -55,6 +62,13 @@ forced.
 
 **To clear it:** you probably can't on purpose. Just know it is untested, and if
 a freeze happens, watch what the run does rather than assuming it handled it.
+
+*Update, 2026-08-15:* the fallback's terminal action — plain `Approve` — has
+since shown a silent no-op mode of its own (its handler async-loads a script,
+then calls `win.open` after the click's activation expired), so the ladder now
+ends in navigating the button's own URL (Step 8.6) rather than in a click. The
+URL leg is live-confirmed on record 2534442; the freeze fallback as a whole has
+still never fired.
 
 ### 4. The Procore scheduled prompt
 
@@ -137,6 +151,11 @@ in them.
   at run time and the skill panel lists them, but nobody has walked that rung.
   If it fails too, rung 3 keeps runs alive and Cowork workspaces only ever
   refresh from a surface whose shell mounts the plugin directory.
+- Whether **Approve With Notes** shares plain Approve's handler shape (async
+  script load, then `win.open`). If it does, its failure presents as the
+  already-documented "notes page never arrives" case, and the same page-read
+  gate catches it — but nobody has read that button's handler to check, and
+  there is no note-carrying equivalent of the URL recovery.
 
 ---
 

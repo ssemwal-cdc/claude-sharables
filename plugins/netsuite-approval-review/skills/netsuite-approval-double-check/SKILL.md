@@ -634,6 +634,30 @@ Then, **one record at a time**:
    means *not yet*, never *failed* — gating a fallback click on it would eventually approve a bill
    twice, which is exactly the damage the never-re-click rule below exists to prevent. A page load
    reads the UI and has no lag.
+
+   **Plain Approve can itself do nothing, silently — and the mechanism is known, not a mystery.**
+   Observed 2026-08-15, five identical clicks with zero effect: the button's handler loads a client
+   script asynchronously and only then calls `win.open`, by which point the click's transient
+   user-activation has expired, so Chrome drops the navigation — no error, no dialog, no network
+   request, nothing in the console. The only thing that detects it is the same page-load read as
+   above. So plain Approve gets **one** click, then a fresh page load:
+
+   - **Advanced** → done. Log it as approved without a note.
+   - **Still pending** → do not click again. **Navigate the approval request the button itself
+     would have made.** Read the URL verbatim out of the button's own handler on the live record
+     page — never compose it from memory or a template — and assert its parameters against the
+     instruction before firing: `recid` is this record's internal id, `acttype` is the named
+     affirmative response, and the approver id names the user. Then navigate to it **once**, in the
+     same authenticated tab. This is the button's own server-side path and the button's own audit
+     trail — the click minus the dropped `win.open` — not a REST shortcut; the
+     never-`ns_updateRecord` rule is untouched. Confirmed live: record 2534442 approved this way
+     after five dead clicks, routed and recorded normally.
+   - Then step 7's verification, unchanged. Still pending after the URL navigation too → **stop
+     the batch.**
+
+   Two hard edges. This route exists **only for the affirmative path** — a rejection always goes
+   through the Reject form, because it needs the reason a person wrote. And it can carry no note,
+   so log it as `approved without a note via the button's own URL, after the button no-opped`.
 7. **Verify it landed — against the record, not the queue.** Query that one record:
 
    ```sql

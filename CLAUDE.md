@@ -419,6 +419,22 @@ already been approved. A page load reads the UI and has no lag. Still pending �
 click Approve and log that the note was lost. Already advanced → click nothing,
 log it as approved without a note.
 
+**Plain Approve can no-op silently, and the mechanism is now pinned.** 2026-08-15,
+five identical clicks with zero effect: the button's handler loads a client script
+asynchronously and only then calls `win.open` — by then the click's transient
+user-activation has expired, so Chrome drops the navigation with no error, no
+dialog and no network request. The post-click page read is the only thing that
+catches it, which is that verification rule earning its keep yet again. Recovery,
+now in Step 8: **one** click, page-load check, then **navigate the approval URL
+read verbatim out of the button's own handler** — parameters asserted (`recid`,
+`acttype`, the user's approver id), fired once, same server path and same audit
+trail as the button. It is the button's own request minus the dropped `win.open`,
+not a REST bypass, so the never-`ns_updateRecord` rule is untouched. Affirmative
+only, never Reject, and it carries no note. Confirmed live on record 2534442
+after five dead clicks. Do not "fix" this by re-clicking harder, and do not
+promote the URL to the primary route — Approve With Notes stays primary because
+it is the only path that can attach the note.
+
 **A CCO's workflow hangs off the commitment change order, not the package — which
 closed a gap the skill had given up on.** Found by a teammate running the plugin,
 2026-08-13. Step 2 used to say `ChangeOrderPackage` returns a 400, *"Those items

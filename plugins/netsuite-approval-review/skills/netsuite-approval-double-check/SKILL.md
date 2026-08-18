@@ -61,6 +61,25 @@ never in the workspace copy** — an edit made there is discarded by the next ru
 nobody else. Ship one by editing the repo's `assets/` and pushing; teammates pick it up on their
 next plugin update.
 
+**The sandbox shell may not be able to see the plugin's files at all.** Observed in a Cowork run
+2026-08-15 (on the Procore side; this surface behaves the same): only the connected workspace
+folder (plus outputs and uploads) is mounted into the shell, so the `cp` source path does not
+exist there and the copy cannot run. That is a property of the surface, not an error to fix. Sync
+down this ladder and take the first rung that works:
+
+1. **The `cp` above** — wherever the shell can see `${CLAUDE_PLUGIN_ROOT}`.
+2. **Read → Write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/`
+   with the file tools and write it over the workspace copy **byte for byte** — the same fidelity
+   contract as the render step: never retype, trim, or tidy in passing. Then prove the copy landed
+   whole: the template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and
+   `python3 -m py_compile publish_dashboard.py` passes in the workspace folder. This rung is
+   designed, not yet observed — if it also fails, say so in the run report.
+3. **Use the existing workspace copies and say so, once** — one line near the headline, naming the
+   files' modification date from `ls -l`: "dashboard code is from the last successful sync,
+   \<date\>". Then carry on; **do not stop the run over it.** The review's procedure lives in this
+   file, which ships with the plugin regardless — only the dashboard template and publish script
+   can lag, so the verdicts are current even when the widget's wording is not.
+
 Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already carries a `config` block, the rest of this
 step is done — go to Step 1. Otherwise, once:
 

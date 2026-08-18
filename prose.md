@@ -27,6 +27,17 @@ chat test of pdf.js on bill 2532506.
 low-value item**. Compare the verdicts against a previous run's — same figures,
 same clear/flagged calls. A difference is a regression until explained.
 
+*Partially observed, 2026-08-15 (Procore):* a live run gated two previously-
+`ungated` Align change orders as actionable at Financial Analyst Review with
+Approve / Revise and Resubmit, through the `CommitmentChangeOrder` join — the
+first real-data confirmation of the CCO recipe, and of the step-not-subject verb
+pairing. The ids came from `wfId`s already recorded in the log, so the
+`line_items[].holder.id` read is still unobserved, and execute mode still has
+not been walked. The same run also surfaced the Step 0 mount gap (see the sync
+ladder), so its dashboard was rendered from workspace copies synced a day
+earlier — the gate results stand regardless, since the gate runs from `SKILL.md`,
+which ships with the plugin.
+
 ### 2. The NetSuite notes page
 
 `Approve With Notes` loads a page **nobody has seen**. The one attempt froze the
@@ -120,6 +131,12 @@ in them.
 - Whether Cowork sessions need the per-conversation connector toggle
   (**+ → Connectors**). Anthropic's docs say connectors are per-conversation;
   the step was removed from the sheet as not matching observed behaviour.
+- Whether the file tools can read `${CLAUDE_PLUGIN_ROOT}` from a Cowork
+  sandbox — rung 2 of Step 0's sync ladder. Observed so far: the *shell*
+  cannot see it there (2026-08-15). Read is expected to, since assets resolve
+  at run time and the skill panel lists them, but nobody has walked that rung.
+  If it fails too, rung 3 keeps runs alive and Cowork workspaces only ever
+  refresh from a surface whose shell mounts the plugin directory.
 
 ---
 

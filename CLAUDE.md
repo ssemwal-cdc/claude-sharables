@@ -947,6 +947,26 @@ that predates the fix therefore keeps restoring the old file, and the natural
 reading — "the workspace copy is stale, fix it upstream" — points at a file that
 is already right.
 
+**Correction, 2026-08-15, from a live Cowork run: the sandbox shell there cannot
+see the plugin directory at all** — only the connected workspace folder, outputs
+and uploads are mounted — so on that surface Step 0's `cp` never runs and the
+workspace mirrors **the last successful sync**, which can lag the installed
+plugin. "Always mirrors the installed plugin" above holds only where the shell can
+reach `${CLAUDE_PLUGIN_ROOT}`. It also reopens the 2026-08-14 diagnosis: a
+workspace stale because the old install kept restoring it and one stale because
+nothing could restore anything produce the same symptom, and only the first is
+fixed by updating the plugin. Step 0 in both skills now carries a sync ladder —
+`cp`, then Read → Write through the file tools, then use-what-is-there and say so
+once — so the failure is visible instead of silent.
+
+**The stale-copy family is therefore three states, with three different fixes.**
+A stale **install** needs the two-command update and a restart. A stale
+**workspace** needs the sync to actually run (a rung of the Step 0 ladder). A
+stale **dashboard** needs a re-render — an old chat replays its old instructions
+forever regardless of the other two. The symptoms overlap almost completely, so
+diagnose in order: install version against `main`, then the workspace files'
+modification dates, then the render date on the widget.
+
 **A rendered dashboard is a snapshot of the template, so an old chat replays old
 instructions — and that reads as a stale install.** Cost a wrong diagnosis
 2026-08-15. A resolve-the-gate button was quoted saying *"try the alternative type

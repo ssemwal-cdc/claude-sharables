@@ -51,6 +51,15 @@ a:hover{text-decoration:underline}
 .binrow{background:var(--sunk);border-radius:var(--r);padding:11px 14px;margin-top:8px;display:flex;gap:10px;align-items:center;color:var(--ink3);font-size:13.5px}
 h2{font-size:15px;font-weight:500;margin:22px 0 0}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.toolbar{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin:16px 0 0}
+.fgrp{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto}
+.tbl{font-size:12px;color:var(--ink3)}
+select{font:400 12.5px/1 inherit;padding:7px 26px 7px 9px;border:1px solid var(--ctl);border-radius:var(--r);background:var(--card) url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%235f5e5a' stroke-width='1.4'/%3E%3C/svg%3E") no-repeat right 8px center/11px;color:var(--ink);cursor:pointer;-webkit-appearance:none;appearance:none}
+select.act{border-color:var(--acc-line);background-color:var(--acc-bg);color:var(--acc-fg)}
+input.search{width:auto;flex:1;min-width:130px;margin-top:0;font-size:12.5px;padding:7px 10px}
+.chip{font-size:12px;padding:5px 10px;border-radius:var(--r);background:var(--sunk);color:var(--ink2);cursor:pointer;border:1px solid transparent}
+.chip.on{background:var(--acc-bg);color:var(--acc-fg);border-color:var(--acc-line)}
+.hid{font-size:12.5px;color:var(--warn-fg);margin:9px 0 0}
 @media (prefers-color-scheme:dark){:root{--ink:#eceae4;--ink2:#a6a49d;--ink3:#9a978d;--line:#35342f;--bg:#191816;--card:#22201d;--surf:#272521;--sunk:#2d2a26;--ctl:#46433d;--ctl2:#6b6860;--ctl-on:#37342e;--inv:#191816;--ink-hi:#ffffff;--ok-bg:#16301d;--ok-fg:#79c78c;--ok-line:#2b5436;--bad-bg:#381d1b;--bad-fg:#ef8b84;--bad-line:#61302c;--warn-bg:#31260f;--warn-fg:#dfb25e;--warn-line:#57431e;--acc-bg:#16283c;--acc-fg:#7db3ed;--acc-line:#2a4868}
 }
 </style>
@@ -88,6 +97,25 @@ document.addEventListener("DOMContentLoaded",function(){
 </div>
 
 <div class="cards" id="cards"></div>
+
+<div class="toolbar">
+  <span class="fgrp"><span class="tbl">Sort</span>
+    <select id="fSort" onchange="setView('sort',this.value)">
+      <option value="verdict">Verdict — flagged first</option>
+      <option value="oldest">Oldest first</option>
+      <option value="newest">Newest first</option>
+      <option value="amtDesc">$ descending</option>
+      <option value="amtAsc">$ ascending</option>
+      <option value="vendor">Vendor A–Z</option>
+    </select></span>
+  <span class="fgrp"><span class="tbl">Type</span>
+    <select id="fType" onchange="setView('type',this.value)"></select></span>
+  <span class="fgrp"><span class="tbl">Vendor</span>
+    <select id="fVendor" onchange="setView('vendor',this.value)"></select></span>
+  <input class="search" id="fQ" type="text" placeholder="Search document, vendor, id…" oninput="setView('q',this.value)">
+  <span class="chip" id="fReset" onclick="resetView()">Reset</span>
+</div>
+
 <div id="banners"></div>
 <div id="rows"></div>
 <div id="bar"></div>
@@ -106,6 +134,85 @@ TOOL=(REVIEW.config&&REVIEW.config.tool)||"";
 var KEY="ns_marks_v1", marks={};
 try{marks=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){marks={}}
 function saveMarks(){try{localStorage.setItem(KEY,JSON.stringify(marks))}catch(e){}}
+
+// ---- view state: sort / filter / search, persisted ---------------------------
+// A NEW key beside ns_marks_v1, never a rename of it. Marks are decisions the user has
+// made and not yet executed; a view is just what they are looking at. Losing the second
+// costs a scroll, losing the first silently discards real work.
+var VKEY="ns_view_v1";
+var DEFV={sort:"verdict",type:"all",vendor:"all",q:""};
+var view=Object.assign({},DEFV);
+try{var sv=JSON.parse(localStorage.getItem(VKEY)||"null"); if(sv)view=Object.assign(view,sv)}catch(e){}
+function saveView(){try{localStorage.setItem(VKEY,JSON.stringify(view))}catch(e){}}
+function setView(k,v){
+  view[k]=v; saveView(); render();
+  if(k==="q"){var e=document.getElementById("fQ"); if(e){e.focus(); e.setSelectionRange(e.value.length,e.value.length)}}
+}
+function resetView(){view=Object.assign({},DEFV);saveView();render()}
+function viewActive(){return view.type!=="all"||view.vendor!=="all"||!!view.q}
+
+// Takes the {it,c} wrappers render() builds rather than bare items: c.state carries the
+// verdict as classified against the live queue, which is what the verdict sort orders on.
+function applyView(list){
+  var q=(view.q||"").toLowerCase().trim();
+  var out=list.filter(function(r){
+    var i=r.it;
+    if(view.type!=="all"   && i.type!==view.type)return false;
+    if(view.vendor!=="all" && i.vendor!==view.vendor)return false;
+    if(q){
+      var hay=(i.doc+" "+i.vendor+" "+i.type+" "+i.id+" "+i.head).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  });
+  var s=view.sort;
+  out.sort(function(a,b){
+    var ai=a.it, bi=b.it;
+    var ad=ageDays(ai.trandate), bd=ageDays(bi.trandate);
+    switch(s){
+      case "oldest":  if(ad==null)return 1; if(bd==null)return -1; return bd-ad;
+      case "newest":  if(ad==null)return 1; if(bd==null)return -1; return ad-bd;
+      case "amtDesc": return (bi.amt||0)-(ai.amt||0);
+      case "amtAsc":  return (ai.amt||0)-(bi.amt||0);
+      case "vendor":  return String(ai.vendor).localeCompare(String(bi.vendor),undefined,{numeric:true}) ||
+                             (bi.amt||0)-(ai.amt||0);
+      // Verdict is the default, and it is the order this page exists to present: anything
+      // that changed under review first, then flagged, then clear, each tier by amount
+      // descending. Same order as before the toolbar existed, so a reader who touches
+      // nothing sees no change - the amount tiebreak was previously inherited from
+      // publish_dashboard.py's pre-sort and is now stated here rather than assumed.
+      default:        var o={changed:0,flagged:1,clear:2};
+                      return (o[a.c.state]-o[b.c.state]) || (bi.amt||0)-(ai.amt||0);
+    }
+  });
+  return out;
+}
+
+function fillFilters(rows){
+  function counts(arr,key){var o={};arr.forEach(function(r){var v=r.it[key];o[v]=(o[v]||0)+1});return o}
+  function opts(vals,cts,cur){
+    return '<option value="all">All</option>'+vals.map(function(v){
+      return '<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(v)+' ('+cts[v]+')</option>'}).join("");
+  }
+  var types=[]; rows.forEach(function(r){if(types.indexOf(r.it.type)<0)types.push(r.it.type)}); types.sort();
+  var tSel=document.getElementById("fType");
+  tSel.innerHTML=opts(types,counts(rows,"type"),view.type);
+  if(types.indexOf(view.type)<0 && view.type!=="all"){view.type="all";tSel.value="all"}
+
+  // Vendor list narrows to the chosen type, the way Procore's buildings narrow to campus.
+  var scope = view.type==="all" ? rows : rows.filter(function(r){return r.it.type===view.type});
+  var vends=[]; scope.forEach(function(r){if(vends.indexOf(r.it.vendor)<0)vends.push(r.it.vendor)});
+  vends.sort(function(a,b){return String(a).localeCompare(String(b),undefined,{numeric:true})});
+  var vSel=document.getElementById("fVendor");
+  vSel.innerHTML=opts(vends,counts(scope,"vendor"),view.vendor);
+  if(vends.indexOf(view.vendor)<0 && view.vendor!=="all"){view.vendor="all";vSel.value="all"}
+
+  document.getElementById("fSort").value=view.sort;
+  var qEl=document.getElementById("fQ"); if(qEl.value!==view.q)qEl.value=view.q;
+  tSel.className=view.type!=="all"?"act":"";
+  vSel.className=view.vendor!=="all"?"act":"";
+  document.getElementById("fReset").className="chip"+(viewActive()||view.sort!==DEFV.sort?" on":"");
+}
 
 var money=function(n){return Math.abs(n).toLocaleString("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2})};
 function parseNsDate(s){if(!s)return null;var p=String(s).split("/");if(p.length!==3)return null;return new Date(+p[2],+p[0]-1,+p[1])}
@@ -181,11 +288,17 @@ function render(){
   var b="";
   document.getElementById("banners").innerHTML=b;
 
-  var html="";
-  rows.sort(function(a,b2){var o={changed:0,flagged:1,clear:2};return (o[a.c.state]-o[b2.c.state])});
-  newItems.forEach(function(n){html+=newRow(n)});
-  rows.forEach(function(r){html+=itemRow(r.it,r.c)});
-  document.getElementById("rows").innerHTML=html||'<div class="empty">Nothing pending your approval right now.</div>';
+  fillFilters(rows);
+  var vrows=applyView(rows), hidden=rows.length-vrows.length;
+
+  // Items that arrived since the last review are never filtered out. Nothing has been
+  // checked about them yet, and hiding one behind a filter is exactly how it goes unseen.
+  var body="";
+  newItems.forEach(function(n){body+=newRow(n)});
+  vrows.forEach(function(r){body+=itemRow(r.it,r.c)});
+  document.getElementById("rows").innerHTML=
+   (hidden>0?'<p class="hid">'+hidden+' item'+(hidden>1?'s':'')+' hidden by the current filter. <a href="#" onclick="resetView();return false">Show everything</a></p>':"")+
+   (body||'<div class="empty">'+(viewActive()?"No items match this filter.":"Nothing pending your approval right now.")+'</div>');
 
   renderBar();
   document.getElementById("binwrap").innerHTML=bin.length?
@@ -283,6 +396,9 @@ function closeHandoff(){var o=document.getElementById("handoff");if(o)o.parentNo
 document.addEventListener("keydown",function(e){if(e.key==="Escape")closeHandoff()});
 
 function renderBar(){
+  // REVIEW.items, never the filtered rows. A marked item that is currently hidden by a
+  // filter still has to execute - narrowing to what is on screen looks like a tidy-up and
+  // would silently drop decisions the user made before they filtered.
   var byId={}; REVIEW.items.forEach(function(i){byId[i.id]=i});
   var ks=Object.keys(marks).filter(function(k){return byId[k]});
   if(!ks.length){document.getElementById("bar").innerHTML='<p class="note" style="margin-top:18px">Mark decisions above. Nothing reaches NetSuite until you press execute.</p>';return}
@@ -308,6 +424,11 @@ function renderBar(){
 function go(){say(window.__prompt)}
 
 render();
+setInterval(function(){
+  var a=document.activeElement;
+  if(a&&(a.tagName==="INPUT"||a.tagName==="SELECT"))return; // don't blow away focus mid-edit
+  render();
+}, 60000);
 </script>
 <div id="__complete" hidden></div>
 </body>

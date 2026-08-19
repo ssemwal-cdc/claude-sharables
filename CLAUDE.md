@@ -754,10 +754,33 @@ response that routed wrongly, a frozen tab. Sweeping once at the end means every
 remaining click has already landed before any of that is visible. Both were
 costed as small savings. Neither is worth the trade.
 
-**Per-item marks live in `localStorage`** (`ns_marks_v1`, `pc_marks_v1`,
-`pc_view_v2`) and are the only user state that survives a re-render. Never
-rename those keys for tidiness; it silently discards decisions the user marked
-but has not executed.
+**Per-item marks live in `localStorage`** (`ns_marks_v1`, `pc_marks_v1`) alongside
+the view state (`pc_view_v2`, `ns_view_v1`), and are the only user state that
+survives a re-render. Never rename those keys for tidiness; it silently discards
+decisions the user marked but has not executed. The two kinds are not equivalent —
+losing a view costs a scroll, losing a mark discards work — so a new control gets a
+**new** key rather than widening a marks key.
+
+**Both dashboards now sort, filter and search, and the NetSuite one is the port.**
+Asked by a teammate 2026-08-19: *"how come netsuite dashboard is not sorting while
+procore one has filtering"*. It had **no view controls at all** — a hardcoded
+`rows.sort()` by verdict and nothing else — so Procore's toolbar was ported across,
+names and idiom identical so the two templates stay diffable. NetSuite has no
+campus/building, so its axes are **Type** and **Vendor** (vendor narrowing to the
+chosen type, the way Procore's buildings narrow to campus), plus sort, search and
+Reset.
+
+Two things about that port are load-bearing:
+
+- **Verdict stays the default sort**, with the amount-descending tiebreak now stated
+  in the template rather than inherited from `publish_dashboard.py`'s pre-sort.
+  Flagged first is what the page is *for*; a reader who touches nothing must see
+  exactly what they saw before.
+- **`renderBar()` reads `REVIEW.items`, never the filtered list.** A marked item that
+  is currently filtered off screen still has to execute. Narrowing the execute bar to
+  what is visible is the obvious-looking tidy-up and would silently drop decisions the
+  user made before they filtered — the same misfile shape as everything else in these
+  notes. Both a comment and a test cover it; do not remove either.
 
 **The teammate-facing onboarding sheet lives at `docs/onboarding.html`.** It is
 served to teammates by **GitHub Pages** from `docs/` on `main`:
@@ -782,6 +805,14 @@ Three consequences worth keeping in mind:
   originally written as an artifact *fragment*, because the artifact host wraps
   content in its own skeleton at publish time; served raw without that wrapper,
   every em dash, arrow and middot in it becomes mojibake.
+- **It now carries one small script, and that is the only one.** Copy buttons on the
+  four code blocks, added 2026-08-19 — the schedule prompts are ~40 lines and selecting
+  one by hand is exactly the friction the "one paste" restructure was meant to remove.
+  The wrapper and the button are **built by the script at run time**, never written into
+  the markup, so a reader with JS off sees a clean `<pre>` and not a dead button. It
+  copies `pre.innerText`, deliberately: the schedule blocks carry `&lt;n&gt;` escapes and
+  `innerText` hands over the `<n>` the chat should actually receive, where `textContent`
+  would too but the source must stay escaped either way.
 - **That also means it can no longer be published as an artifact as-is.** Handing
   the file to `show_widget` or an artifact publish would nest a second `<html>`.
   Strip the wrapper first, or just send the Pages link — which is the point of
@@ -843,6 +874,22 @@ Facts it carries that are not obvious from the skills:
   and the PO/billing-history cross-check — rather than the browser route being
   described as lacking something. That framing is deliberate and matches the
   skill's own rule: state what was checked, never what was not.
+- **The connector lapses every few days, and the sheet now says so up front.** Added
+  2026-08-19 from teammate feedback. Two things about it are deliberate. The cadence is
+  **reported, not measured** — nobody here has timed the TTL, so the sheet says *"every
+  few days"* and never a number. And it is framed as *how the connector behaves
+  generally*, not as something these plugins cause, because the person hitting it will
+  otherwise file it as a plugin bug. It pairs with the third-state rule above: the run
+  says it once, then carries on through the browser, so what lapses is the cross-check,
+  not the review.
+- **The workspace folder is declared, not chosen: Downloads.** The sheet used to say
+  *"point it at any folder"*, which was two defects in one line — *point it at* is
+  jargon for the Cowork folder picker, and *any folder* pushes a decision onto the
+  reader for no benefit. **A declared folder is load-bearing**, not tidiness: the
+  idempotency gate reads `<folder>/_netsuite_review_log.json`, so a reader who picks
+  somewhere different on the second run is a brand-new user to the gate and gets asked
+  the setup questions again. Downloads is safe because neither skill writes attachments
+  there — both read PDFs and workbooks in-page.
 - **Restart the computer, not the app.** Observed on Windows: an app restart is
   not reliably enough for a plugin install or update to show up. Updates land on
   the next reboot, which for most people is the following morning, so auto sync

@@ -789,14 +789,17 @@ extractor will ever return anything for one** — reaching for them is precisely
 produced "support present but unreadable". Good news for the OCR cap: with a real
 visual read available, OCR should be a rare fallback rather than the normal path.
 
-**The sniff table is designed, not yet observed** — written from a failure report
-rather than a reproduction, which is the opposite of how the rest of these notes
-were earned. Confirm the first `spreadsheet` and first `image` end to end and
-correct the provenance note in Step 4 once they are. The Excel *reader* is
-deliberately not built yet: cdnjs is the only host CSP is proven to allow, SheetJS
-may not be served there, and that is a ten-minute live question that gates the
-design — the same order the NetSuite pdf.js work used, and the reason it landed
-right first time.
+**The sniff table was designed from a failure report rather than a reproduction —
+and is now reported working.** Confirmed 2026-08-20 by the person running the
+plugins: real workbooks are read and real images are looked at. That is a user
+report rather than a transcript, so it is weaker evidence than the CCO gate's
+record ids, but it is no longer a guess. `prose.md` carries the exact standing.
+
+**Two branches under it are still unfired and are not covered by that
+confirmation:** `scanned` → rasterise → look (a PDF that parses but yields almost
+nothing, which is not the same as an image attachment Chrome renders directly),
+and the OCR fallback along with the rule that an OCR-derived figure never earns a
+`clear` verdict. Do not cite either as established.
 
 **Reduce the nesting, never the rows.** Computing the six G702 identities in the
 page and returning residuals is a *tightening* — fixed arithmetic is more

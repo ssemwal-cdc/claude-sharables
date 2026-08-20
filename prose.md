@@ -119,26 +119,29 @@ concurrent requests at the live API.
 actionable + suppressed + failed should equal the queue length. Any `failed`
 items should be **named**, never folded into the suppressed count.
 
-### 6. The attachment sniff, on real non-PDF support
+### 6. The attachment sniff — CLEARED for workbooks and images
 
-Added 2026-08-15 after a report that Excel and image support came back
-unreviewed. The classifier and the workbook reader are covered by
-`scripts/test_skill_code.py` — 13 magic-number cases, and `__sheets` against a
-stubbed workbook. Two things that testing cannot reach:
+**Reported working on real support, 2026-08-20**, by the person running the
+plugins. Real vendor workbooks are read and real images are looked at; both paths
+have now been exercised outside the mocks. This item moves out of the unverified
+list, and the claims in `docs/onboarding.html` about reading spreadsheets sheet by
+sheet and looking at images rather than extracting them are therefore accurate
+rather than aspirational.
 
-- **No real Procore `.xlsx` has been read.** The round-trip proved SheetJS on a
-  workbook *this code wrote itself*, in the scratch tab, via a live `import()`
-  from cdnjs. A vendor's actual bid schedule is a different thing: merged cells,
-  multiple sheets, formulas whose cached values may be absent.
-- **No real image or scanned PDF has been read visually.** `computer` is
-  confirmed to exist and to return a rendered view, but no review has yet gone
-  through the navigate-then-look path, and the `scanned` → rasterise → look
-  branch has never fired at all.
+**Provenance, stated exactly.** This is a user report, not something a session
+observed and wrote down from a transcript — which is a weaker standard than the
+CCO gate (record ids, dates) though a stronger one than a mock. Nobody has posted
+the figures a workbook produced, so *that workbook's numbers reached the tie-out
+correctly* is assumed rather than shown.
 
-**To clear it:** run a review over an item with Excel support and one with image
-support — the $25.6M B3 NRC package, six attachments over fourteen scope groups,
-is the natural candidate. Confirm the verdict names the format when it skips,
-and that a workbook's figures actually reach the tie-out.
+**Two narrower branches are still unfired**, and must not be read as covered by
+the above:
+
+- **`scanned` → rasterise → look.** A PDF that parses but yields almost nothing,
+  then gets rendered and looked at. Distinct from an image attachment, which
+  Chrome displays directly.
+- **The OCR fallback**, and with it the rule that an OCR-derived figure never
+  produces a `clear` verdict. Never exercised, so the cap has never been tested.
 
 **The specific regression to watch for:** a skip whose reason is vague. The bug
 this replaced said "support present but unreadable", which reads the same whether

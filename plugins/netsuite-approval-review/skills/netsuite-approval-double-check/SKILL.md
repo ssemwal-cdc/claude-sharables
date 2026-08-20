@@ -189,7 +189,8 @@ In connector mode, pull the queue two ways and reconcile them. **In browser mode
 ```sql
 SELECT t.id, t.type, t.tranid, t.trandate, t.foreigntotal,
        e.entityid AS vendor,
-       t.custbody3 AS po_ref,
+       t.custbody3 AS po_typed,
+       t.custbody_sna_without_purchase_order AS no_po_flag,
        t.custbodyap_invoice AS ap_file,
        t.custbodypurchase_order_attachment AS po_file,
        t.custbody_sn_cdc_skipped_approvers AS skipped,
@@ -202,6 +203,18 @@ ORDER BY t.trandate
 ```
 
 `approvalstatus = 1` means Pending Approval. `custbodyap_invoice` is the internal file ID of the vendor's invoice PDF — this is the key that makes attachment retrieval reliable.
+
+**`custbody3` is a typed reference. It is not the PO this bill is applied to.** It is
+aliased `po_typed` for exactly that reason. A person enters it by hand, and it is wrong
+often enough to matter: checked live 2026-08-20, it was wrong on **five of five** bills
+examined — four Sunbelt diffuser bills all reading `PO16033` while every one of them is
+applied to `PO16034`, and a CEC bill reading `PO11120` while applied to `PO16093`.
+
+**The PO the money is actually on comes from the transaction linkage in Step 2**, and that
+is the only thing that may be called the bill's PO. Never let `po_typed` reach a verdict, a
+`poContext` figure, a comment or the dashboard as though it were the coding. Reading it as
+the coding is what produced confident, entirely false "coded to the wrong PO" flags on
+correctly coded bills — see Step 5.
 
 **Zero rows here is a claim, so make sure it is a true one.** This query is the only thing that finds pending bills, so "no rows" and "the call failed" produce the same visible outcome — an empty queue — and only one of them means the user has nothing waiting. **An error, an auth challenge, or any response that is not a result set is a failure, not an empty queue.** Switch the run to the browser route per Step 0 and read the bills off the portlet instead. Never report an empty NetSuite queue on the strength of a call that did not answer.
 
@@ -243,6 +256,29 @@ ORDER BY tl.transaction, tl.linesequencenumber
 ```
 
 Add subsidiary, approval group and requestor as columns to the Step 1a query rather than reading them off the page — they are the fields 1a does not already carry.
+
+**Also pull the PO linkage, in the same bulk shape.** This is the authoritative answer to
+"which PO is this bill applied to" — it is what the record's **Related Records → Purchase
+Orders** subtab shows, and it is the only source Step 5 may treat as the coding:
+
+```sql
+SELECT l.nextdoc AS bill_id, po.id AS po_id, po.tranid AS po_ref, po.memo AS po_memo
+FROM previoustransactionlinelink l
+JOIN transaction po ON po.id = l.previousdoc AND po.type = 'PurchOrd'
+WHERE l.nextdoc IN (<all ids from step 1>) AND l.linktype = 'OrdBill'
+```
+
+Two things about this query are load-bearing.
+
+**`linktype = 'OrdBill'` is the filter, and it is not optional.** That is the order-to-bill
+application. The same PO also produces `ShipRcpt` rows for the same bill; including them
+double-counts.
+
+**The link table carries one row per line pair, not one per document.** A three-line bill
+returns three `OrdBill` rows for one PO. So **reduce to distinct bill ids before summing
+anything.** Measured 2026-08-20: a naive `SUM` across this join returned exactly 3× the
+truth — `136,369.02` of approved billings came back as `409,107.06`. Deduplicate first,
+every time.
 
 **In browser mode, `get_page_text` on each record tab is the route** — Step 1b already opened one tab per row, so the pages are there. The warning above is a cost optimisation for when a bulk query is available, not a prohibition: read the field set off the page, including the Items sublist lines. Expect the run to be slower and heavier per item; that is the trade and it needs no comment.
 
@@ -374,7 +410,7 @@ Adequate support identifies **what** was done, **for which period or scope**, an
 
 Calibration decisions already established — apply these rather than re-flagging them:
 - **Unsigned vendor proposals are fine.** A blank customer signature block on a change-order proposal is not a finding.
-- **PO linkage:** bills routinely cite a PO on the invoice while the NetSuite record has no PO linked and WITHOUT PURCHASE ORDER unchecked. **Record the PO number for traceability, do not flag it.**
+- **PO linkage:** the PO printed on a vendor's invoice, and the PO typed into `custbody3`, are both *references*. Neither is the coding. **Record them for traceability and never flag on them** — Step 5 resolves the actual applied PO from the transaction linkage, and a reference disagreeing with that linkage is a data-entry note, not a misallocation.
 - **Skipped approvers:** ignore. Not a finding.
 
 ## Step 5 — Cross-check against the real PO and history
@@ -403,7 +439,24 @@ nothing that protects the user is being quietly dropped.
 
 **Pull every PO in the run in one query**, not one per item. The `IN` below is the point of the query, not a template — collect the referenced PO numbers across all items first, then issue it once. The billing-history pull that follows is the same shape: one query with an `OR` across the engagements, sorted, rather than one per vendor.
 
-**Pull the real PO** referenced on the invoice or in `custbody3`:
+### 5a. Resolve which PO the bill is on — three states, never a boolean
+
+**Use the Step 2 linkage result. Never the typed reference, never the PO printed on the
+invoice.** Every bill resolves to exactly one of three states, and they are not
+interchangeable:
+
+| State | Means | What you may say |
+|---|---|---|
+| `linked` | Step 2 returned an `OrdBill` row | **That PO is the coding.** Authoritative. Nothing overrides it. |
+| `unlinked` | the query **succeeded** and returned no `OrdBill` row for this bill | No PO is applied. The typed reference is all there is — report it as *the PO the record names, not confirmed against the ledger*. Note `no_po_flag` alongside: `F` with no link is itself worth stating. |
+| `failed` | the query **errored** | **Unknown. Never `unlinked`.** Say the linkage could not be read and check nothing that depends on it. |
+
+**Never collapse these three into a boolean**, and never let a `failed` become "this bill
+has no PO" — that is the same misfile as the fan-out's `empty` vs `failed` and the CCO
+wrong-id returning 200-empty. A timeout is not an absence of linkage.
+
+**Then pull the PO records you resolved**, by internal id from the linkage rather than by
+matching a document-number string:
 
 ```sql
 SELECT t.id, t.tranid, t.trandate, t.foreigntotal, e.entityid AS vendor, t.memo, t.status,
@@ -411,19 +464,90 @@ SELECT t.id, t.tranid, t.trandate, t.foreigntotal, e.entityid AS vendor, t.memo,
        t.custbody_r_it_revised_contract_amount AS revised_contract,
        t.custbody_r_it_net_change_orders_amount AS net_cos
 FROM transaction t LEFT JOIN vendor e ON e.id = t.entity
-WHERE t.tranid IN ('PO____')
+WHERE t.id IN (<po_id values from the Step 2 linkage>)
 ```
+
+Keying on `po_id` and not on `tranid IN ('PO____')` matters: a `tranid` match resolves
+whatever string you hand it, so feeding it the typed reference silently pulls the contract
+figures for **the wrong PO** and every number downstream is then about a PO the bill was
+never on. That is precisely how the false positives below were produced.
+
+### 5b. A typed reference that disagrees is a data-entry note, not a misallocation
+
+When `po_typed` (or the PO printed on the invoice) does not match the `linked` PO, the
+finding is **not** "coded to the wrong PO". The money is where the linkage says it is. Write
+it as what it is, and put it in `poWarning`:
+
+> The PO reference typed on this record (`PO16033`) does not match the PO it is actually
+> applied to (`PO16034`). The bill is correctly applied; the reference field is stale.
+
+**Report it, do not discard it** — a wrong reference field is a real data-quality problem
+worth telling AP about. But **a typed-reference mismatch never makes an item `flagged` on
+its own**, and it never produces a sentence about money being on the wrong PO, a percentage
+of the wrong contract, or a cumulative total drifting onto the wrong commitment.
+
+**This is not a hypothetical guard.** Observed live 2026-08-20, both flags false:
+
+- Bill `2325026-07` was flagged as coded to `PO11120` while naming `PO16093`. It is applied
+  to `PO16093`. The record's own `custbody_r_it_original_contract_amount` reads `5,400` —
+  `PO16093`'s contract exactly, not `PO11120`'s `372,500`.
+- Bill `182743734-0004` was flagged as one of four diffuser bills on the load-bank PO, with
+  *"$182,526.82 cumulative on the wrong PO"*. All four are applied to `PO16034`, the PO the
+  invoice names. That `182,526.82` is `PO16034` at 64% of a `284,078.31` contract — healthy,
+  and on the correct commitment. Three of those four bills were already approved, so acting
+  on the flag would have meant chasing reversals on correctly posted transactions.
+
+Both records carried a second field that agreed with the linkage and contradicted the flag.
+Neither was read. **When two sources disagree about a PO, the linkage wins** — the same
+doctrine Step 8 already applies to approval state.
 
 Then reconcile: a professional-services invoice's "billed previously" plus its remaining contract phases should tie to the PO's contract value. A change order's PREVIOUSLY APPROVED AMOUNT should tie to the PO total. Residual differences usually correspond to a specific already-approved change order — identify it rather than reporting a bare variance.
 
 Caution: `custbody_r_it_total_amount_invoiced` and `..._remaining` are frequently stale (often 0). Do not rely on them; derive from actual bills instead.
 
-Keep the PO figures — they become the `poContext` line on the dashboard row: contract value, billed to date, remaining, and what this item takes it to.
+### 5c. Billed-to-date comes from the linkage, split by approval state
 
-**Pull the billing history** for the same engagement to catch duplicates, sequence gaps, and to establish proration precedent:
+**Derive it through the link table, not from a memo search.** Sum the bills NetSuite has
+actually applied to that PO — deduplicated to distinct bill ids per 5a — and keep approved
+and pending apart:
 
 ```sql
-SELECT t.id, t.tranid, t.trandate, t.foreigntotal, t.memo, t.approvalstatus, t.custbody3 AS po_ref
+SELECT d.po_id, d.approvalstatus, SUM(d.amt) AS billed, COUNT(*) AS bills
+FROM (SELECT DISTINCT l.previousdoc AS po_id, b.id AS bill_id, b.approvalstatus,
+             ABS(b.foreigntotal) AS amt
+      FROM previoustransactionlinelink l
+      JOIN transaction b ON b.id = l.nextdoc AND b.type = 'VendBill'
+      WHERE l.previousdoc IN (<po_id values>) AND l.linktype = 'OrdBill') d
+GROUP BY d.po_id, d.approvalstatus
+```
+
+**One written convention, because the file used to contradict itself on this.**
+`approvalstatus = 2` is **billed to date**. `approvalstatus = 1` is **pending, stated
+separately and naming this bill**. So "what this item takes it to" is arithmetic you show,
+not an inference. Do not fold pending into billed-to-date, and do not report a
+billed-to-date without saying which of the two it is.
+
+Never derive a `poContext` figure from a vendor-plus-memo search again. The old route
+summed on vendor and a memo `LIKE` with **no PO predicate at all**, so it swept in bills
+applied to other POs entirely: it reported `PO11120` at `$478,012.50` against a `$372,500`
+contract — *"130%"* — when the two bills actually applied to it total exactly its `$372,500`.
+Contract from one key and billings from another, never joined, is how that happened.
+
+### 5d. A zero is not a finding
+
+**A billed-to-date of zero on the PO a bill is applied to is the expected reading** for the
+first draw against a fresh commitment, and for any PO whose only bill is still pending — a
+pending bill has not incremented anything yet. On its own it is **never** evidence of
+miscoding, and it must never be offered as corroboration that a bill sits somewhere else.
+
+Before treating a zero as meaningful at all, confirm the linkage query returned rows. A zero
+that comes from a query that matched nothing is not a fact about the PO.
+
+**Pull the billing history** for the same engagement — for duplicates, sequence gaps, and
+proration precedent **only**. This query is no longer a source of any `poContext` figure:
+
+```sql
+SELECT t.id, t.tranid, t.trandate, t.foreigntotal, t.memo, t.approvalstatus, t.custbody3 AS po_typed
 FROM transaction t LEFT JOIN vendor e ON e.id = t.entity
 WHERE t.type = 'VendBill' AND e.entityid = '<vendor>'
   AND UPPER(t.memo) LIKE '%<person or engagement keyword>%'
@@ -432,7 +556,11 @@ ORDER BY t.trandate
 
 The memo field is the reliable engagement key — staffing POs are often **pooled**, carrying many people at once, so a PO memo naming a different person is not a mismatch. Query by memo, not by PO alone.
 
-Three checks that have found real issues:
+Three further checks. **Provenance:** this list arrived in the repo's first commit
+describing itself as checks that "have found real issues", with no run, record or date
+attached, and Step 5 as a whole has never been observed end to end on real data — it runs
+only in connector mode and no connector run has been walked through. Treat the three as
+designed, not proven, and see `prose.md`.
 
 - **Cumulative reasonableness.** Sum all bills for the engagement including the pending one and compare to what the contract period implies. A partial-month factor that looks inflated in isolation is often exactly right, or even under, once the whole engagement is footed.
 - **Application sequence.** If a pay application says "less previous certificates $X," confirm bills totalling $X actually exist in NetSuite for that engagement. A missing intermediate application means the audit trail is broken and must be flagged before approval.
@@ -455,8 +583,10 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`:
       "reviewedOn": "YYYY-MM-DD", "lastSeenPending": "YYYY-MM-DD",
       "head": "one line, the verdict in plain terms",
       "facts": ["two or three skim lines with the specific figures"],
-      "poContext": "PO15039 - contract $216,000 - billed to date $76,500 - remaining $139,500",
-      "poWarning": "optional, e.g. a duplicate PO worth naming",
+      "poContext": "PO15039 - contract $216,000 - billed to date $76,500 (approved) - this bill $12,000 pending - takes it to $88,500 of $216,000",
+      "poWarning": "optional; a duplicate PO worth naming, or a typed reference that disagrees with the linkage",
+      "poLink": "linked|unlinked|failed",
+      "poTyped": "what custbody3 said, recorded whether or not it agrees",
       "detail": "the full paragraph of reasoning",
       "attachmentFile": "the attachment's NetSuite file name and id, e.g. 'ComEd Aug 2026.pdf (3741744)'",
       "poRef": "PO15039"
@@ -471,6 +601,12 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`:
 ```
 
 These field names are the contract with `publish_dashboard.py`. Do not rename them.
+
+**`poRef` is the PO the bill is applied to** — resolved from the Step 2 linkage, never from
+`poTyped`. The two are separate fields on purpose: keeping the typed value lets a reader see
+the disagreement, and collapsing them back into one would re-create the bug. `poLink` says
+which of the three states produced `poRef`, so an `unlinked` or `failed` item can never be
+read as though its PO had been confirmed.
 
 `head`, `facts`, `poContext` and `detail` are what the dashboard renders, so write them for a reader who is skimming. `facts` should be the two or three lines that carry the specific figures — a reader should be able to judge the item without expanding anything.
 

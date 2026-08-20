@@ -531,6 +531,66 @@ The type is per item now (`wf`) with `wfId` beside it, because the queue's
 `item_type` and the workflow endpoint's type are not the same thing and the old
 kind-keyed constant assumed they were.
 
+**A bill's PO comes from the transaction linkage. `custbody3` is a typed reference and
+has never been the coding.** Found by a teammate running the plugin and confirmed against
+production 2026-08-20. The skill flagged bills as *"coded to the wrong PO"*; NetSuite's
+System Information did show a "PO #" field with the wrong PO, but **Related Records →
+Purchase Orders showed the right one**. The teammate was right and the flags were false.
+
+| Bill | `custbody3` (typed) | Real `OrdBill` link | The record's own contract field |
+|---|---|---|---|
+| `2325026-07` (2534437) | `PO11120` | **PO16093** | `5,400` — PO16093's contract |
+| `182743734-0004` (2535881) | `PO16033` | **PO16034** | `284,078.31` — PO16034's contract |
+
+Both bills were correctly coded, and **both records carried a second field that agreed with
+the linkage and contradicted the flag.** Neither was read.
+
+It was systematic, not two records. All four Sunbelt diffuser bills read `PO16033` and all
+four are applied to `PO16034`; three were already **approved**. So the flag's headline —
+*"$182,526.82 cumulative on the wrong PO"* — was phantom: that is PO16034 at 64% of a
+`284,078.31` contract, on the correct commitment. Acting on it meant chasing reversals on
+correctly posted transactions. The other flag claimed PO11120 was at *"130% of contract,
+$478,012.50 billed"*; the two bills actually applied to it total exactly its `372,500`.
+
+**Three compounding defects, all now fixed in Step 5.**
+
+- **A typed reference read as the coding.** `createdfrom`,
+  `previoustransactionlinelink`, `linkedtrans` and "Related Records" appeared **zero times
+  in the whole repo**. Step 2 even queried `transactionline` — the right table — and never
+  asked it for the link.
+- **Contract and billed-to-date computed off two unjoined keys.** Contract from a `tranid`
+  string match; billed-to-date from a vendor + memo `LIKE` sum with **no PO predicate at
+  all**, so it swept in bills applied to other POs. That is where the `$478,012.50` came
+  from.
+- **The zero-evidence was inverted.** *"The PO the invoice names has $0 billed"* is the
+  **expected** reading for a first draw and for any pending bill — a pending bill has
+  incremented nothing. It was being offered as corroboration of miscoding. The history
+  query selected `approvalstatus` and no rule ever spent it.
+
+**`linktype = 'OrdBill'` is the filter and it is not optional** — the same PO also emits
+`ShipRcpt` rows for the same bill. And **the link table carries one row per line pair, not
+per document**: a three-line bill returns three `OrdBill` rows, and a naive `SUM` across the
+join returned exactly 3× the truth (`136,369.02` came back as `409,107.06`). Deduplicate to
+distinct bill ids before aggregating, always.
+
+**Three states, never a boolean:** `linked` (that PO is the coding, authoritative),
+`unlinked` (the query succeeded and found none — the typed value is all there is, and say
+so), `failed` (the query errored — unknown, and **never** `unlinked`). This is the **fifth**
+instance of the shape these notes had already written down four times — the fan-out's
+`empty` vs `failed`, the CCO wrong-id returning 200-empty, a workbook read as `expired`, a
+`[BLOCKED:]` marker read as an empty field. The PO path was the one major step where the
+principle had never been applied.
+
+**A typed reference that disagrees is a data-entry note, not a misallocation.** Report it —
+a wrong reference field is a real data-quality problem worth telling AP — but it never
+flags an item on its own and never produces a sentence about money on the wrong PO. The
+signal was real; only its category was wrong.
+
+Worth keeping about how this was caught: **the teammate's two independent sources
+disagreeing is what settled it**, the same device that made the CCO recipe trustworthy. The
+skill could not detect its own miss, because a `tranid` match resolves whatever string it is
+handed and returns a clean, plausible answer about the wrong PO.
+
 **Both skills fan out their reads now, and the fan-out has one failure mode that
 governs the whole design.** Procore's gate used to issue one GET per queue item
 across a ~73 item queue, ~41 of them only to learn the item was noise; NetSuite
@@ -1021,6 +1081,17 @@ nothing could restore anything produce the same symptom, and only the first is
 fixed by updating the plugin. Step 0 in both skills now carries a sync ladder —
 `cp`, then Read → Write through the file tools, then use-what-is-there and say so
 once — so the failure is visible instead of silent.
+
+**Deleting the workspace folder is not a fourth fix, and it makes things worse.** The
+copies are stale because the *write failed*, so deleting the destination does not make
+`${CLAUDE_PLUGIN_ROOT}` reachable — the next run fails the same way, except rung 3 now has
+nothing to fall back on. Delete-then-write converts a fail-open into a fail-closed. It also
+destroys the state file in that folder: `config` (publish then aborts rather than guessing
+an identity), the review history, and `lastCompletedRun`. The narrow version — deleting only
+the two asset files and keeping the log — still only helps on a surface where the sync can
+actually run. **The template now carries a version marker and `publish_dashboard.py` warns
+on a mismatch, so a stale copy names itself; bump the marker whenever the template changes,
+and `scripts/test_skill_code.py` fails if script and template disagree.**
 
 **The stale-copy family is therefore three states, with three different fixes.**
 A stale **install** needs the two-command update and a restart. A stale

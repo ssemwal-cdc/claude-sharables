@@ -26,6 +26,15 @@ Covered:
   6. Procore  `__sheets` - workbook reads are budgeted by whole sheets, include
                            hidden sheets, and drop long-digit rows without taking
                            the real row beside them.
+  7. template version   - each publish script's TEMPLATE_VERSION matches the marker
+                           in its sibling template, and a mismatch warns without
+                           stopping the run.
+  8. PO identity rules  - the NetSuite SKILL.md resolves a bill's PO from the
+                           transaction linkage, not from the typed `custbody3`
+                           reference. Guards the exact queries whose absence
+                           produced false "coded to the wrong PO" flags.
+  9. NetSuite `poLine`  - the dashboard keeps linked / unlinked / failed distinct,
+                           so an unconfirmed PO cannot render as confirmed.
 
 Usage:  python3 scripts/test_skill_code.py
 Needs node on PATH for 1-3; those are skipped with a notice if it is missing.
@@ -348,6 +357,142 @@ def test_cco_demotion():
         shutil.rmtree(d, ignore_errors=True)
 
 
+# ------------------------------------------------------- 7. template version
+def _marker(path):
+    m = re.search(r"layout template (v\d+)", open(path, encoding="utf-8").read())
+    return m.group(1) if m else None
+
+
+def test_template_version():
+    """The marker exists to make a stale workspace copy legible. A marker nobody
+    bumps is the state this replaced, so the agreement is enforced here."""
+    for label, root in (("netsuite", NS), ("procore", PC)):
+        assets = os.path.join(root, "assets")
+        script = open(os.path.join(assets, "publish_dashboard.py"), encoding="utf-8").read()
+        m = re.search(r'TEMPLATE_VERSION\s*=\s*"(v\d+)"', script)
+        expect = m.group(1) if m else None
+        found = _marker(os.path.join(assets, "dashboard_template.html"))
+        check("%s: publish script declares TEMPLATE_VERSION" % label, expect is not None)
+        check("%s: template carries a version marker" % label, found is not None)
+        check("%s: script and template agree (%s)" % (label, expect),
+              expect is not None and expect == found, "script=%s template=%s" % (expect, found))
+
+    # Behaviour, not just agreement: a stale template must warn and still publish.
+    # Aborting here would kill a Cowork run whose verdicts are fine and whose only
+    # lag is the layout - which is the whole reason this warns instead of exiting.
+    d = tempfile.mkdtemp()
+    try:
+        assets = os.path.join(NS, "assets")
+        for f in ("publish_dashboard.py", "dashboard_template.html"):
+            shutil.copy(os.path.join(assets, f), d)
+        tpl_path = os.path.join(d, "dashboard_template.html")
+        tpl = open(tpl_path, encoding="utf-8").read()
+        open(tpl_path, "w", encoding="utf-8").write(
+            re.sub(r"layout template v\d+", "layout template v0", tpl, count=1))
+        json.dump({"lastCompletedRun": "2026-08-20", "lastRunTime": "2026-08-20 09:00",
+                   "config": {"me": 42, "account": "1", "tool": "t"},
+                   "items": {"1": {"type": "Bill", "docNo": "B1", "vendor": "V", "amount": 1,
+                                   "trandate": "8/1/2026", "verdict": "clear", "head": "h",
+                                   "facts": ["f"], "detail": "d"}}},
+                  open(os.path.join(d, "_netsuite_review_log.json"), "w"))
+        out = os.path.join(d, "index.html")
+        r = subprocess.run([sys.executable, os.path.join(d, "publish_dashboard.py"), out],
+                           capture_output=True, text=True, timeout=60)
+        check("stale template warns", "WARNING" in (r.stdout + r.stderr) and
+              "v0" in (r.stdout + r.stderr))
+        check("stale template does NOT stop the run", r.returncode == 0, "exit %s" % r.returncode)
+        check("stale template still publishes", os.path.exists(out))
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+# ------------------------------------------------------- 8. PO identity rules
+def test_po_identity_rules():
+    """A bill's PO must come from the transaction linkage, never from the typed
+    `custbody3` reference. Reading the typed field as the coding produced
+    confident, false "coded to the wrong PO" flags on correctly coded bills
+    (observed 2026-08-20 on five of five bills). These assertions guard the
+    specific queries whose absence caused it - if someone reverts the SQL, this
+    goes red rather than the next reviewer's queue going wrong."""
+    src = open(os.path.join(NS, "SKILL.md"), encoding="utf-8").read()
+    # Prose in this file gets re-wrapped, so match sentences against a
+    # whitespace-flattened copy. A rewrap must not silently retire a guard.
+    flat = re.sub(r"\s+", " ", src)
+
+    sql = re.findall(r"```sql\n(.*?)```", src, re.S)
+    link_q = [q for q in sql if "previoustransactionlinelink" in q]
+    check("po: the linkage table is queried", len(link_q) >= 2,
+          "found %d queries using it" % len(link_q))
+    check("po: EVERY linkage query filters to the order-to-bill link",
+          bool(link_q) and all("linktype = 'OrdBill'" in q for q in link_q),
+          "%d of %d filter" % (sum("linktype = 'OrdBill'" in q for q in link_q), len(link_q)))
+    check("po: ShipRcpt double-counting is called out", "ShipRcpt" in src)
+    check("po: the per-line-pair fan-out is warned about",
+          "one row per line pair" in flat)
+    check("po: aggregates are deduplicated to distinct bills",
+          "SELECT DISTINCT" in src and "distinct bill ids" in flat)
+
+    check("po: the typed field is aliased as typed, not as the ref",
+          "custbody3 AS po_typed" in src and "custbody3 AS po_ref" not in src)
+    check("po: the PO pull keys on the linkage id, not a document-number string",
+          "WHERE t.id IN (<po_id" in src and "WHERE t.tranid IN ('PO____')" not in src)
+
+    for state in ("linked", "unlinked", "failed"):
+        check("po: state %r is named" % state, "`%s`" % state in src)
+    check("po: the three states are not collapsible",
+          "Never collapse these three" in flat)
+
+    check("po: a typed mismatch is a data-entry note, not a misallocation",
+          "data-entry note" in flat)
+    check("po: a typed mismatch never flags an item on its own",
+          "never makes an item `flagged` on its own" in flat)
+    check("po: a zero billed-to-date is not a finding",
+          "A zero is not a finding" in flat)
+    check("po: billed-to-date and pending are kept apart",
+          "Do not fold pending into billed-to-date" in flat)
+    check("po: the memo-derived poContext route is retired",
+          "Never derive a `poContext` figure from a vendor-plus-memo search" in flat)
+
+
+# ----------------------------------------------------------- 9. NetSuite poLine
+def test_po_line():
+    """The dashboard must keep the three PO states distinct. Rendering an
+    `unlinked` or `failed` PO the same way as a `linked` one would present an
+    unconfirmed PO as confirmed - the same misfile the skill just removed."""
+    tpl = open(os.path.join(NS, "assets", "dashboard_template.html"), encoding="utf-8").read()
+    m = re.search(r"(function poLine\(it\)\{.*?\n\})", tpl, re.S)
+    if not m:
+        sys.exit("ABORT: poLine() not found in the NetSuite dashboard template. This "
+                 "test extracts it from the template on purpose - if it moved, fix "
+                 "this test rather than duplicating the function.")
+    script = ("function esc(s){return String(s==null?'':s)}\n" + m.group(1) + """
+var out = {
+  linked:   poLine({poRef:"PO16093", poLink:"linked"}),
+  unlinked: poLine({poRef:"PO16093", poLink:"unlinked"}),
+  failed:   poLine({poRef:"PO16093", poLink:"failed"}),
+  empty:    poLine({})
+};
+console.log(JSON.stringify(out));
+""")
+    code, out, err = run_node(script)
+    if code != 0:
+        check("poLine runs", False, (err.splitlines() or ["non-zero exit"])[0])
+        return
+    r = json.loads(out)
+    warn = "var(--warn-fg)"
+    check("poLine: linked names the applied PO", "PO16093" in r["linked"] and "Applied to" in r["linked"])
+    check("poLine: linked is not warn-coloured", warn not in r["linked"])
+    check("poLine: unlinked says no PO is applied", "No PO applied" in r["unlinked"])
+    check("poLine: unlinked is visibly unconfirmed", warn in r["unlinked"])
+    check("poLine: unlinked still names what the record claims", "PO16093" in r["unlinked"])
+    check("poLine: failed says the linkage was not read", "could not be read" in r["failed"])
+    check("poLine: failed is NOT rendered as unlinked",
+          "No PO applied" not in r["failed"] and warn in r["failed"])
+    check("poLine: the three states are mutually distinct",
+          len({r["linked"], r["unlinked"], r["failed"]}) == 3)
+    check("poLine: an older payload renders nothing rather than guessing", r["empty"] == "")
+
+
 def main():
     print("Skill code checks\n")
     if shutil.which("node"):
@@ -356,10 +501,13 @@ def main():
         test_gate_states()
         test_sniff()
         test_sheets()
+        test_po_line()
     else:
         print("  SKIP  node not on PATH - extractor, page budget, gate states, "
-              "sniff and sheets not run")
+              "sniff, sheets and poLine not run")
     test_cco_demotion()
+    test_template_version()
+    test_po_identity_rules()
     print()
     if failures:
         print("FAILED: " + "; ".join(failures))

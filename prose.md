@@ -16,6 +16,37 @@ it as established.
 `python3 scripts/test_skill_code.py` covers the logic against mocks. It cannot
 cover any of this, because all of it is about the real systems.
 
+### 0. Step 5's PO cross-check was wrong, and is now fixed but unobserved
+
+**Corrected from guessed to proven, 2026-08-20** — the one item on this list that moved by
+being falsified rather than confirmed. Step 5 identified a bill's PO from `custbody3`, a
+typed reference, and produced confident false *"coded to the wrong PO"* flags on correctly
+coded bills. Confirmed against production on five of five bills; details and record ids in
+`CLAUDE.md`. A teammate found it by noticing Related Records disagreed with System
+Information.
+
+Two things about its provenance are worth recording, because they are why it survived 50
+commits. Step 5 arrived in the **root commit** and its logic was never revised — `git log -S`
+on `poContext`, `poWarning`, `custbody3` each return only that commit, and **no commit
+message ever explained the design**. And its own text described its three checks as ones that
+*"have found real issues"*, with no run, record or date attached — unlike every other verified
+thing here, which names one. That unsourced claim is now marked as designed in `SKILL.md`.
+
+**What is fixed:** PO identity from `previoustransactionlinelink` with
+`linktype = 'OrdBill'`; three states kept distinct; billed-to-date derived through the link
+and split from pending; a zero no longer readable as a finding; a typed mismatch demoted to a
+data-entry note. Guarded by `scripts/test_skill_code.py`, mutation-tested (10/10 caught).
+
+**What is still unobserved:** the corrected Step 5 has never run inside an actual review. The
+queries themselves are live-verified — every one in this fix was executed against production
+— but the *skill following them end to end* has not been watched, and Step 5 runs only in
+connector mode, so it inherits gap 1 below.
+
+**To clear it:** run one connector-mode review over a queue containing at least one bill whose
+typed reference disagrees with its linkage. Required outcome: not flagged for PO coding, and a
+`poWarning` naming the disagreement. Bills `2325026-07` and `182743734-0004` are the known
+cases.
+
 ### 1. No end-to-end run, either plugin
 
 The single biggest gap. Every change from 2026-08-13/14 — in-page pdf.js
@@ -52,7 +83,8 @@ tab. The skill deliberately says to read that page rather than assume its field
 names or button labels, because inventing them would be worse than vague.
 
 **To clear it:** approve one low-value bill and watch where the note lands.
-Then tighten Step 5 with the real labels.
+Then tighten **Step 8.6** with the real labels. (This said "Step 5" under the old
+numbering, where that was the notes page; Step 5 is now the PO cross-check.)
 
 ### 3. The freeze fallback
 

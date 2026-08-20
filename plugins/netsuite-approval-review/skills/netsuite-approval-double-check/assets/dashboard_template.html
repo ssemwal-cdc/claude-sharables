@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <title>NetSuite approval queue</title>
-<!-- layout template v1 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v2 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:8px}
 *{box-sizing:border-box}
@@ -34,6 +35,7 @@ button.primary:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
 ul.f{margin:7px 0 0;padding-left:17px;font-size:12.5px;color:var(--ink2);line-height:1.6;font-variant-numeric:tabular-nums}
 ul.f li{margin:1px 0}
 .po{font-size:12.5px;color:var(--ink2);background:var(--surf);padding:7px 10px;border-radius:var(--r);margin:9px 0 0;font-variant-numeric:tabular-nums}
+.polink{font-weight:500}
 .det{font-size:13px;color:var(--ink2);line-height:1.7;margin:10px 0 0;display:none}
 .acts{display:flex;gap:8px;align-items:center;margin-top:11px;padding-top:10px;border-top:1px solid var(--line);flex-wrap:wrap}
 button{font:400 12.5px/1 inherit;padding:7px 12px;background:transparent;border:1px solid var(--ctl);border-radius:var(--r);color:var(--ink);cursor:pointer}
@@ -320,6 +322,19 @@ function newRow(n){
   '<a href="'+recUrl(n.id)+'" target="_blank" rel="noopener" onclick="return nav(this)">Open record</a></div></div>'
 }
 
+// The PO the bill is APPLIED to, and how that was resolved. Three states, kept distinct on
+// purpose: an unlinked or unreadable PO must never render as though it had been confirmed.
+// it.poRef comes from the transaction linkage, never from the typed custbody3 reference.
+function poLine(it){
+  if(!it.poRef&&!it.poLink)return "";
+  var st=it.poLink||"", lab, col="";
+  if(st==="linked")        lab="Applied to "+esc(it.poRef);
+  else if(st==="unlinked"){lab="No PO applied in NetSuite"+(it.poRef?" \u00b7 record names "+esc(it.poRef):"");col="var(--warn-fg)"}
+  else if(st==="failed")  {lab="PO linkage could not be read \u00b7 not checked";col="var(--warn-fg)"}
+  else                     lab=esc(it.poRef);
+  return '<span class="polink"'+(col?' style="color:'+col+'"':'')+'>'+lab+'</span><br>';
+}
+
 function itemRow(it,c2){
   var m=marks[it.id]||null, cls="row"+(m?(m.kind==="reject"?" mkr":" mk"):"");
   var a=ageDays(it.trandate);
@@ -337,7 +352,7 @@ function itemRow(it,c2){
   if(c2.state==="changed")h+='<p class="head" style="color:var(--warn-fg)">Amount is now '+money(c2.newAmt)+', was '+money(it.amt)+' when reviewed. The verdict below no longer applies.</p>';
   h+='<p class="head">'+esc(it.head)+'</p>'+
   '<ul class="f">'+it.facts.map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+
-  '<p class="po">'+esc(it.po)+(it.poWarn?'<br><span style="color:var(--warn-fg)">! '+esc(it.poWarn)+'</span>':'')+'</p>'+
+  '<p class="po">'+poLine(it)+esc(it.po)+(it.poWarn?'<br><span style="color:var(--warn-fg)">! '+esc(it.poWarn)+'</span>':'')+'</p>'+
   '<p class="det" id="det'+it.id+'">'+esc(it.detail)+'</p>'+
   '<div class="acts">'+
   '<button onclick="tog('+it.id+',this)">Show detail</button>'+

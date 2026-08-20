@@ -2,7 +2,12 @@
 """Publish the NetSuite approval queue dashboard.
 
 Reads _review_log.json, injects it into dashboard_template.html, and writes
-index.html ready to hand to update_artifact.
+index.html, whose contents are then rendered inline with show_widget.
+
+(An earlier design published this to an artifact. That path was dropped on 2026-08-11: the
+artifact host exposes no sendPrompt, so a dashboard there cannot put the execute instruction
+into chat. The clipboard handoff still in dashboard_template.html is the deliberate fallback
+for that host and is not leftover - do not remove it.)
 
 The template holds the entire layout and all behaviour. This script only ever
 replaces the data block between the sentinels. Nothing here regenerates HTML,
@@ -10,7 +15,7 @@ so the dashboard cannot drift between runs.
 
 Usage:  python3 publish_dashboard.py [<output path>]
 """
-import json, os, sys, datetime
+import json, os, re, sys, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LOG = os.path.join(HERE, "_netsuite_review_log.json")
@@ -29,9 +34,33 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "index.html")
 
 S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 
+# The template is a *cache* in the workspace folder, refreshed by the skill's Step 0. When
+# that sync cannot run - the Cowork sandbox does not mount the plugin directory - the copy
+# here silently lags the installed plugin, and a missing feature reads as a design choice.
+# So the template carries a version marker and this script checks it.
+#
+# Warn, never abort. A lagging template still renders correct verdicts: the review procedure
+# ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
+# a run that is fine.
+TEMPLATE_VERSION = "v2"
+
+def check_template_version(tpl):
+    m = re.search(r"layout template (v\d+)", tpl)
+    found = m.group(1) if m else None
+    if found == TEMPLATE_VERSION:
+        return
+    print("WARNING: dashboard template is %s, this script expects %s - the workspace copy is "
+          "stale and Step 0's sync did not run. Re-sync from a surface whose shell can see the "
+          "plugin, or this dashboard will be missing recent changes."
+          % (found or "unversioned", TEMPLATE_VERSION), file=sys.stderr)
+
+
 def main():
     log = json.load(open(LOG, encoding="utf-8"))
     tpl = open(TPL, encoding="utf-8").read()
+
+    # Warns on a stale workspace copy; deliberately does not stop the run.
+    check_template_version(tpl)
 
     if tpl.count(S) != 1 or tpl.count(E) != 1:
         sys.exit("ABORT: template sentinels missing or duplicated. Do not "
@@ -51,6 +80,12 @@ def main():
             "facts": it.get("facts", []),
             "po": it.get("poContext", ""),
             "poWarn": it.get("poWarning", ""),
+            # The PO the bill is actually applied to, resolved from the transaction
+            # linkage - never from the typed custbody3 reference. poLink says which of
+            # linked/unlinked/failed produced it, so the dashboard can never present an
+            # unconfirmed PO as confirmed.
+            "poRef": it.get("poRef", ""),
+            "poLink": it.get("poLink", ""),
             "detail": it.get("detail", ""),
         })
 

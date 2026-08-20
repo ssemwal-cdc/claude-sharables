@@ -192,6 +192,47 @@ in them.
   gate catches it — but nobody has read that button's handler to check, and
   there is no note-carrying equivalent of the URL recovery.
 
+### 9. The dashboard UI change — measured in a browser, unseen in the widget host
+
+The 2026-08-20 change (newest-first default, sticky execute bar, numbered steps,
+header mirror) is unusual for this list in that most of it **was** observed, just
+not where it will actually run. Both dashboards were published from fixtures and
+driven in headless Chromium: the default sort, the view-key migration for a
+returning user, the ordering itself, the `ageDays` clamp fix, the both-null
+comparator guard, light and dark, and the sticky bar's viewport position measured
+at two scroll offsets. Those are established, and a future session need not redo
+them.
+
+**What is not established is the one thing that cannot be checked from here:
+whether `position:sticky` does anything in the widget host.** The measurement was
+taken at `file://`, where the document itself scrolls. The dashboard renders inside
+an iframe on `*.claudemcpcontent.com`, and whether that iframe scrolls internally
+or auto-sizes while the *conversation* scrolls is not knowable from the agent side
+— the same wall the note in `CLAUDE.md` describes about `show_widget` returning
+"Content rendered" whatever it rendered. If it auto-sizes, there is no scroll
+container, and sticky degrades silently to an ordinary block. No error, no
+console output; it simply sits in flow.
+
+That is why the header mirror exists and why it must not be deleted as redundant:
+it is the half that works on either host. `docs/onboarding.html` is worded to be
+true either way — it says a button sits at the bottom and a second appears in the
+header, and deliberately does **not** promise the bottom one follows you down the
+page. An earlier draft did promise that and it was removed unshipped, because it
+would have been a claim about a host nobody has observed.
+
+**One question settles it, and it needs a person at the keyboard:** on the next
+real run, scroll the queue inside the conversation and say whether the dark
+Execute bar stays pinned near the bottom edge or scrolls away with the rows. If it
+scrolls away, sticky is inert on that host — which is not a bug to fix so much as a
+fact to record here, and the header mirror is then carrying the feature alone.
+
+**Also unseen at real scale.** The fixtures were 6 NetSuite bills and 8 Procore
+items. A real Procore queue has run to 43–73. A sticky bar overlays the rows
+beneath it, and 153px of overlay against a six-row fixture is not the same
+experience as against seventy — nobody has watched that. The step headings and the
+restyled marked rows are likewise cosmetic-only and unseen by anyone but the
+person who wrote them.
+
 ---
 
 ## Retrospective: four rounds spent on a bug that did not exist

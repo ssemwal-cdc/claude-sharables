@@ -407,6 +407,57 @@ def test_template_version():
 
 
 # ------------------------------------------------------- 8. PO identity rules
+def test_dashboard_view():
+    """The toolbar had no coverage at all, and the default sort is the one setting every
+    reader lands on without choosing it. Three things are guarded here, each of which has
+    already failed once in some form: a default that cannot reach an existing user, a
+    comparator that is not a valid comparator, and a sticky rule with no room to travel."""
+    for label, root, key, oldkey in (("netsuite", NS, "ns_view_v2", "ns_view_v1"),
+                                     ("procore",  PC, "pc_view_v3", "pc_view_v2")):
+        tpl = open(os.path.join(root, "assets", "dashboard_template.html"), encoding="utf-8").read()
+
+        m = re.search(r"var DEFV=\{sort:\"(\w+)\"", tpl)
+        check("%s: default sort is newest" % label, bool(m) and m.group(1) == "newest",
+              "found %s" % (m.group(1) if m else "no DEFV"))
+
+        # A new default that ships under the old storage key reaches nobody who has ever
+        # touched the toolbar - their stored view simply overrides it, for good.
+        check("%s: view key was bumped with the default" % label, 'VKEY="%s"' % key in tpl)
+        check("%s: the previous view key is migrated, not dropped" % label,
+              'OLDVKEY="%s"' % oldkey in tpl and "delete sv.sort" in tpl)
+
+        # Returning 1 for both orderings when both dates are absent is not a valid
+        # comparator; an engine may produce any order from it.
+        check("%s: the date comparator handles both-null" % label,
+              "if(ad==null&&bd==null)return 0;" in tpl)
+
+        # position:sticky resolves against the PARENT box. On .bar the parent is exactly as
+        # tall as the bar, so it never travels - measured in a real browser, not assumed.
+        check("%s: sticky sits on #bar, not .bar" % label,
+              "#bar{position:sticky" in tpl and ".bar{background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:15px 17px;margin-top:20px;box-shadow" in tpl)
+        check("%s: the sticky bar has a container to travel in" % label,
+              'class="worksec"' in tpl and ".worksec{position:relative}" in tpl)
+
+        # CLAUDE.md has asserted since 2026-08-19 that a test covers this. Until now it did
+        # not. A marked item hidden behind a filter still has to execute, so narrowing the
+        # bar to the filtered rows would silently discard decisions already made.
+        bar = re.search(r"function renderBar\(\)\{(.*?)\n\}", tpl, re.S)
+        check("%s: renderBar is present" % label, bool(bar))
+        if bar:
+            body = bar.group(1)
+            check("%s: renderBar counts REVIEW.items, never the filtered rows" % label,
+                  "REVIEW.items" in body and "applyView" not in body)
+
+        # The execute affordance has to exist before anything is marked, or step 2 is
+        # invisible until the reader has already worked out step 1 unaided.
+        if bar:
+            check("%s: the bar renders unconditionally, zero marks included" % label,
+                  'getElementById("bar").innerHTML=\'<div class="bar">\'' in bar.group(1) and
+                  'getElementById("bar").innerHTML=\'<p class="note"' not in bar.group(1))
+        check("%s: the header mirror is wired" % label,
+              'id="topexec"' in tpl and 'getElementById("topexec")' in tpl)
+
+
 def test_po_identity_rules():
     """A bill's PO must come from the transaction linkage, never from the typed
     `custbody3` reference. Reading the typed field as the coding produced
@@ -507,6 +558,7 @@ def main():
               "sniff, sheets and poLine not run")
     test_cco_demotion()
     test_template_version()
+    test_dashboard_view()
     test_po_identity_rules()
     print()
     if failures:

@@ -192,31 +192,15 @@ details.warn summary{color:var(--warn)}
 </section>
 
 <section>
-  <div class="step-head"><span class="num">2</span><h2>NetSuite connector <span class="chip">optional · Procore only? skip to step 3</span></h2></div>
-  <p><strong>The NetSuite review works without this.</strong> Connect it if you have it, or set it up later.</p>
-  <ol class="tight">
-    <li><strong>In the Claude desktop app</strong> — not Chrome — click your <strong>profile</strong> at the bottom left, then <strong>Settings → Connectors</strong>.</li>
-    <li>Find <strong>NetSuite</strong> in the list and connect it.</li>
-    <li><strong>Not listed?</strong> You haven't been set up for it. Carry on to step 3.</li>
-    <li><strong>Did connect it?</strong> Go back to NetSuite in Chrome and check you're in your <em>normal</em> account, not the connector's.</li>
-  </ol>
-  <div class="done"><b>Done when</b><span>It's connected and NetSuite in Chrome shows <em>your</em> name — or you've established you don't have it.</span></div>
+  <div class="step-head"><span class="num">2</span><h2>NetSuite connector <span class="chip">optional · skip unless you already have it</span></h2></div>
+  <p><strong>Already know about the NetSuite MCP connector?</strong> Make sure it's connected: in the Claude desktop app, click your <strong>profile</strong> at the bottom left, then <strong>Settings → Connectors</strong>.</p>
+  <p><strong>Never heard of it? Skip to step 3.</strong> It's a separate thing from your normal NetSuite login — having one doesn't mean you have the other — and the review works fine without it.</p>
+  <div class="done"><b>Done when</b><span>It shows connected, or you've skipped it.</span></div>
 
-  <details>
-    <summary>What the connector adds</summary>
-    <p>Faster queries, and one extra check: each bill tied back to the purchase order it is actually applied to, and to the billing history. That catches a duplicate payment or a missing intermediate application, and connected runs name what they checked against.</p>
-    <p>Everything else is identical — figures, support and approvals all run through your browser.</p>
-  </details>
   <details class="warn">
-    <summary>It isn't listed, and I have a NetSuite login</summary>
-    <p>A normal NetSuite login is <strong>not</strong> connector access — it runs on a <strong>separate, Claude-enabled account</strong> issued on top of yours.</p>
-    <p>Check your email for a Compass invitation to add the NetSuite MCP connector; contact IT if there isn't one. <strong>Don't wait on it</strong> — the plugin picks it up on its own once you have it.</p>
-    <p><strong>Got both accounts?</strong> Approve from your <em>normal</em> one — that's whose name goes on the approval. In the wrong one you'll see someone else's queue, or no approve buttons.</p>
-  </details>
-  <details class="warn">
-    <summary>Expect to reconnect it every few days</summary>
-    <p>Connector sessions expire every few days — for everyone, using it for anything, not just this. Reconnect under <strong>Settings → Connectors</strong>, same two clicks.</p>
-    <p><strong>A run says so once, near the top</strong>, then carries on through your browser. You lose only the purchase-order cross-check until you reconnect.</p>
+    <summary>You have it — two things to know</summary>
+    <p><strong>Approve from your normal account, not the connector's.</strong> That's whose name goes on the approval. Connecting can leave the browser session on the connector's account, where you'll see someone else's queue or no approve buttons.</p>
+    <p><strong>Sessions expire every few days</strong> — for everyone, using it for anything, not just this. Reconnect under <strong>Settings → Connectors</strong>. A run says so once, near the top, then carries on through your browser; you lose only the purchase-order cross-check until you reconnect.</p>
   </details>
 </section>
 

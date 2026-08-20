@@ -123,6 +123,15 @@ summary:hover{text-decoration:underline}
 details > p{margin-top:0}
 details > p + p, details > ul, details > .tbl{margin-top:9px}
 details.warn{background:var(--warn-soft); border-color:transparent}
+/* A paste block stays shut by default - it is 40 lines nobody reads, and the Copy button in
+   its summary works without opening it. That relies on the textContent fallback in the copy
+   handler, since a <pre> with no layout returns "" from innerText. */
+details.paste{background:var(--code-bg); border-color:transparent; padding:0 12px}
+details.paste > summary{display:flex; align-items:center; gap:2px; color:var(--code-ink); padding:10px 0}
+details.paste > summary .copy{margin-left:auto; position:static}
+details.paste[open]{padding-bottom:0}
+details.paste .codeblock pre{padding-top:14px; margin-bottom:12px}
+details.paste .codeblock .copy{display:none}
 details.warn summary{color:var(--warn)}
 </style>
 </head>
@@ -266,7 +275,7 @@ claude plugin install procore-open-items-review@compass-claude-plugins</pre>
 
 <section>
   <div class="step-head"><span class="num">5</span><h2>Run it on a schedule</h2></div>
-  <p><strong>In that same chat from step 4</strong>, paste the block for the plugin you set up — the whole thing, in one message.</p>
+  <p><strong>In that same chat from step 4</strong>, hit <strong>Copy</strong> on the block for the plugin you set up, then paste it in as one message. You don't need to read it.</p>
   <p>Claude asks about timing, then gives you an <strong>Add to schedule</strong> button. Click it. <strong>Both plugins?</strong> Do it twice — one block, add its schedule, then the other.</p>
   <p class="muted">A reasonable answer: first try 11am, retries 2pm and 4pm, weekdays only. Closed that chat already? Start a new Cowork chat, connect Downloads again, run the step 4 command once, then paste below.</p>
 
@@ -274,8 +283,9 @@ claude plugin install procore-open-items-review@compass-claude-plugins</pre>
     <strong>It only runs while your computer is on and Chrome is open.</strong>
     <p style="margin-top:8px">Laptop shut at 11am and nothing happens — it doesn't queue up and run later. <strong>That's what the retries are for:</strong> if 11am misses, 2pm catches it; if 11am succeeded, the later ones see the day is done and stop.</p>
   </div>
-  <h3>Paste this — NetSuite schedule</h3>
-  <pre>I'd like to make this run on a schedule. Everything below the line is the exact
+  <details class="paste">
+    <summary><span>Paste this — NetSuite schedule</span></summary>
+    <pre>I'd like to make this run on a schedule. Everything below the line is the exact
 prompt the scheduled task should send — don't summarise it or reword it. Ask me
 what frequency I want: the first try each day, the retries after it, and whether
 it's weekdays only or weekends as well.
@@ -317,9 +327,11 @@ in chat.
 
 If the run fails partway, do NOT set `lastCompletedRun` — leave it so the next
 fallback window retries. Report what blocked it.</pre>
+  </details>
 
-  <h3>Paste this — Procore schedule</h3>
-  <pre>I'd like to make this run on a schedule. Everything below the line is the exact
+  <details class="paste">
+    <summary><span>Paste this — Procore schedule</span></summary>
+    <pre>I'd like to make this run on a schedule. Everything below the line is the exact
 prompt the scheduled task should send — don't summarise it or reword it. Ask me
 what frequency I want: the first try each day, the retries after it, and whether
 it's weekdays only or weekends as well.
@@ -359,6 +371,7 @@ in chat.
 
 If the run fails partway, do NOT set `lastCompletedRun` — leave it so the next
 fallback window retries. Report what blocked it.</pre>
+  </details>
   <div class="done"><b>Done when</b><span>The task fires and posts a one-line summary. <strong>You won't see that until the next fire time</strong> — check the chat tomorrow to confirm it ran.</span></div>
 </section>
 
@@ -520,7 +533,9 @@ claude plugin update procore-open-items-review@compass-claude-plugins</pre>
       btn.className = "copy";
       btn.textContent = "Copy";
       btn.setAttribute("aria-label", "Copy this block to the clipboard");
-      btn.addEventListener("click", function(){
+      btn.addEventListener("click", function(ev){
+        // A button inside <summary> would toggle the block; this keeps Copy a copy.
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
         // innerText, not textContent: the schedule blocks carry &lt;n&gt; escapes, and
         // innerText hands over the < n > the chat should actually receive.
         //
@@ -533,7 +548,9 @@ claude plugin update procore-open-items-review@compass-claude-plugins</pre>
         if (!text || !text.trim()) text = pre.textContent;
         copy(text, btn);
       });
-      wrap.appendChild(btn);
+      var paste = pre.closest("details.paste");
+      if (paste) paste.querySelector("summary").appendChild(btn);
+      else wrap.appendChild(btn);
     })(pres[i]);
   }
 })();

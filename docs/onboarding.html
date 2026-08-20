@@ -136,27 +136,8 @@ details.warn summary{color:var(--warn)}
   <div class="meta">
     <span class="chip">~25 min to set up</span>
     <span class="chip">then a 15–20 min first run</span>
-    <span class="chip">once</span>
   </div>
 </header>
-
-<section>
-  <h2>What you get</h2>
-  <p><strong>Set it up once and the review happens without you.</strong> On whatever schedule you pick, it works through your queue before you've opened it — reading the support, re-deriving the math, tying figures back to the purchase order.</p>
-  <ul class="tight">
-    <li><strong>Every item arrives with a verdict.</strong> Clear, or flagged with the specific figure that's wrong — so you check one line, not the whole document.</li>
-    <li><strong>The noise is gone.</strong> Most of a Procore queue is distribution-only. You see what's yours to action, and a count of what wasn't.</li>
-    <li><strong>Approving is one click, and it never decides anything.</strong> Mark what you want, press Execute. A verdict is a recommendation; nothing moves until you name the items.</li>
-  </ul>
-  <details>
-    <summary>What else it handles</summary>
-    <p><strong>Spreadsheets and images, not just PDFs.</strong> Workbooks are read sheet by sheet, hidden ones included. Images and scanned pages are <em>looked at</em> rather than run through text extraction, which returns nothing useful for them.</p>
-    <p><strong>Some items come back "not ready to review", deliberately.</strong> An item with nothing to check against isn't approved, isn't rejected, and isn't given a verdict it hasn't earned. It tells you why — no support attached, support is a scanned image, the link expired — so you know whether to chase the vendor or just look yourself.</p>
-    <p><strong>A figure it could only read by OCR is never marked clear</strong>, even when the arithmetic ties. It's labelled <em>read by OCR, not independently verified</em> and left flagged for you.</p>
-  </details>
-</section>
-
-<hr class="rule">
 
 <section>
   <h2>Before you start</h2>
@@ -174,29 +155,24 @@ details.warn summary{color:var(--warn)}
   <div class="phase">
     <b>Step 1 · in your browser</b>
     <span>This is a Chrome extension you install. Not a website.</span>
-    <em>It lets Claude click through Procore and NetSuite on your behalf. Get it installed and signed in, then leave it alone.</em>
+    <em>It lets Claude click through Procore and NetSuite for you. Install it, sign in, then leave it alone.</em>
   </div>
 
   <div class="note warn">
     <strong>Don't skip this because you've "used Claude in Chrome" before.</strong>
-    <p style="margin-top:8px">Opening <code>claude.ai</code> in a tab is <strong>not</strong> this. Neither is the desktop app. You need a separate <strong>browser extension</strong> that lets Claude <em>operate</em> your browser — open tabs, read pages, click buttons.</p>
-    <p style="margin-top:8px"><strong>How to be sure:</strong> look for the Claude icon in Chrome's toolbar, next to the address bar. No icon means it isn't installed, whatever else you've used Claude for.</p>
+    <p style="margin-top:8px">A <code>claude.ai</code> tab is <strong>not</strong> this. Nor is the desktop app. You need a <strong>browser extension</strong> that lets Claude <em>operate</em> Chrome — open tabs, read pages, click buttons.</p>
+    <p style="margin-top:8px"><strong>How to be sure:</strong> look for the Claude icon in Chrome's toolbar, next to the address bar. No icon, not installed.</p>
   </div>
 
   <ol class="tight">
     <li><strong>Use Google Chrome.</strong> Not Edge, not Safari.</li>
-    <li><strong>Sign in to Chrome with your Compass profile</strong> — profile icon, top right. Everything below happens inside that profile.</li>
-    <li><strong>Install the extension</strong>, still in that profile: <a href="https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn?hl=en-US">Claude on the Chrome Web Store</a>. You should click a blue <strong>Add to Chrome</strong> and accept the permissions prompt. No button means you're already installed, or in the wrong profile.</li>
-    <li><strong>Click the extension and sign in again</strong> with your Compass login. Signing in to Chrome and signing in to the extension are two separate steps.</li>
+    <li><strong>Sign in to Chrome with your Compass profile</strong> — profile icon, top right. Everything below happens in that profile.</li>
+    <li><strong>Install the extension</strong>, still in that profile: <a href="https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn?hl=en-US">Claude on the Chrome Web Store</a>. Click the blue <strong>Add to Chrome</strong> and accept the permissions prompt. No button means you're already installed, or in the wrong profile.</li>
+    <li><strong>Click the extension and sign in again</strong> with your Compass login. These are two separate sign-ins.</li>
     <li>In that same profile, sign in to <strong>Procore</strong> and <strong>NetSuite</strong>.</li>
-    <li><strong>Test it.</strong> Open a normal Claude chat and type: <code>Open Procore in Chrome and tell me the page title.</code> It should open a tab and answer.</li>
+    <li><strong>Test it.</strong> Open a normal Claude chat and type: <code>Open Procore in Chrome and tell me the page title.</code> It opens a tab and answers.</li>
   </ol>
   <div class="done"><b>Done when</b><span>That test came back with a real page title. If it didn't, stop here and fix the extension — nothing later in this guide works without it.</span></div>
-  <details>
-    <summary>Why the test matters</summary>
-    <p>The Claude icon being present proves the extension is installed. It does not prove Claude can <em>drive</em> the browser, which is what everything else depends on. Thirty seconds here saves finding out twenty minutes into step 4, which is the one step you can't resume cleanly.</p>
-    <p>Both plugins drive your real browser session, so approvals route normally and the audit trail records <em>you</em>.</p>
-  </details>
 </section>
 
 <section>
@@ -209,30 +185,30 @@ details.warn summary{color:var(--warn)}
 
 <section>
   <div class="step-head"><span class="num">2</span><h2>NetSuite connector <span class="chip">optional · Procore only? skip to step 3</span></h2></div>
-  <p><strong>The NetSuite review works without this.</strong> Connect it if you have it; if you don't, go to step 3 and set it up later. Nothing here blocks you.</p>
+  <p><strong>The NetSuite review works without this.</strong> Connect it if you have it, or set it up later.</p>
   <ol class="tight">
     <li><strong>In the Claude desktop app</strong> — not Chrome — click your <strong>profile</strong> at the bottom left, then <strong>Settings → Connectors</strong>.</li>
     <li>Find <strong>NetSuite</strong> in the list and connect it.</li>
     <li><strong>Not listed?</strong> You haven't been set up for it. Carry on to step 3.</li>
     <li><strong>Did connect it?</strong> Go back to NetSuite in Chrome and check you're in your <em>normal</em> account, not the connector's.</li>
   </ol>
-  <div class="done"><b>Done when</b><span>Either it shows connected and NetSuite in Chrome shows <em>your</em> name and role, or you've established you don't have it and you're moving on.</span></div>
+  <div class="done"><b>Done when</b><span>It's connected and NetSuite in Chrome shows <em>your</em> name — or you've established you don't have it.</span></div>
 
   <details>
     <summary>What the connector adds</summary>
-    <p>The review gets faster, and gains one extra check: each bill is tied back to the purchase order it is actually applied to, and to the engagement's billing history. That's what catches a duplicate payment or a missing intermediate application. Connected runs name the PO and history they checked against.</p>
-    <p>Everything else is the same either way — the figures, the support, the approvals all run through your browser and never touch the connector.</p>
+    <p>Faster queries, and one extra check: each bill tied back to the purchase order it is actually applied to, and to the billing history. That catches a duplicate payment or a missing intermediate application, and connected runs name what they checked against.</p>
+    <p>Everything else is identical — figures, support and approvals all run through your browser.</p>
   </details>
   <details class="warn">
     <summary>It isn't listed, and I have a NetSuite login</summary>
-    <p>A normal NetSuite login is <strong>not</strong> connector access. The connector runs on a <strong>separate, Claude-enabled NetSuite account</strong> issued on top of your usual one — which is why people are surprised not to find it.</p>
-    <p>Check your email for a Compass invitation to add the NetSuite MCP connector, and contact IT if there isn't one. But <strong>don't wait on it.</strong> Finish setup and start using the plugin today; it picks the connector up on its own once you have it.</p>
-    <p><strong>Got both accounts?</strong> Keep the browser on your <em>normal</em> one when approving — that's whose name goes on the approval. In the wrong one you'll see a queue that isn't yours, or a bill with no approve buttons.</p>
+    <p>A normal NetSuite login is <strong>not</strong> connector access — it runs on a <strong>separate, Claude-enabled account</strong> issued on top of yours.</p>
+    <p>Check your email for a Compass invitation to add the NetSuite MCP connector; contact IT if there isn't one. <strong>Don't wait on it</strong> — the plugin picks it up on its own once you have it.</p>
+    <p><strong>Got both accounts?</strong> Approve from your <em>normal</em> one — that's whose name goes on the approval. In the wrong one you'll see someone else's queue, or no approve buttons.</p>
   </details>
   <details class="warn">
     <summary>Expect to reconnect it every few days</summary>
-    <p>A connector session doesn't stay signed in for long. Plan on going back to <strong>Settings → Connectors</strong> and reconnecting every few days — the same two clicks. <strong>This is how the NetSuite connector behaves generally</strong>, for everyone using it for anything. Nothing about these plugins causes it or could prevent it.</p>
-    <p><strong>A run tells you when it has lapsed</strong>, once, near the top — then carries on through your browser. The review still happens and the figures are still checked. What you lose until you reconnect is the purchase-order cross-check. Reconnect, run again, and it's back.</p>
+    <p>Connector sessions expire every few days — for everyone, using it for anything, not just this. Reconnect under <strong>Settings → Connectors</strong>, same two clicks.</p>
+    <p><strong>A run says so once, near the top</strong>, then carries on through your browser. You lose only the purchase-order cross-check until you reconnect.</p>
   </details>
 </section>
 
@@ -242,24 +218,23 @@ details.warn summary{color:var(--warn)}
     <li>Click your <strong>profile</strong> at the bottom left, then <strong>Settings → Plugins</strong>.</li>
     <li>Click <strong>Add</strong>, then <strong>Add marketplace</strong>.</li>
     <li>Enter the repo: <code>ssemwal-cdc/claude-sharables</code></li>
-    <li><strong>Check auto sync is ticked</strong> before you add it. It should be on by default — it's what keeps you on the current version.</li>
+    <li><strong>Check auto sync is ticked</strong> before adding. It's what keeps you on the current version.</li>
     <li>Add it. Both plugins appear in the list.</li>
     <li><strong>Install</strong> the ones you need — <code>netsuite-approval-review</code>, <code>procore-open-items-review</code>, or both.</li>
   </ol>
   <div class="done"><b>Done when</b><span>Your plugins appear in the installed list. Not showing up in a new chat? <strong>Restart your computer.</strong> Still nothing after that means the marketplace didn't add — remove it and add it again, checking auto sync is ticked.</span></div>
   <details>
     <summary>Doing it in the terminal instead</summary>
-    <p class="muted">Only if you already work in a command line. If that means nothing to you, ignore this — you're not missing anything.</p>
     <pre>claude plugin marketplace add ssemwal-cdc/claude-sharables
 claude plugin install netsuite-approval-review@compass-claude-plugins
 claude plugin install procore-open-items-review@compass-claude-plugins</pre>
-    <p class="muted">You <em>add</em> the repo but <em>install</em> from the marketplace, which is why those names differ. It looks like a typo; it isn't. Inside a Claude chat the same commands work as <code>/plugin …</code> — and if a chat says <code>Run /reload-plugins to activate</code>, run that there.</p>
+    <p class="muted">In a Claude chat the same commands work as <code>/plugin …</code>. If a chat says <code>Run /reload-plugins to activate</code>, run that there.</p>
   </details>
 </section>
 
 <section>
   <div class="step-head"><span class="num">4</span><h2>First run</h2></div>
-  <p><strong>Budget 15–20 minutes.</strong> This is the longest run you'll do and the only one that needs you. It pauses to ask permission and waits, so it won't finish on its own — check back every few minutes. Don't leave it for hours; if it times out you start this step over.</p>
+  <p><strong>Budget 15–20 minutes.</strong> It pauses to ask permission and waits, so check back every few minutes. Don't leave it for hours — if it times out you start this step over.</p>
   <ol class="tight">
     <li>Create a <strong>new chat</strong>. <strong>Keep it open</strong> — step 5 continues in it.</li>
     <li>Switch the toggle below the prompt box from Chat to <strong>Cowork</strong>.</li>
@@ -280,25 +255,24 @@ claude plugin install procore-open-items-review@compass-claude-plugins</pre>
       </tr>
     </table>
   </div>
-  <div class="note warn"><strong>It will ask permission to use each site — pick <em>always</em>, not <em>just once</em>.</strong> This is Claude asking, not Chrome. You'll see it for Procore, for NetSuite, and once more the first time it opens an attachment. Choose "just once" and you'll be asked again on nearly every action.</div>
-  <div class="done"><b>Done when</b><span>A dashboard appears inline in the conversation, listing the items waiting on you. <strong>If a red banner appears</strong> across the top, the dashboard got cut off on the way to the chat — your figures are fine; say so and it re-renders smaller.</span></div>
+  <div class="note warn"><strong>It will ask permission to use each site — pick <em>always</em>, not <em>just once</em>.</strong> You'll see it about three times. Pick "just once" and you'll be asked again on nearly every action.</div>
+  <div class="done"><b>Done when</b><span>A dashboard appears in the conversation listing the items waiting on you. <strong>Red banner across the top?</strong> It got cut off in transit — your figures are fine; say so and it re-renders smaller.</span></div>
   <details>
     <summary>Where your work is saved</summary>
-    <p>Inside <strong>Downloads</strong> you get a <code>NetSuite Approval Checks</code> folder, a <code>Procore Open Items</code> folder, or both, created on the first run. Each holds your review history, the ids you confirmed, and the dashboard.</p>
-    <p><strong>Choose Downloads every time</strong> — it's how a scheduled run knows whether it already ran today. Choose somewhere else, or rename or delete those folders, and the next run treats you as brand new and asks the setup questions again.</p>
-    <p>Nothing is shared between people; your ids and state stay local to your install.</p>
+    <p>Inside <strong>Downloads</strong>: a <code>NetSuite Approval Checks</code> folder, a <code>Procore Open Items</code> folder, or both. Each holds your review history, the ids you confirmed, and the dashboard.</p>
+    <p><strong>Choose Downloads every time.</strong> It's how a scheduled run knows whether it already ran today. Somewhere else — or renaming these — and the next run asks the setup questions again.</p>
   </details>
 </section>
 
 <section>
   <div class="step-head"><span class="num">5</span><h2>Run it on a schedule</h2></div>
-  <p><strong>In that same chat from step 4</strong>, paste the block below for the plugin you set up — the whole block, in one message. Nothing to assemble, nothing to fill in.</p>
-  <p>Claude asks a couple of questions about timing, then gives you an <strong>Add to schedule</strong> button. Click it. <strong>Set up both plugins?</strong> Do it twice — paste one block, add its schedule, then paste the other.</p>
+  <p><strong>In that same chat from step 4</strong>, paste the block for the plugin you set up — the whole thing, in one message.</p>
+  <p>Claude asks about timing, then gives you an <strong>Add to schedule</strong> button. Click it. <strong>Both plugins?</strong> Do it twice — one block, add its schedule, then the other.</p>
   <p class="muted">A reasonable answer: first try 11am, retries 2pm and 4pm, weekdays only. Closed that chat already? Start a new Cowork chat, connect Downloads again, run the step 4 command once, then paste below.</p>
 
   <div class="note warn">
     <strong>It only runs while your computer is on and Chrome is open.</strong>
-    <p style="margin-top:8px">Claude works through your real browser session, so a scheduled run needs your machine awake, Chrome running, and you signed in. Laptop shut at 11am and nothing happens — it doesn't queue up and run later. <strong>That's what the extra fire times are for:</strong> if 11am misses, 2pm catches it, and if 11am succeeded the later ones see the day is done and stop.</p>
+    <p style="margin-top:8px">Laptop shut at 11am and nothing happens — it doesn't queue up and run later. <strong>That's what the retries are for:</strong> if 11am misses, 2pm catches it; if 11am succeeded, the later ones see the day is done and stop.</p>
   </div>
   <h3>Paste this — NetSuite schedule</h3>
   <pre>I'd like to make this run on a schedule. Everything below the line is the exact
@@ -385,20 +359,20 @@ in chat.
 
 If the run fails partway, do NOT set `lastCompletedRun` — leave it so the next
 fallback window retries. Report what blocked it.</pre>
-  <div class="done"><b>Done when</b><span>The task fires and either posts a one-line summary, or says a run already completed today. <strong>You won't see that until the next fire time</strong> — so check the chat tomorrow after 11am to confirm it ran.</span></div>
+  <div class="done"><b>Done when</b><span>The task fires and posts a one-line summary. <strong>You won't see that until the next fire time</strong> — check the chat tomorrow to confirm it ran.</span></div>
 </section>
 
 <hr class="rule">
 
 <section>
   <h2>Using it day to day</h2>
-  <p>Once the schedule is running the review has already happened and the dashboard is waiting — provided your machine was on and Chrome open when it fired. You can also start one any time with the same command from step 4.</p>
+  <p>With the schedule running, the dashboard is already waiting. You can also start a review any time with the command from step 4.</p>
   <ol class="tight">
-    <li>Read the dashboard. Each item shows a verdict, the figures behind it, and a link to the record.</li>
-    <li>Sort, filter or search if the queue is long — by amount, age, vendor or type. Both dashboards have the same controls and remember what you set.</li>
+    <li>Read it. Each item shows a verdict, the figures behind it, and a link to the record.</li>
+    <li>Sort, filter or search if it's long — by amount, age, vendor or type. Both dashboards remember what you set.</li>
     <li>Mark the ones you want to action.</li>
-    <li>Press <strong>Execute</strong>. That puts an instruction into the chat in one click.</li>
-    <li>The approvals run through your own browser session, one record at a time.</li>
+    <li>Press <strong>Execute</strong>. That puts an instruction into the chat.</li>
+    <li>They run through your own browser session, one record at a time.</li>
   </ol>
   <div class="tbl">
     <table>
@@ -413,7 +387,7 @@ fallback window retries. Report what blocked it.</pre>
       </tr>
     </table>
   </div>
-  <div class="note"><strong>Every approval it makes says so.</strong> Approvals carry the note <code>Approved by Claude</code> in the audit trail. Type your own note for an item and yours is used instead, word for word. Rejection reasons are never filled in for you — it stops and asks.</div>
+  <div class="note"><strong>Every approval says so.</strong> They carry the note <code>Approved by Claude</code> in the audit trail; type your own and yours is used instead, word for word. Rejection reasons are never filled in for you — it stops and asks.</div>
 </section>
 
 <section>
@@ -425,11 +399,11 @@ fallback window retries. Report what blocked it.</pre>
         <tr><th>What you see</th><th>What to do</th></tr>
         <tr>
           <td>It stopped after one item and reports a <strong>frozen tab</strong> or that a click didn't land</td>
-          <td>Nothing was approved — it stops rather than guessing, and it won't click twice. The record tabs are open; click through those manually, or say "retry the batch".</td>
+          <td>Nothing was approved — it stops rather than guessing, and won't click twice. The record tabs are open; click through them, or say "retry the batch".</td>
         </tr>
         <tr>
           <td>It says the <strong>session expired</strong></td>
-          <td>Chrome was closed, or you were signed out of Procore or NetSuite. Reopen Chrome in your Compass profile, sign in to both, run it again. It never logs in for you.</td>
+          <td>Chrome was closed, or you were signed out. Reopen it in your Compass profile, sign in, run again. It never logs in for you.</td>
         </tr>
         <tr>
           <td>It says the <strong>connector session expired</strong></td>
@@ -437,21 +411,17 @@ fallback window retries. Report what blocked it.</pre>
         </tr>
         <tr>
           <td>An <strong>empty queue</strong> when you expected items</td>
-          <td>Say so. A failed query and a genuinely empty queue look the same from the outside, and it should re-check through the browser rather than trust the first answer.</td>
+          <td>Say so. A failed query and a truly empty queue look identical from outside — it should re-check through the browser rather than trust the first answer.</td>
         </tr>
       </table>
     </div>
-    <p class="muted">These are the failures actually seen in use. Anything else, tell Shivam rather than working around it.</p>
+    <p class="muted">These are the failures actually seen. Anything else, tell Shivam rather than working around it.</p>
   </details>
   <details>
-    <summary>Five things that will confuse you</summary>
+    <summary>Four things that will confuse you</summary>
     <div class="tbl">
       <table>
         <tr><th>What you see</th><th>What it means</th></tr>
-        <tr>
-          <td>The dashboard is missing a feature this page describes</td>
-          <td>Your plugin is behind, or the dashboard was rendered in an older chat. Update (below), restart, then run the review again to re-render.</td>
-        </tr>
         <tr>
           <td><code>Plugin "netsuite-approval-review" not found</code></td>
           <td>You left off <code>@compass-claude-plugins</code> on the update command. It <em>is</em> installed; the bare name isn't enough.</td>
@@ -465,8 +435,8 @@ fallback window retries. Report what blocked it.</pre>
           <td>Auto-update only maintains plugins you already installed. New ones need installing once.</td>
         </tr>
         <tr>
-          <td>An old chat's dashboard still shows old buttons</td>
-          <td>A dashboard is a snapshot. Updating changes nothing about one already on screen — run the review again for a fresh one.</td>
+          <td>The dashboard looks out of date, or shows old buttons</td>
+          <td>A dashboard is a snapshot, so updating changes nothing already on screen. Update (below), restart, then run the review again for a fresh one.</td>
         </tr>
       </table>
     </div>
@@ -475,7 +445,7 @@ fallback window retries. Report what blocked it.</pre>
 
 <section>
   <h2>Keeping it updated</h2>
-  <p><strong>With auto sync on, there's nothing to run.</strong> Fixes reach you on their own and apply on your next computer restart — so in practice you just have them the following morning.</p>
+  <p><strong>With auto sync on, there's nothing to run.</strong> Fixes apply on your next restart, so you have them the following morning.</p>
   <details>
     <summary>Forcing an update now</summary>
     <p class="muted">Only if you need a fix immediately, or auto sync got switched off.</p>
@@ -483,7 +453,7 @@ fallback window retries. Report what blocked it.</pre>
     <pre>claude plugin marketplace update compass-claude-plugins
 claude plugin update netsuite-approval-review@compass-claude-plugins
 claude plugin update procore-open-items-review@compass-claude-plugins</pre>
-    <p class="muted">Then restart your computer. The first command reports success whether or not anything shipped — only a changed version hash proves an update landed. The second needs the <code>@compass-claude-plugins</code> suffix or it says the plugin isn't found. It is.</p>
+    <p class="muted">Then restart your computer.</p>
   </details>
   <details>
     <summary>What it will never do</summary>

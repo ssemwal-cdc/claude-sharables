@@ -1007,6 +1007,14 @@ Facts it carries that are not obvious from the skills:
   somewhere different on the second run is a brand-new user to the gate and gets asked
   the setup questions again. Downloads is safe because neither skill writes attachments
   there — both read PDFs and workbooks in-page.
+- **The sheet now tells the reader to set permissions to Auto, and not to use skip-all.**
+  Added 2026-08-20 on request, and it is the one permissions instruction the sheet carries.
+  Note what it is *not*: the deleted onboarding section warned against above was
+  troubleshooting for a scheduled-run hang that never existed. This is a setup instruction
+  resting on two settled facts — every operation either plugin performs has run clean in
+  auto, and skip-all is ruled out on Anthropic's own grounds for a browser holding live
+  approval authority. The sheet gives that reason rather than just the prohibition, because
+  a rule with no reason is the one people talk themselves out of.
 - **Restart the computer, not the app.** Observed on Windows: an app restart is
   not reliably enough for a plugin install or update to show up. Updates land on
   the next reboot, which for most people is the following morning, so auto sync

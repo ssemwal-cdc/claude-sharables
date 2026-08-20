@@ -42,7 +42,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # Warn, never abort. A lagging template still renders correct verdicts: the review procedure
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
-TEMPLATE_VERSION = "v1"
+TEMPLATE_VERSION = "v2"
 
 def check_template_version(tpl):
     m = re.search(r"layout template (v\d+)", tpl)

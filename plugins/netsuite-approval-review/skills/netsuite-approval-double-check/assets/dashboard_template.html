@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>NetSuite approval queue</title>
-<!-- layout template v2 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v3 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:8px}
@@ -25,8 +25,8 @@ button.primary:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
 .card .l{font-size:12.5px;color:var(--ink2)}
 .card .v{font-size:23px;font-weight:500;margin-top:2px;font-variant-numeric:tabular-nums}
 .row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 17px;margin-bottom:10px}
-.row.mk{border-width:2px;border-color:var(--acc-line)}
-.row.mkr{border-width:2px;border-color:var(--bad-line)}
+.row.mk{border:2px solid var(--acc-line);border-left:5px solid var(--acc-fg);background:var(--acc-bg);padding-left:13px}
+.row.mkr{border:2px solid var(--bad-line);border-left:5px solid var(--bad-fg);background:var(--bad-bg);padding-left:13px}
 .rh{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .doc{font-size:15px;font-weight:500;flex:1;min-width:130px}
 .amt{font-size:15px;font-weight:500;font-variant-numeric:tabular-nums}
@@ -43,10 +43,27 @@ button:hover{background:var(--sunk)}
 button.on{background:var(--ctl-on);border-color:var(--ctl2)}
 button.rj{border-color:var(--bad-line);color:var(--bad-fg)}
 button.go{border-color:var(--ctl2);font-size:13px}
+button.go.big{background:var(--ink);color:var(--bg);border-color:var(--ink);font-size:14px;font-weight:600;padding:10px 18px}
+button.go.big:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
+button.go.big[disabled]{background:transparent;color:var(--ink3);border-color:var(--ctl);cursor:not-allowed}
+button.go.big[disabled]:hover{background:transparent;border-color:var(--ctl)}
 input[type=text]{width:100%;font:400 13px inherit;padding:8px 10px;border:1px solid var(--ctl);border-radius:var(--r);margin-top:10px;background:var(--card);color:var(--ink)}
 a{color:var(--acc-fg);text-decoration:none;font-size:12.5px}
 a:hover{text-decoration:underline}
-.bar{background:var(--sunk);border-radius:12px;padding:15px 17px;margin-top:20px}
+.bar{background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:15px 17px;margin-top:20px;box-shadow:0 6px 22px rgba(0,0,0,.10)}
+/* Sticky resolves against the PARENT box, so this has to sit on #bar inside .worksec - on
+   .bar itself the parent is exactly as tall as the bar and it never travels. Measured. */
+.worksec{position:relative}
+#bar{position:sticky;bottom:10px;z-index:5}
+.barhead{font-size:14px;font-weight:500}
+.barlive{font-size:13px;color:var(--ink2);margin-top:4px}
+.barsum{font-size:12.5px;color:var(--ink3);margin-top:4px;font-variant-numeric:tabular-nums}
+.barbtns{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
+.stephead{display:flex;align-items:center;gap:10px;margin:24px 0 12px}
+.stepnum{width:23px;height:23px;border-radius:50%;background:var(--ink);color:var(--bg);font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
+.stephead .st{font-size:14px;font-weight:600}
+.stephead .sd{font-size:12.5px;color:var(--ink2)}
+.topright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .note{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
 .banner{border-radius:12px;padding:12px 15px;margin-bottom:14px;font-size:13.5px}
 .empty{text-align:center;padding:34px 20px;color:var(--ink2);font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
@@ -90,7 +107,10 @@ document.addEventListener("DOMContentLoaded",function(){
     <h1>Approval queue</h1>
     <p class="sub" id="sub">…</p>
   </div>
-  <span class="pill" id="conn" style="background:var(--warn-bg);color:var(--warn-fg)">Snapshot</span>
+  <div class="topright">
+    <span class="pill" id="conn" style="background:var(--warn-bg);color:var(--warn-fg)">Snapshot</span>
+    <span id="topexec"></span>
+  </div>
 </div>
 
 <div class="freshbox" id="freshbox">
@@ -103,9 +123,9 @@ document.addEventListener("DOMContentLoaded",function(){
 <div class="toolbar">
   <span class="fgrp"><span class="tbl">Sort</span>
     <select id="fSort" onchange="setView('sort',this.value)">
-      <option value="verdict">Verdict — flagged first</option>
-      <option value="oldest">Oldest first</option>
       <option value="newest">Newest first</option>
+      <option value="oldest">Oldest first</option>
+      <option value="verdict">Verdict — flagged first</option>
       <option value="amtDesc">$ descending</option>
       <option value="amtAsc">$ ascending</option>
       <option value="vendor">Vendor A–Z</option>
@@ -119,8 +139,15 @@ document.addEventListener("DOMContentLoaded",function(){
 </div>
 
 <div id="banners"></div>
+
+<div class="worksec">
+<div class="stephead" id="step1"><span class="stepnum">1</span><span><span class="st">Mark the items you want to action</span> <span class="sd">— nothing is sent to NetSuite yet</span></span></div>
 <div id="rows"></div>
+
+<div class="stephead" id="step2"><span class="stepnum">2</span><span><span class="st">Execute</span> <span class="sd">— sends one instruction to the chat, which does the clicking</span></span></div>
 <div id="bar"></div>
+</div>
+
 <div id="binwrap"></div>
 
 <p class="note" style="margin-top:22px">Verdicts are written by the netsuite-approval-double-check skill. This page is a snapshot and never queries NetSuite by itself. Every record is re-verified against the live queue at execute time, immediately before it is clicked.</p>
@@ -141,10 +168,19 @@ function saveMarks(){try{localStorage.setItem(KEY,JSON.stringify(marks))}catch(e
 // A NEW key beside ns_marks_v1, never a rename of it. Marks are decisions the user has
 // made and not yet executed; a view is just what they are looking at. Losing the second
 // costs a scroll, losing the first silently discards real work.
-var VKEY="ns_view_v1";
-var DEFV={sort:"verdict",type:"all",vendor:"all",q:""};
+// v2 because the default sort changed. A stored v1 view would otherwise pin everyone who
+// has ever touched the toolbar to the old default for good, and the change would reach
+// nobody who already uses the page - which is everybody it is for. The migration carries
+// their filters and search across and resets only the sort, so the cost is not even a scroll.
+var VKEY="ns_view_v2", OLDVKEY="ns_view_v1";
+var DEFV={sort:"newest",type:"all",vendor:"all",q:""};
 var view=Object.assign({},DEFV);
-try{var sv=JSON.parse(localStorage.getItem(VKEY)||"null"); if(sv)view=Object.assign(view,sv)}catch(e){}
+try{
+  var sv=JSON.parse(localStorage.getItem(VKEY)||"null");
+  if(!sv){var old=JSON.parse(localStorage.getItem(OLDVKEY)||"null");
+          if(old){sv=Object.assign({},old); delete sv.sort}}
+  if(sv)view=Object.assign(view,sv);
+}catch(e){}
 function saveView(){try{localStorage.setItem(VKEY,JSON.stringify(view))}catch(e){}}
 function setView(k,v){
   view[k]=v; saveView(); render();
@@ -170,21 +206,29 @@ function applyView(list){
   var s=view.sort;
   out.sort(function(a,b){
     var ai=a.it, bi=b.it;
-    var ad=ageDays(ai.trandate), bd=ageDays(bi.trandate);
+    var ad=ageDaysRaw(ai.trandate), bd=ageDaysRaw(bi.trandate);
+    // Both-null has to return 0. The previous shape returned 1 for both orderings, which is
+    // not a valid comparator and lets an engine produce an arbitrary order from it.
+    function bydate(oldestFirst){
+      if(ad==null&&bd==null)return 0;
+      if(ad==null)return 1;
+      if(bd==null)return -1;
+      return oldestFirst?bd-ad:ad-bd;
+    }
     switch(s){
-      case "oldest":  if(ad==null)return 1; if(bd==null)return -1; return bd-ad;
-      case "newest":  if(ad==null)return 1; if(bd==null)return -1; return ad-bd;
+      case "oldest":  return bydate(true) || (ai.id||0)-(bi.id||0);
       case "amtDesc": return (bi.amt||0)-(ai.amt||0);
       case "amtAsc":  return (ai.amt||0)-(bi.amt||0);
       case "vendor":  return String(ai.vendor).localeCompare(String(bi.vendor),undefined,{numeric:true}) ||
                              (bi.amt||0)-(ai.amt||0);
-      // Verdict is the default, and it is the order this page exists to present: anything
-      // that changed under review first, then flagged, then clear, each tier by amount
-      // descending. Same order as before the toolbar existed, so a reader who touches
-      // nothing sees no change - the amount tiebreak was previously inherited from
-      // publish_dashboard.py's pre-sort and is now stated here rather than assumed.
-      default:        var o={changed:0,flagged:1,clear:2};
+      // Still available, just no longer the default. Anything that changed under review
+      // first, then flagged, then clear, each tier by amount descending.
+      case "verdict": var o={changed:0,flagged:1,clear:2};
                       return (o[a.c.state]-o[b.c.state]) || (bi.amt||0)-(ai.amt||0);
+      // Newest is the default now. trandate is day-granular, so same-day bills would fall
+      // back to whatever order publish_dashboard.py pre-sorted them into; the internal id
+      // descending breaks that tie by arrival, the closest thing NetSuite gives to "latest".
+      default:        return bydate(false) || (bi.id||0)-(ai.id||0);
     }
   });
   return out;
@@ -218,7 +262,12 @@ function fillFilters(rows){
 
 var money=function(n){return Math.abs(n).toLocaleString("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2})};
 function parseNsDate(s){if(!s)return null;var p=String(s).split("/");if(p.length!==3)return null;return new Date(+p[2],+p[0]-1,+p[1])}
-function ageDays(s){var d=parseNsDate(s);if(!d)return null;return Math.max(0,Math.floor((Date.now()-d.getTime())/86400000))}
+// Two of these on purpose. ageDays clamps at zero because "-3 days pending" is nonsense to
+// read; ageDaysRaw does not, because that clamp collapses every future-dated bill to 0, so
+// they tie with each other and with today's. Invisible under the old verdict default and
+// wrong at the top of a newest-first list. Display uses the clamp, the comparator does not.
+function ageDaysRaw(s){var d=parseNsDate(s);if(!d)return null;return Math.floor((Date.now()-d.getTime())/86400000)}
+function ageDays(s){var a=ageDaysRaw(s);return a==null?null:Math.max(0,a)}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function nav(a){
   // The widget host exposes openLink as a bare global; target=_blank is unreliable in a sandboxed
@@ -301,6 +350,11 @@ function render(){
   document.getElementById("rows").innerHTML=
    (hidden>0?'<p class="hid">'+hidden+' item'+(hidden>1?'s':'')+' hidden by the current filter. <a href="#" onclick="resetView();return false">Show everything</a></p>':"")+
    (body||'<div class="empty">'+(viewActive()?"No items match this filter.":"Nothing pending your approval right now.")+'</div>');
+
+  // Step headings frame the queue, so with no queue they frame nothing and only add noise
+  // above the empty state.
+  var hasWork=REVIEW.items.length>0||newItems.length>0;
+  ["step1","step2"].forEach(function(id){var e=document.getElementById(id); if(e)e.style.display=hasWork?"":"none"});
 
   renderBar();
   document.getElementById("binwrap").innerHTML=bin.length?
@@ -416,7 +470,6 @@ function renderBar(){
   // would silently drop decisions the user made before they filtered.
   var byId={}; REVIEW.items.forEach(function(i){byId[i.id]=i});
   var ks=Object.keys(marks).filter(function(k){return byId[k]});
-  if(!ks.length){document.getElementById("bar").innerHTML='<p class="note" style="margin-top:18px">Mark decisions above. Nothing reaches NetSuite until you press execute.</p>';return}
   var ap=[],rj=[],missing=[];
   ks.forEach(function(k){var it=byId[k],m=marks[k];
     if(m.kind==="reject"){rj.push(it);if(!m.text||!m.text.trim())missing.push(it.doc)}else ap.push(it)});
@@ -427,13 +480,29 @@ function renderBar(){
   var prompt="Execute my marked NetSuite approval decisions, one record at a time: "+lines.join("; ")+
    ". For each: confirm the document number, vendor and amount on the record match before clicking, click the named button only, then re-query the pending queue to confirm the item left it. Stop and report if any item fails rather than continuing.";
   var undec=REVIEW.items.length-ks.length;
+  var blocked=missing.length>0, canRun=ks.length>0&&!blocked;
+  // The bar renders in every state, zero marks included. It used to collapse to one line of
+  // grey text, so step 2 was invisible until you had already worked out step 1 unaided -
+  // backwards for the one thing this page has to teach.
+  // Not named `live` - that is a module-level variable meaning the live NetSuite queue.
+  var liveText=!ks.length ? "Nothing marked yet — use the buttons on each item above"
+              : blocked   ? "A rejection still needs its reason before this can run"
+              :             ks.length+" marked · ready to execute";
   document.getElementById("bar").innerHTML='<div class="bar">'+
-   '<div style="font-size:14px;font-weight:500">'+ks.length+' decided · nothing sent yet</div>'+
-   '<div class="note" style="margin-top:4px;font-variant-numeric:tabular-nums">'+ap.length+' to approve ('+money(apSum)+') · '+rj.length+' to reject ('+money(rjSum)+')'+(undec>0?' · '+undec+' left undecided and will stay pending':'')+'</div>'+
+   '<div class="barhead">'+(ks.length?ks.length+' decided · nothing sent yet':'Nothing sent yet')+'</div>'+
+   '<div class="barlive">'+liveText+'</div>'+
+   '<div class="barsum">'+(ks.length
+      ? ap.length+' to approve ('+money(apSum)+') · '+rj.length+' to reject ('+money(rjSum)+')'+(undec>0?' · '+undec+' left undecided and will stay pending':'')
+      : 'Nothing reaches NetSuite until you press execute.')+'</div>'+
    (missing.length?'<div class="note" style="color:var(--bad-fg);margin-top:6px">Reason required before executing: '+missing.map(esc).join(", ")+'</div>':'')+
-   '<div style="display:flex;gap:8px;margin-top:12px">'+
-   '<button class="go" '+(missing.length?'disabled style="opacity:.5;cursor:not-allowed"':'onclick="go()"')+'>Execute '+ks.length+' decision'+(ks.length>1?"s":"")+' in NetSuite ↗</button>'+
-   '<button onclick="clearAll()">Clear all marks</button></div></div>';
+   '<div class="barbtns">'+
+   '<button class="go big" '+(canRun?'onclick="go()"':'disabled')+'>Execute '+ks.length+' decision'+(ks.length===1?"":"s")+' in NetSuite ↗</button>'+
+   (ks.length?'<button onclick="clearAll()">Clear all marks</button>':'')+'</div></div>';
+  // Header mirror: the same one click, reachable the moment the page opens instead of only
+  // after scrolling the whole queue. Hidden until there is something to execute so it never
+  // competes with the toolbar for attention.
+  var te=document.getElementById("topexec");
+  if(te)te.innerHTML=canRun?'<button class="go big" onclick="go()">Execute '+ks.length+' ↗</button>':'';
   window.__prompt=prompt;
 }
 function go(){say(window.__prompt)}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Procore open items queue</title>
-<!-- layout template v1 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v2 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:8px}
@@ -26,8 +26,8 @@ button.primary:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
 .card .l{font-size:12.5px;color:var(--ink2)}
 .card .v{font-size:23px;font-weight:500;margin-top:2px;font-variant-numeric:tabular-nums}
 .row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 17px;margin-bottom:10px}
-.row.mk{border-width:2px;border-color:var(--acc-line)}
-.row.mkr{border-width:2px;border-color:var(--bad-line)}
+.row.mk{border:2px solid var(--acc-line);border-left:5px solid var(--acc-fg);background:var(--acc-bg);padding-left:13px}
+.row.mkr{border:2px solid var(--bad-line);border-left:5px solid var(--bad-fg);background:var(--bad-bg);padding-left:13px}
 .rh{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .doc{font-size:15px;font-weight:500;flex:1;min-width:150px}
 .amt{font-size:15px;font-weight:500;font-variant-numeric:tabular-nums}
@@ -43,12 +43,29 @@ button:hover{background:var(--sunk)}
 button.on{background:var(--ctl-on);border-color:var(--ctl2)}
 button.rj{border-color:var(--bad-line);color:var(--bad-fg)}
 button.go{border-color:var(--ctl2);font-size:13px}
+button.go.big{background:var(--ink);color:var(--bg);border-color:var(--ink);font-size:14px;font-weight:600;padding:10px 18px}
+button.go.big:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
+button.go.big[disabled]{background:transparent;color:var(--ink3);border-color:var(--ctl);cursor:not-allowed}
+button.go.big[disabled]:hover{background:transparent;border-color:var(--ctl)}
 button.caution{border-color:var(--warn-line);color:var(--warn-fg)}
 button.acc{border-color:var(--acc-line);color:var(--acc-fg)}
 input[type=text]{width:100%;font:400 13px inherit;padding:8px 10px;border:1px solid var(--ctl);border-radius:var(--r);margin-top:10px;background:var(--card);color:var(--ink)}
 a{color:var(--acc-fg);text-decoration:none;font-size:12.5px}
 a:hover{text-decoration:underline}
-.bar{background:var(--sunk);border-radius:12px;padding:15px 17px;margin-top:20px}
+.bar{background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:15px 17px;margin-top:20px;box-shadow:0 6px 22px rgba(0,0,0,.10)}
+/* Sticky resolves against the PARENT box, so this has to sit on #bar inside .worksec - on
+   .bar itself the parent is exactly as tall as the bar and it never travels. Measured. */
+.worksec{position:relative}
+#bar{position:sticky;bottom:10px;z-index:5}
+.barhead{font-size:14px;font-weight:500}
+.barlive{font-size:13px;color:var(--ink2);margin-top:4px}
+.barsum{font-size:12.5px;color:var(--ink3);margin-top:4px;font-variant-numeric:tabular-nums}
+.barbtns{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
+.stephead{display:flex;align-items:center;gap:10px;margin:24px 0 12px}
+.stepnum{width:23px;height:23px;border-radius:50%;background:var(--ink);color:var(--bg);font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
+.stephead .st{font-size:14px;font-weight:600}
+.stephead .sd{font-size:12.5px;color:var(--ink2)}
+.topright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .note{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
 .banner{border-radius:12px;padding:12px 15px;margin-bottom:14px;font-size:13.5px}
 .empty{text-align:center;padding:34px 20px;color:var(--ink2);font-size:14px;background:var(--card);border:1px solid var(--line);border-radius:12px}
@@ -94,7 +111,10 @@ document.addEventListener("DOMContentLoaded",function(){
     <h1>Procore open items</h1>
     <p class="sub" id="sub">…</p>
   </div>
-  <span class="pill" id="conn" style="background:var(--warn-bg);color:var(--warn-fg)">Snapshot</span>
+  <div class="topright">
+    <span class="pill" id="conn" style="background:var(--warn-bg);color:var(--warn-fg)">Snapshot</span>
+    <span id="topexec"></span>
+  </div>
 </div>
 
 <div class="freshbox" id="freshbox">
@@ -107,8 +127,8 @@ document.addEventListener("DOMContentLoaded",function(){
 <div class="toolbar">
   <span class="fgrp"><span class="tbl">Sort</span>
     <select id="fSort" onchange="setView('sort',this.value)">
-      <option value="oldest">Oldest first</option>
-      <option value="newest">Newest first</option>
+      <option value="newest">Newest first — latest deadline</option>
+      <option value="oldest">Oldest first — most overdue</option>
       <option value="amtDesc">$ descending</option>
       <option value="amtAsc">$ ascending</option>
       <option value="doc">Item #</option>
@@ -124,8 +144,15 @@ document.addEventListener("DOMContentLoaded",function(){
 </div>
 
 <div id="banners"></div>
+
+<div class="worksec">
+<div class="stephead" id="step1"><span class="stepnum">1</span><span><span class="st">Mark the items you want to action</span> <span class="sd">— nothing is sent to Procore yet</span></span></div>
 <div id="rows"></div>
+
+<div class="stephead" id="step2"><span class="stepnum">2</span><span><span class="st">Execute</span> <span class="sd">— sends one instruction to the chat, which does the clicking</span></span></div>
 <div id="bar"></div>
+<div id="barnote"></div>
+</div>
 <div id="ungatedwrap"></div>
 <div id="skipwrap"></div>
 <div id="binwrap"></div>
@@ -160,10 +187,19 @@ function saveMarks(){try{localStorage.setItem(KEY,JSON.stringify(marks))}catch(e
 var showSkipped=false;
 
 // ---- view state: sort / filter / search, persisted ---------------------------
-var VKEY="pc_view_v2";
-var DEFV={sort:"oldest",campus:"all",bldg:"all",type:"all",q:""};
+// v3 because the default sort changed from oldest to newest. A stored v2 view would
+// otherwise pin everyone who has ever touched the toolbar to the old default for good and
+// the change would reach nobody who already uses the page. The migration carries their
+// filters and search across and resets only the sort, so the cost is not even a scroll.
+var VKEY="pc_view_v3", OLDVKEY="pc_view_v2";
+var DEFV={sort:"newest",campus:"all",bldg:"all",type:"all",q:""};
 var view=Object.assign({},DEFV);
-try{var sv=JSON.parse(localStorage.getItem(VKEY)||"null"); if(sv)view=Object.assign(view,sv)}catch(e){}
+try{
+  var sv=JSON.parse(localStorage.getItem(VKEY)||"null");
+  if(!sv){var old=JSON.parse(localStorage.getItem(OLDVKEY)||"null");
+          if(old){sv=Object.assign({},old); delete sv.sort}}
+  if(sv)view=Object.assign(view,sv);
+}catch(e){}
 function saveView(){try{localStorage.setItem(VKEY,JSON.stringify(view))}catch(e){}}
 function setView(k,v){
   view[k]=v;
@@ -197,13 +233,26 @@ function applyView(list){
   var s=view.sort;
   out.sort(function(a,b){
     var ad=daysSince(a.due), bd=daysSince(b.due);
+    // Both-null has to return 0. The previous shape returned 1 for both orderings, which is
+    // not a valid comparator and lets an engine produce an arbitrary order from it.
+    function bydate(oldestFirst){
+      if(ad==null&&bd==null)return 0;
+      if(ad==null)return 1;
+      if(bd==null)return -1;
+      return oldestFirst?bd-ad:ad-bd;
+    }
     switch(s){
-      case "newest":  if(ad==null)return 1; if(bd==null)return -1; return ad-bd;
+      case "oldest":  return bydate(true) || docNum(a.doc)-docNum(b.doc);
       case "amtDesc": return (b.amt||0)-(a.amt||0);
       case "amtAsc":  return (a.amt||0)-(b.amt||0);
       case "doc":     return a.type.localeCompare(b.type) || docNum(a.doc)-docNum(b.doc) ||
                              a.doc.localeCompare(b.doc,undefined,{numeric:true});
-      default:        if(ad==null)return 1; if(bd==null)return -1; return bd-ad; // oldest first
+      // Newest is the default. Read this honestly: `due` is the workflow step's DUE date and
+      // it is the only date Procore's pipeline carries, so this is latest-deadline-first, not
+      // most-recently-raised. Chosen deliberately as the closest available proxy for "newest";
+      // do not relabel it as a creation date unless one is actually added to the reads.
+      // Item number descending breaks a same-deadline tie, newer numbers being later work.
+      default:        return bydate(false) || docNum(b.doc)-docNum(a.doc);
     }
   });
   return out;
@@ -255,6 +304,10 @@ function compactMoney(n){
 }
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function daysSince(iso){if(!iso)return null;var p=iso.split("-");var d=new Date(+p[0],+p[1]-1,+p[2]);return Math.floor((Date.now()-d.getTime())/86400000)}
+// daysSince is negative for a deadline still ahead. Kept signed for the comparator - the sign
+// is the whole ordering - and phrased here instead, so a future date reads "in 13 days" rather
+// than "-13 days ago". Never clamp daysSince itself; that is the bug fixed on the NetSuite side.
+function dueText(a){return a>0?a+" days ago":a<0?"in "+(-a)+" days":"today"}
 function ageOfRun(){var t=new Date(REVIEW.lastRunISO).getTime();if(isNaN(t))return null;return Math.max(0,Math.round((Date.now()-t)/60000))}
 function ageText(){var m=ageOfRun();if(m==null)return "";
   if(m<2)return "just now"; if(m<60)return m+" minutes ago";
@@ -335,6 +388,11 @@ function render(){
       ? vReady.map(function(i){return itemRow(i)}).join("")
       : '<div class="empty">'+(viewActive()?"No decidable items match this filter.":"Nothing ready to decide.")+'</div>');
 
+  // Step headings frame the decidable queue, so with nothing in it they frame nothing and
+  // only add noise above the empty state.
+  var hasWork=ready.length>0;
+  ["step1","step2"].forEach(function(id){var e=document.getElementById(id); if(e)e.style.display=hasWork?"":"none"});
+
   renderBar();
 
   document.getElementById("ungatedwrap").innerHTML = vUngated.length
@@ -373,7 +431,7 @@ function itemRow(it){
    '<span class="doc">'+esc(it.type)+' · '+esc(it.doc)+'</span>'+mk+
    '<span class="amt">'+money(it.amt)+'</span></div>'+
    '<p class="ven">'+esc(it.projLabel)+' · '+esc(it.vendor)+
-     (a!=null?' <span style="color:'+(a>30?"var(--bad-fg)":a>7?"var(--warn-fg)":"var(--ink3)")+'">· step due '+esc(it.due)+', '+a+' days ago</span>':'')+'</p>'+
+     (a!=null?' <span style="color:'+(a>30?"var(--bad-fg)":a>7?"var(--warn-fg)":"var(--ink3)")+'">· step due '+esc(it.due)+', '+dueText(a)+'</span>':'')+'</p>'+
    '<p class="head">'+esc(it.head)+'</p>'+
    '<ul class="f">'+it.facts.map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+
    '<p class="po">'+esc(it.po)+(it.poWarn?'<br><span style="color:var(--warn-fg)">! '+esc(it.poWarn)+'</span>':'')+'</p>'+
@@ -456,10 +514,6 @@ function renderBar(){
 
   var mins=ageOfRun(), stale=(mins!=null&&mins>180);
   var ks=Object.keys(marks);
-  if(!ks.length){
-    document.getElementById("bar").innerHTML='<p class="note" style="margin-top:18px">Mark responses above. Nothing reaches Procore until you press execute, and nothing is ever responded to without you naming it here.</p>';
-    return;
-  }
   var missing=[], affirm=[], neg=[], sum=0;
   ks.forEach(function(k){var it=byId(k),m=marks[k];
     if(needsReason(m.kind)){neg.push(it); if(!m.text||!m.text.trim())missing.push(it.doc)}
@@ -495,18 +549,34 @@ function renderBar(){
    "Finish by reporting three counts — actioned, skipped as already done, and whatever stopped the batch — then re-run the review and republish the dashboard so this snapshot is current again.";
 
   var undec=REVIEW.items.length-ks.length;
+  var blocked=missing.length>0, canRun=ks.length>0&&!blocked;
+  // The bar renders in every state, zero marks included. It used to collapse to one line of
+  // grey text, so step 2 was invisible until you had already worked out step 1 unaided -
+  // backwards for the one thing this page has to teach.
+  var liveText=!ks.length ? "Nothing marked yet — use the response buttons on each item above"
+              : blocked   ? "A response that needs a reason is still missing one"
+              :             ks.length+" marked · ready to execute";
   document.getElementById("bar").innerHTML='<div class="bar">'+
-   '<div style="font-size:14px;font-weight:500">'+ks.length+' marked · nothing sent yet</div>'+
-   '<div class="note" style="margin-top:4px;font-variant-numeric:tabular-nums">'+
-     affirm.length+' affirmative ('+money(sum)+') · '+neg.length+' sent back'+
-     (undec>0?' · '+undec+' left alone and will stay in your queue':'')+'</div>'+
+   '<div class="barhead">'+(ks.length?ks.length+' marked · nothing sent yet':'Nothing sent yet')+'</div>'+
+   '<div class="barlive">'+liveText+'</div>'+
+   '<div class="barsum">'+(ks.length
+      ? affirm.length+' affirmative ('+money(sum)+') · '+neg.length+' sent back'+(undec>0?' · '+undec+' left alone and will stay in your queue':'')
+      : 'Nothing reaches Procore until you press execute, and nothing is ever responded to without you naming it here.')+'</div>'+
    (missing.length?'<div class="note" style="color:var(--bad-fg);margin-top:6px">Reason required before executing: '+missing.map(esc).join(", ")+'</div>':'')+
-   (stale?'<div class="note" style="color:var(--warn-fg);margin-top:6px">This snapshot is '+ageText()+'. Executing is still safe — each item is re-checked against Procore before any click — but a re-check first would give you a truer picture of what is left.</div>':'')+
-   '<div style="display:flex;gap:8px;margin-top:12px">'+
-   '<button class="go" '+(missing.length?'disabled style="opacity:.5;cursor:not-allowed"':'onclick="go()"')+'>Execute '+ks.length+' response'+(ks.length>1?"s":"")+' in Procore ↗</button>'+
-   '<button onclick="clearAll()">Clear all marks</button></div>'+
-   '<p class="note" style="margin-top:10px"><b>Stale-safe.</b> This page is a snapshot, so before each click the live workflow is re-queried: if you already actioned an item in Procore yourself, it is skipped and logged, never re-clicked or retried. A changed amount stops the whole batch instead.</p>'+
+   '<div class="barbtns">'+
+   '<button class="go big" '+(canRun?'onclick="go()"':'disabled')+'>Execute '+ks.length+' response'+(ks.length===1?"":"s")+' in Procore ↗</button>'+
+   (ks.length?'<button onclick="clearAll()">Clear all marks</button>':'')+'</div>'+
    '</div>';
+  // Below the sticky box, deliberately. Both of these are things to read once, not state to
+  // watch while marking, and inside the bar they pushed it to a third of the viewport.
+  document.getElementById("barnote").innerHTML=
+   (stale?'<p class="note" style="color:var(--warn-fg)">This snapshot is '+ageText()+'. Executing is still safe — each item is re-checked against Procore before any click — but a re-check first would give you a truer picture of what is left.</p>':'')+
+   '<p class="note"><b>Stale-safe.</b> This page is a snapshot, so before each click the live workflow is re-queried: if you already actioned an item in Procore yourself, it is skipped and logged, never re-clicked or retried. A changed amount stops the whole batch instead.</p>';
+  // Header mirror: the same one click, reachable the moment the page opens instead of only
+  // after scrolling the whole queue. Hidden until there is something to execute so it never
+  // competes with the toolbar for attention.
+  var te=document.getElementById("topexec");
+  if(te)te.innerHTML=canRun?'<button class="go big" onclick="go()">Execute '+ks.length+' ↗</button>':'';
   window.__prompt=prompt;
 }
 function go(){say(window.__prompt)}

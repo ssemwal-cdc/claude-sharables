@@ -835,15 +835,69 @@ Reset.
 
 Two things about that port are load-bearing:
 
-- **Verdict stays the default sort**, with the amount-descending tiebreak now stated
-  in the template rather than inherited from `publish_dashboard.py`'s pre-sort.
-  Flagged first is what the page is *for*; a reader who touches nothing must see
-  exactly what they saw before.
 - **`renderBar()` reads `REVIEW.items`, never the filtered list.** A marked item that
   is currently filtered off screen still has to execute. Narrowing the execute bar to
   what is visible is the obvious-looking tidy-up and would silently drop decisions the
   user made before they filtered — the same misfile shape as everything else in these
-  notes. Both a comment and a test cover it; do not remove either.
+  notes. Both a comment and a test cover it; do not remove either. **The test was
+  missing until 2026-08-20** — this note asserted one existed for a day and it did
+  not, which is worth remembering the next time these notes claim coverage.
+
+**Verdict is no longer the default sort. Newest first is, on both dashboards.** Asked
+for directly, 2026-08-20, overriding the note that used to sit here — which argued
+flagged-first was what the page is *for* and that a reader who touches nothing must see
+what they saw before. That reasoning was sound and was still outranked: the person
+reading the queue every day wanted recency. Verdict survives as an option in NetSuite's
+dropdown, so nothing is lost, only re-defaulted. Do not quietly restore it.
+
+Four things about that change are load-bearing, three of them earned by something that
+was actually broken:
+
+- **A new default must ship with a new view key.** `pc_view_v2` → `pc_view_v3`,
+  `ns_view_v1` → `ns_view_v2`. A stored view overrides the default on every load, so
+  shipping a new default under the old key reaches nobody who has ever touched the
+  toolbar — which is everyone it is for. Both templates migrate the old key rather than
+  discarding it: filters and search carry across, only `sort` resets. The marks-key rule
+  above is untouched and still absolute.
+- **"Newest" means different things on the two dashboards, and Procore's is a proxy.**
+  NetSuite sorts on `trandate`, a real document date, with the internal id descending as
+  the same-day tiebreak. **Procore has no creation date anywhere in its pipeline** — its
+  only per-item date is `due`, the workflow step's *deadline* — so "newest first" there
+  is *latest-deadline-first*, chosen deliberately as the closest available proxy and
+  labelled `Newest first — latest deadline` so nobody reads it as an origin date. If a
+  real creation date is ever wanted there it has to be added to the Step 3 record reads,
+  the log schema and `publish_dashboard.py` together; do not relabel without doing that.
+- **`ageDays` clamped at `Math.max(0,…)` and that clamp was wrong in a comparator.**
+  Every future-dated bill collapsed to `0` and tied with every other one. Invisible while
+  verdict was the default; wrong at the top of a newest-first list, which is precisely
+  where future-dated rows now land. There are two helpers now — `ageDaysRaw` for
+  ordering, `ageDays` for display, because "-3 days pending" is nonsense to read. Procore
+  has the mirror-image of this: `daysSince` is correctly unsigned-free, and the *display*
+  was the broken half, rendering "-13 days ago" for a deadline still ahead. `dueText()`
+  phrases it; the comparator still gets the sign. **Never clamp the ordering key, and
+  never sign the display.**
+- **`position:sticky` resolves against the element's parent box.** The execute bar was
+  first made sticky on `.bar`, whose parent `#bar` is exactly as tall as it — zero travel,
+  no error, and it looked done. Caught by measuring the bar's viewport position at two
+  scroll offsets in a real browser, not by reading the CSS. It now sits on `#bar` inside a
+  `.worksec` that also holds the rows, which is what gives it the queue to float over. A
+  test pins this. The same measurement is the only honest way to check the next one.
+
+**The execute bar is rendered in every state now, zero marks included**, and there is a
+second Execute button mirrored in the page header once something is marked. The bar used
+to collapse to one line of grey text below the queue until you had marked something — so
+step 2 was invisible until you had already worked out step 1 unaided, which is backwards
+for the one thing the page has to teach. The two steps are also numbered in the markup.
+**The header mirror is the half that is guaranteed to work**: whether the widget iframe
+scrolls internally is not knowable from the agent side, and if it does not, sticky
+silently degrades to an ordinary block. That is why both exist; do not delete one as
+redundant.
+
+**Procore's sticky bar carries only what you need in the second before clicking.** The
+stale-snapshot warning and the Stale-safe explainer moved below it into `#barnote`,
+because inside the bar they made it 249px — over a third of a 700px viewport. Both
+dashboards' bars now measure 153px. Anything added to `.bar` is paid for in queue you
+cannot see, so put reference text in `#barnote`.
 
 **The teammate-facing onboarding sheet lives at `docs/onboarding.html`.** It is
 served to teammates by **GitHub Pages** from `docs/` on `main`:

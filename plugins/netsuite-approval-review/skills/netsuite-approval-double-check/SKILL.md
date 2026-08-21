@@ -5,6 +5,8 @@ description: Financial double-check of the NetSuite bills, purchase orders and c
 
 # NetSuite Approval Double-Check
 
+**Skill version 1 — 2026-08-21.** If this line is missing or the number is lower than the one in the repo README's plugin table, the installed copy is stale.
+
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
 Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.

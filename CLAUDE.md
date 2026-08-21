@@ -88,7 +88,8 @@ then fails everywhere else. See [Traps](#traps-proven-not-guessed).
 Both `README.md` and this file must stay truthful. `scripts/validate.py` fails
 the build if either stops mentioning a registered plugin, so this is enforced,
 not merely requested. Add a row to the **Available plugins** table in
-`README.md` including its prerequisite.
+`README.md` including its prerequisite and its skill version (a new skill
+starts at v1 — see [Skill version lines](#skill-version-lines)).
 
 ### 6. Verify before committing
 
@@ -1210,6 +1211,38 @@ Confirm it is working — installed version should be a commit SHA prefix:
 ```bash
 claude plugin list        # Version: 7ca6a2ea2c70
 ```
+
+**`claude plugin list` only sees CLI installs.** Confirmed 2026-08-21 on a
+machine with the plugins installed and working through the desktop app: the
+terminal list came back empty. The CLI and the desktop app keep separate plugin
+inventories — the CLI's lives in `~/.claude/plugins/installed_plugins.json`,
+the app's in its own store — and the terminal update commands above only ever
+touch the CLI copy. So a terminal update does nothing for plugins that were
+installed through the app, and an empty `claude plugin list` does not mean the
+app has no plugins. Update app installs through the app.
+
+### Skill version lines
+
+The no-`version` rule above bans the *machine* fields — the ones install
+resolution reads. Separately, every skill carries a *human* version marker, and
+that one is **required**: the first line under the title in each `SKILL.md`
+reads
+
+```
+**Skill version N — YYYY-MM-DD.** …
+```
+
+mirrored as `vN` in the README's Available plugins table. It exists because an
+installed skill is a snapshot and the desktop app shows no commit SHA anywhere;
+opening the skill shows `SKILL.md`, so the file itself is the only place a
+version can be read on that surface. An installed copy with no version line at
+all predates 2026-08-21. Because the line is in the prompt, the running skill
+can also answer "what version are you on?" in chat.
+
+Bump the number, the date, and the README cell **in the same commit as any
+change under that skill**. `scripts/validate.py` enforces that the line exists,
+sits at the top, and agrees with the README — it cannot enforce the bump
+itself, so that part is habit. A new skill starts at version 1.
 
 ---
 

@@ -5,6 +5,8 @@ description: Review of the Procore open items actually awaiting your workflow re
 
 # Procore Open Items Review
 
+**Skill version 1 — 2026-08-21.** If this line is missing or the number is lower than the one in the repo README's plugin table, the installed copy is stale.
+
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 
 Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.

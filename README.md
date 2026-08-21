@@ -94,15 +94,28 @@ than in Cowork, that case is different: declare the plugin in that repo's
 
 ## Available plugins
 
-| Plugin | What it does | Needs |
-|---|---|---|
-| `netsuite-approval-review` | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | Claude in Chrome, signed in to NetSuite. NetSuite MCP connector optional — adds bulk queries and the PO cross-check |
-| `procore-open-items-review` | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
+| Plugin | Version | What it does | Needs |
+|---|---|---|---|
+| `netsuite-approval-review` | v1 | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | Claude in Chrome, signed in to NetSuite. NetSuite MCP connector optional — adds bulk queries and the PO cross-check |
+| `procore-open-items-review` | v1 | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
+
+**Checking what you have installed:** each skill's `SKILL.md` opens with a
+`**Skill version N — date.**` line, and this table always shows the current
+number. Open the skill in the app (**+** next to the prompt box → **Plugins** →
+open the skill) and compare its first line to the column above. A lower number —
+or no version line at all — means your installed copy is stale: update or
+reinstall the plugin. You can also just ask in a chat ("what skill version is
+the NetSuite check on?") — the running skill reads its own line.
 
 ## For maintainers: releasing an update
 
 Push to the default branch. That is the whole release process — version resolves
 from the commit SHA, so every push is a new version.
+
+If the push changes anything under a skill, bump that skill's
+`**Skill version N — date.**` line and the Version cell in the table above in
+the same commit. `validate.py` enforces that the two agree; the bump itself is
+the habit it cannot check for you.
 
 Teammates get it automatically **only if they have auto-update enabled on this
 marketplace.** It is off by default: Claude Code enables auto-update for

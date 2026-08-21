@@ -110,6 +110,37 @@ footer{color:var(--muted); font-size:13.5px; border-top:1px solid var(--line); p
 a{color:var(--accent)}
 :focus-visible{outline:2px solid var(--accent); outline-offset:2px}
 
+/* Nav rail. .wrap is 820px centred, so at 1920px there are 550px of dead margin each side
+   and at 2560px there are 870px - the rail costs nothing. Hidden below 1300px, where it
+   would start clipping into the text; the page reads fine without it. */
+.rail{display:none}
+h2{scroll-margin-top:26px}
+@media (min-width:1300px){
+  .rail{
+    display:block; position:fixed; top:40px; width:196px;
+    left:calc(50% - 410px - 44px - 196px);
+    max-height:calc(100vh - 80px); overflow-y:auto;
+    font-size:13.5px; line-height:1.45;
+  }
+  .rail .railhead{
+    font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--muted); font-weight:650; margin:0 0 7px; max-width:none;
+  }
+  .rail .railpre{margin:0 0 9px; max-width:none}
+  .rail ol,.rail ul{margin:0 0 20px; display:flex; flex-direction:column; gap:6px}
+  .rail ol{padding-left:19px}
+  .rail ul{padding-left:0; list-style:none}
+  .rail li::marker{color:var(--muted); font-size:12px}
+  .rail a{color:var(--muted); text-decoration:none; display:block}
+  .rail a:hover{color:var(--ink)}
+  .rail a.on{color:var(--accent); font-weight:650}
+  .rail .railhelp{
+    font-size:12.5px; color:var(--muted); max-width:none; margin:0;
+    border-top:1px solid var(--line); padding-top:13px;
+  }
+  .rail .railhelp strong{color:var(--ink)}
+}
+
 /* Progressive disclosure. Native <details> - no JS, works on Pages served raw, and
    keyboard-accessible for free. The spine of the page is the steps and their done-when
    checks; everything a reader only needs sometimes lives in one of these. */
@@ -137,6 +168,25 @@ details.warn summary{color:var(--warn)}
 </head>
 <body>
 
+<nav class="rail" aria-label="On this page">
+  <p class="railhead">Setup</p>
+  <p class="railpre"><a href="#before">Before you start</a></p>
+  <ol>
+    <li><a href="#step1">Chrome extension</a></li>
+    <li><a href="#step2">NetSuite connector</a></li>
+    <li><a href="#step3">Install the plugins</a></li>
+    <li><a href="#step4">First run</a></li>
+    <li><a href="#step5">Run it on a schedule</a></li>
+  </ol>
+  <p class="railhead">Afterwards</p>
+  <ul>
+    <li><a href="#daily">Using it day to day</a></li>
+    <li><a href="#problems">If something goes wrong</a></li>
+    <li><a href="#updates">Keeping it updated</a></li>
+  </ul>
+  <p class="railhelp"><strong>Not working the way this says?</strong> Tell Shivam — don't work around it.</p>
+</nav>
+
 <div class="wrap">
 
 <header>
@@ -149,7 +199,7 @@ details.warn summary{color:var(--warn)}
 </header>
 
 <section>
-  <h2>Before you start</h2>
+  <h2 id="before">Before you start</h2>
   <ul class="tight">
     <li>The <strong>Claude desktop app</strong>, signed in with your Compass account.</li>
     <li><strong>Google Chrome</strong>, plus a <strong>Claude browser extension</strong> you'll install in step 1. Having used Claude in a Chrome tab is not the same thing.</li>
@@ -160,7 +210,7 @@ details.warn summary{color:var(--warn)}
 <hr class="rule">
 
 <section>
-  <div class="step-head"><span class="num">1</span><h2>Install the Claude Chrome extension <span class="chip">everyone</span></h2></div>
+  <div class="step-head"><span class="num">1</span><h2 id="step1">Install the Claude Chrome extension <span class="chip">everyone</span></h2></div>
   <div class="phase">
     <b>Step 1 · in your browser</b>
     <span>This is a Chrome extension you install. Not a website.</span>
@@ -192,7 +242,7 @@ details.warn summary{color:var(--warn)}
 </section>
 
 <section>
-  <div class="step-head"><span class="num">2</span><h2>NetSuite connector <span class="chip">optional · skip unless you already have it</span></h2></div>
+  <div class="step-head"><span class="num">2</span><h2 id="step2">NetSuite connector <span class="chip">optional · skip unless you already have it</span></h2></div>
   <p><strong>Already know about the NetSuite MCP connector?</strong> Make sure it's connected: in the Claude desktop app, click your <strong>profile</strong> at the bottom left, then <strong>Settings → Connectors</strong>.</p>
   <p><strong>Never heard of it? Skip to step 3.</strong> It's a separate thing from your normal NetSuite login — having one doesn't mean you have the other — and the review works fine without it.</p>
   <div class="done"><b>Done when</b><span>It shows connected, or you've skipped it.</span></div>
@@ -205,7 +255,7 @@ details.warn summary{color:var(--warn)}
 </section>
 
 <section>
-  <div class="step-head"><span class="num">3</span><h2>Install the plugins</h2></div>
+  <div class="step-head"><span class="num">3</span><h2 id="step3">Install the plugins</h2></div>
   <ol class="tight">
     <li>Click your <strong>profile</strong> at the bottom left, then <strong>Settings → Plugins</strong>.</li>
     <li>Click <strong>Add</strong>, then <strong>Add marketplace</strong>.</li>
@@ -225,7 +275,7 @@ claude plugin install procore-open-items-review@compass-claude-plugins</pre>
 </section>
 
 <section>
-  <div class="step-head"><span class="num">4</span><h2>First run</h2></div>
+  <div class="step-head"><span class="num">4</span><h2 id="step4">First run</h2></div>
   <p><strong>Budget 15–20 minutes, and don't start without them.</strong> Everything so far is saved, so stopping here costs nothing and this is the step to come back to. It pauses to ask permission and waits, so check back every few minutes — but if it times out you start this step over.</p>
   <ol class="tight">
     <li>Create a <strong>new chat</strong>. <strong>Keep it open</strong> — step 5 continues in it.</li>
@@ -258,7 +308,7 @@ claude plugin install procore-open-items-review@compass-claude-plugins</pre>
 </section>
 
 <section>
-  <div class="step-head"><span class="num">5</span><h2>Run it on a schedule</h2></div>
+  <div class="step-head"><span class="num">5</span><h2 id="step5">Run it on a schedule</h2></div>
   <p><strong>In that same chat from step 4</strong>, hit <strong>Copy</strong> on the block for the plugin you set up, then paste it in as one message. You don't need to read it.</p>
   <p>Claude asks about timing, then gives you an <strong>Add to schedule</strong> button. Click it. <strong>Both plugins?</strong> Do it twice — one block, add its schedule, then the other.</p>
   <p class="muted">A reasonable answer: first try 11am, retries 2pm and 4pm, weekdays only. Closed that chat already? Start a new Cowork chat, connect Downloads again, run the step 4 command once, then paste below.</p>
@@ -362,7 +412,7 @@ fallback window retries. Report what blocked it.</pre>
 <hr class="rule">
 
 <section>
-  <h2>Using it day to day</h2>
+  <h2 id="daily">Using it day to day</h2>
   <p>With the schedule running, the dashboard is already waiting. You can also start a review any time with the command from step 4.</p>
   <ol class="tight">
     <li>Read it. Each item shows a verdict, the figures behind it, and a link to the record.</li>
@@ -388,7 +438,7 @@ fallback window retries. Report what blocked it.</pre>
 </section>
 
 <section>
-  <h2>If something goes wrong</h2>
+  <h2 id="problems">If something goes wrong</h2>
   <details class="warn">
     <summary>A run stopped partway, or nothing was approved</summary>
     <div class="tbl">
@@ -441,7 +491,7 @@ fallback window retries. Report what blocked it.</pre>
 </section>
 
 <section>
-  <h2>Keeping it updated</h2>
+  <h2 id="updates">Keeping it updated</h2>
   <p><strong>With auto sync on, there's nothing to run.</strong> Fixes apply on your next restart, so you have them the following morning.</p>
   <details>
     <summary>Forcing an update now</summary>
@@ -464,7 +514,7 @@ claude plugin update procore-open-items-review@compass-claude-plugins</pre>
 </section>
 
 <footer>
-  Questions, or something here that doesn't match what you see — tell Shivam. The plugins update from
+  <strong>Not working the way this page says?</strong> Tell Shivam rather than working around it — that's how this page gets fixed. The plugins update from
   <code>ssemwal-cdc/claude-sharables</code>; every push is a new version.
 </footer>
 
@@ -537,6 +587,37 @@ claude plugin update procore-open-items-review@compass-claude-plugins</pre>
       else wrap.appendChild(btn);
     })(pres[i]);
   }
+})();
+
+// Nav rail: light up the section you are actually in.
+(function(){
+  var rail = document.querySelector(".rail");
+  if (!rail) return;
+  // Pair each link with its target so a missing id cannot misalign the highlight.
+  var pairs = [];
+  [].forEach.call(rail.querySelectorAll("a[href^='#']"), function(a){
+    var t = document.getElementById(a.getAttribute("href").slice(1));
+    if (t) pairs.push({ a: a, t: t });
+  });
+  if (!pairs.length) return;
+  var queued = false;
+  function mark(){
+    queued = false;
+    var active = 0;
+    // Near the foot of the page the last sections can never reach the highlight line -
+    // there is not enough scroll left to bring them up to it - so they would never light.
+    // Within a screen of the end, take the last heading that is on screen at all instead.
+    var atEnd = window.scrollY + window.innerHeight >= document.body.scrollHeight - 4;
+    var line  = atEnd ? window.scrollY + window.innerHeight - 60 : window.scrollY + 140;
+    for (var i = 0; i < pairs.length; i++) {
+      if (pairs[i].t.getBoundingClientRect().top + window.scrollY <= line) active = i;
+    }
+    for (var j = 0; j < pairs.length; j++) pairs[j].a.className = (j === active) ? "on" : "";
+  }
+  window.addEventListener("scroll", function(){
+    if (!queued) { queued = true; window.requestAnimationFrame(mark); }
+  });
+  mark();
 })();
 </script>
 

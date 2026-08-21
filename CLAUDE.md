@@ -1244,6 +1244,17 @@ change under that skill**. `scripts/validate.py` enforces that the line exists,
 sits at the top, and agrees with the README — it cannot enforce the bump
 itself, so that part is habit. A new skill starts at version 1.
 
+The line's wording matters, and the first live run set it. Asked "what version
+are you on?", the installed skill reported its line correctly — then went
+looking for the README table *locally*, found nothing (a git-subdir install
+ships only the plugin folder, never the repo root), reported the staleness
+check as unrunnable, and suggested adding a `version` field to `plugin.json` —
+the exact field the rule above bans. The line now names GitHub as the only
+comparison point and rules that field out in place, and each plugin README
+carries the same note under **Versioning**. Keep both when editing; an
+installed copy has no repo around it, so anything the line asks a reader to do
+must work from the plugin folder alone.
+
 ---
 
 ## House conventions

@@ -5,7 +5,7 @@ description: Financial double-check of the NetSuite bills, purchase orders and c
 
 # NetSuite Approval Double-Check
 
-**Skill version 1 — 2026-08-21.** If this line is missing or the number is lower than the one in the repo README's plugin table, the installed copy is stale.
+**Skill version 2 — 2026-08-21.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 

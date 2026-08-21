@@ -5,7 +5,7 @@ description: Review of the Procore open items actually awaiting your workflow re
 
 # Procore Open Items Review
 
-**Skill version 1 — 2026-08-21.** If this line is missing or the number is lower than the one in the repo README's plugin table, the installed copy is stale.
+**Skill version 2 — 2026-08-21.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 

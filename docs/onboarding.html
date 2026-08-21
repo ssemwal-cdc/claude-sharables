@@ -270,7 +270,7 @@ details.warn summary{color:var(--warn)}
     <pre>claude plugin marketplace add ssemwal-cdc/claude-sharables
 claude plugin install netsuite-approval-review@compass-claude-plugins
 claude plugin install procore-open-items-review@compass-claude-plugins</pre>
-    <p class="muted">In a Claude chat the same commands work as <code>/plugin …</code>. If a chat says <code>Run /reload-plugins to activate</code>, run that there.</p>
+    <p class="muted">Know this installs a <strong>separate terminal-side copy</strong>: Cowork chats run the app-installed copy, so for this sheet's setup use the app path above. In a Claude Code chat the same commands work as <code>/plugin …</code> (they don't in a Cowork chat). If it says <code>Run /reload-plugins to activate</code>, run that there.</p>
   </details>
 </section>
 
@@ -465,17 +465,25 @@ fallback window retries. Report what blocked it.</pre>
     <p class="muted">These are the failures actually seen. Anything else, tell Shivam rather than working around it.</p>
   </details>
   <details>
-    <summary>Four things that will confuse you</summary>
+    <summary>Six things that will confuse you</summary>
     <div class="tbl">
       <table>
         <tr><th>What you see</th><th>What it means</th></tr>
         <tr>
+          <td>Settings → Plugins says <strong>Last updated</strong> weeks ago</td>
+          <td>That column tracks a catalog file that rarely changes — it says nothing about your plugins. Your real version is the skill's first line; see <a href="#updates">Keeping it updated</a>.</td>
+        </tr>
+        <tr>
+          <td><code>claude plugin list</code> in a terminal shows nothing installed</td>
+          <td>The terminal and the app keep separate copies. App installs never show there, and terminal update commands never touch them.</td>
+        </tr>
+        <tr>
           <td><code>Plugin "netsuite-approval-review" not found</code></td>
-          <td>You left off <code>@compass-claude-plugins</code> on the update command. It <em>is</em> installed; the bare name isn't enough.</td>
+          <td>You left off <code>@compass-claude-plugins</code> on the terminal update command. It <em>is</em> installed; the bare name isn't enough.</td>
         </tr>
         <tr>
           <td><code>Successfully updated marketplace</code>, but nothing changed</td>
-          <td>That refreshes the catalog only. You still need <code>plugin update</code> per plugin.</td>
+          <td>That terminal command refreshes the catalog only. You still need <code>plugin update</code> per plugin.</td>
         </tr>
         <tr>
           <td>A new plugin appears in the catalog but you don't have it</td>
@@ -495,8 +503,24 @@ fallback window retries. Report what blocked it.</pre>
   <p><strong>With auto sync on, there's nothing to run.</strong> Fixes apply on your next restart, so you have them the following morning.</p>
   <details>
     <summary>Forcing an update now</summary>
-    <p class="muted">Only if you need a fix immediately, or auto sync got switched off.</p>
-    <p>Press <strong>Win + R</strong>, type <code>cmd</code>, hit <strong>Enter</strong>. (On a Mac, open <strong>Terminal</strong>.) Paste these one at a time:</p>
+    <p class="muted">Only if you need a fix immediately, or auto sync got switched off. This happens in the app, where you installed — terminal commands don't reach app installs.</p>
+    <ol class="tight">
+      <li>Click your <strong>profile</strong> at the bottom left, then <strong>Settings → Plugins</strong>.</li>
+      <li>Click <strong>Browse</strong>, then the <strong>Personal</strong> tab.</li>
+      <li>Next to <strong>Local uploads</strong> there's a <code>claude-sharables</code> chip — click the <strong>⋯</strong> (three dots) on it.</li>
+      <li>Click <strong>Check for updates</strong>. While you're in that menu: <strong>Sync automatically</strong> should be on, and <strong>Synced commit</strong> is the release you're on.</li>
+      <li>Restart — the computer, not just the app — then run the review again for a fresh dashboard.</li>
+    </ol>
+    <p class="muted">Still on an old version after that? In that same ⋯ menu, <strong>Remove</strong> the marketplace — this uninstalls its plugins — then add it back (<a href="#step3">step 3</a>) and reinstall. That always lands you on current. Tell Shivam it came to that.</p>
+  </details>
+  <details>
+    <summary>Which version am I on?</summary>
+    <p>Open either skill (<strong>+</strong> next to the prompt box → <strong>Plugins</strong> → open the skill). The first line reads <strong>"Skill version N"</strong> with a date. The current number is the Version column of the <a href="https://github.com/ssemwal-cdc/claude-sharables#available-plugins">plugin table on GitHub</a> — a lower number, or no version line at all, means you're stale: force an update as above. Or skip the clicking and just ask in a chat: <em>"what skill version are you on?"</em></p>
+    <p class="muted">Ignore the <strong>Last updated</strong> column on the Settings → Plugins list — it tracks a catalog file that rarely changes, so an old date there says nothing about your plugins.</p>
+  </details>
+  <details>
+    <summary>Updating from a terminal — only for terminal installs</summary>
+    <p class="muted">The terminal and the app keep <strong>separate copies</strong> of the plugins. These commands update terminal installs only, and do nothing for plugins installed through the app — likewise, <code>claude plugin list</code> coming back empty just means you have no <em>terminal</em> installs, not that the app has none.</p>
     <pre>claude plugin marketplace update compass-claude-plugins
 claude plugin update netsuite-approval-review@compass-claude-plugins
 claude plugin update procore-open-items-review@compass-claude-plugins</pre>

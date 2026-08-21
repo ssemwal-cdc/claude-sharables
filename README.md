@@ -137,6 +137,13 @@ claude plugin update procore-open-items-review@compass-claude-plugins
 Then restart the computer. Observed on Windows: an app restart is not always
 enough for a plugin change to show up.
 
+Those terminal commands update **terminal installs only**. Plugins installed
+through the desktop app live in a separate, account-synced store; the app's
+own force-update is **Settings → Plugins → Browse → Personal →
+`claude-sharables` → ⋯ → Check for updates**, and that menu's **Synced
+commit** should match the tip of `main`. The onboarding sheet walks teammates
+through it.
+
 ## Adding another plugin or skill
 
 **See [CLAUDE.md](CLAUDE.md)** for the full layout, the required fields, the

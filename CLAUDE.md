@@ -1126,6 +1126,23 @@ netsuite-approval-review   9ea01d3a5df2 -> 5c242055c130
 and after versions so you can see whether anything actually shipped, and it
 surfaces the qualifier error rather than failing quietly.
 
+**Those commands update terminal installs only — the app has its own store and
+its own update path.** Verified with screenshots, 2026-08-21. App-installed
+plugins live in the app's account-synced store, not `~/.claude/plugins` (the
+split under [Versioning](#versioning)), and the app's force-update is: profile
+(bottom left) → **Settings → Plugins** → **Browse** → **Personal** tab → the
+`claude-sharables` chip beside "Local uploads" → **⋯** → **Check for updates**.
+That menu also carries the **Sync automatically** toggle and shows **Synced
+commit** — the installed release, directly comparable to `main`'s tip. Two
+display traps nearby, both observed: the app labels the marketplace by **repo**
+name (`claude-sharables`), not marketplace name — the repo-vs-marketplace split
+again, surfacing in reverse — and the Settings → Plugins list's **Last
+updated** column tracks the last commit to `marketplace.json` (2026-08-12 for a
+long stretch), not plugin content, so an old date there is not staleness.
+Removing the marketplace from that ⋯ menu uninstalls its plugins and a re-add
+lands on current — the reliable last resort when Check for updates doesn't move
+the synced commit.
+
 **A stale install presents as a bug in the repo, and it is worth recognising on
 sight.** Reported 2026-08-14: `publish_dashboard.py` was hardcoding
 `cco -> ChangeOrderPackage`, the type that 400s — except the repo had shipped

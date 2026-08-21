@@ -1265,9 +1265,23 @@ version can be read on that surface. An installed copy with no version line at
 all predates 2026-08-21. Because the line is in the prompt, the running skill
 can also answer "what version are you on?" in chat.
 
-Bump the number, the date, and the README cell **in the same commit as any
-change under that skill**. `scripts/validate.py` enforces that the line exists,
-sits at the top, and agrees with the README — it cannot enforce the bump
+**The Settings → Plugins screen never shows the SKILL.md body** — settled by
+screenshot, 2026-08-21: the plugin detail page renders `plugin.json`'s
+description in full and the skill's frontmatter description truncated to one
+line, and nothing else from the skill. So the version lives in **four synced
+sites**, each for the surface that shows it: the START of the skill's
+frontmatter description (`vN — …`, visible in the truncated Skills row and the
+in-chat skills list), the END of the `plugin.json` description
+(`Skill version N — date.`, the plugin detail page — prose, deliberately not
+the banned `version` field), the SKILL.md body line (the in-chat skill panel,
+and how the running skill answers in chat), and the README table (`vN`, the
+current-version side, on GitHub). The marketplace.json descriptions carry no
+version on purpose: a stale catalog could show a number that matches neither
+the installed copy nor `main`.
+
+Bump the number, the date, the two descriptions, and the README cell **in the
+same commit as any change under that skill**. `scripts/validate.py` enforces
+that every site exists and all of them agree — it cannot enforce the bump
 itself, so that part is habit. A new skill starts at version 1.
 
 The line's wording matters, and the first live run set it. Asked "what version

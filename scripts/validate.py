@@ -192,7 +192,27 @@ for name, src in registered.items():
                     f"[{name}/{skill}] the skill version line must sit at the top of "
                     f"SKILL.md (directly under the title), not {vm.start()} chars in"
                 )
-            skill_versions[(name, skill)] = int(vm.group(1))
+            n, vdate = int(vm.group(1)), vm.group(2)
+            skill_versions[(name, skill)] = n
+
+            # The desktop app's Settings -> Plugins screen renders plugin.json's
+            # description in full and the skill's frontmatter description truncated
+            # to one line - never the SKILL.md body (screenshot, 2026-08-21). So the
+            # version also lives at the START of the skill description and the END
+            # of the plugin description, and every site must agree.
+            if not keys.get("description", "").startswith("v%d — " % n):
+                fail(
+                    f"[{name}/{skill}] frontmatter description must start with "
+                    f"'v{n} — ' to match the skill version line — bump both in the "
+                    f"same commit"
+                )
+            tail = "Skill version %d — %s." % (n, vdate)
+            if not pj.get("description", "").rstrip().endswith(tail):
+                fail(
+                    f"[{name}] plugin.json description must end with {tail!r} to match "
+                    f"{skill}/SKILL.md — bump both in the same commit. (One skill per "
+                    f"plugin today; if this plugin now holds several, revisit this rule.)"
+                )
 
         # Assets must be referenced through ${CLAUDE_PLUGIN_ROOT} and must exist.
         # A reference may point at a file or, in prose, at a directory.

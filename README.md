@@ -96,16 +96,17 @@ than in Cowork, that case is different: declare the plugin in that repo's
 
 | Plugin | Version | What it does | Needs |
 |---|---|---|---|
-| `netsuite-approval-review` | v3 | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | Claude in Chrome, signed in to NetSuite. NetSuite MCP connector optional — adds bulk queries and the PO cross-check |
-| `procore-open-items-review` | v3 | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
+| `netsuite-approval-review` | v4 | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | Claude in Chrome, signed in to NetSuite. NetSuite MCP connector optional — adds bulk queries and the PO cross-check |
+| `procore-open-items-review` | v4 | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
 
-**Checking what you have installed:** each skill's `SKILL.md` opens with a
-`**Skill version N — date.**` line, and this table always shows the current
-number. Open the skill in the app (**+** next to the prompt box → **Plugins** →
-open the skill) and compare its first line to the column above. A lower number —
-or no version line at all — means your installed copy is stale: update or
-reinstall the plugin. You can also just ask in a chat ("what skill version is
-the NetSuite check on?") — the running skill reads its own line.
+**Checking what you have installed:** the easiest read is **profile (bottom
+left) → Settings → Plugins → click the plugin** — the last sentence of its
+Description is the installed version ("Skill version N — date"). The same
+number starts each skill's one-line description (`vN — …`), opens its
+`SKILL.md`, and comes back if you just ask in a chat ("what skill version is
+the NetSuite check on?"). Compare it to the Version column above: a lower
+number — or no version anywhere — means your installed copy is stale; update
+or reinstall the plugin.
 
 ## For maintainers: releasing an update
 

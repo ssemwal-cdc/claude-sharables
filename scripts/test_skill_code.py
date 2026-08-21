@@ -433,8 +433,11 @@ def test_dashboard_view():
 
         # position:sticky resolves against the PARENT box. On .bar the parent is exactly as
         # tall as the bar, so it never travels - measured in a real browser, not assumed.
+        # Asserts the mechanism, not the styling: pinning .bar's full declaration string
+        # here made a pure restyle read as a sticky regression (2026-08-21).
+        m_bar = re.search(r"\.bar\{[^}]*\}", tpl)
         check("%s: sticky sits on #bar, not .bar" % label,
-              "#bar{position:sticky" in tpl and ".bar{background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:15px 17px;margin-top:20px;box-shadow" in tpl)
+              "#bar{position:sticky" in tpl and bool(m_bar) and "sticky" not in m_bar.group(0))
         check("%s: the sticky bar has a container to travel in" % label,
               'class="worksec"' in tpl and ".worksec{position:relative}" in tpl)
 

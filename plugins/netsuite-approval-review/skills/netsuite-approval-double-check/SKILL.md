@@ -5,7 +5,7 @@ description: Financial double-check of the NetSuite bills, purchase orders and c
 
 # NetSuite Approval Double-Check
 
-**Skill version 2 — 2026-08-21.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 3 — 2026-08-21.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
@@ -26,6 +26,7 @@ An instruction to review is never an instruction to execute. A verdict of "clear
 - **Only act on an explicit instruction that names the document.** "Approve 4139-40671" is an instruction. "Approve everything clear," "approve the rest," or anything inferred from a verdict is not — ask which documents, specifically.
 - **Never** call `ns_createRecord` or `ns_updateRecord`. Treat the NetSuite connector as read-only. Approvals must go through the real UI so the workflow routes and the audit trail records the user as the approver; a REST field flip would bypass SuiteFlow and leave no trail.
 - **Never hand-write or regenerate the dashboard HTML.** See Step 7. The layout is a file on disk; runs inject data into it and nothing else.
+- **Never present, attach, or send the working files as files or file cards in chat** — the dashboard template, `publish_dashboard.py`, the review log, or the rendered `index.html`/`widget.html`. They are internal state, not deliverables, even when the platform encourages surfacing files a run produced. The dashboard widget is the only deliverable, and chat gets one headline line.
 - **Never copy identity between people.** The employee internal id in `config.me` scopes the whole review. Using someone else's shows them a queue that is not theirs.
 - If deeper review would require actions beyond reading, say so in the verdict and ask first.
 - **Every approval carries the note `Approved by Claude`, unless the user supplied their own for that document — theirs replaces it verbatim.** Those two are the only text this skill types into a note field, and approvals route through Approve With Notes so it can be attached; see Step 8. Do not ask permission for the default and do not vary its wording. Rejection reasons are different: they always come from the user and are never defaulted.

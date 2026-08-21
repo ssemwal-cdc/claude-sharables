@@ -335,6 +335,15 @@ trusting this tool's success message probably reinforced it. The fix is not more
 reassurance: it is to close the loop by asking the user to report the banner, one
 sentence after the render. Both skills now do that.
 
+**Runs began presenting the working files as chat file cards, 2026-08-21.** The
+template, publish script, review log and rendered index all appeared as
+download cards at the end of a run. Nothing in either skill asks for that —
+newer harness builds push agents to surface files a run wrote, and the state
+files pattern-match "deliverable". Both skills now carry an Absolute rule that
+the widget is the only deliverable and the working files are never attached.
+If cards still appear with that rule shipped, it is the surface auto-listing
+written files, and no skill wording can suppress it.
+
 **Do not let an agent refuse to render because the file looks big.** A 120 KB Procore dashboard was
 handed over as a file instead, on the reasoning that it might truncate — which cost one-click
 execute entirely to avoid a risk that had not happened. The truncation guard exists precisely to

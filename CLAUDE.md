@@ -1057,15 +1057,30 @@ Facts it carries that are not obvious from the skills:
   "restore consistency" by putting the commands back in `docs/onboarding.html`; if a
   teammate ever does end up with a terminal install, the commands are two sections
   up in this file, which is where the person helping them will be looking anyway.
-- **The first-run time is elapsed time on a second screen, and the sheet now says
-  which.** Also 2026-08-24. "15-20 minutes" read as twenty minutes of sitting and
-  watching, which is a much bigger ask than the thing actually is and is the sort of
-  number that makes someone defer the step to a day that never comes. The run pauses
-  for permission and waits, so what it needs is a glance every few minutes. Both the
-  header chip and the step 4 opener say it, deliberately: the chip is what someone
-  decides from before they start, the opener is what they read once committed. The
-  timeout warning stays beside it, because "not your full attention" must not be read
-  as "walk away for an hour".
+- **The whole sheet is second-screenable, and saying so is worth more than the time
+  figures were.** 2026-08-24, in two passes. "15-20 minutes" read as twenty minutes of
+  sitting and watching — a much bigger ask than the thing is, and the sort of number
+  that defers the step to a day that never comes. The first pass fixed only step 4's
+  opener, which was the wrong scope: the claim is true of the *whole* document, and
+  someone deciding whether to start today has not reached step 4 yet.
+  **Three things about the fix are load-bearing.**
+  - **The chips carry the whole span, not the setup half** — `~45 min end to end` and
+    `mostly waiting`. Two chips reading `~25 min to set up` / `then a 15-20 min first
+    run` invite adding the halves and reading the total as booked time.
+  - **"On a second screen" was cut as a phrase while the meaning was kept.** In a sheet
+    whose second section is a prerequisites list, it reads as a *hardware requirement*
+    — "do I need two monitors?" — which is the exact opposite of the reassurance
+    intended. What replaced it names the mechanism instead: most of the elapsed time is
+    a download, an install, a restart, and a run that pauses and waits for you. That is
+    a claim about the work, and it is checkable.
+  - **It sits above the prerequisites list, not in it.** That list is things you must
+    have; this is not one of them, and a fourth bullet would file it as one. It is also
+    deliberately *not* inside a `<details>` — a reassurance nobody opens is not a
+    reassurance. A test pins both, mutation-checked by folding the line away.
+
+  Step 4 keeps a warning of its own but no longer repeats the posture: the timeout is
+  the one fact true of that step and not of the others, and "not your full attention"
+  must not be read as "walk away for an hour".
 
 **The marketplace name is not the repo name.**
 Repo is `ssemwal-cdc/claude-sharables`; marketplace is `compass-claude-plugins`

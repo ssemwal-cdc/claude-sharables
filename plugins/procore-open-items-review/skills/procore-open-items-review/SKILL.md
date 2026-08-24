@@ -1,11 +1,11 @@
 ---
 name: procore-open-items-review
-description: v5 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
+description: v6 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
 ---
 
 # Procore Open Items Review
 
-**Skill version 5 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 6 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 
@@ -49,6 +49,7 @@ const E=String.fromCharCode(61), Q=String.fromCharCode(63), A=String.fromCharCod
 
 Never echo a URL back in a result. Return parsed values only.
 
+<!--__SHARED:skill-step0-preamble__-->
 ## Step 0 — Sync assets, then first-run setup
 
 **Do this on every run, before anything else.** The workspace copies of the template and the
@@ -56,6 +57,7 @@ publish script are a *cache* of the plugin's assets. Refresh them, or a plugin u
 reaches the dashboard — `SKILL.md` updates with the plugin while the HTML your runs actually
 render stays frozen at whatever version was copied the first time.
 
+<!--__END_SHARED:skill-step0-preamble__-->
 ```bash
 mkdir -p "<workspace>/Procore Open Items"
 cp "${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/dashboard_template.html" "<workspace>/Procore Open Items/"
@@ -64,6 +66,7 @@ chmod u+w "<workspace>/Procore Open Items/dashboard_template.html" \
           "<workspace>/Procore Open Items/publish_dashboard.py"
 ```
 
+<!--__SHARED:skill-step0-fidelity__-->
 The `chmod` is required, not tidiness. The plugin's installed assets are read-only and `cp`
 preserves that mode, so without it the publish step fails with
 `PermissionError: [Errno 13] Permission denied`.
@@ -73,6 +76,7 @@ never in the workspace copy** — an edit made there is discarded by the next ru
 nobody else. Ship one by editing the repo's `assets/` and pushing; teammates pick it up on their
 next plugin update.
 
+<!--__END_SHARED:skill-step0-fidelity__-->
 **The sandbox shell may not be able to see the plugin's files at all.** Observed in a Cowork run
 2026-08-15: only the connected workspace folder (plus outputs and uploads) is mounted into the
 shell, so the `cp` source path does not exist there and the copy cannot run. That is a property
@@ -595,13 +599,16 @@ fallback only after the user reports the banner, and then report the byte count 
 `index.html` remains the complete dashboard — every item with its response buttons — and is what to
 open to action a folded row.
 
+<!--__SHARED:skill-artifact-host__-->
 **Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
 widget host exposes `sendPrompt` as a bare global; the artifact host exposes `window.cowork`
 (`callMcpTool`, `askClaude`, `runScheduledTask`) and no `sendPrompt` anywhere. On an artifact the
 execute button cannot start a turn and fails silently — no error, no console output. As a widget it
 works in one click, confirmed on a live run. The template keeps a clipboard handoff for the
 artifact case; it is a fallback, not a plan.
+<!--__END_SHARED:skill-artifact-host__-->
 
+<!--__SHARED:skill-render-fidelity__-->
 **Fall back only after an observed failure.** The template carries its own integrity guard: a
 marker as its last element, checked from `<head>` as soon as the DOM parses, which raises a visible
 red banner if anything was lost in transit. Trust it. If that banner actually appears, hand over
@@ -614,6 +621,7 @@ path, so the HTML never travelled through a model response; a widget takes the c
 which puts the layout through the tool call. If a rendered dashboard is missing a card, a control
 or a colour, suspect this before suspecting the template.
 
+<!--__END_SHARED:skill-render-fidelity__-->
 The script writes `index.html` beside the state file and keeps the last seven renders in
 `renders/<weekday>.html`. Both matter when a render goes wrong: diff today against the last good
 one to see what actually changed, and **re-render from `index.html` rather than re-running the

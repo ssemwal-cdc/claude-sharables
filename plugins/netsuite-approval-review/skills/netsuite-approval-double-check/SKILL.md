@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v6 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: v7 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 6 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 7 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
@@ -40,6 +40,7 @@ So do not stall an authorised batch to raise the size of the amounts, the number
 
 The checks that do matter are mechanical, and Step 8 already has them: the document is still theirs to action, the figures match the instruction, the record has not moved underneath the review. Those still stop the batch, every time.
 
+<!--__SHARED:skill-step0-preamble__-->
 ## Step 0 — Sync assets, then first-run setup
 
 **Do this on every run, before anything else.** The workspace copies of the template and the
@@ -47,6 +48,7 @@ publish script are a *cache* of the plugin's assets. Refresh them, or a plugin u
 reaches the dashboard — `SKILL.md` updates with the plugin while the HTML your runs actually
 render stays frozen at whatever version was copied the first time.
 
+<!--__END_SHARED:skill-step0-preamble__-->
 ```bash
 mkdir -p "<workspace>/NetSuite Approval Checks"
 cp "${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/dashboard_template.html" "<workspace>/NetSuite Approval Checks/"
@@ -55,6 +57,7 @@ chmod u+w "<workspace>/NetSuite Approval Checks/dashboard_template.html" \
           "<workspace>/NetSuite Approval Checks/publish_dashboard.py"
 ```
 
+<!--__SHARED:skill-step0-fidelity__-->
 The `chmod` is required, not tidiness. The plugin's installed assets are read-only and `cp`
 preserves that mode, so without it the publish step fails with
 `PermissionError: [Errno 13] Permission denied`.
@@ -64,6 +67,7 @@ never in the workspace copy** — an edit made there is discarded by the next ru
 nobody else. Ship one by editing the repo's `assets/` and pushing; teammates pick it up on their
 next plugin update.
 
+<!--__END_SHARED:skill-step0-fidelity__-->
 **The sandbox shell may not be able to see the plugin's files at all.** Observed in a Cowork run
 2026-08-15 (on the Procore side; this surface behaves the same): only the connected workspace
 folder (plus outputs and uploads) is mounted into the shell, so the `cp` source path does not
@@ -636,12 +640,14 @@ to hesitate. Handing the user a file or an artifact *instead of* attempting the 
 of this step, not a cautious alternative — it silently costs them one-click execute, which is the
 entire point of rendering this way.
 
+<!--__SHARED:skill-artifact-host__-->
 **Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
 widget host exposes `sendPrompt` as a bare global; the artifact host exposes `window.cowork`
 (`callMcpTool`, `askClaude`, `runScheduledTask`) and no `sendPrompt` anywhere. On an artifact the
 execute button cannot start a turn and fails silently — no error, no console output. As a widget it
 works in one click, confirmed on a live run. The template keeps a clipboard handoff for the
 artifact case; it is a fallback, not a plan.
+<!--__END_SHARED:skill-artifact-host__-->
 
 **You cannot see whether the render worked, so ask.** `show_widget` returns `Content rendered and
 shown to the user` regardless of what it rendered — it says that even when handed a file path and
@@ -652,6 +658,7 @@ not, and the missing feedback is a person. After rendering, add one line:
 
 That turns an unverifiable gamble into a checkable claim for the cost of one sentence.
 
+<!--__SHARED:skill-render-fidelity__-->
 **Fall back only after an observed failure.** The template carries its own integrity guard: a
 marker as its last element, checked from `<head>` as soon as the DOM parses, which raises a visible
 red banner if anything was lost in transit. Trust it. If that banner actually appears, hand over
@@ -664,6 +671,7 @@ path, so the HTML never travelled through a model response; a widget takes the c
 which puts the layout through the tool call. If a rendered dashboard is missing a card, a control
 or a colour, suspect this before suspecting the template.
 
+<!--__END_SHARED:skill-render-fidelity__-->
 The script writes `index.html` beside the state file and keeps the last seven renders in
 `renders/<weekday>.html`. Both matter when a render goes wrong: diff today against the last good
 one to see what actually changed, and **re-render from `index.html` rather than re-running the

@@ -307,6 +307,8 @@ if shared_blocks is not None:
     _problems, _synced, _seen = shared_blocks.run(sync=False)
     for _name in shared_blocks.orphan_canonicals(_seen):
         _problems.append(f"plugins/_shared/{_name} is not referenced by any plugin file")
+    _pin_problems, _pins = shared_blocks.check_pins()
+    _problems += _pin_problems
     for _p in _problems:
         fail("[shared] " + _p.replace("\n", " ").replace("      ", " "))
     if not _problems:

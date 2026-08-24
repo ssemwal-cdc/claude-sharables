@@ -291,11 +291,22 @@ both themes, with markers embedded in their JS and Python — Procore's `index.h
 `widget.html` both.
 
 What is **not** established: nobody has yet had to use it in anger, i.e. fix a real shared bug
-by editing the canonical file mid-review. And it covers nine blocks out of roughly 285 shared
-lines, so most of the duplication is still hand-maintained — the mechanism is proven, its
-coverage is not finished. Extending it is cheap and mechanical; the blocks that differ by one
-token (`ns_marks_v1` vs `pc_marks_v1`, the log filenames) need that difference designed away
-first and are deliberately left alone.
+by editing the canonical file mid-review.
+
+**Coverage, after the SKILL.md pass:** 13 blocks across 26 sites — 9 in the assets (90 lines)
+and 4 in the two `SKILL.md` files (34 lines) — plus a cdnjs version-pin check that needs no
+registration. Mutation-tested at every step, including a one-sided pdf.js bump and a reworded
+Step 0 paragraph.
+
+**And the honest limit, which is the finding worth keeping from that pass.** The `SKILL.md`
+duplication is mostly *near*-identical rather than identical: the same paragraph with the
+plugin's own name and workspace folder substituted. Only **72 of ~1,500 lines** sit in
+contiguous byte-identical runs, and only ~34 of those have clean paragraph boundaries — a
+Markdown comment mid-paragraph splits it, and one inside a fence corrupts code the test
+harness evaluates. So the block mechanism can never cover most of that surface as written.
+The gap is not laziness; closing it would mean designing the per-plugin names out of the
+prose, which is a bigger and separate decision. The blocks that differ by one token
+(`ns_marks_v1` vs `pc_marks_v1`, the two log filenames) are the same story in miniature.
 
 **Not fixed, because it is a product decision and not a port:** `widget.html`. Procore
 writes a slim copy and its `SKILL.md` says to render *that* as the primary; NetSuite

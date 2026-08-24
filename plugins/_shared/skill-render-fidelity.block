@@ -1,0 +1,12 @@
+**Fall back only after an observed failure.** The template carries its own integrity guard: a
+marker as its last element, checked from `<head>` as soon as the DOM parses, which raises a visible
+red banner if anything was lost in transit. Trust it. If that banner actually appears, hand over
+`index.html` directly and say why. A prediction that it *might* appear is not a reason to skip the
+render.
+
+**Pass the file verbatim.** Read it and hand it over byte for byte — never retype it, never
+summarise it, never "clean it up" on the way through. The old artifact path passed the file by
+path, so the HTML never travelled through a model response; a widget takes the content inline,
+which puts the layout through the tool call. If a rendered dashboard is missing a card, a control
+or a colour, suspect this before suspecting the template.
+

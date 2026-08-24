@@ -1,0 +1,6 @@
+**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
+widget host exposes `sendPrompt` as a bare global; the artifact host exposes `window.cowork`
+(`callMcpTool`, `askClaude`, `runScheduledTask`) and no `sendPrompt` anywhere. On an artifact the
+execute button cannot start a turn and fails silently — no error, no console output. As a widget it
+works in one click, confirmed on a live run. The template keeps a clipboard handoff for the
+artifact case; it is a fallback, not a plan.

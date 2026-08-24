@@ -1,0 +1,7 @@
+## Step 0 — Sync assets, then first-run setup
+
+**Do this on every run, before anything else.** The workspace copies of the template and the
+publish script are a *cache* of the plugin's assets. Refresh them, or a plugin update never
+reaches the dashboard — `SKILL.md` updates with the plugin while the HTML your runs actually
+render stays frozen at whatever version was copied the first time.
+

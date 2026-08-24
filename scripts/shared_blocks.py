@@ -135,6 +135,36 @@ def _first_diff(have, want):
     return "lengths differ"
 
 
+CDN_PIN = re.compile(r"cdnjs\.cloudflare\.com/ajax/libs/([A-Za-z0-9._-]+)/([0-9][0-9A-Za-z.-]*)")
+
+
+def check_pins():
+    """Both skills load the same libraries from cdnjs; the pinned versions must agree.
+
+    This is deliberately not a shared block. The loaders sit inside ```javascript fences that
+    scripts/test_skill_code.py extracts and evaluates, and the two skills wrap them in different
+    prose because NetSuite loads pdf.js in the record tab (the media.nl fetch needs the session
+    cookie) while Procore loads it in an S3 scratch tab. The surrounding text differs for real
+    reasons; only the version may not. A one-sided bump is the drift that matters here - the
+    xlsx pin is 0.18.5 specifically, a version whose known CVEs were accepted on the reasoning
+    that parsing happens in a session-less tab, and that reasoning is per-plugin.
+    """
+    pins = {}
+    for path in plugin_files():
+        rel = os.path.relpath(path, REPO)
+        with open(path, encoding="utf-8") as fh:
+            for lib, ver in CDN_PIN.findall(fh.read()):
+                pins.setdefault(lib, {}).setdefault(ver, set()).add(rel)
+    problems = []
+    for lib, vers in sorted(pins.items()):
+        if len(vers) > 1:
+            detail = "; ".join("%s in %s" % (v, ", ".join(sorted(f)))
+                               for v, f in sorted(vers.items()))
+            problems.append("cdnjs %s is pinned to more than one version - %s. Bump it in both "
+                            "plugins or neither." % (lib, detail))
+    return problems, {lib: next(iter(v)) for lib, v in pins.items() if len(v) == 1}
+
+
 def orphan_canonicals(seen):
     if not os.path.isdir(SHARED):
         return []
@@ -149,6 +179,8 @@ def main():
     problems, synced, seen = run(sync=sync)
     for name in orphan_canonicals(seen):
         problems.append("plugins/_shared/%s is not referenced by any plugin file" % name)
+    pin_problems, pins = check_pins()
+    problems += pin_problems
     if sync:
         for s in synced:
             print("synced " + s)
@@ -165,6 +197,8 @@ def main():
     total = sum(len(v) for v in seen.values())
     print("OK: %d shared block(s) across %d site(s), all matching canonical"
           % (len(seen), total))
+    if pins:
+        print("    cdnjs pins agree: " + ", ".join("%s %s" % kv for kv in sorted(pins.items())))
 
 
 if __name__ == "__main__":

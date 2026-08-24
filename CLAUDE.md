@@ -271,6 +271,33 @@ block that differs by even one token (`ns_marks_v1` vs `pc_marks_v1`) is not a c
 until that difference is designed away. A canonical file nobody references fails the
 build, as does a marker naming a canonical file that does not exist.
 
+**`SKILL.md` blocks have two extra rules, both learned the hard way.** A marker is a
+line, and in Markdown a comment line dropped *inside* a paragraph splits it in two, so
+every block must begin and end on a **paragraph boundary** — never mid-sentence, never
+inside a numbered list item. And a marker must never land inside a fenced code block:
+the ```` ```bash ```` and ```` ```javascript ```` fences are content, and
+`scripts/test_skill_code.py` extracts the javascript ones and *evaluates* them.
+
+Those two rules are why the `SKILL.md` coverage is smaller than the duplication
+suggests. **Most of what the two skills share is *near*-identical, not identical** —
+the same paragraph with `netsuite-approval-double-check` and `NetSuite Approval Checks`
+swapped for the Procore names, or a path that differs. Measured 2026-08-24: only **72
+lines** sit in contiguous byte-identical runs across the two 800-and-660-line files, and
+of those only about **34** have clean paragraph boundaries. The rest — including most of
+the Step 0 ladder, whose rung 2 carries a per-plugin asset path mid-list-item — is not
+eligible until that difference is designed away. Do not force it by rewording one
+plugin to match the other; the names are correct as they are.
+
+**Library version pins are checked separately, not shared.** `check_pins()` in
+`shared_blocks.py` asserts that every `cdnjs.cloudflare.com/ajax/libs/<lib>/<version>`
+reference agrees across all plugins — today pdf.js 4.0.379 and xlsx 0.18.5. This is
+deliberately *not* a shared block: the loaders sit inside javascript fences (see the
+rule above), and the two skills wrap them in genuinely different prose because NetSuite
+loads pdf.js in the record tab, where the `media.nl` fetch needs the session cookie,
+while Procore loads it in an S3 scratch tab. The surrounding text differs for real
+reasons; only the version may not. A one-sided bump is the drift worth catching, and it
+needs no registration — any new cdnjs library is covered the moment it appears.
+
 **What is deliberately *not* shared:** anything genuinely per-domain — NetSuite's
 type/vendor filter axes against Procore's campus/building/type, the `M/D/YYYY` vs ISO
 date parsing, NetSuite's three fixed buttons against Procore's verbs read from the

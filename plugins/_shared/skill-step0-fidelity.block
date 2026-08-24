@@ -1,0 +1,9 @@
+The `chmod` is required, not tidiness. The plugin's installed assets are read-only and `cp`
+preserves that mode, so without it the publish step fails with
+`PermissionError: [Errno 13] Permission denied`.
+
+This overwrites the workspace copies deliberately. **A design change belongs in the plugin repo,
+never in the workspace copy** — an edit made there is discarded by the next run and reaches
+nobody else. Ship one by editing the repo's `assets/` and pushing; teammates pick it up on their
+next plugin update.
+

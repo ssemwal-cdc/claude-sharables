@@ -1,11 +1,11 @@
 ---
 name: procore-open-items-review
-description: v7 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
+description: v8 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
 ---
 
 # Procore Open Items Review
 
-**Skill version 7 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 8 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 
@@ -578,11 +578,15 @@ On each run:
 cd "<workspace>/Procore Open Items" && python3 publish_dashboard.py
 ```
 
-**Render `widget.html` as an inline widget with `show_widget`, passing its contents.** The publish
-script writes it alongside `index.html`. It carries full detail for every item with a verdict of
-`clear` or `flagged` — the ones with a cost and a response to give — and folds skipped and ungated
-items to display-only rows. Roughly a fifth smaller, and on a real queue that is the difference
-between a render that happens and one that gets talked out of.
+**Render `index.html` as an inline widget with `show_widget`, passing its contents.** The publish
+script also writes a slim `widget.html` beside it, which keeps full detail for every `clear` or
+`flagged` item and folds skipped and ungated ones to display-only rows.
+
+**That slim copy is a fallback, not the default.** Reach for it only if the integrity banner below
+actually appears. Folding drops those rows' response verbs and the reasoning behind their verdict,
+so a skipped item — one whose support never arrived — cannot be sent back from the slim render at
+all, which is the response it most often needs. `ungated` rows lose nothing, having no buttons to
+begin with, but they are not the reason to fold.
 
 Render it and do not deliberate about the size. `show_widget` takes content inline only — the
 properties are `loading_messages`, `title` and `widget_code`, with no path, file or src, and handing

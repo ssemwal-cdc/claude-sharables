@@ -207,7 +207,7 @@ def main():
     wout = tpl[:a] + json.dumps(wpayload, ensure_ascii=False, indent=1) + tpl[b:]
     WIDGET = os.path.join(os.path.dirname(os.path.abspath(OUT)), "widget.html")
     open(WIDGET, "w", encoding="utf-8").write(wout)
-    print("wrote %s  (%d KB vs %d KB full; %d actionable, %d folded)" % (
+    print("wrote %s  (fallback only; %d KB vs %d KB full; %d actionable, %d folded)" % (
         WIDGET, len(wout) // 1024, len(out) // 1024, len(slim), len(folded)))
 
     #__SHARED:pub-render-archive__

@@ -417,6 +417,25 @@ not an observed failure.
 not the default, because folding rows costs their response buttons and nothing
 yet justifies paying that.
 
+**That note and Procore's `SKILL.md` disagreed for a while, and the note was
+right.** Procore rendered the slim copy as its *primary* dashboard, justified as
+"roughly a fifth smaller". Measured 2026-08-24 across five fixture queue mixes,
+the real figure is **0% to 12%** — 0% when nothing is skipped or ungated, 2–6%
+on a realistic mix — because only those two verdicts fold and a live queue is
+mostly neither. At the large end 113 KB became 101 KB, which crosses no
+threshold anyone has observed. Procore now renders `index.html` like NetSuite,
+and the slim copy is reached only when the integrity banner fires.
+
+**NetSuite cannot have this feature at all, and that is structural rather than
+an omission.** Its verdict vocabulary is exactly `("clear", "flagged")`, which
+is precisely the slim build's *actionable* set, and the fold branch is the
+`else`. So nothing would ever fold: the output would be a byte-for-byte copy of
+`index.html`, every run. NetSuite has no `skipped` concept by design — a missing
+attachment **flags** an item rather than skipping it (Step 4). It also could not
+be a shared block even if it were wanted, because the folded keep-list is
+per-domain (`projLabel`, `due`, `pid`, `cid`, `kind`, `wf`, `key` against
+NetSuite's `trandate`). Do not add it for symmetry.
+
 **The render is unverifiable from the agent's side, which is why it keeps being
 declined.** `show_widget` returns `Content rendered and shown to the user`
 whatever it rendered — the path test proved it says that while showing a line of

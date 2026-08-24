@@ -308,14 +308,32 @@ The gap is not laziness; closing it would mean designing the per-plugin names ou
 prose, which is a bigger and separate decision. The blocks that differ by one token
 (`ns_marks_v1` vs `pc_marks_v1`, the two log filenames) are the same story in miniature.
 
-**Not fixed, because it is a product decision and not a port:** `widget.html`. Procore
-writes a slim copy and its `SKILL.md` says to render *that* as the primary; NetSuite
-writes no such file. But `CLAUDE.md` says widget.html is "a fallback … **not the
-default**, because folding rows costs their response buttons", and separately says to
-render the full thing and never pre-judge the size. Procore's shipped behaviour
-contradicts that note. Also, the note's stated cost may be wrong: Procore folds only
-`skipped` and `ungated` rows, which have no response buttons to lose. Three sources
-disagree; somebody has to decide which is right before either side changes.
+**`widget.html` — resolved 2026-08-24, and the measurement decided it.** Procore rendered
+the slim copy as its primary dashboard on the grounds it was "roughly a fifth smaller".
+Measured across five fixture queue mixes, it is **0% to 12%** smaller — 0% with nothing
+skipped or ungated, 2–6% on a realistic mix, and 113 KB → 101 KB at the large end, which
+crosses no observed threshold. Only `skipped` and `ungated` rows fold, and a live queue is
+mostly neither, so the saving was always going to be small.
+
+The cost is not small. Folded rows drop `resp`, `head`, `facts` and `detail`, so on the slim
+render a `skipped` item — one whose support never arrived — **cannot be sent back**, which is
+the response it most often needs. My earlier note here guessed the cost was nil because
+folded rows "have no response buttons to lose"; that is true of `ungated` and false of
+`skipped`, and the publish script's own `no_resp` warning covers `skipped` precisely because
+those items normally do carry verbs.
+
+So Procore now renders `index.html`, matching NetSuite, and the slim copy is reached only
+when the integrity banner fires — which is what `CLAUDE.md` had said all along. The note was
+right and the shipped behaviour was wrong.
+
+**NetSuite is not getting a matching slim build, and the reason is structural.** Its verdicts
+are exactly `("clear", "flagged")`, which is the slim build's *actionable* set, and the fold
+branch is the `else` — so nothing would ever fold and the output would be a byte-for-byte
+duplicate of `index.html` on every run. NetSuite has no `skipped` concept by design: a
+missing attachment flags an item rather than skipping it. It could not be a shared block
+either, since the folded keep-list is per-domain. Asked for on grounds of symmetry and
+declined on grounds of vacuousness — worth recording, because "make the two match" is
+usually the right instinct in this repo and here it is not.
 
 **What made this findable, and it is the repo's own device:** two independent sources
 saying different things. Neither copy could detect its own miss, exactly as the CCO

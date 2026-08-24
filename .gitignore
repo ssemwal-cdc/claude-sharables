@@ -1,0 +1,5 @@
+# validate.py imports scripts/shared_blocks.py, so running it writes a __pycache__.
+# Never commit one: an installed plugin's assets/ folder is scanned by validate.py's
+# asset-reference note, and a stray .pyc there shows up as an unreferenced asset.
+__pycache__/
+*.pyc

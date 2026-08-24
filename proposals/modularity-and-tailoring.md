@@ -1,3 +1,16 @@
+> **Superseded, 2026-08-24 — read this first.** The direction below (a concierge
+> plugin, then persona plugins) was **not taken.** It was written before the decision
+> and is kept only for the reasoning in "How far the repo already goes" and "How the
+> catalog serves a supply-chain person today", which still hold.
+>
+> What was actually built instead: modularity *inside* the two existing plugins — no
+> new plugins. Six drift defects fixed, a canonical shared-block mechanism in
+> `plugins/_shared/` with `validate.py` enforcing it, a cdnjs version-pin check, and a
+> staleness check that can actually see a stale workspace. See the **Shared blocks**
+> section of `CLAUDE.md` and the 2026-08-24 entries in `prose.md`.
+>
+> Do not implement the concierge skill from this document without re-deciding it.
+
 # Modularity and per-user tailoring
 
 *Proposal, 2026-08-24. Nothing here is shipped. This document answers one

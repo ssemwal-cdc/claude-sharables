@@ -1069,8 +1069,11 @@ Facts it carries that are not obvious from the skills:
     adding the halves and reading the total as booked time — to a three-chip row, and
     then out entirely. Nothing was lost with them: `~45 min` and `mostly waiting` were
     already the paragraph's own words, and the break chip became *"take a break after
-    step 3 if you need one"*, which names a step a reader can act on where `halfway`
-    did not. **The `.chip` class stays** — the step 1 and step 2 headings use it — so
+    step 3"* in the lead sentence, which names a step a reader can act on where
+    `halfway` did not. **Both facts now live in that one sentence and nowhere else**, so
+    they get an assertion each rather than one a half-edit could satisfy; the placement
+    guard was re-anchored to the element (the `<p>` after `#before`) rather than to a
+    phrase, since the phrase is the part that keeps getting rewritten. **The `.chip` class stays** — the step 1 and step 2 headings use it — so
     the test asserts `header .chip` is empty rather than the class being unused. The
     `.meta` rule went with the row, since that row was its only user.
   - **"On a second screen" was cut as a phrase while the meaning was kept.** In a sheet
@@ -1087,11 +1090,19 @@ Facts it carries that are not obvious from the skills:
   **The first wording of it over-corrected, and that was caught the same day.** *"None
   of this needs your full attention"* invites starting it and leaving, and the run
   cannot survive that — it stops to ask permission and waits for an answer. The line
-  now leads with the constraint (*"Be around for all of it, but not glued to it"*) and
-  earns the reassurance afterwards, and a test asserts the page still carries the
-  can't-run-alone clause specifically — not merely the headline sentence — mutation-
-  checked by deleting the clause. Both halves are load-bearing in opposite directions:
-  dropping either produces a wrong sheet.
+  now leads with **the two facts a reader decides from — how long, and where they can
+  stop** — and the posture follows as explanation rather than as the headline:
+
+  > **About 45 minutes, with a good place to stop after step 3.** Stay around for the
+  > whole thing — it pauses to ask permission and won't go on without you. But most of
+  > that time is a download, an install and a restart, so a glance every few minutes is
+  > enough.
+
+  Three sentences, one job each: how long, you have to be here, but lightly. *"Won't go
+  on without you"* replaced *"can't run unattended"* deliberately — it states the
+  consequence rather than issuing a rule, and the consequence is what makes someone
+  stay. Both directions are load-bearing and dropping either produces a wrong sheet, so
+  a test asserts the presence claim survives, mutation-checked by deleting it.
 
   **It then had to be cut in half, because the paragraph outgrew the list it
   introduces** — 76 words against 48 for all three prerequisites. Two of its four

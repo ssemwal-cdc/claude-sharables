@@ -42,7 +42,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # Warn, never abort. A lagging template still renders correct verdicts: the review procedure
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
-TEMPLATE_VERSION = "v4"
+TEMPLATE_VERSION = "v5"
 
 def check_template_version(tpl):
     m = re.search(r"layout template (v\d+)", tpl)
@@ -53,6 +53,13 @@ def check_template_version(tpl):
           "stale and Step 0's sync did not run. Re-sync from a surface whose shell can see the "
           "plugin, or this dashboard will be missing recent changes."
           % (found or "unversioned", TEMPLATE_VERSION), file=sys.stderr)
+
+
+# The only two verdicts this review produces (Step 6 of SKILL.md). An unknown value used to
+# fall straight through the template's pill logic into "Clear" - a fail-open on the one field
+# that decides what gets approved - so it aborts the publish instead. Procore's script has
+# had this guard since it shipped; this side never got it.
+VERDICTS = ("clear", "flagged")
 
 
 def main():
@@ -66,8 +73,11 @@ def main():
         sys.exit("ABORT: template sentinels missing or duplicated. Do not "
                  "regenerate the template - restore it and retry.")
 
-    items = []
+    items, bad = [], []
     for tid, it in log.get("items", {}).items():
+        verdict = it.get("verdict", "clear")
+        if verdict not in VERDICTS:
+            bad.append("%s has verdict %r" % (tid, verdict))
         items.append({
             "id": int(tid),
             "type": it.get("type", "Bill"),
@@ -75,7 +85,7 @@ def main():
             "vendor": it.get("vendor", ""),
             "amt": abs(float(it.get("amount", 0) or 0)),
             "trandate": it.get("trandate", ""),
-            "verdict": it.get("verdict", "clear"),
+            "verdict": verdict,
             "head": it.get("head", ""),
             "facts": it.get("facts", []),
             "po": it.get("poContext", ""),
@@ -89,6 +99,10 @@ def main():
             "detail": it.get("detail", ""),
         })
 
+    if bad:
+        sys.exit("ABORT: unknown verdict(s) - " + "; ".join(bad) +
+                 ". Allowed: " + ", ".join(VERDICTS))
+
     order = {"flagged": 0, "clear": 1}
     items.sort(key=lambda i: (order.get(i["verdict"], 2), -i["amt"]))
 
@@ -98,19 +112,30 @@ def main():
               " - these rows will render thin", file=sys.stderr)
 
     cfg = log.get("config") or {}
-    for key, hint in (("me", "your NetSuite employee internal id"),
-                      ("tool", "the NetSuite connector tool name"),
-                      ("account", "the NetSuite account id")):
+    # `account` builds every record URL, so it is required on both routes. `me` and `tool` are
+    # connector-only: Step 0 omits them in browser mode by design, because the bill portlets are
+    # per-user saved searches already scoped to whoever is signed in, so there is no id to
+    # configure and nothing to confuse with someone else's. Requiring all three unconditionally
+    # made the documented no-connector route impossible to finish - the review completed and then
+    # aborted, telling the user to redo a first-run setup they had done correctly.
+    required = [("account", "the NetSuite account id")]
+    if cfg.get("mode") == "connector" or cfg.get("tool"):
+        required += [("me", "your NetSuite employee internal id"),
+                     ("tool", "the NetSuite connector tool name")]
+    for key, hint in required:
         if not cfg.get(key):
-            sys.exit("ABORT: config.%s missing from _review_log.json (%s). "
+            # Name the file that is actually read; the literal used to say _review_log.json,
+            # which is only the pre-migration name, so it sent people to a file that is not there.
+            sys.exit("ABORT: config.%s missing from %s (%s). "
                      "Run the first-time setup before publishing - never fall back "
-                     "to another person's identity." % (key, hint))
+                     "to another person's identity." % (key, os.path.basename(LOG), hint))
 
     payload = {
         "lastRun": log.get("lastRunTime") or log.get("lastCompletedRun", ""),
         "lastRunISO": log.get("lastRunISO", "") or (
             (log.get("lastRunTime") or "").replace(" ", "T")),
-        "config": {"me": cfg["me"], "tool": cfg["tool"], "account": cfg["account"]},
+        "config": {"me": cfg.get("me", ""), "tool": cfg.get("tool", ""),
+                   "account": cfg["account"]},
         "items": items,
     }
 
@@ -142,7 +167,10 @@ def main():
     print("wrote %s" % OUT)
     print("%d items (%d flagged) as of %s" % (len(items), flagged, payload["lastRun"]))
     print("headline: %d pending · %d flagged · dashboard updated" % (len(items), flagged))
-    print("identity: employee %s via %s" % (cfg["me"], cfg["tool"]))
+    if cfg.get("tool"):
+        print("identity: employee %s via %s" % (cfg["me"], cfg["tool"]))
+    else:
+        print("identity: browser route, portlet-scoped queue (no connector)")
 
 if __name__ == "__main__":
     main()

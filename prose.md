@@ -156,6 +156,22 @@ dashboard portlets, record fields via `get_page_text`, the attachment URL read o
 the record page, and Step 5's PO/billing-history cross-check simply not performed.
 None of it has been run.
 
+**One consequence of that surfaced on 2026-08-24: browser mode could not publish at
+all.** `publish_dashboard.py` hard-aborted when `config.me` or `config.tool` was
+missing — and Step 0 omits both in browser mode *by design*, because the portlets are
+per-user saved searches already scoped to whoever is signed in. So a browser-mode run
+completed the whole review and then died at Step 7, telling the user to run a
+first-time setup they had done correctly. Reproduced from a fixture, then fixed:
+`account` is required on both routes, `me` and `tool` only in connector mode. The
+identity guard is unchanged for connector runs — a connector-mode config still aborts
+without `me`.
+
+Worth keeping for the method rather than the bug: this is the second defect found by
+*reading the two plugins against each other* rather than by running either. It had
+survived since browser mode shipped because nothing had exercised the path, which is
+exactly what this gap says. A gap on this list is not inert — it is where the next bug
+is.
+
 The queue and record-page halves are reverts to methods that worked before the
 bulk queries replaced them, so they are the low-risk part. **The unobserved piece
 is the attachment URL DOM read** — whether the AP INVOICE / CHANGE ORDER
@@ -232,6 +248,49 @@ beneath it, and 153px of overlay against a six-row fixture is not the same
 experience as against seventy — nobody has watched that. The step headings and the
 restyled marked rows are likewise cosmetic-only and unseen by anyone but the
 person who wrote them.
+
+---
+
+## The two dashboards had drifted, and it cost seven defects
+
+2026-08-24. An audit of the two plugins' assets against each other, prompted by a
+question about making them more modular. The finding worth keeping is not any single
+bug but the shape: **every one of these is a case where one copy learned something and
+the other never did.**
+
+Measured duplication at the time of the audit: `dashboard_template.html` 528 vs 603
+lines with **308 identical** (54.5% Dice); `publish_dashboard.py` 148 vs 238 with
+**106 identical**. The CSS blocks alone were 92.5% identical. Across the two
+`SKILL.md` files, ~250–300 of 1,495 lines were duplicated or near-duplicated, and
+**10 of the 22 commits that ever touched a `SKILL.md` touched both in the same
+commit** — every one of those ten a mechanics or convention change, not one a change
+to a financial check.
+
+Fixed in that commit, NetSuite side unless noted:
+
+| | Defect | Consequence |
+|---|---|---|
+| 1 | Browser mode could not publish (see gap 7) | A complete review died at Step 7 |
+| 2 | No verdict allowlist | A typo'd verdict fell through the pill logic to **"Clear"** — fail-open on the field that decides what gets approved. Procore has aborted on this since it shipped |
+| 3 | `var live=null` never assigned | ~45 lines unreachable: the gone/changed states, `newRow`, the bin, and a permanently-`0` "Unreviewed" card |
+| 4 | Marks never pruned | A mark for a since-approved bill stayed in `ns_marks_v1` forever and would reappear if NetSuite reused the id. Procore sweeps them |
+| 5 | Money card had no rollover | A $2.7m queue rendered `$2702k` |
+| 6 | Abort message named `_review_log.json` | The pre-migration name — both copies, so the rename fix reached neither string |
+| 7 | Aborted on two unused config keys | `me` and `tool` were injected and read by the page and then never used; only `account` is |
+
+**Not fixed, because it is a product decision and not a port:** `widget.html`. Procore
+writes a slim copy and its `SKILL.md` says to render *that* as the primary; NetSuite
+writes no such file. But `CLAUDE.md` says widget.html is "a fallback … **not the
+default**, because folding rows costs their response buttons", and separately says to
+render the full thing and never pre-judge the size. Procore's shipped behaviour
+contradicts that note. Also, the note's stated cost may be wrong: Procore folds only
+`skipped` and `ungated` rows, which have no response buttons to lose. Three sources
+disagree; somebody has to decide which is right before either side changes.
+
+**What made this findable, and it is the repo's own device:** two independent sources
+saying different things. Neither copy could detect its own miss, exactly as the CCO
+gate and the PO cross-check could not. The difference here is that the second source
+was *the other plugin*, sitting in the same repo the whole time.
 
 ---
 

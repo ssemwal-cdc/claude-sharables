@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>NetSuite approval queue</title>
-<!-- layout template v4 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v5 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -72,7 +72,6 @@ a:hover{text-decoration:underline}
 .note{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
 .banner{border-radius:var(--r2);padding:12px 15px;margin-bottom:14px;font-size:13.5px}
 .empty{text-align:center;padding:42px 20px;color:var(--ink2);font-size:14px;background:var(--card);border:1px dashed var(--ctl);border-radius:var(--r2)}
-.binrow{background:var(--sunk);border-radius:10px;padding:11px 14px;margin-top:8px;display:flex;gap:10px;align-items:center;color:var(--ink3);font-size:13.5px}
 h2{font-size:15px;font-weight:600;margin:22px 0 0}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .toolbar{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:11px 13px;margin:16px 0 0;box-shadow:var(--sh1)}
@@ -157,17 +156,15 @@ document.addEventListener("DOMContentLoaded",function(){
 <div id="bar"></div>
 </div>
 
-<div id="binwrap"></div>
-
 <p class="note" style="margin-top:22px">Verdicts are written by the netsuite-approval-double-check skill. This page is a snapshot and never queries NetSuite by itself. Every record is re-verified against the live queue at execute time, immediately before it is clicked.</p>
 </div>
 
 <script>
-var ACCT="", ME=null, TOOL="";
+var ACCT="";
 var REVIEW=/*__REVIEW_DATA__*/{"lastRun":"","items":[]}/*__END__*/;
+// Only `account` is used here, to build record URLs. `me` and `tool` stay in the payload as a
+// record of which route produced the review, but the page has no use for them.
 ACCT=(REVIEW.config&&REVIEW.config.account)||"";
-ME=(REVIEW.config&&REVIEW.config.me)||null;
-TOOL=(REVIEW.config&&REVIEW.config.tool)||"";
 
 var KEY="ns_marks_v1", marks={};
 try{marks=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){marks={}}
@@ -230,9 +227,9 @@ function applyView(list){
       case "amtAsc":  return (ai.amt||0)-(bi.amt||0);
       case "vendor":  return String(ai.vendor).localeCompare(String(bi.vendor),undefined,{numeric:true}) ||
                              (bi.amt||0)-(ai.amt||0);
-      // Still available, just no longer the default. Anything that changed under review
-      // first, then flagged, then clear, each tier by amount descending.
-      case "verdict": var o={changed:0,flagged:1,clear:2};
+      // Still available, just no longer the default. Flagged first, then clear, each tier
+      // by amount descending.
+      case "verdict": var o={flagged:0,clear:1};
                       return (o[a.c.state]-o[b.c.state]) || (bi.amt||0)-(ai.amt||0);
       // Newest is the default now. trandate is day-granular, so same-day bills would fall
       // back to whatever order publish_dashboard.py pre-sorted them into; the internal id
@@ -270,6 +267,15 @@ function fillFilters(rows){
 }
 
 var money=function(n){return Math.abs(n).toLocaleString("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2})};
+// Rolls over into millions. The card used to inline total/1000 with no rollover, so a $2.7m
+// queue rendered as "$2702k". Same helper as the Procore template.
+function compactMoney(n){
+  n=Math.abs(n||0);
+  if(n<1000)return "$"+Math.round(n);
+  var k=Math.round(n/1000);
+  if(k>=1000)return "$"+(Math.round(n/1e5)/10)+"m";
+  return "$"+k.toLocaleString()+"k";
+}
 function parseNsDate(s){if(!s)return null;var p=String(s).split("/");if(p.length!==3)return null;return new Date(+p[2],+p[0]-1,+p[1])}
 // Two of these on purpose. ageDays clamps at zero because "-3 days pending" is nonsense to
 // read; ageDaysRaw does not, because that clamp collapses every future-dated bill to 0, so
@@ -289,7 +295,9 @@ function recUrl(id){return "https://"+ACCT+".app.netsuite.com/app/accounting/tra
 // This page never queries NetSuite. The widget host exposes no callMcpTool, and an on-open
 // query would be stale by the time execute is pressed anyway. Freshness is enforced in the
 // execute turn instead, which re-verifies each record immediately before clicking it.
-var live=null;
+// So every row is a snapshot reading, which is what `stale` below records. A `live` queue
+// variable and the gone/changed/unreviewed states it fed were carried here unassigned for
+// several versions - dead in every render. Removed; do not reintroduce an on-open query.
 
 function ageOfRun(){var t=new Date(REVIEW.lastRunISO).getTime();if(isNaN(t))return null;return Math.max(0,Math.round((Date.now()-t)/60000))}
 function ageText(){var m=ageOfRun();if(m==null)return "";
@@ -297,33 +305,16 @@ function ageText(){var m=ageOfRun();if(m==null)return "";
   var h=Math.round(m/60); if(h<24)return h+" hour"+(h>1?"s":"")+" ago";
   var d=Math.round(h/24); return d+" day"+(d>1?"s":"")+" ago";}
 
-function classify(it){
-  if(it.type==="Change Order")return{state:it.verdict,stale:true};
-  if(live===null)return{state:it.verdict,stale:true};
-  var l=live[it.id];
-  if(!l)return{state:"gone",stale:false};
-  if(Math.abs(l.amt-it.amt)>0.005)return{state:"changed",stale:false,newAmt:l.amt};
-  return{state:it.verdict,stale:false};
-}
+function classify(it){return{state:it.verdict,stale:true}}
 
 function render(){
-  var reviewed={}; REVIEW.items.forEach(function(i){reviewed[i.id]=i});
-  var rows=[], bin=[], newItems=[];
+  var rows=REVIEW.items.map(function(it){return{it:it,c:classify(it)}});
 
-  REVIEW.items.forEach(function(it){
-    var c2=classify(it);
-    if(c2.state==="gone"){bin.push(it); if(marks[it.id]){delete marks[it.id];saveMarks()} }
-    else rows.push({it:it,c:c2});
-  });
-
-  if(live){Object.keys(live).forEach(function(k){if(!reviewed[k])newItems.push(live[k])})}
-
-  var pending=rows.length+newItems.length;
+  var pending=rows.length;
   var clear=rows.filter(function(r){return r.c.state==="clear"}).length;
   var flagged=rows.filter(function(r){return r.c.state==="flagged"}).length;
-  var changed=rows.filter(function(r){return r.c.state==="changed"}).length;
-  var total=rows.reduce(function(s,r){return s+r.it.amt},0)+newItems.reduce(function(s,n){return s+n.amt},0);
-  var ages=rows.map(function(r){return ageDays(r.it.trandate)}).concat(newItems.map(function(n){return ageDays(n.trandate)})).filter(function(a){return a!=null});
+  var total=rows.reduce(function(s,r){return s+r.it.amt},0);
+  var ages=rows.map(function(r){return ageDays(r.it.trandate)}).filter(function(a){return a!=null});
   var oldest=ages.length?Math.max.apply(null,ages):0;
 
   document.getElementById("sub").textContent=pending+" pending your approval";
@@ -342,8 +333,8 @@ function render(){
 
   document.getElementById("cards").innerHTML=
    cd("Pending",pending)+cd("Clear",clear,"var(--ok-fg)")+cd("Flagged",flagged,"var(--bad-fg)")+
-   cd("Unreviewed",newItems.length+changed,"var(--warn-fg)")+cd("Oldest",oldest?oldest+"d":"–")+
-   cd("In queue",total?"$"+(Math.round(total/100)/10)+"k":"$0");
+   cd("Oldest",oldest?oldest+"d":"–")+
+   cd("In queue",total?compactMoney(total):"$0");
 
   var b="";
   document.getElementById("banners").innerHTML=b;
@@ -351,10 +342,7 @@ function render(){
   fillFilters(rows);
   var vrows=applyView(rows), hidden=rows.length-vrows.length;
 
-  // Items that arrived since the last review are never filtered out. Nothing has been
-  // checked about them yet, and hiding one behind a filter is exactly how it goes unseen.
   var body="";
-  newItems.forEach(function(n){body+=newRow(n)});
   vrows.forEach(function(r){body+=itemRow(r.it,r.c)});
   document.getElementById("rows").innerHTML=
    (hidden>0?'<p class="hid">'+hidden+' item'+(hidden>1?'s':'')+' hidden by the current filter. <a href="#" onclick="resetView();return false">Show everything</a></p>':"")+
@@ -362,28 +350,12 @@ function render(){
 
   // Step headings frame the queue, so with no queue they frame nothing and only add noise
   // above the empty state.
-  var hasWork=REVIEW.items.length>0||newItems.length>0;
+  var hasWork=REVIEW.items.length>0;
   ["step1","step2"].forEach(function(id){var e=document.getElementById(id); if(e)e.style.display=hasWork?"":"none"});
 
   renderBar();
-  document.getElementById("binwrap").innerHTML=bin.length?
-   '<h2>Actioned since the last review ('+bin.length+')</h2>'+bin.map(function(it){
-     return '<div class="binrow"><span style="flex:1;min-width:0">'+esc(it.type)+' · '+esc(it.doc)+' — '+esc(it.vendor)+'</span><span style="font-variant-numeric:tabular-nums">'+money(it.amt)+'</span></div>'+
-            '<p class="note">'+(it.verdict==="flagged"?"was flagged":"was cleared")+' on the last run, no longer pending — actioned in NetSuite</p>'}).join(""):"";
 }
 function cd(l,v,col){return '<div class="card"><div class="l">'+l+'</div><div class="v"'+(col?' style="color:'+col+'"':'')+'>'+v+'</div></div>'}
-
-function newRow(n){
-  var a=ageDays(n.trandate);
-  return '<div class="row" style="border-color:var(--warn-line)">'+
-  '<div class="rh"><span class="pill" style="background:var(--warn-bg);color:var(--warn-fg)">Not yet reviewed</span>'+
-  '<span class="doc">'+esc(n.type==="VendBill"?"Bill":n.type)+' · '+esc(n.tranid)+'</span>'+
-  '<span class="amt">'+money(n.amt)+'</span></div>'+
-  '<p class="ven">arrived since the last review'+(a!=null?' · dated '+esc(n.trandate)+' ('+a+'d)':'')+(n.po_ref?' · '+esc(n.po_ref):'')+'</p>'+
-  '<p class="head">No verdict yet — no math or support check has run against this item</p>'+
-  '<div class="acts"><button onclick="sendRun()">Run the check on this ↗</button>'+
-  '<a href="'+recUrl(n.id)+'" target="_blank" rel="noopener" onclick="return nav(this)">Open record</a></div></div>'
-}
 
 // The PO the bill is APPLIED to, and how that was resolved. Three states, kept distinct on
 // purpose: an unlinked or unreadable PO must never render as though it had been confirmed.
@@ -402,8 +374,7 @@ function itemRow(it,c2){
   var m=marks[it.id]||null, cls="row"+(m?(m.kind==="reject"?" mkr":" mk"):"");
   var a=ageDays(it.trandate);
   var pill,pbg,pfg;
-  if(c2.state==="changed"){pill="Amount changed — re-review";pbg="var(--warn-bg)";pfg="var(--warn-fg)"}
-  else if(c2.state==="flagged"){pill="Flagged";pbg="var(--bad-bg)";pfg="var(--bad-fg)"}
+  if(c2.state==="flagged"){pill="Flagged";pbg="var(--bad-bg)";pfg="var(--bad-fg)"}
   else{pill="Clear";pbg="var(--ok-bg)";pfg="var(--ok-fg)"}
   var mk=m?'<span class="pill" style="background:'+(m.kind==="reject"?"var(--bad-bg)":"var(--acc-bg)")+';color:'+(m.kind==="reject"?"var(--bad-fg)":"var(--acc-fg)")+'">'+(m.kind==="reject"?"Will reject":m.kind==="notes"?"Will approve with notes":"Will approve")+'</span>':"";
   var h='<div class="'+cls+'" id="row'+it.id+'">'+
@@ -412,7 +383,6 @@ function itemRow(it,c2){
   '<span class="amt">'+money(it.amt)+'</span></div>'+
   '<p class="ven">'+esc(it.vendor)+(a!=null?' <span style="color:'+(a>14?"var(--bad-fg)":"var(--ink3)")+'">· '+a+' days pending</span>':'')+
   (c2.stale?' <span style="color:var(--warn-fg)">· as of last review, not live-checked</span>':'')+'</p>';
-  if(c2.state==="changed")h+='<p class="head" style="color:var(--warn-fg)">Amount is now '+money(c2.newAmt)+', was '+money(it.amt)+' when reviewed. The verdict below no longer applies.</p>';
   h+='<p class="head">'+esc(it.head)+'</p>'+
   '<ul class="f">'+it.facts.map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+
   '<p class="po">'+poLine(it)+esc(it.po)+(it.poWarn?'<br><span style="color:var(--warn-fg)">! '+esc(it.poWarn)+'</span>':'')+'</p>'+
@@ -478,7 +448,13 @@ function renderBar(){
   // filter still has to execute - narrowing to what is on screen looks like a tidy-up and
   // would silently drop decisions the user made before they filtered.
   var byId={}; REVIEW.items.forEach(function(i){byId[i.id]=i});
-  var ks=Object.keys(marks).filter(function(k){return byId[k]});
+  // Drop marks whose item is no longer in the review. Filtering them for display left them in
+  // localStorage forever, so a decision on a bill approved elsewhere would reappear the moment
+  // NetSuite reused that internal id. Same sweep as the Procore template.
+  var orphan=false;
+  Object.keys(marks).forEach(function(k){if(!byId[k]){delete marks[k];orphan=true}});
+  if(orphan)saveMarks();
+  var ks=Object.keys(marks);
   var ap=[],rj=[],missing=[];
   ks.forEach(function(k){var it=byId[k],m=marks[k];
     if(m.kind==="reject"){rj.push(it);if(!m.text||!m.text.trim())missing.push(it.doc)}else ap.push(it)});
@@ -493,7 +469,6 @@ function renderBar(){
   // The bar renders in every state, zero marks included. It used to collapse to one line of
   // grey text, so step 2 was invisible until you had already worked out step 1 unaided -
   // backwards for the one thing this page has to teach.
-  // Not named `live` - that is a module-level variable meaning the live NetSuite queue.
   var liveText=!ks.length ? "Nothing marked yet — use the buttons on each item above"
               : blocked   ? "A rejection still needs its reason before this can run"
               :             ks.length+" marked · ready to execute";

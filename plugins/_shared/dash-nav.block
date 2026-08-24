@@ -1,0 +1,6 @@
+function nav(a){
+  // The widget host exposes openLink as a bare global; target=_blank is unreliable in a sandboxed
+  // iframe. Fall through to the anchor on any host that does not provide it.
+  if(window.openLink){try{window.openLink(a.href);return false}catch(e){}}
+  return true
+}

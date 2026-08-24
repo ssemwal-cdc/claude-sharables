@@ -202,6 +202,10 @@ usefully, **the standing list of what has not actually been observed yet.** A
 good deal of recent work is mock-verified and shipped but has never been watched
 running on real data. Read it before citing anything recent as established.
 
+**`scripts/shared_blocks.py`** holds the cross-plugin drift check described under
+[Shared blocks](#shared-blocks-edit-pluginsshared-then-sync). `validate.py` runs it, so
+it is a build gate rather than a habit.
+
 **`scripts/test_skill_code.py`** runs the executable code the skills carry —
 the pdf.js layout extractor, the size-budgeted page reads, the Procore gate's
 three-state fan-out, and the CCO ungated demotion. It extracts each one **from
@@ -209,6 +213,69 @@ three-state fan-out, and the CCO ungated demotion. It extracts each one **from
 copy that can drift. Run it after touching any of that code; it is fast and needs
 only `node`. It is mutation-tested — collapsing a 429 into `empty` makes it fail,
 which is the whole point of it existing.
+
+---
+
+## Shared blocks: edit `plugins/_shared/`, then sync
+
+The two plugins carry a lot of byte-identical machinery, and **they cannot share it at
+run time.** `${CLAUDE_PLUGIN_ROOT}` resolves per plugin and a `git-subdir` install ships
+only `plugins/<name>/`, so every shipped file has to be complete on its own. Runtime
+sharing is not an option that exists; do not go looking for it.
+
+What is shared instead is a **maintainer-side canonical copy plus a check**:
+
+```
+plugins/_shared/<name>.block     the canonical content
+<a plugin file>                  the same content, fenced by markers naming the block
+```
+
+Markers are matched by name, not by comment syntax, so each site uses whatever comment
+is valid at that point — `//` in a script block, `#` in Python, `<!-- -->` in markup:
+
+```
+  //__SHARED:dash-nav__
+  ...content...
+  //__END_SHARED:dash-nav__
+```
+
+**The workflow, and it is the whole point:** edit the file in `plugins/_shared/`, then run
+
+```bash
+python3 scripts/shared_blocks.py --sync     # pushes canonical into every marked site
+python3 scripts/shared_blocks.py --check    # what validate.py runs
+```
+
+`scripts/validate.py` runs the check on every build, so **a fix that reaches one plugin
+and not the other is now a failed build** rather than a missed diff. Editing a shipped
+copy directly is not wrong, it just fails the check until you move the change into the
+canonical file — which is the reminder doing its job.
+
+**`plugins/_shared/` never ships.** `validate.py` skips directories starting with `_`, so
+it is invisible to the orphan check, and it is not inside any plugin, so no install can
+see it. That underscore is load-bearing.
+
+**Why this exists, in defects rather than principle.** As of 2026-08-24 the two dashboard
+templates were 54.5% line-identical and the two publish scripts 54.9%, kept in step by
+hand — and **10 of the 22 commits that ever touched a `SKILL.md` had to touch both**,
+every one of them a mechanics or convention change, not one a change to a financial
+check. Six defects had accumulated in that gap, each one a fix that reached one plugin
+and never the other: a fail-open verdict that rendered as "Clear", a mark store that was
+never pruned, a money card that printed `$2702k` for $2.7m, an abort message naming a
+file that no longer existed. Full list in `prose.md`.
+
+**Adding a block:** put the content in `plugins/_shared/<name>.block`, fence the identical
+region in both plugins with markers, and run `--check`. The block must already be
+byte-identical in both — this mechanism enforces sameness, it does not create it, and a
+block that differs by even one token (`ns_marks_v1` vs `pc_marks_v1`) is not a candidate
+until that difference is designed away. A canonical file nobody references fails the
+build, as does a marker naming a canonical file that does not exist.
+
+**What is deliberately *not* shared:** anything genuinely per-domain — NetSuite's
+type/vendor filter axes against Procore's campus/building/type, the `M/D/YYYY` vs ISO
+date parsing, NetSuite's three fixed buttons against Procore's verbs read from the
+workflow step, and the record-URL shapes. Those differ for real reasons. Do not force
+them into a shared block to raise the percentage.
 
 ---
 

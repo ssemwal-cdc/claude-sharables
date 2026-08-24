@@ -1,0 +1,8 @@
+    // Both-null has to return 0. The previous shape returned 1 for both orderings, which is
+    // not a valid comparator and lets an engine produce an arbitrary order from it.
+    function bydate(oldestFirst){
+      if(ad==null&&bd==null)return 0;
+      if(ad==null)return 1;
+      if(bd==null)return -1;
+      return oldestFirst?bd-ad:ad-bd;
+    }

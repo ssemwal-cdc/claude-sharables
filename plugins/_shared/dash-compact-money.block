@@ -1,0 +1,7 @@
+function compactMoney(n){
+  n=Math.abs(n||0);
+  if(n<1000)return "$"+Math.round(n);
+  var k=Math.round(n/1000);
+  if(k>=1000)return "$"+(Math.round(n/1e5)/10)+"m";
+  return "$"+k.toLocaleString()+"k";
+}

@@ -1,0 +1,8 @@
+function go(){say(window.__prompt)}
+
+render();
+setInterval(function(){
+  var a=document.activeElement;
+  if(a&&(a.tagName==="INPUT"||a.tagName==="SELECT"))return; // don't blow away focus mid-edit
+  render();
+}, 60000);

@@ -278,6 +278,25 @@ Fixed in that commit, NetSuite side unless noted:
 | 6 | Abort message named `_review_log.json` | The pre-migration name — both copies, so the rename fix reached neither string |
 | 7 | Aborted on two unused config keys | `me` and `tool` were injected and read by the page and then never used; only `account` is |
 
+**The drift check that came out of it.** `plugins/_shared/` now holds the canonical copy of
+nine blocks, fenced in both plugins by name-matched markers, with `scripts/shared_blocks.py`
+enforcing that every shipped copy matches — run by `validate.py`, so drift is a failed build.
+
+What is **established** about it, by construction and by test: adding the markers changed no
+content at all (the whole diff was 36 marker lines, zero deletions, verified by grepping every
+changed line); the check catches a one-sided edit, a reworded comment, a missing canonical file
+and an orphaned one, each naming the file and the differing line; editing one canonical file and
+running `--sync` reaches both plugins; and both dashboards still render in headless Chromium, in
+both themes, with markers embedded in their JS and Python — Procore's `index.html` and
+`widget.html` both.
+
+What is **not** established: nobody has yet had to use it in anger, i.e. fix a real shared bug
+by editing the canonical file mid-review. And it covers nine blocks out of roughly 285 shared
+lines, so most of the duplication is still hand-maintained — the mechanism is proven, its
+coverage is not finished. Extending it is cheap and mechanical; the blocks that differ by one
+token (`ns_marks_v1` vs `pc_marks_v1`, the log filenames) need that difference designed away
+first and are deliberately left alone.
+
 **Not fixed, because it is a product decision and not a port:** `widget.html`. Procore
 writes a slim copy and its `SKILL.md` says to render *that* as the primary; NetSuite
 writes no such file. But `CLAUDE.md` says widget.html is "a fallback … **not the

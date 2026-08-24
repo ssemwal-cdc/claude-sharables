@@ -14,6 +14,8 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MARKETPLACE = os.path.join(REPO, ".claude-plugin", "marketplace.json")
 PLUGINS_DIR = os.path.join(REPO, "plugins")
@@ -286,6 +288,32 @@ for doc in ("README.md", "CLAUDE.md"):
                 f"{doc} instructs using a relative-path source ({line.strip()[:60]}…), "
                 f"which validate.py rejects. Say git-subdir."
             )
+
+# ------------------------------------------------- shared blocks (cross-plugin)
+# The two plugins carry a good deal of byte-identical machinery and cannot share it at run
+# time - ${CLAUDE_PLUGIN_ROOT} is per plugin, and a git-subdir install ships only
+# plugins/<name>/. So the canonical copy lives in plugins/_shared/ and this asserts every
+# shipped copy still matches it. Six defects had already accumulated in that gap by
+# 2026-08-24, each one a fix that reached one plugin and not the other.
+# Imported, never optional. A missing checker that silently skips its own check is the
+# fail-open shape this repo keeps finding bugs in, so an ImportError is a build failure.
+try:
+    import shared_blocks
+except ImportError as exc:
+    fail("[shared] cannot import scripts/shared_blocks.py (%s) - the cross-plugin drift "
+         "check did not run" % exc)
+    shared_blocks = None
+if shared_blocks is not None:
+    _problems, _synced, _seen = shared_blocks.run(sync=False)
+    for _name in shared_blocks.orphan_canonicals(_seen):
+        _problems.append(f"plugins/_shared/{_name} is not referenced by any plugin file")
+    for _p in _problems:
+        fail("[shared] " + _p.replace("\n", " ").replace("      ", " "))
+    if not _problems:
+        notes.append(
+            "%d shared block(s) across %d site(s) match plugins/_shared/"
+            % (len(_seen), sum(len(v) for v in _seen.values()))
+        )
 
 # -------------------------------------------------------------------- report
 for n in notes:

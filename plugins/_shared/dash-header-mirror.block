@@ -1,0 +1,6 @@
+  // Header mirror: the same one click, reachable the moment the page opens instead of only
+  // after scrolling the whole queue. Hidden until there is something to execute so it never
+  // competes with the toolbar for attention.
+  var te=document.getElementById("topexec");
+  if(te)te.innerHTML=canRun?'<button class="go big" onclick="go()">Execute '+ks.length+' ↗</button>':'';
+  window.__prompt=prompt;

@@ -19,6 +19,7 @@ import json, os, re, sys, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LOG = os.path.join(HERE, "_netsuite_review_log.json")
+#__SHARED:pub-log-migration__
 _LEGACY = os.path.join(HERE, "_review_log.json")
 # Both skills used to name this file _review_log.json, differing only by parent folder,
 # with both folders under the same Downloads parent. An agent resolving it by bare name
@@ -42,8 +43,10 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # Warn, never abort. A lagging template still renders correct verdicts: the review procedure
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
-TEMPLATE_VERSION = "v5"
+#__END_SHARED:pub-log-migration__
+TEMPLATE_VERSION = "v6"
 
+#__SHARED:pub-version-check__
 def check_template_version(tpl):
     m = re.search(r"layout template (v\d+)", tpl)
     found = m.group(1) if m else None
@@ -53,6 +56,7 @@ def check_template_version(tpl):
           "stale and Step 0's sync did not run. Re-sync from a surface whose shell can see the "
           "plugin, or this dashboard will be missing recent changes."
           % (found or "unversioned", TEMPLATE_VERSION), file=sys.stderr)
+#__END_SHARED:pub-version-check__
 
 
 # The only two verdicts this review produces (Step 6 of SKILL.md). An unknown value used to
@@ -148,6 +152,7 @@ def main():
 
     open(OUT, "w", encoding="utf-8").write(out)
 
+    #__SHARED:pub-render-archive__
     # Keep a short rolling archive of what was actually rendered. Two uses: diff a bad render
     # against the last good one to see what changed, and re-render from disk without re-running
     # the whole review, which costs connector queries and attachment downloads.
@@ -163,6 +168,7 @@ def main():
             fh.write(out)
     except OSError as exc:
         print("note: render archive not written (%s)" % exc, file=sys.stderr)
+    #__END_SHARED:pub-render-archive__
     flagged = sum(1 for i in items if i["verdict"] == "flagged")
     print("wrote %s" % OUT)
     print("%d items (%d flagged) as of %s" % (len(items), flagged, payload["lastRun"]))

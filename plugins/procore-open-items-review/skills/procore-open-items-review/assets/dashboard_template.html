@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Procore open items queue</title>
-<!-- layout template v3 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v4 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -203,6 +203,7 @@ var showSkipped=false;
 // filters and search across and resets only the sort, so the cost is not even a scroll.
 var VKEY="pc_view_v3", OLDVKEY="pc_view_v2";
 var DEFV={sort:"newest",campus:"all",bldg:"all",type:"all",q:""};
+//__SHARED:dash-view-migration__
 var view=Object.assign({},DEFV);
 try{
   var sv=JSON.parse(localStorage.getItem(VKEY)||"null");
@@ -211,6 +212,7 @@ try{
   if(sv)view=Object.assign(view,sv);
 }catch(e){}
 function saveView(){try{localStorage.setItem(VKEY,JSON.stringify(view))}catch(e){}}
+//__END_SHARED:dash-view-migration__
 function setView(k,v){
   view[k]=v;
   if(k==="campus")view.bldg="all";   // campus is the outer axis; buildings belong to one campus
@@ -243,6 +245,7 @@ function applyView(list){
   var s=view.sort;
   out.sort(function(a,b){
     var ad=daysSince(a.due), bd=daysSince(b.due);
+    //__SHARED:dash-date-comparator__
     // Both-null has to return 0. The previous shape returned 1 for both orderings, which is
     // not a valid comparator and lets an engine produce an arbitrary order from it.
     function bydate(oldestFirst){
@@ -251,6 +254,7 @@ function applyView(list){
       if(bd==null)return -1;
       return oldestFirst?bd-ad:ad-bd;
     }
+    //__END_SHARED:dash-date-comparator__
     switch(s){
       case "oldest":  return bydate(true) || docNum(a.doc)-docNum(b.doc);
       case "amtDesc": return (b.amt||0)-(a.amt||0);
@@ -305,6 +309,7 @@ function fillFilters(all){
 
 function money(n){return n==null?"—":Math.abs(n).toLocaleString("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2})}
 // Compact form for the summary cards: 2,702,000 → $2.7m · 270,200 → $270k
+//__SHARED:dash-compact-money__
 function compactMoney(n){
   n=Math.abs(n||0);
   if(n<1000)return "$"+Math.round(n);
@@ -312,6 +317,7 @@ function compactMoney(n){
   if(k>=1000)return "$"+(Math.round(n/1e5)/10)+"m";
   return "$"+k.toLocaleString()+"k";
 }
+//__END_SHARED:dash-compact-money__
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
 function daysSince(iso){if(!iso)return null;var p=iso.split("-");var d=new Date(+p[0],+p[1]-1,+p[2]);return Math.floor((Date.now()-d.getTime())/86400000)}
 // daysSince is negative for a deadline still ahead. Kept signed for the comparator - the sign
@@ -323,12 +329,14 @@ function ageText(){var m=ageOfRun();if(m==null)return "";
   if(m<2)return "just now"; if(m<60)return m+" minutes ago";
   var h=Math.round(m/60); if(h<24)return h+" hour"+(h>1?"s":"")+" ago";
   var d=Math.round(h/24); return d+" day"+(d>1?"s":"")+" ago";}
+//__SHARED:dash-nav__
 function nav(a){
   // The widget host exposes openLink as a bare global; target=_blank is unreliable in a sandboxed
   // iframe. Fall through to the anchor on any host that does not provide it.
   if(window.openLink){try{window.openLink(a.href);return false}catch(e){}}
   return true
 }
+//__END_SHARED:dash-nav__
 function recUrl(it){
   if(it.kind==="inv")return "https://app.procore.com/webclients/host/companies/"+CO+"/projects/"+it.pid+"/tools/invoicing/requisitions/"+it.cid+"/"+it.id;
   if(it.kind==="cco")return "https://app.procore.com/"+it.pid+"/project/commitments/purchase_order_contracts/"+it.cid+"/change_orders/commitment_contract_change_orders/"+it.id;
@@ -582,13 +590,16 @@ function renderBar(){
   document.getElementById("barnote").innerHTML=
    (stale?'<p class="note" style="color:var(--warn-fg)">This snapshot is '+ageText()+'. Executing is still safe — each item is re-checked against Procore before any click — but a re-check first would give you a truer picture of what is left.</p>':'')+
    '<p class="note"><b>Stale-safe.</b> This page is a snapshot, so before each click the live workflow is re-queried: if you already actioned an item in Procore yourself, it is skipped and logged, never re-clicked or retried. A changed amount stops the whole batch instead.</p>';
+  //__SHARED:dash-header-mirror__
   // Header mirror: the same one click, reachable the moment the page opens instead of only
   // after scrolling the whole queue. Hidden until there is something to execute so it never
   // competes with the toolbar for attention.
   var te=document.getElementById("topexec");
   if(te)te.innerHTML=canRun?'<button class="go big" onclick="go()">Execute '+ks.length+' ↗</button>':'';
   window.__prompt=prompt;
+  //__END_SHARED:dash-header-mirror__
 }
+//__SHARED:dash-render-tail__
 function go(){say(window.__prompt)}
 
 render();
@@ -597,6 +608,7 @@ setInterval(function(){
   if(a&&(a.tagName==="INPUT"||a.tagName==="SELECT"))return; // don't blow away focus mid-edit
   render();
 }, 60000);
+//__END_SHARED:dash-render-tail__
 </script>
 <div id="__complete" hidden></div>
 </body>

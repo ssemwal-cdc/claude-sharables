@@ -1,0 +1,9 @@
+def check_template_version(tpl):
+    m = re.search(r"layout template (v\d+)", tpl)
+    found = m.group(1) if m else None
+    if found == TEMPLATE_VERSION:
+        return
+    print("WARNING: dashboard template is %s, this script expects %s - the workspace copy is "
+          "stale and Step 0's sync did not run. Re-sync from a surface whose shell can see the "
+          "plugin, or this dashboard will be missing recent changes."
+          % (found or "unversioned", TEMPLATE_VERSION), file=sys.stderr)

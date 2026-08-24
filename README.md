@@ -94,15 +94,29 @@ than in Cowork, that case is different: declare the plugin in that repo's
 
 ## Available plugins
 
-| Plugin | What it does | Needs |
-|---|---|---|
-| `netsuite-approval-review` | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | Claude in Chrome, signed in to NetSuite. NetSuite MCP connector optional — adds bulk queries and the PO cross-check |
-| `procore-open-items-review` | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
+| Plugin | Version | What it does | Needs |
+|---|---|---|---|
+| `netsuite-approval-review` | v4 | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | Claude in Chrome, signed in to NetSuite. NetSuite MCP connector optional — adds bulk queries and the PO cross-check |
+| `procore-open-items-review` | v4 | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
+
+**Checking what you have installed:** the easiest read is **profile (bottom
+left) → Settings → Plugins → click the plugin** — the last sentence of its
+Description is the installed version ("Skill version N — date"). The same
+number starts each skill's one-line description (`vN — …`), opens its
+`SKILL.md`, and comes back if you just ask in a chat ("what skill version is
+the NetSuite check on?"). Compare it to the Version column above: a lower
+number — or no version anywhere — means your installed copy is stale; update
+or reinstall the plugin.
 
 ## For maintainers: releasing an update
 
 Push to the default branch. That is the whole release process — version resolves
 from the commit SHA, so every push is a new version.
+
+If the push changes anything under a skill, bump that skill's
+`**Skill version N — date.**` line and the Version cell in the table above in
+the same commit. `validate.py` enforces that the two agree; the bump itself is
+the habit it cannot check for you.
 
 Teammates get it automatically **only if they have auto-update enabled on this
 marketplace.** It is off by default: Claude Code enables auto-update for
@@ -123,6 +137,13 @@ claude plugin update procore-open-items-review@compass-claude-plugins
 
 Then restart the computer. Observed on Windows: an app restart is not always
 enough for a plugin change to show up.
+
+Those terminal commands update **terminal installs only**. Plugins installed
+through the desktop app live in a separate, account-synced store; the app's
+own force-update is **Settings → Plugins → Browse → Personal →
+`claude-sharables` → ⋯ → Check for updates**, and that menu's **Synced
+commit** should match the tip of `main`. The onboarding sheet walks teammates
+through it.
 
 ## Adding another plugin or skill
 

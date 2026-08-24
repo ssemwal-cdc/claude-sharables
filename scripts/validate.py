@@ -67,6 +67,7 @@ if not entries:
 REPO_URL = "https://github.com/ssemwal-cdc/claude-sharables.git"
 
 registered = {}
+skill_versions = {}  # (plugin, skill) -> int, from each SKILL.md's version line
 for e in entries:
     name = e.get("name")
     src = e.get("source")
@@ -171,6 +172,48 @@ for name, src in registered.items():
         if not keys.get("description"):
             fail(f"[{name}/{skill}] frontmatter has no description")
 
+        # Human-readable skill version line. An installed skill is a snapshot,
+        # and the desktop app shows no commit SHA anywhere — opening the skill
+        # shows SKILL.md, so the file itself is the only place a version can be
+        # read on that surface. This is NOT the banned machine 'version' field:
+        # it affects nothing about install resolution. It must sit at the top
+        # (so any preview shows it) and match the README table (checked below).
+        body = re.sub(r"^---\n.*?\n---\n", "", text, count=1, flags=re.DOTALL)
+        vlines = re.findall(r"^\*\*Skill version (\d+) — (\d{4}-\d{2}-\d{2})\.\*\*", body, re.M)
+        if len(vlines) != 1:
+            fail(
+                f"[{name}/{skill}] SKILL.md must carry exactly one "
+                f"'**Skill version N — YYYY-MM-DD.**' line (found {len(vlines)})"
+            )
+        else:
+            vm = re.search(r"^\*\*Skill version (\d+) — (\d{4}-\d{2}-\d{2})\.\*\*", body, re.M)
+            if vm.start() > 200:
+                fail(
+                    f"[{name}/{skill}] the skill version line must sit at the top of "
+                    f"SKILL.md (directly under the title), not {vm.start()} chars in"
+                )
+            n, vdate = int(vm.group(1)), vm.group(2)
+            skill_versions[(name, skill)] = n
+
+            # The desktop app's Settings -> Plugins screen renders plugin.json's
+            # description in full and the skill's frontmatter description truncated
+            # to one line - never the SKILL.md body (screenshot, 2026-08-21). So the
+            # version also lives at the START of the skill description and the END
+            # of the plugin description, and every site must agree.
+            if not keys.get("description", "").startswith("v%d — " % n):
+                fail(
+                    f"[{name}/{skill}] frontmatter description must start with "
+                    f"'v{n} — ' to match the skill version line — bump both in the "
+                    f"same commit"
+                )
+            tail = "Skill version %d — %s." % (n, vdate)
+            if not pj.get("description", "").rstrip().endswith(tail):
+                fail(
+                    f"[{name}] plugin.json description must end with {tail!r} to match "
+                    f"{skill}/SKILL.md — bump both in the same commit. (One skill per "
+                    f"plugin today; if this plugin now holds several, revisit this rule.)"
+                )
+
         # Assets must be referenced through ${CLAUDE_PLUGIN_ROOT} and must exist.
         # A reference may point at a file or, in prose, at a directory.
         for ref in re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\"'`\s)]+)", text):
@@ -221,6 +264,19 @@ for doc in ("README.md", "CLAUDE.md"):
         looks_like_plugin = os.path.isdir(os.path.join(PLUGINS_DIR, mentioned))
         if looks_like_plugin and mentioned not in registered:
             fail(f"{doc} references {mentioned!r}, which is not registered in marketplace.json")
+
+    # The README's plugin table must agree with each SKILL.md's version line.
+    # validate.py can enforce the match, not the bump — bumping is the habit.
+    if doc == "README.md":
+        for (pname, skill), n in sorted(skill_versions.items()):
+            rows = [l for l in body.splitlines() if f"`{pname}`" in l and "|" in l]
+            if not rows:
+                fail(f"README.md has no table row for {pname!r} to carry its skill version")
+            elif not any(f"v{n}" in l for l in rows):
+                fail(
+                    f"README.md's row for {pname!r} does not say v{n}, but "
+                    f"{skill}/SKILL.md says skill version {n} — bump both in the same commit"
+                )
 
     # The docs must not instruct anyone to do what the rules above reject.
     # Quoted failure examples are fine; instructions are not.

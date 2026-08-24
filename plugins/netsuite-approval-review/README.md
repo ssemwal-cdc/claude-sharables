@@ -126,6 +126,19 @@ than continuing.
 
 It never writes to NetSuite through the connector.
 
+## Versioning
+
+The skill's version is the `**Skill version N — date.**` line at the top of its
+`SKILL.md` — the first thing shown when you open the skill. The authoritative
+current number is the Version column of the repo README on GitHub
+(https://github.com/ssemwal-cdc/claude-sharables); it does not ship with the
+plugin, so the comparison happens there, not against any installed file.
+
+`plugin.json` deliberately carries no `version` field. Install resolution
+tracks the git commit, and a hand-maintained version field that someone
+forgets to bump would silently freeze everyone's cached copy. Do not add one,
+and do not suggest adding one.
+
 ## Known limits
 
 - **Change orders cannot be live-checked.** Their records carry no approval

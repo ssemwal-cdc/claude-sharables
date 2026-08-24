@@ -88,7 +88,8 @@ then fails everywhere else. See [Traps](#traps-proven-not-guessed).
 Both `README.md` and this file must stay truthful. `scripts/validate.py` fails
 the build if either stops mentioning a registered plugin, so this is enforced,
 not merely requested. Add a row to the **Available plugins** table in
-`README.md` including its prerequisite.
+`README.md` including its prerequisite and its skill version (a new skill
+starts at v1 — see [Skill version lines](#skill-version-lines)).
 
 ### 6. Verify before committing
 
@@ -333,6 +334,15 @@ Four rounds of rewording did not shift that, and the note above about not
 trusting this tool's success message probably reinforced it. The fix is not more
 reassurance: it is to close the loop by asking the user to report the banner, one
 sentence after the render. Both skills now do that.
+
+**Runs began presenting the working files as chat file cards, 2026-08-21.** The
+template, publish script, review log and rendered index all appeared as
+download cards at the end of a run. Nothing in either skill asks for that —
+newer harness builds push agents to surface files a run wrote, and the state
+files pattern-match "deliverable". Both skills now carry an Absolute rule that
+the widget is the only deliverable and the working files are never attached.
+If cards still appear with that rule shipped, it is the surface auto-listing
+written files, and no skill wording can suppress it.
 
 **Do not let an agent refuse to render because the file looks big.** A 120 KB Procore dashboard was
 handed over as a file instead, on the reasoning that it might truncate — which cost one-click
@@ -1026,24 +1036,27 @@ Facts it carries that are not obvious from the skills:
 - **`/plugin` and `claude plugin` are different things.** The first is typed in a
   chat, the second in a terminal. A sheet that says "terminal" and then shows
   `/plugin` is wrong, and `README.md` used to make exactly that mistake.
-- **The sheet carries no terminal commands at all now, and that is the resolution
-  of the note above rather than a stylistic trim.** Removed 2026-08-24: `claude
-  plugin ...` drives the **CLI**, which is a separate install from the desktop app
-  the sheet is walking someone through. So a teammate who followed those commands
-  was updating something they are not running, and the sheet's own instructions
-  had no way to say so. Three things went with them, and the third is the one worth
-  noticing: step 3's "doing it in the terminal instead", the forcing-an-update block
-  under *Keeping it updated*, and **two of the four rows in the confusion table** —
-  the missing-`@compass-claude-plugins` error and the marketplace-updated-but-nothing-
-  changed one — because both are errors that can only be produced by a terminal
-  command. A troubleshooting row for an error the reader can no longer reach is
-  worse than nothing; the table is titled "Two things" now. What replaced the
-  forcing block is *restart the computer*, with no chat-command substitute, because
-  no `/plugin update` form is verified anywhere in these notes and asserting one
-  would be exactly the kind of guess the rest of this file exists to prevent.
-  **The maintainer-facing CLI guidance in this file and in `README.md` stays** — the
-  maintainer does work in a terminal. Do not "restore consistency" by putting the
-  commands back in `docs/onboarding.html`.
+- **The sheet carries no terminal commands at all now — the terminal/app split above
+  was resolved twice, and deleting won.** 2026-08-24. The split had just been
+  documented and the sheet taught it: the terminal blocks were kept and *labelled*
+  ("only for terminal installs", "separate copies"), with confusion-table rows for
+  the terminal-side errors. Labelling is the more informative fix and it is not the
+  one asked for. **The sheet's reader has no terminal install** — it walks them
+  through the app, start to finish — so every terminal block was reference material
+  for a thing they do not have, sitting in the middle of instructions they do.
+  Deleted: step 3's "doing it in the terminal instead", the terminal update section,
+  and **three confusion-table rows**. The rows are the part worth noticing — the
+  missing-`@compass-claude-plugins` error, marketplace-updated-but-nothing-changed,
+  and `claude plugin list` coming back empty are all errors *only a terminal command
+  produces*, so with the commands gone they document failures the reader cannot
+  reach, which is worse than saying nothing. The table is "Three things" now.
+  **Nothing verified was lost**: the screenshot-verified in-app force-update path
+  and "Which version am I on?" are what *Keeping it updated* is made of, and the
+  app-side **Last updated** row stayed. **The maintainer-facing CLI guidance in this
+  file and in `README.md` stays** — the maintainer does work in a terminal. Do not
+  "restore consistency" by putting the commands back in `docs/onboarding.html`; if a
+  teammate ever does end up with a terminal install, the commands are two sections
+  up in this file, which is where the person helping them will be looking anyway.
 - **The first-run time is elapsed time on a second screen, and the sheet now says
   which.** Also 2026-08-24. "15-20 minutes" read as twenty minutes of sitting and
   watching, which is a much bigger ask than the thing actually is and is the sort of
@@ -1152,6 +1165,23 @@ netsuite-approval-review   9ea01d3a5df2 -> 5c242055c130
 and after versions so you can see whether anything actually shipped, and it
 surfaces the qualifier error rather than failing quietly.
 
+**Those commands update terminal installs only — the app has its own store and
+its own update path.** Verified with screenshots, 2026-08-21. App-installed
+plugins live in the app's account-synced store, not `~/.claude/plugins` (the
+split under [Versioning](#versioning)), and the app's force-update is: profile
+(bottom left) → **Settings → Plugins** → **Browse** → **Personal** tab → the
+`claude-sharables` chip beside "Local uploads" → **⋯** → **Check for updates**.
+That menu also carries the **Sync automatically** toggle and shows **Synced
+commit** — the installed release, directly comparable to `main`'s tip. Two
+display traps nearby, both observed: the app labels the marketplace by **repo**
+name (`claude-sharables`), not marketplace name — the repo-vs-marketplace split
+again, surfacing in reverse — and the Settings → Plugins list's **Last
+updated** column tracks the last commit to `marketplace.json` (2026-08-12 for a
+long stretch), not plugin content, so an old date there is not staleness.
+Removing the marketplace from that ⋯ menu uninstalls its plugins and a re-add
+lands on current — the reliable last resort when Check for updates doesn't move
+the synced commit.
+
 **A stale install presents as a bug in the repo, and it is worth recognising on
 sight.** Reported 2026-08-14: `publish_dashboard.py` was hardcoding
 `cco -> ChangeOrderPackage`, the type that 400s — except the repo had shipped
@@ -1237,6 +1267,63 @@ Confirm it is working — installed version should be a commit SHA prefix:
 ```bash
 claude plugin list        # Version: 7ca6a2ea2c70
 ```
+
+**`claude plugin list` only sees CLI installs.** Confirmed 2026-08-21 on a
+machine with the plugins installed and working through the desktop app: the
+terminal list came back empty. The CLI and the desktop app keep separate plugin
+inventories — the CLI's lives in `~/.claude/plugins/installed_plugins.json`,
+the app's in its own store — and the terminal update commands above only ever
+touch the CLI copy. So a terminal update does nothing for plugins that were
+installed through the app, and an empty `claude plugin list` does not mean the
+app has no plugins. Update app installs through the app.
+
+### Skill version lines
+
+The no-`version` rule above bans the *machine* fields — the ones install
+resolution reads. Separately, every skill carries a *human* version marker, and
+that one is **required**: the first line under the title in each `SKILL.md`
+reads
+
+```
+**Skill version N — YYYY-MM-DD.** …
+```
+
+mirrored as `vN` in the README's Available plugins table. It exists because an
+installed skill is a snapshot and the desktop app shows no commit SHA anywhere;
+opening the skill shows `SKILL.md`, so the file itself is the only place a
+version can be read on that surface. An installed copy with no version line at
+all predates 2026-08-21. Because the line is in the prompt, the running skill
+can also answer "what version are you on?" in chat.
+
+**The Settings → Plugins screen never shows the SKILL.md body** — settled by
+screenshot, 2026-08-21: the plugin detail page renders `plugin.json`'s
+description in full and the skill's frontmatter description truncated to one
+line, and nothing else from the skill. So the version lives in **four synced
+sites**, each for the surface that shows it: the START of the skill's
+frontmatter description (`vN — …`, visible in the truncated Skills row and the
+in-chat skills list), the END of the `plugin.json` description
+(`Skill version N — date.`, the plugin detail page — prose, deliberately not
+the banned `version` field), the SKILL.md body line (the in-chat skill panel,
+and how the running skill answers in chat), and the README table (`vN`, the
+current-version side, on GitHub). The marketplace.json descriptions carry no
+version on purpose: a stale catalog could show a number that matches neither
+the installed copy nor `main`.
+
+Bump the number, the date, the two descriptions, and the README cell **in the
+same commit as any change under that skill**. `scripts/validate.py` enforces
+that every site exists and all of them agree — it cannot enforce the bump
+itself, so that part is habit. A new skill starts at version 1.
+
+The line's wording matters, and the first live run set it. Asked "what version
+are you on?", the installed skill reported its line correctly — then went
+looking for the README table *locally*, found nothing (a git-subdir install
+ships only the plugin folder, never the repo root), reported the staleness
+check as unrunnable, and suggested adding a `version` field to `plugin.json` —
+the exact field the rule above bans. The line now names GitHub as the only
+comparison point and rules that field out in place, and each plugin README
+carries the same note under **Versioning**. Keep both when editing; an
+installed copy has no repo around it, so anything the line asks a reader to do
+must work from the plugin folder alone.
 
 ---
 

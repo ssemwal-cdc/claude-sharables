@@ -324,6 +324,45 @@ was *the other plugin*, sitting in the same repo the whole time.
 
 ---
 
+## The staleness check could not detect staleness
+
+2026-08-24, found by a question rather than a failure: *"shouldn't we just write the dashboard
+copies every time instead of caching them?"*
+
+**The copy cannot be removed, and that part of the design is right.** `publish_dashboard.py`
+resolves its log, its template and its output from `__file__`, and the Cowork sandbox does not
+mount the plugin directory into the shell — so code that must run in that shell has to live
+inside the workspace. The every-run overwrite the question was reaching for already exists:
+Step 0 says *"Do this on every run"* and *"This overwrites the workspace copies deliberately."*
+
+**But the question landed on a real hole.** `check_template_version()` compares the workspace
+*template's* marker to the workspace *script's* constant — and Step 0 copies those two files
+**together**. So they disagree only when a sync tears halfway. A workspace that is uniformly
+three versions old has both files agreeing with each other and publishes in silence. Reproduced:
+template `v4` + script `v4` against a plugin shipping `v6` produced no warning at all.
+
+So the marker caught a torn sync, never a stale one — which is the failure it was added for, and
+`CLAUDE.md` claimed outright that *"a stale copy names itself"*. It does not. That line is now
+corrected rather than left as a claim nobody had tested.
+
+**The fix has to live somewhere that always ships.** Any check comparing two workspace files is
+blind here, because staleness moves them in lockstep. `SKILL.md` is the only fixed point: it
+ships with the plugin, so it is current by construction even on the surface where the plugin
+directory cannot be reached at all. Step 0 now states the expected `layout template vN` and reads
+the workspace copy back, reporting a mismatch once and carrying on — the same fail-open posture as
+rung 3, because a stale layout still renders correct verdicts.
+
+That makes a **third** site for the template version per plugin, so `validate.py` now fails if
+`SKILL.md`, the template marker and the script constant disagree. Adding a synced site without
+adding its enforcement is the exact mistake this session spent two commits cleaning up.
+
+**The general shape, which has now appeared often enough to name:** *a check whose two inputs
+fail together cannot detect that failure.* Same family as the connector-lag rule (verify the
+record, not the queue, because the queue lags with it) and the CCO wrong-id case (a 200-empty
+looks like no-instance). Any freshness check needs one input that cannot go stale.
+
+---
+
 ## Retrospective: four rounds spent on a bug that did not exist
 
 2026-08-15. A `javascript_tool` call was reported blocked. Four rounds of probes

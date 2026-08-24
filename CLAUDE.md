@@ -1320,9 +1320,15 @@ nothing to fall back on. Delete-then-write converts a fail-open into a fail-clos
 destroys the state file in that folder: `config` (publish then aborts rather than guessing
 an identity), the review history, and `lastCompletedRun`. The narrow version — deleting only
 the two asset files and keeping the log — still only helps on a surface where the sync can
-actually run. **The template now carries a version marker and `publish_dashboard.py` warns
-on a mismatch, so a stale copy names itself; bump the marker whenever the template changes,
-and `scripts/test_skill_code.py` fails if script and template disagree.**
+actually run. **The template carries a version marker and `publish_dashboard.py` warns on a
+mismatch — but that pair only catches a *torn* sync, not a stale one.** The template and the
+script are copied together, so a workspace three versions old has both files agreeing and
+publishes silently; verified 2026-08-24. The check that actually catches staleness is in Step 0 of
+each `SKILL.md`, which states the expected `layout template vN` and reads the workspace copy back,
+because `SKILL.md` always ships with the plugin and is the only fixed point left when the plugin
+directory cannot be reached. Bump the marker whenever the template changes;
+`scripts/test_skill_code.py` fails if script and template disagree, and `validate.py` fails if
+either disagrees with the version `SKILL.md` states.
 
 **The stale-copy family is therefore three states, with three different fixes.**
 A stale **install** needs the two-command update and a restart. A stale

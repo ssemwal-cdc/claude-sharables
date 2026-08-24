@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v7 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: v8 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 7 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 8 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
@@ -86,6 +86,23 @@ down this ladder and take the first rung that works:
    \<date\>". Then carry on; **do not stop the run over it.** The review's procedure lives in this
    file, which ships with the plugin regardless — only the dashboard template and publish script
    can lag, so the verdicts are current even when the widget's wording is not.
+
+**This plugin ships layout template `v6`. Confirm the sync landed by reading it back:**
+
+```bash
+head -n 8 "<workspace>/NetSuite Approval Checks/dashboard_template.html" | grep -o 'layout template v[0-9]*'
+```
+
+If that does not say `v6`, the sync did not land and the dashboard you are about to publish is
+stale. Say so once near the headline, naming both versions, and carry on — same fail-open rule as
+rung 3.
+
+**This check is the only one that can see a stale workspace, which is why it is here and not left
+to the publish script.** `publish_dashboard.py` compares the template's marker to its own
+constant, and those two files are copied *together* — so they disagree only when a sync tears
+halfway, and a workspace that is uniformly three versions old passes it silently. The expected
+version above ships in this file, which is always current because it ships with the plugin, so it
+is the only fixed point available when the plugin directory cannot be reached at all.
 
 Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already carries a `config` block, the rest of this
 step is done — go to Step 1. Otherwise, once:

@@ -165,6 +165,60 @@ def check_pins():
     return problems, {lib: next(iter(v)) for lib, v in pins.items() if len(v) == 1}
 
 
+SKILL_TPL_VER = re.compile(r"ships layout template `(v\d+)`")
+TPL_MARKER = re.compile(r"layout template (v\d+)")
+SCRIPT_TPL_VER = re.compile(r'^TEMPLATE_VERSION = "(v\d+)"', re.M)
+
+
+def check_template_versions():
+    """The template version has three sites per plugin and all of them must agree.
+
+    SKILL.md states the expected version; the template carries it as a marker; the publish
+    script pins it as a constant. The script/template pair only catches a *torn* sync - both
+    files are copied together, so a uniformly stale workspace has them agreeing and publishes
+    silently (verified 2026-08-24). SKILL.md is the fixed point that catches that, because it
+    always ships with the plugin. Which only works if the number it states is right, hence this.
+    """
+    problems = []
+    for entry in sorted(os.listdir(PLUGINS)):
+        if entry.startswith("_"):
+            continue
+        root = os.path.join(PLUGINS, entry)
+        skills = os.path.join(root, "skills")
+        if not os.path.isdir(skills):
+            continue
+        for skill in sorted(os.listdir(skills)):
+            sd = os.path.join(skills, skill)
+            found = {}
+            for label, rel, rx in (
+                ("SKILL.md", "SKILL.md", SKILL_TPL_VER),
+                ("template", os.path.join("assets", "dashboard_template.html"), TPL_MARKER),
+                ("script", os.path.join("assets", "publish_dashboard.py"), SCRIPT_TPL_VER),
+            ):
+                fp = os.path.join(sd, rel)
+                if not os.path.isfile(fp):
+                    continue
+                with open(fp, encoding="utf-8") as fh:
+                    m = rx.search(fh.read())
+                if m:
+                    found[label] = m.group(1)
+            if len(found) < 3:
+                if "template" in found or "script" in found:
+                    missing = {"SKILL.md", "template", "script"} - set(found)
+                    problems.append(
+                        "%s/%s: template version stated in %d of 3 sites - missing %s. "
+                        "SKILL.md must say \"ships layout template `vN`\" so a stale "
+                        "workspace can be detected." % (entry, skill, len(found),
+                                                        ", ".join(sorted(missing))))
+                continue
+            if len(set(found.values())) > 1:
+                problems.append(
+                    "%s/%s: template version disagrees across its three sites - %s. "
+                    "Bump all three together." % (entry, skill,
+                        ", ".join("%s=%s" % kv for kv in sorted(found.items()))))
+    return problems
+
+
 def orphan_canonicals(seen):
     if not os.path.isdir(SHARED):
         return []
@@ -181,6 +235,7 @@ def main():
         problems.append("plugins/_shared/%s is not referenced by any plugin file" % name)
     pin_problems, pins = check_pins()
     problems += pin_problems
+    problems += check_template_versions()
     if sync:
         for s in synced:
             print("synced " + s)

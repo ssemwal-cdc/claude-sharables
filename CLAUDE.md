@@ -1064,9 +1064,15 @@ Facts it carries that are not obvious from the skills:
   opener, which was the wrong scope: the claim is true of the *whole* document, and
   someone deciding whether to start today has not reached step 4 yet.
   **Three things about the fix are load-bearing.**
-  - **The chips carry the whole span, not the setup half** — `~45 min end to end` and
-    `mostly waiting`. Two chips reading `~25 min to set up` / `then a 15-20 min first
-    run` invite adding the halves and reading the total as booked time.
+  - **The header carries no chips at all now** (2026-08-24, after two rounds of them).
+    They went from `~25 min to set up` / `then a 15-20 min first run` — which invited
+    adding the halves and reading the total as booked time — to a three-chip row, and
+    then out entirely. Nothing was lost with them: `~45 min` and `mostly waiting` were
+    already the paragraph's own words, and the break chip became *"take a break after
+    step 3 if you need one"*, which names a step a reader can act on where `halfway`
+    did not. **The `.chip` class stays** — the step 1 and step 2 headings use it — so
+    the test asserts `header .chip` is empty rather than the class being unused. The
+    `.meta` rule went with the row, since that row was its only user.
   - **"On a second screen" was cut as a phrase while the meaning was kept.** In a sheet
     whose second section is a prerequisites list, it reads as a *hardware requirement*
     — "do I need two monitors?" — which is the exact opposite of the reassurance

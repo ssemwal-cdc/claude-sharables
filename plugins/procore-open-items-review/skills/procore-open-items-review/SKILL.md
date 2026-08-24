@@ -1,11 +1,11 @@
 ---
 name: procore-open-items-review
-description: v8 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
+description: v9 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
 ---
 
 # Procore Open Items Review
 
-**Skill version 8 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 9 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 
@@ -570,7 +570,7 @@ On each run:
 - Previously **flagged** → re-check in full; the attachment may have been swapped.
 - Amount changed → treat as new.
 - Previously **skipped** → re-check in full every run; support gets added later.
-- No longer in the queue → keep for one run so the dashboard can show it in the actioned bin, then drop it.
+- No longer in the queue → drop it. The template's actioned bin filters on `verdict === "gone"`, which is not in Step 6's vocabulary and would be rejected by the publish script's verdict allowlist, so that bin has never rendered and a lingering entry would show as an apparently-pending row.
 
 **Do not write HTML.** The layout lives in `dashboard_template.html`. Publish by injecting data:
 

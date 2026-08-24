@@ -1398,8 +1398,9 @@ A stale **install** needs the two-command update and a restart. A stale
 **workspace** needs the sync to actually run (a rung of the Step 0 ladder). A
 stale **dashboard** needs a re-render — an old chat replays its old instructions
 forever regardless of the other two. The symptoms overlap almost completely, so
-diagnose in order: install version against `main`, then the workspace files'
-modification dates, then the render date on the widget.
+diagnose in order: install version against `main`; then the workspace copy's
+`layout template vN` against the version Step 0 states, which is a **direct** check
+rather than an inference from modification dates; then the render date on the widget.
 
 **A rendered dashboard is a snapshot of the template, so an old chat replays old
 instructions — and that reads as a stale install.** Cost a wrong diagnosis

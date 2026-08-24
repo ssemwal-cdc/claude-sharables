@@ -251,7 +251,7 @@ person who wrote them.
 
 ---
 
-## The two dashboards had drifted, and it cost seven defects
+## The two dashboards had drifted, and it cost six defects
 
 2026-08-24. An audit of the two plugins' assets against each other, prompted by a
 question about making them more modular. The finding worth keeping is not any single
@@ -270,13 +270,13 @@ Fixed in that commit, NetSuite side unless noted:
 
 | | Defect | Consequence |
 |---|---|---|
-| 1 | Browser mode could not publish (see gap 7) | A complete review died at Step 7 |
+| 1 | Browser mode could not publish (see gap 7) | A complete review died at Step 7. Same root cause as the unused-config-keys item below — one over-broad `required` list — which is why this is six defects and not seven |
 | 2 | No verdict allowlist | A typo'd verdict fell through the pill logic to **"Clear"** — fail-open on the field that decides what gets approved. Procore has aborted on this since it shipped |
 | 3 | `var live=null` never assigned | ~45 lines unreachable: the gone/changed states, `newRow`, the bin, and a permanently-`0` "Unreviewed" card |
 | 4 | Marks never pruned | A mark for a since-approved bill stayed in `ns_marks_v1` forever and would reappear if NetSuite reused the id. Procore sweeps them |
 | 5 | Money card had no rollover | A $2.7m queue rendered `$2702k` |
 | 6 | Abort message named `_review_log.json` | The pre-migration name — both copies, so the rename fix reached neither string |
-| 7 | Aborted on two unused config keys | `me` and `tool` were injected and read by the page and then never used; only `account` is |
+| 6b | Aborted on two unused config keys | The other face of defect 1: `me` and `tool` were injected and read by the page and then never used; only `account` is |
 
 **The drift check that came out of it.** `plugins/_shared/` now holds the canonical copy of
 nine blocks, fenced in both plugins by name-matched markers, with `scripts/shared_blocks.py`
@@ -378,6 +378,95 @@ adding its enforcement is the exact mistake this session spent two commits clean
 fail together cannot detect that failure.* Same family as the connector-lag rule (verify the
 record, not the queue, because the queue lags with it) and the CCO wrong-id case (a 200-empty
 looks like no-instance). Any freshness check needs one input that cannot go stale.
+
+---
+
+## The actioned bin never worked in either plugin
+
+2026-08-24, found by a documentation sweep rather than a run — which is the point worth
+keeping, since neither plugin would ever have reported it.
+
+Both skills' carry-forward rules said: *"no longer in the queue → keep the entry for one
+run so the dashboard can show it in the actioned bin, then drop it."* Neither bin could
+render.
+
+**NetSuite's was collateral from the same day.** Its bin was fed by the `gone` state of
+the dead `live` machinery, removed earlier that day as unreachable — and the instruction
+that fed it was not updated with it. Self-inflicted drift, caught within hours only
+because the sweep went looking.
+
+**Procore's has never worked, and the guard that blocks it is one I added.** Its template
+still filters `bin` on `verdict === "gone"`, but `gone` is not in Step 6's vocabulary and
+the publish script's `VERDICTS` allowlist would abort on it. So the bin has never rendered
+in any run, and could not without a fourth verdict nobody defined.
+
+The harm was mild and real either way: a departed item lingered as an apparently-pending
+row for one extra run, inflating the queue count. Execute would have skipped it — it
+re-verifies before every click — so this could never have caused a wrong click, only a
+wrong number. Both rules now say drop it.
+
+**Procore's dead bin markup, CSS and filter are deliberately still there**, pending a
+decision on whether to finish the feature (add a `gone` verdict) or delete it as NetSuite's
+was. Recorded rather than resolved, because "delete a UI feature" is a product call and
+this was a docs pass.
+
+**The general lesson, and it is about method not code:** removing dead code leaves live
+prose pointing at it, and nothing in the build catches that — `validate.py` checks that
+docs mention every *plugin*, never that they describe behaviour the code still has. Both
+of these were found by reading the docs against the code on purpose. That is not a check
+anyone has automated, and it is not obvious that it can be.
+
+---
+
+## Directions considered and not taken
+
+2026-08-24, from the question of how the catalog should serve someone who is not a
+financial analyst. Kept only so they are not re-proposed from scratch. The full
+pre-decision write-up that used to sit in `proposals/` was **deleted rather than marked
+superseded**: most of it restated `CLAUDE.md` back at itself, which is a drift source,
+and the rest argued for a path that was declined.
+
+**Persona plugins, plus a concierge plugin to route people to them — declined.** The work
+went into modularity *inside* the two existing plugins instead. Nothing about the
+prerequisite test changed, so a genuinely new prerequisite (M365/Teams) is still a new
+plugin named for the prerequisite rather than for its first task.
+
+**A skill that interviews the user and then *generates* a bespoke skill — declined, and
+this is the one whose reasoning is worth keeping.** The interview and connector-probe
+halves are both solvable today. The generation half is the wrong bet here for reasons
+that are structural rather than technical:
+
+- A generated skill starts at zero on everything these notes paid for — three-state
+  reads, verify-the-record-not-the-queue, the output-filter redactions — and re-earns
+  each lesson in production, on systems where the failure mode is a silent wrong
+  approval.
+- It forks the distribution model. Push-to-`main`-is-the-release works because everyone
+  runs the same artifact. A per-user generated skill has no shared version, receives no
+  fixes, and is invisible to `validate.py`. The Step 5 PO fix reached every installed
+  copy in one push; it would have reached zero generated ones.
+- It inverts the house safety convention. *"Neither plugin acts on its own judgement"* is
+  load-bearing, and a skill that designed itself is judgment all the way down, with no
+  reviewable text a maintainer ever vetted.
+
+**Never fork a skill per persona.** If a second persona ever needs different *checks* over
+the same queue, that is a config-selectable review lens inside the one skill, not a
+second copy to drift.
+
+**What is actually true about a non-finance user today**, and worth knowing before anyone
+designs for one: the plumbing already serves them and the judgment does not. Both queues
+are scoped by the system of record itself — Procore's endpoint and permission gate by the
+signed-in session, NetSuite's by `next_approver` — so a supply-chain teammate installing
+either plugin today would see *their own* queue. But every check encodes a financial
+analyst's questions (the G702 identities, contract math, the PO cross-check), while
+receipt-against-PO quantities, delivery dates against need dates and lead-time slippage
+appear nowhere. They would get a correctly-scoped queue reviewed against questions that
+are not theirs.
+
+**Two questions gate any future attempt.** Whether a supply-chain teammate exists who
+will sit for an interview and let one run be watched — nothing here should be designed
+from imagination, by this repo's own standard. And whether a NetSuite-only supply-chain
+skill would be split out of the NetSuite bucket by the audience rule, or given to
+everyone.
 
 ---
 

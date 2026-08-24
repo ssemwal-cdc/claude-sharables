@@ -1177,9 +1177,18 @@ Facts it carries that are not obvious from the skills:
   opener, which was the wrong scope: the claim is true of the *whole* document, and
   someone deciding whether to start today has not reached step 4 yet.
   **Three things about the fix are load-bearing.**
-  - **The chips carry the whole span, not the setup half** — `~45 min end to end` and
-    `mostly waiting`. Two chips reading `~25 min to set up` / `then a 15-20 min first
-    run` invite adding the halves and reading the total as booked time.
+  - **The header carries no chips at all now** (2026-08-24, after two rounds of them).
+    They went from `~25 min to set up` / `then a 15-20 min first run` — which invited
+    adding the halves and reading the total as booked time — to a three-chip row, and
+    then out entirely. Nothing was lost with them: `~45 min` and `mostly waiting` were
+    already the paragraph's own words, and the break chip became *"take a break after
+    step 3"* in the lead sentence, which names a step a reader can act on where
+    `halfway` did not. **Both facts now live in that one sentence and nowhere else**, so
+    they get an assertion each rather than one a half-edit could satisfy; the placement
+    guard was re-anchored to the element (the `<p>` after `#before`) rather than to a
+    phrase, since the phrase is the part that keeps getting rewritten. **The `.chip` class stays** — the step 1 and step 2 headings use it — so
+    the test asserts `header .chip` is empty rather than the class being unused. The
+    `.meta` rule went with the row, since that row was its only user.
   - **"On a second screen" was cut as a phrase while the meaning was kept.** In a sheet
     whose second section is a prerequisites list, it reads as a *hardware requirement*
     — "do I need two monitors?" — which is the exact opposite of the reassurance
@@ -1191,9 +1200,44 @@ Facts it carries that are not obvious from the skills:
     deliberately *not* inside a `<details>` — a reassurance nobody opens is not a
     reassurance. A test pins both, mutation-checked by folding the line away.
 
-  Step 4 keeps a warning of its own but no longer repeats the posture: the timeout is
-  the one fact true of that step and not of the others, and "not your full attention"
-  must not be read as "walk away for an hour".
+  **The first wording of it over-corrected, and that was caught the same day.** *"None
+  of this needs your full attention"* invites starting it and leaving, and the run
+  cannot survive that — it stops to ask permission and waits for an answer. The line
+  now leads with **the two facts a reader decides from — how long, and where they can
+  stop** — and the posture follows as explanation rather than as the headline:
+
+  > **About 45 minutes, with a good place to stop after step 3.** Stay around for the
+  > whole thing — it pauses to ask permission and won't go on without you. But most of
+  > that time is a download, an install and a restart, so a glance every few minutes is
+  > enough.
+
+  Three sentences, one job each: how long, you have to be here, but lightly. *"Won't go
+  on without you"* replaced *"can't run unattended"* deliberately — it states the
+  consequence rather than issuing a rule, and the consequence is what makes someone
+  stay. Both directions are load-bearing and dropping either produces a wrong sheet, so
+  a test asserts the presence claim survives, mutation-checked by deleting it.
+
+  **It then had to be cut in half, because the paragraph outgrew the list it
+  introduces** — 76 words against 48 for all three prerequisites. Two of its four
+  sentences were third copies: the halfway break is already a chip *and* a marker at
+  step 3, and "mostly waiting" is already a chip. What a paragraph like this owes the
+  reader is the part no chip can carry — *why* you can't walk off — so the enumeration
+  went, the break sentence went, and the constraint stayed. 41 words. The general rule
+  worth keeping: when a fact earns a chip or a marker, delete it from the prose rather
+  than leaving the prose as the authority.
+
+  **The break is marked at the end of step 3, and where it sits is the whole point.**
+  It existed before as a clause *inside* step 4 — so the only reader who could find it
+  had already started the step it lets them defer. It is now a `.note` after step 3's
+  *Done when*, and a third chip (`break point halfway`) puts it on the decide-from
+  surface, because "do I need a free 45 minutes" is the biggest single objection to
+  starting today. Reuses the existing `.note` class rather than adding one: this sheet
+  had just been through a brevity pass and a bespoke class for one element is exactly
+  the accretion that pass was removing. A test pins that the marker is between step 3
+  and step 4 and outside any `<details>`.
+
+  Step 4 keeps a warning of its own but no longer repeats either point: the timeout is
+  the one fact true of that step and not of the others.
 
 **The marketplace name is not the repo name.**
 Repo is `ssemwal-cdc/claude-sharables`; marketplace is `compass-claude-plugins`

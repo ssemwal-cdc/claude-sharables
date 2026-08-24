@@ -37,7 +37,6 @@ body{
 header{display:flex; flex-direction:column; gap:10px; padding-bottom:26px; border-bottom:2px solid var(--ink)}
 h1{margin:0; font-size:clamp(28px,5vw,40px); line-height:1.08; letter-spacing:-.025em; font-weight:700; text-wrap:balance}
 .sub{margin:0; color:var(--muted); max-width:62ch}
-.meta{display:flex; flex-wrap:wrap; gap:8px; margin-top:4px}
 .chip{
   font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; font-weight:650;
   padding:4px 9px; border-radius:3px; background:var(--surface-2); color:var(--muted); border:1px solid var(--line);
@@ -186,15 +185,11 @@ details.warn summary{color:var(--warn)}
 <header>
   <h1>Approval Plugin Setup</h1>
   <p class="sub">Two plugins that review your NetSuite and Procore approval queues, check the figures against the attached support, and let you approve or reject from one dashboard.</p>
-  <div class="meta">
-    <span class="chip">~45 min end to end</span>
-    <span class="chip">mostly waiting</span>
-  </div>
 </header>
 
 <section>
   <h2 id="before">Before you start</h2>
-  <p><strong>None of this needs your full attention.</strong> Most of the 45 minutes is a download, an install, a restart, and a run that pauses and waits for you — so put it on whichever screen you're not using and glance over now and then.</p>
+  <p><strong>About 45 minutes, with a good place to stop after step 3.</strong> Stay around for the whole thing — it pauses to ask permission and won't go on without you. But most of that time is a download, an install and a restart, so a glance every few minutes is enough.</p>
   <ul class="tight">
     <li>The <strong>Claude desktop app</strong>, signed in with your Compass account.</li>
     <li><strong>Google Chrome</strong>, plus a <strong>Claude browser extension</strong> you'll install in step 1. Having used Claude in a Chrome tab is not the same thing.</li>
@@ -260,11 +255,12 @@ details.warn summary{color:var(--warn)}
     <li><strong>Install</strong> the ones you need — <code>netsuite-approval-review</code>, <code>procore-open-items-review</code>, or both.</li>
   </ol>
   <div class="done"><b>Done when</b><span>Your plugins appear in the installed list. Not showing up in a new chat? <strong>Restart your computer.</strong> Still nothing after that means the marketplace didn't add — remove it and add it again, checking auto sync is ticked.</span></div>
+  <div class="note"><strong>Good place to stop.</strong> Setup is done and saved — your plugins stay installed. Pick step 4 up whenever you have 15–20 minutes; it's the one stretch that doesn't resume partway.</div>
 </section>
 
 <section>
   <div class="step-head"><span class="num">4</span><h2 id="step4">First run</h2></div>
-  <p><strong>Budget 15–20 minutes for this step, and don't leave it for hours.</strong> It pauses to ask permission and waits, so leave it running and glance over every few minutes — but a timeout means starting this step over. Everything before this is saved, so stopping here costs nothing and this is the step to come back to.</p>
+  <p><strong>Budget 15–20 minutes for this step, and don't leave it for hours.</strong> It pauses to ask permission and waits, so stay nearby and glance over every few minutes — a timeout means starting this step over.</p>
   <ol class="tight">
     <li>Create a <strong>new chat</strong>. <strong>Keep it open</strong> — step 5 continues in it.</li>
     <li>Switch the toggle below the prompt box from Chat to <strong>Cowork</strong>.</li>

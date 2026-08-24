@@ -219,6 +219,53 @@ def check_template_versions():
     return problems
 
 
+VERDICT_ALLOWLIST = re.compile(r'^VERDICTS = \((.*?)\)', re.M | re.S)
+VERDICT_TEST = re.compile(r'verdict\s*===?\s*"([a-z]+)"')
+
+
+def check_verdict_vocabulary():
+    """A template may only test verdicts its own publish script can emit.
+
+    Found 2026-08-24 by reading docs against code: Procore's template filtered an "actioned
+    bin" on `verdict === "gone"`, which Step 6 never defines and the publish script's VERDICTS
+    allowlist would abort on - so the bin had never rendered in any run, and the skill's
+    carry-forward rule was retaining items for a UI that could not exist. NetSuite's
+    equivalent was dead for a different reason (a never-assigned live-queue variable).
+
+    Both were invisible to every gate: nothing checked that the page's branches were reachable.
+    This is that check. It is deliberately narrow - one string compared against one allowlist,
+    in the same skill folder - because that is the part a machine can settle.
+    """
+    problems = []
+    for entry in sorted(os.listdir(PLUGINS)):
+        if entry.startswith("_"):
+            continue
+        skills = os.path.join(PLUGINS, entry, "skills")
+        if not os.path.isdir(skills):
+            continue
+        for skill in sorted(os.listdir(skills)):
+            assets = os.path.join(skills, skill, "assets")
+            script = os.path.join(assets, "publish_dashboard.py")
+            tpl = os.path.join(assets, "dashboard_template.html")
+            if not (os.path.isfile(script) and os.path.isfile(tpl)):
+                continue
+            with open(script, encoding="utf-8") as fh:
+                m = VERDICT_ALLOWLIST.search(fh.read())
+            if not m:
+                continue
+            allowed = set(re.findall(r'"([a-z]+)"', m.group(1)))
+            with open(tpl, encoding="utf-8") as fh:
+                tested = set(VERDICT_TEST.findall(fh.read()))
+            for bad in sorted(tested - allowed):
+                problems.append(
+                    "%s/%s: dashboard_template.html branches on verdict %r, which "
+                    "publish_dashboard.py's VERDICTS allowlist (%s) can never emit - that "
+                    "branch is unreachable. Either add the verdict to the allowlist and to "
+                    "SKILL.md's Step 6 vocabulary, or delete the branch."
+                    % (entry, skill, bad, ", ".join(sorted(allowed))))
+    return problems
+
+
 def orphan_canonicals(seen):
     if not os.path.isdir(SHARED):
         return []
@@ -236,6 +283,7 @@ def main():
     pin_problems, pins = check_pins()
     problems += pin_problems
     problems += check_template_versions()
+    problems += check_verdict_vocabulary()
     if sync:
         for s in synced:
             print("synced " + s)

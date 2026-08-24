@@ -16,6 +16,58 @@ it as established.
 `python3 scripts/test_skill_code.py` covers the logic against mocks. It cannot
 cover any of this, because all of it is about the real systems.
 
+---
+
+## Open decisions, and what was deliberately deferred
+
+Written 2026-08-24 at the end of the modularity work, because the reasoning behind these
+lived in one conversation and would otherwise be lost. **None of this is a commitment.**
+It is a record of what was considered, decided against *for now*, and why — so the next
+session neither re-derives it nor treats it as a mandate.
+
+### Decisions waiting on a person
+
+1. **Extending shared-block coverage.** Cheap and mechanical for anything byte-identical. The
+   named blockers are not laziness: most remaining `SKILL.md` duplication is *near*-identical,
+   differing only by the plugin's own name and workspace folder, and closing that would mean
+   designing those names out of the prose. Same for blocks differing by one token
+   (`ns_marks_v1` vs `pc_marks_v1`, the two log filenames).
+
+### Work considered and deferred, in the order it was judged worth doing
+
+- **Capability-gated, config-selectable check packs.** The answer to *"how does this serve
+  someone who is not a financial analyst"* without any new plugin: each check declares the
+  capability it needs and the lens it belongs to; `config.lenses` selects; **absent config
+  means exactly today's behaviour**, which is what makes it additive. A check whose capability
+  is missing does not run and **is named as not run** — generalising the connector re-detect
+  the NetSuite skill already does well. A skipped check may never produce a `clear` verdict
+  (the existing OCR-cap rule reused). Precondition, and it is the whole risk: the judgment
+  layer is currently pure static prose with zero parameters, so *extracting* checks is
+  behaviour-neutral while *parameterising* them is not — separate phases. And the second pack
+  must not be written from imagination; see "Directions considered and not taken".
+
+- **Thin `SKILL.md` spine plus `references/` modules.** Roughly a third of each skill is dead
+  weight on any given run — NetSuite's Step 5 loads in browser mode where it cannot run, Step 8
+  loads on review-only runs. `ofci-analysis-cip` on this machine is the in-house precedent (a
+  158-line spine plus four reference files). **The non-negotiable line if it is ever done:**
+  safety and policy prose never moves, because reference files load on demand and a rule the
+  model must choose to read is the silent-degradation class this repo has spent fifty commits
+  eliminating. Step 8 is the hard case — large *and* almost entirely safety — and the only
+  defensible handling is an explicit mandatory read, not lazy loading. `test_skill_code.py`
+  reads `SKILL.md` by path with no fallback and must be re-pointed in the same commit.
+
+- **One parameterised dashboard instead of two.** Largest change, least user-visible benefit,
+  and it removes the independent verification two copies give. The drift check already solves
+  the problem that made this tempting. Revisit only if a third lens needs a dashboard.
+
+### The standing constraint behind all of it
+
+The two plugins **cannot share code at run time.** `${CLAUDE_PLUGIN_ROOT}` resolves per plugin
+and a `git-subdir` install ships only `plugins/<name>/`, so every shipped file must be complete
+on its own. Runtime sharing is not an option that exists; do not go looking for it.
+
+---
+
 ### 0. Step 5's PO cross-check was wrong, and is now fixed but unobserved
 
 **Corrected from guessed to proven, 2026-08-20** — the one item on this list that moved by
@@ -278,8 +330,8 @@ Fixed in that commit, NetSuite side unless noted:
 | 6 | Abort message named `_review_log.json` | The pre-migration name — both copies, so the rename fix reached neither string |
 | 6b | Aborted on two unused config keys | The other face of defect 1: `me` and `tool` were injected and read by the page and then never used; only `account` is |
 
-**The drift check that came out of it.** `plugins/_shared/` now holds the canonical copy of
-nine blocks, fenced in both plugins by name-matched markers, with `scripts/shared_blocks.py`
+**The drift check that came out of it.** `plugins/_shared/` holds the canonical copy of each
+shared block, fenced in both plugins by name-matched markers, with `scripts/shared_blocks.py`
 enforcing that every shipped copy matches — run by `validate.py`, so drift is a failed build.
 
 What is **established** about it, by construction and by test: adding the markers changed no
@@ -293,10 +345,11 @@ both themes, with markers embedded in their JS and Python — Procore's `index.h
 What is **not** established: nobody has yet had to use it in anger, i.e. fix a real shared bug
 by editing the canonical file mid-review.
 
-**Coverage, after the SKILL.md pass:** 13 blocks across 26 sites — 9 in the assets (90 lines)
-and 4 in the two `SKILL.md` files (34 lines) — plus a cdnjs version-pin check that needs no
-registration. Mutation-tested at every step, including a one-sided pdf.js bump and a reworded
-Step 0 paragraph.
+**Coverage was 13 blocks across 26 sites on 2026-08-24** — 9 in the assets (90 lines) and 4 in
+the two `SKILL.md` files (34 lines) — plus a cdnjs version-pin check that needs no registration.
+Mutation-tested at every step, including a one-sided pdf.js bump and a reworded Step 0 paragraph.
+**Do not trust that figure once it is old**; `python3 scripts/shared_blocks.py --check` prints the
+live count, which is the only number that cannot be stale.
 
 **And the honest limit, which is the finding worth keeping from that pass.** The `SKILL.md`
 duplication is mostly *near*-identical rather than identical: the same paragraph with the
@@ -405,16 +458,25 @@ row for one extra run, inflating the queue count. Execute would have skipped it 
 re-verifies before every click — so this could never have caused a wrong click, only a
 wrong number. Both rules now say drop it.
 
-**Procore's dead bin markup, CSS and filter are deliberately still there**, pending a
-decision on whether to finish the feature (add a `gone` verdict) or delete it as NetSuite's
-was. Recorded rather than resolved, because "delete a UI feature" is a product call and
-this was a docs pass.
+**Both bins are now gone.** Procore's markup, CSS and filter were removed once it was
+mechanically confirmed that no run could reach them — it had never rendered in any run and
+finishing it would have meant inventing a fifth verdict nobody had asked for.
 
-**The general lesson, and it is about method not code:** removing dead code leaves live
-prose pointing at it, and nothing in the build catches that — `validate.py` checks that
-docs mention every *plugin*, never that they describe behaviour the code still has. Both
-of these were found by reading the docs against the code on purpose. That is not a check
-anyone has automated, and it is not obvious that it can be.
+**And this part of it turned out to be automatable after all**, which the first version of
+this note said was "not obvious that it can be". `check_verdict_vocabulary()` in
+`shared_blocks.py` asserts that every verdict a template branches on is one its own publish
+script can emit. It reproduces the Procore bin exactly, and it is mutation-tested — the
+first attempt at that test passed silently because the injecting `sed` had not applied, so
+the check looked verified when nothing had been checked. Re-run properly, it fires with the
+file, the verdict and the allowlist named. **A check that passes because the mutation never
+landed is worse than no check**, because it also certifies itself.
+
+**What is still not automated, and is the honest residue:** removing dead code leaves live
+*prose* pointing at it, and nothing catches that. `validate.py` checks that docs mention
+every *plugin*, never that they describe behaviour the code still has. The NetSuite
+instruction that survived its own bin's deletion by a few hours was found by reading the
+docs against the code deliberately. The verdict check covers one narrow, machine-settleable
+slice of that; the rest is still a person reading.
 
 ---
 

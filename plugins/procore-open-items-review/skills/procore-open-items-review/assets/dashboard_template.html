@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Procore open items queue</title>
-<!-- layout template v4 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v5 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -76,7 +76,6 @@ a:hover{text-decoration:underline}
 .note{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
 .banner{border-radius:var(--r2);padding:12px 15px;margin-bottom:14px;font-size:13.5px}
 .empty{text-align:center;padding:42px 20px;color:var(--ink2);font-size:14px;background:var(--card);border:1px dashed var(--ctl);border-radius:var(--r2)}
-.binrow{background:var(--sunk);border-radius:10px;padding:11px 14px;margin-top:8px;display:flex;gap:10px;align-items:center;color:var(--ink3);font-size:13.5px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .tog{cursor:pointer;user-select:none}
 .seclead{font-size:12.5px;color:var(--ink3);margin:4px 0 10px}
@@ -165,7 +164,6 @@ document.addEventListener("DOMContentLoaded",function(){
 </div>
 <div id="ungatedwrap"></div>
 <div id="skipwrap"></div>
-<div id="binwrap"></div>
 
 <div class="freshbox" style="margin-top:24px">
   <div class="freshtext">Verdicts are written by the procore-open-items-review skill. Procore has no MCP connector, so this page cannot re-query the queue by itself — a re-check runs the review again through the browser and republishes this page.</div>
@@ -355,7 +353,6 @@ function render(){
   var ready=all.filter(function(i){return i.verdict==="clear"||i.verdict==="flagged"});
   var ungated=all.filter(function(i){return i.verdict==="ungated"});
   var skipped=all.filter(function(i){return i.verdict==="skipped"});
-  var bin=REVIEW.items.filter(function(i){return i.verdict==="gone"});
 
   var clear=ready.filter(function(i){return i.verdict==="clear"}).length;
   var flagged=ready.filter(function(i){return i.verdict==="flagged"}).length;
@@ -424,11 +421,6 @@ function render(){
       '<p class="seclead">Not approved, not rejected. These sit on your gate step with no cost value, no attachment, or both. Rejecting sends them back for the cost information the step asks for.'+
       (showSkipped?'':' <a href="#" onclick="toggleSkipped();return false">Show them</a>')+'</p>'+
       (showSkipped ? vSkipped.map(function(i){return itemRow(i)}).join("") : "")
-    : "";
-
-  document.getElementById("binwrap").innerHTML = bin.length
-    ? '<h2>Actioned since the last review ('+bin.length+')</h2>'+bin.map(function(i){
-        return '<div class="binrow"><span style="flex:1;min-width:0">'+esc(i.type)+' · '+esc(i.doc)+'</span><span>'+money(i.amt)+'</span></div>'}).join("")
     : "";
 }
 function cd(l,v,col){return '<div class="card"><div class="l">'+l+'</div><div class="v"'+(col?' style="color:'+col+'"':'')+'>'+v+'</div></div>'}

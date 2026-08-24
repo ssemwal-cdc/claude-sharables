@@ -202,6 +202,11 @@ usefully, **the standing list of what has not actually been observed yet.** A
 good deal of recent work is mock-verified and shipped but has never been watched
 running on real data. Read it before citing anything recent as established.
 
+It also carries **Open decisions, and what was deliberately deferred** — the
+decisions waiting on a person, and the work considered and put off with the
+reasoning attached. Read that before proposing a direction; several obvious-looking
+ones have already been weighed and declined, and it says why.
+
 **`scripts/shared_blocks.py`** holds the cross-plugin drift check described under
 [Shared blocks](#shared-blocks-edit-pluginsshared-then-sync). `validate.py` runs it, so
 it is a build gate rather than a habit.
@@ -297,6 +302,15 @@ loads pdf.js in the record tab, where the `media.nl` fetch needs the session coo
 while Procore loads it in an S3 scratch tab. The surrounding text differs for real
 reasons; only the version may not. A one-sided bump is the drift worth catching, and it
 needs no registration — any new cdnjs library is covered the moment it appears.
+
+**One more check rides in the same file, and it is not about sharing.**
+`check_verdict_vocabulary()` asserts that every verdict a `dashboard_template.html` branches
+on is one its own `publish_dashboard.py` can emit. It exists because Procore carried an
+"actioned bin" filtered on `verdict === "gone"` — absent from Step 6's vocabulary and
+rejected by the `VERDICTS` allowlist — so the branch was unreachable and had never rendered
+in any run, while the skill's carry-forward rule retained items to feed it. Nothing else
+checks that a page's branches are reachable. If a new verdict is ever added, it goes in
+three places together: the allowlist, Step 6's vocabulary, and the template.
 
 **What is deliberately *not* shared:** anything genuinely per-domain — NetSuite's
 type/vendor filter axes against Procore's campus/building/type, the `M/D/YYYY` vs ISO

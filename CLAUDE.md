@@ -1026,6 +1026,33 @@ Facts it carries that are not obvious from the skills:
 - **`/plugin` and `claude plugin` are different things.** The first is typed in a
   chat, the second in a terminal. A sheet that says "terminal" and then shows
   `/plugin` is wrong, and `README.md` used to make exactly that mistake.
+- **The sheet carries no terminal commands at all now, and that is the resolution
+  of the note above rather than a stylistic trim.** Removed 2026-08-24: `claude
+  plugin ...` drives the **CLI**, which is a separate install from the desktop app
+  the sheet is walking someone through. So a teammate who followed those commands
+  was updating something they are not running, and the sheet's own instructions
+  had no way to say so. Three things went with them, and the third is the one worth
+  noticing: step 3's "doing it in the terminal instead", the forcing-an-update block
+  under *Keeping it updated*, and **two of the four rows in the confusion table** —
+  the missing-`@compass-claude-plugins` error and the marketplace-updated-but-nothing-
+  changed one — because both are errors that can only be produced by a terminal
+  command. A troubleshooting row for an error the reader can no longer reach is
+  worse than nothing; the table is titled "Two things" now. What replaced the
+  forcing block is *restart the computer*, with no chat-command substitute, because
+  no `/plugin update` form is verified anywhere in these notes and asserting one
+  would be exactly the kind of guess the rest of this file exists to prevent.
+  **The maintainer-facing CLI guidance in this file and in `README.md` stays** — the
+  maintainer does work in a terminal. Do not "restore consistency" by putting the
+  commands back in `docs/onboarding.html`.
+- **The first-run time is elapsed time on a second screen, and the sheet now says
+  which.** Also 2026-08-24. "15-20 minutes" read as twenty minutes of sitting and
+  watching, which is a much bigger ask than the thing actually is and is the sort of
+  number that makes someone defer the step to a day that never comes. The run pauses
+  for permission and waits, so what it needs is a glance every few minutes. Both the
+  header chip and the step 4 opener say it, deliberately: the chip is what someone
+  decides from before they start, the opener is what they read once committed. The
+  timeout warning stays beside it, because "not your full attention" must not be read
+  as "walk away for an hour".
 
 **The marketplace name is not the repo name.**
 Repo is `ssemwal-cdc/claude-sharables`; marketplace is `compass-claude-plugins`

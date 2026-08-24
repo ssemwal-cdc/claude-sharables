@@ -194,7 +194,7 @@ details.warn summary{color:var(--warn)}
   <p class="sub">Two plugins that review your NetSuite and Procore approval queues, check the figures against the attached support, and let you approve or reject from one dashboard.</p>
   <div class="meta">
     <span class="chip">~25 min to set up</span>
-    <span class="chip">then a 15–20 min first run</span>
+    <span class="chip">then a 15–20 min first run on a second screen</span>
   </div>
 </header>
 
@@ -265,18 +265,11 @@ details.warn summary{color:var(--warn)}
     <li><strong>Install</strong> the ones you need — <code>netsuite-approval-review</code>, <code>procore-open-items-review</code>, or both.</li>
   </ol>
   <div class="done"><b>Done when</b><span>Your plugins appear in the installed list. Not showing up in a new chat? <strong>Restart your computer.</strong> Still nothing after that means the marketplace didn't add — remove it and add it again, checking auto sync is ticked.</span></div>
-  <details>
-    <summary>Doing it in the terminal instead</summary>
-    <pre>claude plugin marketplace add ssemwal-cdc/claude-sharables
-claude plugin install netsuite-approval-review@compass-claude-plugins
-claude plugin install procore-open-items-review@compass-claude-plugins</pre>
-    <p class="muted">In a Claude chat the same commands work as <code>/plugin …</code>. If a chat says <code>Run /reload-plugins to activate</code>, run that there.</p>
-  </details>
 </section>
 
 <section>
   <div class="step-head"><span class="num">4</span><h2 id="step4">First run</h2></div>
-  <p><strong>Budget 15–20 minutes, and don't start without them.</strong> Everything so far is saved, so stopping here costs nothing and this is the step to come back to. It pauses to ask permission and waits, so check back every few minutes — but if it times out you start this step over.</p>
+  <p><strong>Budget 15–20 minutes of elapsed time — on a second screen, not your full attention.</strong> It pauses to ask permission and waits, so leave it running and glance over every few minutes. Everything so far is saved, so stopping here costs nothing and this is the step to come back to; just don't leave it for hours, because a timeout means starting this step over.</p>
   <ol class="tight">
     <li>Create a <strong>new chat</strong>. <strong>Keep it open</strong> — step 5 continues in it.</li>
     <li>Switch the toggle below the prompt box from Chat to <strong>Cowork</strong>.</li>
@@ -465,25 +458,17 @@ fallback window retries. Report what blocked it.</pre>
     <p class="muted">These are the failures actually seen. Anything else, tell Shivam rather than working around it.</p>
   </details>
   <details>
-    <summary>Four things that will confuse you</summary>
+    <summary>Two things that will confuse you</summary>
     <div class="tbl">
       <table>
         <tr><th>What you see</th><th>What it means</th></tr>
-        <tr>
-          <td><code>Plugin "netsuite-approval-review" not found</code></td>
-          <td>You left off <code>@compass-claude-plugins</code> on the update command. It <em>is</em> installed; the bare name isn't enough.</td>
-        </tr>
-        <tr>
-          <td><code>Successfully updated marketplace</code>, but nothing changed</td>
-          <td>That refreshes the catalog only. You still need <code>plugin update</code> per plugin.</td>
-        </tr>
         <tr>
           <td>A new plugin appears in the catalog but you don't have it</td>
           <td>Auto-update only maintains plugins you already installed. New ones need installing once.</td>
         </tr>
         <tr>
           <td>The dashboard looks out of date, or shows old buttons</td>
-          <td>A dashboard is a snapshot, so updating changes nothing already on screen. Update (below), restart, then run the review again for a fresh one.</td>
+          <td>A dashboard is a snapshot, so an update changes nothing already on screen. Restart, then run the review again for a fresh one.</td>
         </tr>
       </table>
     </div>
@@ -492,16 +477,7 @@ fallback window retries. Report what blocked it.</pre>
 
 <section>
   <h2 id="updates">Keeping it updated</h2>
-  <p><strong>With auto sync on, there's nothing to run.</strong> Fixes apply on your next restart, so you have them the following morning.</p>
-  <details>
-    <summary>Forcing an update now</summary>
-    <p class="muted">Only if you need a fix immediately, or auto sync got switched off.</p>
-    <p>Press <strong>Win + R</strong>, type <code>cmd</code>, hit <strong>Enter</strong>. (On a Mac, open <strong>Terminal</strong>.) Paste these one at a time:</p>
-    <pre>claude plugin marketplace update compass-claude-plugins
-claude plugin update netsuite-approval-review@compass-claude-plugins
-claude plugin update procore-open-items-review@compass-claude-plugins</pre>
-    <p class="muted">Then restart your computer.</p>
-  </details>
+  <p><strong>Nothing to run.</strong> With auto sync on, fixes reach you on their own and apply the next time you restart your computer — so in practice you have them the following morning. Need one sooner? Restart now. Still missing after that, tell Shivam.</p>
   <details>
     <summary>What it will never do</summary>
     <ul class="tight">

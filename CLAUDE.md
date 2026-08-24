@@ -1078,9 +1078,26 @@ Facts it carries that are not obvious from the skills:
     deliberately *not* inside a `<details>` — a reassurance nobody opens is not a
     reassurance. A test pins both, mutation-checked by folding the line away.
 
-  Step 4 keeps a warning of its own but no longer repeats the posture: the timeout is
-  the one fact true of that step and not of the others, and "not your full attention"
-  must not be read as "walk away for an hour".
+  **The first wording of it over-corrected, and that was caught the same day.** *"None
+  of this needs your full attention"* invites starting it and leaving, and the run
+  cannot survive that — it stops to ask permission and waits for an answer. The line
+  now leads with the constraint (*"You need to be around for all of it, but not glued
+  to it"*) and earns the reassurance afterwards, and a test asserts the page still says
+  you have to be there, mutation-checked by swinging it back. Both halves are load-
+  bearing in opposite directions: dropping either produces a wrong sheet.
+
+  **The break is marked at the end of step 3, and where it sits is the whole point.**
+  It existed before as a clause *inside* step 4 — so the only reader who could find it
+  had already started the step it lets them defer. It is now a `.note` after step 3's
+  *Done when*, and a third chip (`break point halfway`) puts it on the decide-from
+  surface, because "do I need a free 45 minutes" is the biggest single objection to
+  starting today. Reuses the existing `.note` class rather than adding one: this sheet
+  had just been through a brevity pass and a bespoke class for one element is exactly
+  the accretion that pass was removing. A test pins that the marker is between step 3
+  and step 4 and outside any `<details>`.
+
+  Step 4 keeps a warning of its own but no longer repeats either point: the timeout is
+  the one fact true of that step and not of the others.
 
 **The marketplace name is not the repo name.**
 Repo is `ssemwal-cdc/claude-sharables`; marketplace is `compass-claude-plugins`

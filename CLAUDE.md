@@ -1081,10 +1081,20 @@ Facts it carries that are not obvious from the skills:
   **The first wording of it over-corrected, and that was caught the same day.** *"None
   of this needs your full attention"* invites starting it and leaving, and the run
   cannot survive that — it stops to ask permission and waits for an answer. The line
-  now leads with the constraint (*"You need to be around for all of it, but not glued
-  to it"*) and earns the reassurance afterwards, and a test asserts the page still says
-  you have to be there, mutation-checked by swinging it back. Both halves are load-
-  bearing in opposite directions: dropping either produces a wrong sheet.
+  now leads with the constraint (*"Be around for all of it, but not glued to it"*) and
+  earns the reassurance afterwards, and a test asserts the page still carries the
+  can't-run-alone clause specifically — not merely the headline sentence — mutation-
+  checked by deleting the clause. Both halves are load-bearing in opposite directions:
+  dropping either produces a wrong sheet.
+
+  **It then had to be cut in half, because the paragraph outgrew the list it
+  introduces** — 76 words against 48 for all three prerequisites. Two of its four
+  sentences were third copies: the halfway break is already a chip *and* a marker at
+  step 3, and "mostly waiting" is already a chip. What a paragraph like this owes the
+  reader is the part no chip can carry — *why* you can't walk off — so the enumeration
+  went, the break sentence went, and the constraint stayed. 41 words. The general rule
+  worth keeping: when a fact earns a chip or a marker, delete it from the prose rather
+  than leaving the prose as the authority.
 
   **The break is marked at the end of step 3, and where it sits is the whole point.**
   It existed before as a clause *inside* step 4 — so the only reader who could find it

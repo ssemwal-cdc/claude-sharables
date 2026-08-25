@@ -59,7 +59,8 @@ if "metadata" in mkt and "pluginRoot" in mkt.get("metadata", {}):
     fail(
         "marketplace.json sets metadata.pluginRoot. It does not work: sources "
         "resolve from the repo root regardless, and the install fails with "
-        "'Source path does not exist'. Spell each source out as ./plugins/<name>."
+        "'Source path does not exist'. Give each entry a git-subdir source with its own "
+        "url and a bare repo-relative path."
     )
 
 entries = mkt.get("plugins", [])
@@ -312,6 +313,7 @@ if shared_blocks is not None:
     _problems += shared_blocks.check_template_versions()
     _problems += shared_blocks.check_verdict_vocabulary()
     _problems += shared_blocks.check_execute_prompt_purity()
+    _problems += shared_blocks.check_onboarding_page()
     for _p in _problems:
         fail("[shared] " + _p.replace("\n", " ").replace("      ", " "))
     if not _problems:

@@ -1,6 +1,6 @@
     # Keep a short rolling archive of what was actually rendered. Two uses: diff a bad render
     # against the last good one to see what changed, and re-render from disk without re-running
-    # the whole review, which costs connector queries and attachment downloads.
+    # the whole review, which costs a fresh queue read and re-reading every attachment.
     #
     # Seven weekday slots, overwritten in place, rather than dated files. The workspace folder is
     # usually cloud-synced, where creating and overwriting work but deleting is typically blocked,

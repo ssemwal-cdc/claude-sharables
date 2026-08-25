@@ -294,8 +294,19 @@ details.warn summary{color:var(--warn)}
 <section>
   <div class="step-head"><span class="num">5</span><h2 id="step5">Run it on a schedule</h2></div>
   <p><strong>In that same chat from step 4</strong>, hit <strong>Copy</strong> on the block for the plugin you set up, then paste it in as one message. You don't need to read it.</p>
-  <p>Claude asks about timing, then gives you an <strong>Add to schedule</strong> button. Click it. <strong>Both plugins?</strong> Do it twice — one block, add its schedule, then the other.</p>
+  <p>Claude asks about timing, then gives you an <strong>Add to schedule</strong> button. Click it. <strong>Do this once per plugin you installed</strong>, and only after you have done step 4 for that plugin — a schedule on a plugin whose first run never happened will stop to ask you setup questions with nobody watching. <strong>Both plugins?</strong> Do it twice — one block, add its schedule, then the other.</p>
   <p class="muted">A reasonable answer: first try 11am, retries 2pm and 4pm, weekdays only. Closed that chat already? Start a new Cowork chat, connect Downloads again, run the step 4 command once, then paste below.</p>
+
+  <div class="note">
+    <strong>The words in that daily headline.</strong>
+    <p style="margin-top:8px"><strong>Flagged</strong> means the numbers did not tie or the support
+    did not back them &mdash; read it before you decide anything. <strong>Skipped</strong> (Procore
+    only) means nothing was attached to review, so it has no verdict yet and no verdict has been
+    guessed for it; it is not a rejection. You may also see a row marked <strong>gate
+    unknown</strong>, which means the plugin could not establish that the item is genuinely yours to
+    answer &mdash; those rows deliberately carry no response buttons, and there is a link on them to
+    go sort that out in Procore instead.</p>
+  </div>
 
   <div class="note warn">
     <strong>It only runs while your computer is on and Chrome is open.</strong>
@@ -430,7 +441,7 @@ fallback window retries. Report what blocked it.</pre>
         <tr><th>What you see</th><th>What to do</th></tr>
         <tr>
           <td>It stopped after one item and reports a <strong>frozen tab</strong> or that a click didn't land</td>
-          <td>Nothing was approved — it stops rather than guessing, and won't click twice. The record tabs are open; click through them, or say "retry the batch".</td>
+          <td>It stops rather than guessing, and it will not click the same item twice. It reports each item it confirmed and each one it could not — read that list before doing anything. Items it could not confirm may or may not have gone through, so check those in the system rather than assuming, and never say &ldquo;retry the batch&rdquo; without looking first.</td>
         </tr>
         <tr>
           <td>It says the <strong>session expired</strong></td>

@@ -1,11 +1,11 @@
 ---
 name: procore-open-items-review
-description: v11 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
+description: v12 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
 ---
 
 # Procore Open Items Review
 
-**Skill version 11 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 12 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 
@@ -21,7 +21,7 @@ An instruction to review is never an instruction to execute. A verdict of "clear
 ## Absolute rules
 
 - **Never click Respond, Approve, Reject, Revise and Resubmit, or Edit on your own judgement.** In review mode keep clicks away from the orange Respond button at the bottom-right of the workflow side panel and the orange Edit button at the top-right of the record header.
-- **Only act on an explicit instruction that names the item.** "Approve invoice 536994-TOF" is an instruction. "Approve everything clear" is not — ask which items, specifically.
+- **Only act on an explicit instruction that names the item.** "Approve invoice INV-0002" is an instruction. "Approve everything clear" is not — ask which items, specifically.
 - **Every Procore call in review mode is a GET.** Never POST, PUT, PATCH or DELETE against the API. Responses must go through the real UI so the workflow routes and the audit trail records the user.
 - **Never hand-write or regenerate the dashboard HTML.** See Step 7.
 - **Never present, attach, or send the working files as files or file cards in chat** — the dashboard template, `publish_dashboard.py`, the review log, or the rendered `index.html`/`widget.html`. They are internal state, not deliverables, even when the platform encourages surfacing files a run produced. The dashboard widget is the only deliverable, and chat gets one headline line.
@@ -95,13 +95,18 @@ of the surface, not an error to fix. Sync down this ladder and take the first ru
    file, which ships with the plugin regardless — only the dashboard template and publish script
    can lag, so the verdicts are current even when the widget's wording is not.
 
-**This plugin ships layout template `v6`. Confirm the sync landed by reading it back:**
+   **On a first run there are no existing copies to fall back on, so rung 3 is not available.** If
+   rungs 1 and 2 both fail on a first run, say exactly that and stop before Step 7 — there is no
+   template to inject into, and inventing one is forbidden by the Absolute rules. This is the case
+   to expect on Cowork, where rung 1 is known to fail and rung 2 has never been observed.
+
+**This plugin ships layout template `v7`. Confirm the sync landed by reading it back:**
 
 ```bash
 head -n 8 "<workspace>/Procore Open Items/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
 
-If that does not say `v6`, the sync did not land and the dashboard you are about to publish is
+If that does not say `v7`, the sync did not land and the dashboard you are about to publish is
 stale. Say so once near the headline, naming both versions, and carry on — same fail-open rule as
 rung 3.
 
@@ -115,7 +120,7 @@ is the only fixed point available when the plugin directory cannot be reached at
 Then read `Procore Open Items/_procore_review_log.json`. If it already carries a `config` block, the rest of this
 step is done — go to Step 1. Otherwise, once:
 
-1. **Confirm Claude in Chrome is connected and Procore is authenticated.** Before navigating, warn the user about the site-access prompt: Claude in Chrome asks whether to allow access to a site the first time it acts on one, offering a once-only option and an always option. **Tell them to pick the always option** — once for Procore, and again for the S3 host when Step 4 first reads an attachment. On once-only they are re-prompted on effectively every action, and a run that stalls waiting for a prompt nobody is watching reads as a hang. Then navigate to the company Open Items tool. Procore login is email + Continue, then SSO with no password — `find` the email field, set it with `form_input`, click **Continue**. Anything beyond that (password, MFA, CAPTCHA) is a hand-off to the user, not a retry.
+1. **Confirm Claude in Chrome is connected and Procore is authenticated.** Before navigating, warn the user about the site-access prompt: Claude in Chrome asks whether to allow access to a site the first time it acts on one, offering a once-only option and an always option. **Tell them to pick the always option** — once for Procore, and again for the S3 host when Step 4 first reads an attachment. On once-only they are re-prompted on effectively every action, and a run that stalls waiting for a prompt nobody is watching reads as a hang. Then navigate to the company Open Items tool. **If Procore is already authenticated, do not touch the login form at all** — the teammate-facing sheet promises the plugin never logs in for you, and that promise is the correct one. The only case this covers is an email-plus-Continue screen that then hands off to SSO with no password: `find` the email field, set it with `form_input`, click **Continue**, and stop there. Anything beyond that — a password box, MFA, a CAPTCHA — is a hand-off to the user, never a retry. NetSuite's skill has no login procedure at all and does not need one; this is the single asymmetry between the two plugins on authentication.
 
 2. **Find the company id.** It is in the Open Items URL: `https://app.procore.com/webclients/host/companies/<company>/tools/opentasks`.
 
@@ -128,14 +133,14 @@ step is done — go to Step 1. Otherwise, once:
    ```json
    {
      "config": {
-       "company": "2866",
-       "companyName": "Compass Datacenters",
-       "icrToolId": "416015",
+       "company": "<your company id>",
+       "companyName": "<your company name>",
+       "icrToolId": "<the change-risk tool id>",
        "icrSubtype": "Internal Change Risk (88)",
        "costFields": {
-         "vendorProposed": "custom_field_499681",
-         "compassAccepted": "custom_field_499682",
-         "changeReason": "custom_field_446020"
+         "vendorProposed": "custom_field_<id>",
+         "compassAccepted": "custom_field_<id>",
+         "changeReason": "custom_field_<id>"
        }
      },
      "items": {},
@@ -384,6 +389,11 @@ const kind = window.__sniff(b);
 if (kind === 'pdf') {
   // new Uint8Array is REQUIRED - a raw ArrayBuffer throws InvalidPDFException on valid bytes
   const d = await window.__pj.getDocument({data:new Uint8Array(b)}).promise;
+  // Flattening the page with join(' ') is deliberate HERE and must not be ported to NetSuite, which
+  // rebuilds rows from pdf.js geometry instead. The difference is what the text is for: every figure
+  // Procore checks comes from the API, and the PDF is only searched for those figures verbatim, so
+  // column alignment carries no information. NetSuite reads its figures OUT of the PDF, where losing
+  // the columns destroys the quantity x rate and line-tie checks.
   let t=''; for(let i=1;i<=d.numPages;i++){const p=await d.getPage(i);const c=await p.getTextContent();t+=' '+c.items.map(z=>z.str).join(' ');}
   // a PDF that parsed but yielded almost nothing is the ONLY thing that means "scanned"
   return {state: t.trim().length > 40 ? 'text' : 'scanned', text: t};
@@ -540,20 +550,20 @@ Maintain `Procore Open Items/_procore_review_log.json`:
   "suppressed": 41,
   "items": {
     "<item_type>:<item_id>": {
-      "itemId": "17074361", "projectId": "2992760", "commitmentId": "15453968",
+      "itemId": "<item id>", "projectId": "<project id>", "commitmentId": "<commitment id>",
       "wfId": "CCOs only - the commitment change order id, from line_items[].holder.id; omit for ICRs and invoices",
-      "kind": "inv", "type": "Invoice", "docNo": "#2 · 536994-TOF (PR-02)",
-      "project": "ORD I - Building 1", "counterparty": "Power Construction Company, LLC.",
-      "amount": 891991, "dueDate": "2026-08-02", "step": "FA Review",
+      "kind": "inv", "type": "Invoice", "docNo": "#2 · INV-0002 (PR-02)",
+      "project": "Campus A - Building 1", "counterparty": "Example Contractor LLC",
+      "amount": 500000, "dueDate": "2026-08-02", "step": "FA Review",
       "responses": ["Approve", "Revise and Resubmit"],
       "verdict": "clear|flagged|skipped|ungated",
       "reviewedOn": "2026-08-11", "lastSeenPending": "2026-08-11",
       "head": "one line, the verdict in plain terms",
       "facts": ["two or three skim lines carrying the specific figures"],
-      "context": "Commitment 15453968 · 6.08% complete · balance to finish $18,973,785.18",
+      "context": "Commitment <id> · 6.08% complete · balance to finish $9,400,000.00",
       "warning": "optional — the thing worth knowing that is not a finding",
       "detail": "the full paragraph of reasoning",
-      "attachments": ["D260001 TOF B1 Draw-002 July-2026 Final.pdf"]
+      "attachments": ["Draw-002 July-2026 Final.pdf"]
     }
   },
   "actions": [
@@ -646,7 +656,8 @@ or a colour, suspect this before suspecting the template.
 The script writes `index.html` beside the state file and keeps the last seven renders in
 `renders/<weekday>.html`. Both matter when a render goes wrong: diff today against the last good
 one to see what actually changed, and **re-render from `index.html` rather than re-running the
-review** — the review costs connector queries and attachment downloads, the render costs nothing.
+review** — the review costs a queue fetch, a gate fan-out and an in-page attachment read, the
+render costs nothing.
 Do not write a cleanup step for `renders/`; the folder is usually cloud-synced, where deleting is
 typically blocked, which is why the slots are overwritten in place rather than accumulated.
 

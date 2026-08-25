@@ -16,6 +16,11 @@ it as established.
 `python3 scripts/test_skill_code.py` covers the logic against mocks. It cannot
 cover any of this, because all of it is about the real systems.
 
+**The nine numbered gaps are below, after the open-decisions section.** They belong to this
+heading, not to that one — a section inserted between the two on 2026-08-24 left them reading
+as deferred work under a heading that opens *"none of this is a commitment"*, which is the
+opposite of what they are.
+
 ---
 
 ## Open decisions, and what was deliberately deferred
@@ -176,7 +181,7 @@ items should be **named**, never folded into the suppressed count.
 **Reported working on real support, 2026-08-20**, by the person running the
 plugins. Real vendor workbooks are read and real images are looked at; both paths
 have now been exercised outside the mocks. This item moves out of the unverified
-list, and the claims in `docs/onboarding.html` about reading spreadsheets sheet by
+list, and the claims in the two plugin READMEs about reading spreadsheets sheet by
 sheet and looking at images rather than extracting them are therefore accurate
 rather than aspirational.
 
@@ -268,8 +273,12 @@ not where it will actually run. Both dashboards were published from fixtures and
 driven in headless Chromium: the default sort, the view-key migration for a
 returning user, the ordering itself, the `ageDays` clamp fix, the both-null
 comparator guard, light and dark, and the sticky bar's viewport position measured
-at two scroll offsets. Those are established, and a future session need not redo
-them.
+at two scroll offsets. Those were established **on 2026-08-20 fixtures that were never
+committed**, so a future session cannot re-run them and cannot audit them either — it can only
+take this paragraph's word for it. Treat them as reported rather than reproducible, and if any
+of it matters again, re-measure. The pattern across this whole corpus is worth the reminder:
+every number a command regenerates has verified correct on demand; almost every number a human
+typed into prose has since moved.
 
 **What is not established is the one thing that cannot be checked from here:
 whether `position:sticky` does anything in the widget host.** The measurement was
@@ -529,6 +538,61 @@ every string a human retyped had drifted. The corpus's defects cluster almost pe
 hand-maintained text that no command reads — which is an argument for extending mechanical checks
 into prose wherever a claim names an identifier, and for treating any un-checked string near a
 click as suspect by default.
+
+---
+
+## Working the audit list
+
+2026-08-24, immediately after the nine-agent audit. 38 items needed no decision; this is what
+happened to them and what is left.
+
+**Two answers came from the maintainer mid-pass and changed the work.** NetSuite change orders
+*should* be executable, so they now have a real bracket instead of a documented gap: their records
+carry no `approvalstatus` and no next-approver, but their approval buttons render only while the
+item is still pending **and** still assigned to the signed-in approver — so on that record type the
+buttons *are* the gate. Step 8 reads the page before the click and re-reads it after. That also
+reorders the buttons-absent diagnosis: already-actioned is now the first hypothesis for a single
+item, and the browser-role theory is reserved for when *every* item in the batch shows no buttons,
+because the old ordering would have logged a whole batch as actioned on a role mistake.
+
+And the examples are sanitised. Every live value a teammate could copy — company id, tool id, three
+custom-field ids, a named subcontractor, a project label, a commitment balance, real bill and PO
+numbers — is now a placeholder, and `README.md` no longer claims the plugins carry no customer data
+while carrying some. **Defect provenance is deliberately exempt and stays**: *"bill `2325026-07` was
+flagged as coded to `PO11120` while applied to `PO16093`"* is the evidence a documented bug was
+real, and this repo's epistemics rest on findings being traceable to a record and a date. `CLAUDE.md`
+now states that distinction instead of banning both and doing neither.
+
+**Three fixes were to things this session had itself just built**, which is the part worth
+remembering:
+
+- Procore's dashboard still filtered on `verdict !== "gone"` after the bin was removed — a filter
+  that can exclude nothing — and `prose.md` certified the filter deleted. The reachability check
+  missed it because its regex matched only `==`/`===`. Widened to `[!=]==?`, which catches the
+  inequality form.
+- `check_template_versions()` read only the first version mention per file. Procore's Step 0 stated
+  `v5` and tested for `v4` two lines below, so the check written to detect a stale workspace would
+  have called a current one stale. It compares every site now.
+- The verdict allowlist caught a wrong verdict but not a missing one.
+
+**One thing about the shared-block mechanism is now demonstrated rather than argued.** A wording fix
+belonging to `pub-render-archive` was made in `plugins/_shared/`; `--check` failed both plugins for
+being out of step, `--sync` pushed it into both, and the build went green. That is the loop working
+in anger for the first time, which `prose.md` had listed as unestablished.
+
+**Newly enforced, where a claim used to stand in for a check:** `test_skill_code.py` now runs in CI
+(it never did, while `README.md` told contributors it would); `check_onboarding_page()` checks the
+four properties `CLAUDE.md` asserted tests for and no file read; `check_execute_prompt_purity()`
+keeps procedure out of the authorising message; and an unrecognised Procore response verb now fails
+conservatively on both axes — it requires a reason **and** counts as affirmative for the no-support
+caution, where it previously answered false to both.
+
+**Not done, and why.** Committing the 2026-08-20 dashboard fixtures: the measurements behind them
+were never reproducible and the honest fix was to withdraw the *"a future session need not redo
+them"* certification rather than fabricate fixtures after the fact. The `zip`-versus-`xl/` sniff
+distinction is documented as a rule rather than implemented in the snippet, because the sniff reads
+four bytes and cannot see inside the container — SheetJS yielding no sheets is the real signal, and
+that is what the rule now says.
 
 ---
 

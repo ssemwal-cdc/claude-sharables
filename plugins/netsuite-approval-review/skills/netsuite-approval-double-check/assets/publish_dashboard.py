@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Publish the NetSuite approval queue dashboard.
 
-Reads _review_log.json, injects it into dashboard_template.html, and writes
+Reads the review log beside this script, injects it into dashboard_template.html, and writes
 index.html, whose contents are then rendered inline with show_widget.
 
 (An earlier design published this to an artifact. That path was dropped on 2026-08-11: the
@@ -159,7 +159,7 @@ def main():
     #__SHARED:pub-render-archive__
     # Keep a short rolling archive of what was actually rendered. Two uses: diff a bad render
     # against the last good one to see what changed, and re-render from disk without re-running
-    # the whole review, which costs connector queries and attachment downloads.
+    # the whole review, which costs a fresh queue read and re-reading every attachment.
     #
     # Seven weekday slots, overwritten in place, rather than dated files. The workspace folder is
     # usually cloud-synced, where creating and overwriting work but deleting is typically blocked,

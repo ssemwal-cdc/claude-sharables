@@ -96,8 +96,8 @@ than in Cowork, that case is different: declare the plugin in that repo's
 
 | Plugin | Version | What it does | Needs |
 |---|---|---|---|
-| `netsuite-approval-review` | v10 | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | Claude in Chrome, signed in to NetSuite. NetSuite MCP connector optional — adds bulk queries and the PO cross-check |
-| `procore-open-items-review` | v11 | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
+| `netsuite-approval-review` | v11 | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | Claude in Chrome, signed in to NetSuite. NetSuite MCP connector optional — adds bulk queries and the PO cross-check |
+| `procore-open-items-review` | v12 | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
 
 **Checking what you have installed:** the easiest read is **profile (bottom
 left) → Settings → Plugins → click the plugin** — the last sentence of its
@@ -118,7 +118,7 @@ If the push changes anything under a skill, bump that skill's
 the same commit. `validate.py` enforces that the two agree; the bump itself is
 the habit it cannot check for you.
 
-Teammates get it automatically **only if they have auto-update enabled on this
+Teammates get it automatically **only if auto sync is enabled on this
 marketplace.** It is off by default: Claude Code enables auto-update for
 Anthropic's own marketplaces, not for third-party ones like this. Turn it on
 once, in `/plugin` → **Marketplaces** → `compass-claude-plugins` → **Enable
@@ -192,10 +192,14 @@ The result is a teammate who silently stops receiving updates — exactly the
 failure the no-`version` rule exists to prevent. SSH remotes avoid it, but only
 while every teammate keeps a key loaded in `ssh-agent`.
 
-The tradeoff accepted in exchange: both plugins are **world-readable**. They
-describe approval gates and cost-field mappings; they carry no credentials,
-endpoints, or customer data. Keep it that way — never commit a token, a company
-id, or a real document into this repo.
+The tradeoff accepted in exchange: both plugins are **world-readable** — not
+enterprise-private, and forkable by anyone. They describe approval gates and
+cost-field mappings, and their worked examples use placeholders rather than live
+tenant ids, counterparty names or amounts. Keep it that way: never commit a token
+or a credential, and keep every example a teammate copies free of real values.
+Maintainer notes in `CLAUDE.md` and `prose.md` do cite record ids where those are
+the evidence for a documented defect — see the rule under *Repo facts* in
+`CLAUDE.md`, which spells out the distinction.
 
 <details>
 <summary>The one route that would beat public, and why it is not used</summary>

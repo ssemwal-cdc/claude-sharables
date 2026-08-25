@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Publish the Procore open items dashboard.
 
-Reads _review_log.json, injects it into dashboard_template.html, and writes
+Reads the review log beside this script, injects it into dashboard_template.html, and writes
 index.html, whose contents are then rendered inline with show_widget.
 
 (An earlier design published this to an artifact. That path was dropped on 2026-08-11: the
@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v6"
+TEMPLATE_VERSION = "v7"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -97,8 +97,9 @@ def main():
     for key, hint in (("company", "your Procore company id"),
                       ("icrToolId", "the tool_id of the change-risk custom tool")):
         if not cfg.get(key):
-            sys.exit("ABORT: config.%s missing from _review_log.json (%s). "
-                     "Run the first-time setup before publishing." % (key, hint))
+            sys.exit("ABORT: config.%s missing from %s (%s). "
+                     "Run the first-time setup before publishing."
+                     % (key, os.path.basename(LOG), hint))
 
     items, bad, ungated = [], [], []
     for key, it in (log.get("items") or {}).items():
@@ -213,7 +214,7 @@ def main():
     #__SHARED:pub-render-archive__
     # Keep a short rolling archive of what was actually rendered. Two uses: diff a bad render
     # against the last good one to see what changed, and re-render from disk without re-running
-    # the whole review, which costs connector queries and attachment downloads.
+    # the whole review, which costs a fresh queue read and re-reading every attachment.
     #
     # Seven weekday slots, overwritten in place, rather than dated files. The workspace folder is
     # usually cloud-synced, where creating and overwriting work but deleting is typically blocked,

@@ -15,6 +15,14 @@ jobs:
         with:
           python-version: '3.x'
 
-      # Enforces the layout, manifest and doc rules described in CLAUDE.md.
+      # Enforces the layout, manifest and doc rules described in CLAUDE.md, plus the
+      # cross-plugin shared-block, cdnjs-pin, template-version, verdict-reachability and
+      # execute-prompt-purity checks in scripts/shared_blocks.py.
       - name: Validate marketplace, plugins and docs
         run: python3 scripts/validate.py
+
+      # Runs the executable code the skills carry, extracted from SKILL.md itself. Was a
+      # manual gate until 2026-08-24 while README.md told contributors it ran here, so the
+      # three-state fan-out, sniff-table, CCO-demotion and renderBar assertions were habit.
+      - name: Run the skills' own code tests
+        run: python3 scripts/test_skill_code.py

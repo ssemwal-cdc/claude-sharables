@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Procore open items queue</title>
-<!-- layout template v6 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v7 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -345,11 +345,18 @@ function recUrl(it){
 // record id used for links. See Step 2 of SKILL.md.
 function wfType(it){return it.wf||(it.kind==="inv"?"Billings::Requisition":it.kind==="cco"?"CommitmentChangeOrder":"GenericToolItem")}
 function wfIdOf(it){return it.wfId||it.id}
-function isAffirmative(v){return v==="Yes"||v==="Approve"}
-function needsReason(v){return v==="Reject"||v==="Revise and Resubmit"}
+// The verbs come from each item's own workflow step (available_responses), so these two lists are
+// samples, not the vocabulary - Step 2 says never assume a fixed triplet. An UNRECOGNISED verb used
+// to answer false to both questions, which is unsafe twice over: it needed no reason, and it did not
+// count as affirmative, so the no-support caution never fired for it. Unknown now answers YES to
+// both, which is the conservative direction on each axis independently.
+var AFFIRM_VERBS=["Yes","Approve"], SENTBACK_VERBS=["Reject","Revise and Resubmit"];
+function knownVerb(v){return AFFIRM_VERBS.indexOf(v)>=0||SENTBACK_VERBS.indexOf(v)>=0}
+function isAffirmative(v){return AFFIRM_VERBS.indexOf(v)>=0||!knownVerb(v)}
+function needsReason(v){return SENTBACK_VERBS.indexOf(v)>=0||!knownVerb(v)}
 
 function render(){
-  var all=REVIEW.items.filter(function(i){return i.verdict!=="gone"});
+  var all=REVIEW.items;   // no filter: "gone" is not in VERDICTS, so nothing can ever be excluded
   var ready=all.filter(function(i){return i.verdict==="clear"||i.verdict==="flagged"});
   var ungated=all.filter(function(i){return i.verdict==="ungated"});
   var skipped=all.filter(function(i){return i.verdict==="skipped"});

@@ -21,9 +21,11 @@ For every bill and change order awaiting your approval:
 
 The dashboard is a snapshot and shows its own age, warning once it passes
 three hours; a re-run button refreshes it in one click. Every record is
-re-verified against the live queue at execute time, immediately before it is
-clicked, so an item actioned since the review is skipped rather than clicked
-twice.
+re-verified at execute time, immediately before it is clicked, so an item
+actioned since the review is skipped rather than clicked twice. Bills are
+re-checked by query; change orders carry no approval-status field, so they are
+re-checked by reading the record page, where the approval buttons are present
+only while the item is still pending and still yours.
 
 You mark approve / approve with notes / reject per item, then execute them
 together. Execute sends the instruction straight into the conversation in one
@@ -63,7 +65,7 @@ and the plugin stops and asks if one is missing.
 
 ## Requirements
 
-- Claude in Chrome, signed in to NetSuite. **This is the only hard requirement.**
+- Claude in Chrome, signed in to NetSuite, plus a connected workspace folder for state. **Those two are the hard requirements** — the folder because the run records what it reviewed there, and reads it back to know a day is already done.
 - **A NetSuite MCP connector is optional and makes the review faster and
   broader.** With it, the queue and every record's lines come back in two bulk
   queries instead of a tab per record, and each item is additionally cross-checked
@@ -84,8 +86,6 @@ and the plugin stops and asks if one is missing.
   account is for reading. Both the queue and the approve buttons are role-scoped,
   so in the wrong account you'll see a queue that isn't yours, or a record with no
   buttons on it.
-- Claude in Chrome, signed in to NetSuite
-- A connected workspace folder for state (attachments are never downloaded)
 - **The machine on and Chrome open whenever it runs.** Claude works through your
   real browser session, so a scheduled run needs the computer awake, Chrome
   running, and you still signed in. A missed window does not queue up and run

@@ -230,7 +230,10 @@ def check_template_versions():
 
 
 VERDICT_ALLOWLIST = re.compile(r'^VERDICTS = \((.*?)\)', re.M | re.S)
-VERDICT_TEST = re.compile(r'verdict\s*===?\s*"([a-z]+)"')
+# Matches ==, ===, != and !== alike. The inequality form matters: Procore carried
+# `verdict !== "gone"` for a while, which is a filter that can never exclude anything, and a
+# regex that only looked for equality reported the file clean.
+VERDICT_TEST = re.compile(r'verdict\s*[!=]==?\s*"([a-z]+)"')
 
 
 def check_verdict_vocabulary():
@@ -337,6 +340,46 @@ def check_execute_prompt_purity():
     return problems
 
 
+def check_onboarding_page():
+    """docs/onboarding.html is served verbatim by GitHub Pages, so its structure is load-bearing.
+
+    CLAUDE.md asserted four tests over this file and no file in the repo read that path, so all
+    four were claims rather than checks. These are the properties that are genuinely checkable
+    without a browser: it decodes as UTF-8 (it was authored as an artifact fragment and every dash
+    and arrow becomes mojibake without the charset), it is a complete document, and every
+    var(--token) it uses is defined on BARE :root - that last one is what stops the page rendering
+    one theme's text on the other theme's ground for a reader on the default "system" setting.
+    Anything genuinely visual still has to be eyeballed by a person; do not add assertions about
+    chip rows or paragraph placement here, which is what the deleted claims tried to do.
+    """
+    rel = os.path.join("docs", "onboarding.html")
+    fp = os.path.join(REPO, rel)
+    if not os.path.isfile(fp):
+        return []
+    problems = []
+    raw = open(fp, "rb").read()
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        return ["%s does not decode as UTF-8 (%s) - Pages serves it verbatim, so every dash and "
+                "arrow in it would render as mojibake" % (rel, exc)]
+    if not text.lstrip()[:15].lower().startswith("<!doctype"):
+        problems.append("%s has no doctype - Pages serves the file verbatim, so it must be a "
+                        "complete HTML document, not an artifact fragment" % rel)
+    if "charset" not in text[:600]:
+        problems.append("%s declares no <meta charset> in its head" % rel)
+    if not text.rstrip().endswith("</html>"):
+        problems.append("%s does not close </html>" % rel)
+    used = set(re.findall(r"var\(--([\w-]+)\)", text))
+    m = re.search(r":root\s*\{(.*?)\}", text, re.S)
+    defined = set(re.findall(r"--([\w-]+)\s*:", m.group(1))) if m else set()
+    for tok in sorted(used - defined):
+        problems.append("%s uses var(--%s) but does not define it on bare :root - a token defined "
+                        "only inside a media query renders the wrong theme for anyone on the "
+                        "default 'system' setting" % (rel, tok))
+    return problems
+
+
 def orphan_canonicals(seen):
     if not os.path.isdir(SHARED):
         return []
@@ -356,6 +399,7 @@ def main():
     problems += check_template_versions()
     problems += check_verdict_vocabulary()
     problems += check_execute_prompt_purity()
+    problems += check_onboarding_page()
     if sync:
         for s in synced:
             print("synced " + s)

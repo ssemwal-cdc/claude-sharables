@@ -185,9 +185,15 @@ just appears in their catalog and sits there. So every new plugin is another
 announcement plus another `/plugin install` for every teammate, and that cost is
 what the bundle removes — not the updating, which already works.
 
-**`scripts/validate.py` will reject the bundle as written.** Lines 146–155 fail
+**`scripts/validate.py` will reject the bundle as written.** Its `skills/`-must-exist-and-be-
+non-empty check fails
 any plugin with no `skills/` directory or an empty one, and a dependency-only
-manifest has neither. So the bundle needs a validator carve-out *before* it can
+manifest has neither. **A second skill inside an existing plugin hits a different wall in the
+same file:** `validate.py`'s per-skill check asserts that `plugin.json`'s description *ends with*
+`Skill version N — DATE.`, and a string can end with only one tail, so two skills at different
+versions can never both pass. Its own failure message says as much. Multi-skill plugins are the
+documented standard above, so that check needs widening before the standard can actually be
+followed. So the bundle needs a validator carve-out *before* it can
 ship — check for a `dependencies` key and skip the skills requirement for that
 case. Nobody has needed it yet, but the instruction above and the validator
 currently disagree, and the failure lands on whoever tries it rather than on
@@ -542,7 +548,10 @@ below. Reject is never substituted for either, in any direction.
 once immediately after that click — renderer locked, tab dropped out of the
 automation group, note never typed — and the run correctly verified two ways and
 refused to re-click. That freeze got diagnosed as a blocking native dialog, and a
-`window.prompt` override was designed on that reasoning. **It was wrong.** The
+`window.prompt` override was designed on that reasoning. **That reasoning was almost certainly
+wrong, and the override was never built** — but note the standing of it: `prose.md` records that
+nobody has seen the notes page and nobody has read that button's handler, so "there is no popup"
+is inference from the UI, not observation of the code. The
 button just loads an ordinary page in the same tab; there is no popup and no
 native dialog, so the freeze was a transient hang and the override would have
 overridden nothing. It was never built only because the design was checked
@@ -820,7 +829,7 @@ the permission classifier rather than the browser, and it fires on the first
 **Auto mode works, and no permission configuration is needed for either plugin.**
 Settled 2026-08-15 by re-running the exact snippet that had once been denied:
 byte-identical code, no `autoMode` block, auto mode — it passed, with no prompt.
-Every operation either plugin performs has now run clean in auto.
+The snippet that had been denied ran clean in auto. That is one operation, not all of them — the earlier wording here claimed every operation either plugin performs had run clean in auto, which one re-run cannot support. The permissions instruction below rests on its other leg: skip-all is ruled out on Anthropic's own grounds for a browser holding live approval authority.
 
 The single denial that started all this was **environmental — the run was in
 skip-all, not auto.** Nothing about the code, the hosts, or the configuration.
@@ -955,7 +964,9 @@ remaining click has already landed before any of that is visible. Both were
 costed as small savings. Neither is worth the trade.
 
 **Per-item marks live in `localStorage`** (`ns_marks_v1`, `pc_marks_v1`) alongside
-the view state (`pc_view_v2`, `ns_view_v1`), and are the only user state that
+the view state (`pc_view_v3`, `ns_view_v2` — the current keys; the rule below is about not
+renaming whatever the current ones are, and this line used to name the superseded pair), and are
+the only user state that
 survives a re-render. Never rename those keys for tidiness; it silently discards
 decisions the user marked but has not executed. The two kinds are not equivalent —
 losing a view costs a scroll, losing a mark discards work — so a new control gets a
@@ -970,7 +981,7 @@ campus/building, so its axes are **Type** and **Vendor** (vendor narrowing to th
 chosen type, the way Procore's buildings narrow to campus), plus sort, search and
 Reset.
 
-Two things about that port are load-bearing:
+One thing about that port is load-bearing:
 
 - **`renderBar()` reads `REVIEW.items`, never the filtered list.** A marked item that
   is currently filtered off screen still has to execute. Narrowing the execute bar to
@@ -1036,6 +1047,14 @@ because inside the bar they made it 249px — over a third of a 700px viewport. 
 dashboards' bars now measure 153px. Anything added to `.bar` is paid for in queue you
 cannot see, so put reference text in `#barnote`.
 
+**No test asserted any of the four claims above until 2026-08-24, and the claims are gone
+now.** They described assertions about chip rows, paragraph placement and mutation-checks over
+`docs/onboarding.html`, and no file in the repo read that path. What is genuinely checkable
+without a browser is now checked, by `check_onboarding_page()` in `shared_blocks.py`: the file
+decodes as UTF-8, carries a doctype and a `<meta charset>`, closes `</html>`, and defines every
+`var(--token)` it uses on **bare** `:root`. Anything visual still needs a person to look; do not
+add assertions about paragraph placement, which is what the deleted claims tried to do.
+
 **The teammate-facing onboarding sheet lives at `docs/onboarding.html`.** It is
 served to teammates by **GitHub Pages** from `docs/` on `main`:
 
@@ -1060,7 +1079,8 @@ Three consequences worth keeping in mind:
   content in its own skeleton at publish time; served raw without that wrapper,
   every em dash, arrow and middot in it becomes mojibake.
 - **It now carries one small script, and that is the only one.** Copy buttons on the
-  four code blocks, added 2026-08-19 — the schedule prompts are ~40 lines and selecting
+  two `<pre>` blocks inside `<details class="paste">`, added 2026-08-19 — the schedule prompts
+  are ~40 lines and selecting
   one by hand is exactly the friction the "one paste" restructure was meant to remove.
   The wrapper and the button are **built by the script at run time**, never written into
   the markup, so a reader with JS off sees a clean `<pre>` and not a dead button. It
@@ -1111,7 +1131,7 @@ Facts it carries that are not obvious from the skills:
   the connector is not listed, they were never provisioned — email invite from
   Compass, otherwise IT. Approvals must still come from their *normal* account,
   since that is whose name lands on them.
-- - **An expired connector session is a third state, and it must not be silent.**
+- **An expired connector session is a third state, and it must not be silent.**
   The say-nothing rule covers the never-provisioned case only, where a caveat is an
   apology on a loop for something the reader cannot fix. A stale session is seconds
   to fix and restores the cross-check, so the run says it once near the headline and
@@ -1122,7 +1142,7 @@ Facts it carries that are not obvious from the skills:
   challenge, or any non-result-set response means switch that run to the browser
   route — same three-state rule as the Procore gate, reached from a different
   direction, and the highest-consequence instance of it in either skill.
-**The connector is optional, and the sheet says so at step 2.** It was written
+- **The connector is optional, and the sheet says so at step 2.** It was written
   as a required step, which told unprovisioned teammates to wait on IT when they
   could have started that day. What it adds is stated positively — faster queries
   and the PO/billing-history cross-check — rather than the browser route being
@@ -1201,7 +1221,8 @@ Facts it carries that are not obvious from the skills:
     they get an assertion each rather than one a half-edit could satisfy; the placement
     guard was re-anchored to the element (the `<p>` after `#before`) rather than to a
     phrase, since the phrase is the part that keeps getting rewritten. **The `.chip` class stays** — the step 1 and step 2 headings use it — so
-    the test asserts `header .chip` is empty rather than the class being unused. The
+    the `.chip` class stays used by the step headings, so any future check should assert the
+    header row is empty rather than that the class is unused. The
     `.meta` rule went with the row, since that row was its only user.
   - **"On a second screen" was cut as a phrase while the meaning was kept.** In a sheet
     whose second section is a prerequisites list, it reads as a *hardware requirement*
@@ -1212,7 +1233,7 @@ Facts it carries that are not obvious from the skills:
   - **It sits above the prerequisites list, not in it.** That list is things you must
     have; this is not one of them, and a fourth bullet would file it as one. It is also
     deliberately *not* inside a `<details>` — a reassurance nobody opens is not a
-    reassurance. A test pins both, mutation-checked by folding the line away.
+    reassurance.
 
   **The first wording of it over-corrected, and that was caught the same day.** *"None
   of this needs your full attention"* invites starting it and leaving, and the run
@@ -1229,7 +1250,7 @@ Facts it carries that are not obvious from the skills:
   on without you"* replaced *"can't run unattended"* deliberately — it states the
   consequence rather than issuing a rule, and the consequence is what makes someone
   stay. Both directions are load-bearing and dropping either produces a wrong sheet, so
-  a test asserts the presence claim survives, mutation-checked by deleting it.
+  both directions have to survive any future edit.
 
   **It then had to be cut in half, because the paragraph outgrew the list it
   introduces** — 76 words against 48 for all three prerequisites. Two of its four
@@ -1247,8 +1268,8 @@ Facts it carries that are not obvious from the skills:
   surface, because "do I need a free 45 minutes" is the biggest single objection to
   starting today. Reuses the existing `.note` class rather than adding one: this sheet
   had just been through a brevity pass and a bespoke class for one element is exactly
-  the accretion that pass was removing. A test pins that the marker is between step 3
-  and step 4 and outside any `<details>`.
+  the accretion that pass was removing. The marker belongs between step 3 and step 4 and
+  outside any `<details>`.
 
   Step 4 keeps a warning of its own but no longer repeats either point: the timeout is
   the one fact true of that step and not of the others.
@@ -1577,9 +1598,28 @@ skill deviates, say so explicitly rather than quietly normalising it.
   sync was considered and explicitly rejected. Do not propose going private, and
   do not "fix" prose that says public. The reasoning is in README.md under
   *Distribution: why this repo is public*.
-- **Because it is public, nothing sensitive may land here.** No tokens, no
-  company ids, no endpoints, no real documents in fixtures or examples. If a
-  ported skill carries any of those, stop and raise it before committing.
+- **Because it is public, nothing sensitive may land here.** No tokens and no
+  credentials, ever. If a ported skill carries any, stop and raise it before
+  committing.
+
+  Two cases that used to be conflated, and the rule differs:
+
+  - **Shipped worked examples — the `config` blocks and log schemas a teammate
+    copies — use placeholders, never live values.** No tenant or company id, no
+    custom-field id, no counterparty name, no project label, no real amount.
+    Sanitised 2026-08-24; before that both skills shipped a real company id, tool
+    id, three custom-field ids, a named subcontractor and a real commitment
+    balance, while `README.md` claimed the plugins carried no customer data.
+  - **Defect provenance may cite record ids, and should.** *"Bill `2325026-07`
+    was flagged as coded to `PO11120` while applied to `PO16093`"* is the evidence
+    that a documented bug was real, and this repo's whole epistemics rests on
+    claims being traceable to a record and a date. Stripping those would leave the
+    findings unfalsifiable, which is worse. They live in `CLAUDE.md`, `prose.md`
+    and Step 5's worked reconciliation — maintainer-facing notes, not patterns to
+    copy.
+
+  Anything genuinely confidential — a rate, a contract term, a person's details —
+  belongs in neither category and does not go here at all.
 - No CI beyond `.github/workflows/validate.yml`, which runs `scripts/validate.py`.
 
 ---

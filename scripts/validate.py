@@ -311,6 +311,7 @@ if shared_blocks is not None:
     _problems += _pin_problems
     _problems += shared_blocks.check_template_versions()
     _problems += shared_blocks.check_verdict_vocabulary()
+    _problems += shared_blocks.check_execute_prompt_purity()
     for _p in _problems:
         fail("[shared] " + _p.replace("\n", " ").replace("      ", " "))
     if not _problems:

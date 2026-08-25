@@ -165,7 +165,7 @@ def check_pins():
     return problems, {lib: next(iter(v)) for lib, v in pins.items() if len(v) == 1}
 
 
-SKILL_TPL_VER = re.compile(r"ships layout template `(v\d+)`")
+SKILL_TPL_VER = re.compile(r"(?:ships layout template|does not say) `(v\d+)`")
 TPL_MARKER = re.compile(r"layout template (v\d+)")
 SCRIPT_TPL_VER = re.compile(r'^TEMPLATE_VERSION = "(v\d+)"', re.M)
 
@@ -199,9 +199,19 @@ def check_template_versions():
                 if not os.path.isfile(fp):
                     continue
                 with open(fp, encoding="utf-8") as fh:
-                    m = rx.search(fh.read())
-                if m:
-                    found[label] = m.group(1)
+                    hits = rx.findall(fh.read())
+                if not hits:
+                    continue
+                # EVERY site in the file must agree, not just the first. Procore once stated
+                # v5 in its Step 0 header and tested for v4 two lines below, so the check that
+                # exists to detect a stale workspace would have called a current one stale and
+                # passed a stale one - and a search() that stopped at the first match saw only
+                # the correct half.
+                if len(set(hits)) > 1:
+                    problems.append(
+                        "%s/%s: %s states more than one template version (%s) - they must agree"
+                        % (entry, skill, label, ", ".join(sorted(set(hits)))))
+                found[label] = hits[0]
             if len(found) < 3:
                 if "template" in found or "script" in found:
                     missing = {"SKILL.md", "template", "script"} - set(found)
@@ -266,6 +276,67 @@ def check_verdict_vocabulary():
     return problems
 
 
+# Tokens that mean the composed execute message has started specifying PROCEDURE rather than
+# authority. Each one is drawn from a real defect: the endpoint/parameter forms because Procore's
+# prompt omitted per_page=100 from a gate query it had no business carrying, the verification
+# verbs because NetSuite's prompt shipped the retired queue re-query that CLAUDE.md says invites
+# a double approval, and the button rule because it contradicted Step 8's Approve With Notes
+# routing. Identifiers the agent needs in order to FIND a record are fine and deliberately absent
+# from this list; query shapes and verification methods are not.
+PROCEDURE_TOKENS = (
+    "per_page", "page=", "view=action_card", "filters[", "GET /", "/rest/v",
+    "re-query", "approvalstatus", "available_responses", "can_respond",
+    "workflows/instances", "click the named button", "the named button only",
+)
+PROMPT_STMT = re.compile(r"^  var prompt\s*=(.*?);\s*$", re.M | re.S)
+
+
+def check_execute_prompt_purity():
+    """The message the Execute button posts into chat authorises; it must not also specify.
+
+    This is the least-governed text in either plugin - a JavaScript string inside an HTML
+    template, read by no test and covered by no shared block - and it is the text closest to a
+    real approve click. Both copies independently drifted into carrying procedure, and both got
+    it wrong in the same week: NetSuite's contradicted Step 8, Procore's omitted one of its
+    gates. Settled with the maintainer 2026-08-24: Step 8 is the specification, the prompt is
+    the authorisation, and they may not overlap. Execute is always pressed in the session that
+    ran the review, so the skill is in context; the run is unwatched, which is the reason the
+    gates belong in the governed text rather than here.
+    """
+    problems = []
+    for entry in sorted(os.listdir(PLUGINS)):
+        if entry.startswith("_"):
+            continue
+        skills = os.path.join(PLUGINS, entry, "skills")
+        if not os.path.isdir(skills):
+            continue
+        for skill in sorted(os.listdir(skills)):
+            tpl = os.path.join(skills, skill, "assets", "dashboard_template.html")
+            if not os.path.isfile(tpl):
+                continue
+            with open(tpl, encoding="utf-8") as fh:
+                body = fh.read()
+            m = PROMPT_STMT.search(body)
+            if not m:
+                problems.append("%s/%s: dashboard_template.html has no recognisable "
+                                "`var prompt = ...;` statement to check" % (entry, skill))
+                continue
+            stmt = m.group(1)
+            for tok in PROCEDURE_TOKENS:
+                if tok in stmt:
+                    problems.append(
+                        "%s/%s: the composed execute message contains %r - that is procedure, "
+                        "and procedure belongs in SKILL.md Step 8, never in this string. It is "
+                        "read by no test and is the text closest to a real click."
+                        % (entry, skill, tok))
+            if "Step 8" not in stmt:
+                problems.append(
+                    "%s/%s: the composed execute message must point at Step 8 of the skill as "
+                    "the procedure - without that pointer it is an authorisation with no "
+                    "specification attached." % (entry, skill))
+    return problems
+
+
 def orphan_canonicals(seen):
     if not os.path.isdir(SHARED):
         return []
@@ -284,6 +355,7 @@ def main():
     problems += pin_problems
     problems += check_template_versions()
     problems += check_verdict_vocabulary()
+    problems += check_execute_prompt_purity()
     if sync:
         for s in synced:
             print("synced " + s)

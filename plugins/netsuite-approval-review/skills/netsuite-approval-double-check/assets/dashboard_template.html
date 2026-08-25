@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>NetSuite approval queue</title>
-<!-- layout template v6 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v7 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -467,11 +467,35 @@ function renderBar(){
   ks.forEach(function(k){var it=byId[k],m=marks[k];
     if(m.kind==="reject"){rj.push(it);if(!m.text||!m.text.trim())missing.push(it.doc)}else ap.push(it)});
   var apSum=ap.reduce(function(s,i){return s+i.amt},0), rjSum=rj.reduce(function(s,i){return s+i.amt},0);
-  var lines=ks.map(function(k){var it=byId[k],m=marks[k];
+  var lines=ks.map(function(k,n){var it=byId[k],m=marks[k];
     var verb=m.kind==="reject"?"reject":m.kind==="notes"?"approve with notes":"approve";
-    return verb+" "+it.type.toLowerCase()+" "+it.doc+" ("+it.vendor+", "+money(it.amt)+", internal id "+it.id+")"+(m.text&&m.text.trim()?" — "+(m.kind==="reject"?"reason":"note")+": "+m.text.trim():"")});
-  var prompt="Execute my marked NetSuite approval decisions, one record at a time: "+lines.join("; ")+
-   ". For each: confirm the document number, vendor and amount on the record match before clicking, click the named button only, then re-query the pending queue to confirm the item left it. Stop and report if any item fails rather than continuing.";
+    return (n+1)+") "+verb+" "+it.type.toLowerCase()+" "+it.doc+" ("+it.vendor+", "+money(it.amt)+
+           ", internal id "+it.id+") [reviewed: "+esc(it.verdict)+"]"+
+           (m.text&&m.text.trim()?" — "+(m.kind==="reject"?"reason":"note")+": "+m.text.trim():"")});
+  // AUTHORITY ONLY. This message names what may be actioned; it does not say how.
+  //
+  // It used to carry procedure, and the procedure it carried was wrong: "click the named button
+  // only" contradicts Step 8, which routes every affirmative through Approve With Notes, and
+  // "re-query the pending queue" is the retired verification that CLAUDE.md records as inviting
+  // a re-run that would approve twice. Neither error was reachable by any test, because this is
+  // a JavaScript string in an HTML template and nothing reads it.
+  //
+  // So the rule is now explicit: Step 8 is the specification, this message is the authorisation,
+  // and the two must never overlap. Verified with the maintainer 2026-08-24 - execute is always
+  // pressed in the same session that ran the review, so the skill is loaded and in context; and
+  // the run is not watched, which is exactly why the gates belong in the governed text rather
+  // than here. scripts/shared_blocks.py check_execute_prompt_purity() enforces it.
+  var prompt=
+   "Execute my marked NetSuite approval decisions, one record at a time.\n\n"+
+   "Follow Step 8 of the netsuite-approval-double-check skill exactly. That is the procedure. "+
+   "Nothing in this message replaces, overrides or abbreviates any part of it, and this message "+
+   "deliberately does not restate it.\n\n"+
+   "This list came from a dashboard snapshot taken "+REVIEW.lastRun+
+   ", so treat it as possibly out of date - I may have actioned some of these in NetSuite directly.\n\n"+
+   "Items:\n"+lines.join("\n")+"\n\n"+
+   "Report back per item: the response you submitted, what the record read when you verified it "+
+   "afterwards, and anything you skipped or stopped on. I am not watching this run, so that "+
+   "report is the only thing I will see.";
   var undec=REVIEW.items.length-ks.length;
   var blocked=missing.length>0, canRun=ks.length>0&&!blocked;
   // The bar renders in every state, zero marks included. It used to collapse to one line of

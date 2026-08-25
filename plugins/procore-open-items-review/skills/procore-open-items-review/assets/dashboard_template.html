@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Procore open items queue</title>
-<!-- layout template v5 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v6 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -537,26 +537,28 @@ function renderBar(){
            (wfIdOf(it)!==it.id?', record id '+it.id+' (different - use it to open the record, never for the lookup)':'')+
            ', project_id '+it.pid+', '+it.projLabel+
            (it.amt?', '+money(it.amt):'')+']'+
+           ' [reviewed: '+esc(it.verdict)+']'+
            (m.text&&m.text.trim()?' — comment: '+m.text.trim():'');
   });
 
+  // AUTHORITY ONLY - see the matching note in the NetSuite template. This message names what may
+  // be actioned; Step 8 of the skill says how. The full five-step ladder that used to live here
+  // omitted per_page=100 from its gate query, and the skill's own Step 2 records that on the
+  // default page size the endpoint hid live instances outright - which Step 8 then reads as
+  // "already actioned elsewhere, skip it". A missing query parameter in an unread template
+  // string could silently log a live invoice as done.
   var prompt=
-   "Execute my marked Procore responses, one record at a time. This list came from a dashboard snapshot taken "+REVIEW.lastRun+
-   ", so treat it as possibly out of date — I may have already actioned some of these in Procore directly.\n\n"+
-   "For EACH item, in this exact order:\n"+
-   "1. VERIFY IT IS STILL MINE TO ACTION, before touching any UI. GET /rest/v1.0/projects/{project_id}/workflows/instances with "+
-   "filters[workflowable_object_id]={workflowable_object_id}, filters[workflowable_object_type]={type}, page=1, view=action_card. "+
-   "If it returns no instance, or user_permissions.can_respond is false, or the response named below is not in "+
-   "current_step_occurrence.available_responses, then it has already been actioned or has moved to another step. "+
-   "SKIP it, log it as 'already actioned elsewhere — no click made', and move to the next item. Do not open it, do not click, do not retry.\n"+
-   "2. Only if can_respond is still true: open the record and confirm the item number, campus/building and amount match what I list below. "+
-   "Any mismatch means the data has shifted underneath us — STOP the entire batch and report. Do not guess.\n"+
-   "3. Open the workflow side panel, click Respond, select only the named response, paste my comment verbatim, submit.\n"+
-   "4. Re-query the same workflows/instances endpoint and confirm can_respond is now false or the step has advanced. "+
-   "A click that appears to succeed is not proof — the API is.\n"+
-   "5. If a submit fails or the step does not advance, STOP the batch there. Never retry the same item and never fall back to clicking something else.\n\n"+
+   "Execute my marked Procore responses, one record at a time.\n\n"+
+   "Follow Step 8 of the procore-open-items-review skill exactly. That is the procedure. "+
+   "Nothing in this message replaces, overrides or abbreviates any part of it, and this message "+
+   "deliberately does not restate it.\n\n"+
+   "This list came from a dashboard snapshot taken "+REVIEW.lastRun+
+   ", so treat it as possibly out of date - I may have already actioned some of these in Procore "+
+   "directly.\n\n"+
    "Items:\n"+lines.join("\n")+"\n\n"+
-   "Finish by reporting three counts — actioned, skipped as already done, and whatever stopped the batch — then re-run the review and republish the dashboard so this snapshot is current again.";
+   "Report back per item: the response you submitted, what the workflow read when you verified it "+
+   "afterwards, and anything you skipped or stopped on. I am not watching this run, so that "+
+   "report is the only thing I will see.";
 
   var undec=REVIEW.items.length-ks.length;
   var blocked=missing.length>0, canRun=ks.length>0&&!blocked;

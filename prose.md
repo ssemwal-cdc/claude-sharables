@@ -480,6 +480,58 @@ slice of that; the rest is still a person reading.
 
 ---
 
+## The nine-agent prose audit, and what the interview corrected
+
+2026-08-24. Five auditors read the whole prose corpus cold — deliberately given none of the
+session's conclusions and told not to read git history — then three debaters contested the pooled
+findings from defence, prosecution and adjudicating positions. 122 raw findings, 29 surviving
+contest. What follows is only what changed something.
+
+**The headline was a place nobody had looked: the composed execute message.** It is the text
+closest to a real approve click, and it is the least-governed text in either plugin — a JavaScript
+string inside an HTML template, covered by no shared block, read by no test. Both copies had
+independently drifted into carrying procedure, and both had got it wrong in the same week.
+NetSuite's said *"click the named button only, then re-query the pending queue to confirm the item
+left it"* — the button rule that Approve With Notes exists to override, and the retired
+verification that `CLAUDE.md` records as inviting a re-run that would approve twice. Procore's
+carried its whole five-step ladder but omitted `per_page=100`, which its own Step 2 records as
+converting a live workflow into an empty response that Step 8 then reads as *already actioned,
+skip it*. `grep per_page plugins/` returned three hits, all in `SKILL.md`, none in the template.
+
+**Also a gap in that morning's own fix.** The verdict allowlist added to close a fail-open caught a
+*wrong* verdict but not a *missing* one: `it.get("verdict", "clear")` defaulted an absent key to
+`clear` and sailed straight through the check. Procore's sibling defaults to `skipped`. Fixed by
+removing the default entirely and letting the allowlist abort.
+
+**And the staleness check added the previous turn was itself stale.** Procore's Step 0 stated it
+ships `v5` and then tested *"if that does not say `v4`"* — so the check written specifically to
+detect a stale workspace would have called a current one stale and passed a genuinely stale one.
+`check_template_versions()` missed it because `re.search` stops at the first match and there were
+two sites. It compares every site now. **Third instance of the same shape**: a check whose inputs
+fail together, and a checker that only looked at one of them.
+
+**Four things the interview corrected, and this is why the interview existed.** Auditors reason
+from the documents; the documents are not the system. (1) The panel asked whether NetSuite change
+orders should be executable at all — the maintainer replied *"I thought we resolved change
+orders?"*, conflating Procore's CCO gate, which was resolved, with NetSuite's change orders, which
+carry no approval status or next-approver and so cannot be gated or confirmed. Different systems,
+same word; the docs now distinguish them. (2) Browser-mode execute: the maintainer reports it works
+through Claude in Chrome, which is a user report rather than an observed run, and answers a
+narrower question than the panel asked — *the clicks land* is not *the gate ran*. (3) On the public
+repo, the maintainer believed it was enterprise-private. The GitHub API says `"private": false`,
+`"visibility": "public"`, forkable, personal account. The judgment about sensitivity is theirs; the
+premise was checkable and wrong. (4) The precedence question resolved on two facts no auditor could
+have known: execute is always pressed in the session that ran the review, and the run is not
+watched.
+
+**The generalisable lesson.** Every number a command regenerates was verified correct today. Almost
+every string a human retyped had drifted. The corpus's defects cluster almost perfectly on
+hand-maintained text that no command reads — which is an argument for extending mechanical checks
+into prose wherever a claim names an identifier, and for treating any un-checked string near a
+click as suspect by default.
+
+---
+
 ## Directions considered and not taken
 
 2026-08-24, from the question of how the catalog should serve someone who is not a

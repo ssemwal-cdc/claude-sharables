@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v6"
+TEMPLATE_VERSION = "v7"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -79,7 +79,11 @@ def main():
 
     items, bad = [], []
     for tid, it in log.get("items", {}).items():
-        verdict = it.get("verdict", "clear")
+        # No default. The allowlist below catches a WRONG verdict but a MISSING one used to
+        # default to "clear" and sail through it - fail-open on the field that decides what gets
+        # approved. Procore's sibling defaults to "skipped", i.e. non-actionable; the equivalent
+        # here is to have no default at all and let the allowlist abort.
+        verdict = it.get("verdict") or ""
         if verdict not in VERDICTS:
             bad.append("%s has verdict %r" % (tid, verdict))
         items.append({

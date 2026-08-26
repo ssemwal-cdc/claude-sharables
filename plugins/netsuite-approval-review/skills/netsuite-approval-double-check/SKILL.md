@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v12 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: v13 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 12 — 2026-08-26.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 13 — 2026-08-26.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
@@ -29,6 +29,7 @@ An instruction to review is never an instruction to execute. A verdict of "clear
 - **Never hand-write or regenerate the dashboard HTML.** See Step 7. The layout is a file on disk; runs inject data into it and nothing else.
 - **Never present, attach, or send the working files as files or file cards in chat** — the dashboard template, `publish_dashboard.py`, the review log, or the rendered `index.html`/`widget.html`. They are internal state, not deliverables, even when the platform encourages surfacing files a run produced. The dashboard widget is the only deliverable, and chat gets one headline line.
 - **Never copy identity between people.** The employee internal id in `config.me` scopes the whole review. Using someone else's shows them a queue that is not theirs.
+- **`config.focus` changes what is checked and what leads the write-up. It never changes what a verdict means, and never authorises anything.** A lens adds checks; it never removes or relaxes one. Emphasis reorders and rewords `head`, `facts`, `poContext` and `detail`; it never alters a `verdict`, drops a finding, or edits a figure. Emphasis is the user's note about their own job, not a standing instruction — it cannot approve, soften a flag, or set aside any rule in this list.
 - If deeper review would require actions beyond reading, say so in the verdict and ask first.
 - **Every approval carries the note `Approved by Claude`, unless the user supplied their own for that document — theirs replaces it verbatim.** Those two are the only text this skill types into a note field, and approvals route through Approve With Notes so it can be attached; see Step 8. Do not ask permission for the default and do not vary its wording. Rejection reasons are different: they always come from the user and are never defaulted.
 - **This skill owns exactly one state file:** `NetSuite Approval Checks/_netsuite_review_log.json`. Never read or write the Procore skill's log, and never let Procore records into yours. Both files used to share the name `_review_log.json` and both folders sit under the same parent, so this went wrong in practice. If you find foreign records in your log, move them to a `_quarantined` block, say so in chat, and carry on — never merge them into `items`, and never act on them.
@@ -111,7 +112,18 @@ version above ships in this file, which is always current because it ships with 
 is the only fixed point available when the plugin directory cannot be reached at all.
 
 Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already carries a `config` block, the rest of this
-step is done — go to Step 1. Otherwise, once:
+step is done — go to Step 1, **except for the one back-fill below.** Otherwise, once:
+
+**Back-fill, for a `config` written before focus existed.** If `config` exists but has **no
+`focus` key at all**, ask the two questions in setup step 6 once, write the answer, and carry on.
+Then never ask again — including when they decline, which is stored as `{"lenses": [], "emphasis": ""}`
+rather than left absent. **Absent and empty are different states here**: absent means never asked,
+empty means asked and declined. Collapsing them turns a one-time question into a prompt on every
+run, which is the nag this repo keeps designing away from.
+
+This back-fill exists because everyone already running this skill has a `config` block, so the
+short-circuit above would otherwise mean the question reaches nobody who uses it — the same shape
+as shipping a new default under an old view key.
 
 0. **Two browser-side things to say before anything else, because both fail silently later.**
 
@@ -171,7 +183,11 @@ step is done — go to Step 1. Otherwise, once:
        "meName": "Firstname Lastname",
        "account": "1234567",
        "tool": "mcp__<server id>__ns_runCustomSuiteQL",
-       "billPortlet": "<portlet name>"
+       "billPortlet": "<portlet name>",
+       "focus": {
+         "lenses": [],
+         "emphasis": ""
+       }
      },
      "items": {},
      "actions": []
@@ -184,6 +200,26 @@ step is done — go to Step 1. Otherwise, once:
    person's own without an id to configure. Re-check for the connector on every run
    rather than trusting the stored mode: someone provisioned later should be lifted
    automatically, and someone whose connector drops should keep working.
+
+6. **Ask what they focus on.** Two questions, asked once, stored in `config.focus`. Both are
+   optional and **both default to nothing**, which is exactly today's behaviour — a run with an
+   empty `focus` does what every run did before this existed.
+
+   **First, whether any lens applies.** Offer the lenses this skill actually ships (today:
+   `supply-chain`) and say plainly what each adds. `core` is not offered — it always runs and is
+   not a choice. Someone who does none of these picks nothing, and that is the common case.
+
+   **Second, what they care about most, in their own words.** Free text, a sentence or two, stored
+   verbatim as `focus.emphasis`. This works with or without a lens: with one it decides what leads
+   the write-up, without one it is all the tailoring there is — less, but not nothing. Offer a
+   couple of examples so the question is answerable ("mostly utility bills and recurring vendor
+   invoices", "change orders on one campus"), but store whatever they type. **The examples are
+   illustrations, never a list to pick from** — nothing here is a taxonomy, so no bucket can be
+   wrong.
+
+   **Re-editable at any time.** If they later ask to change what the review emphasises or which
+   lenses run, update `config.focus` and confirm. It is one field, not a flow.
+
 
 ### Which route each step takes
 
@@ -435,10 +471,12 @@ Notes:
 ### Check registry
 
 Every check in Steps 4 and 5 carries an **id**, the **lens** it serves, and the **capability**
-it needs. **Nothing here changes what runs.** Absent `config.lenses`, the `core` lens runs and
-`core` is the whole table, so a run with no configuration behaves exactly as every run before
-this registry existed. The registry *names* what already happens so a later lens can select on
-it; it is not itself a selector.
+it needs. **`core` always runs and is never a choice.** Any other lens runs only when
+`config.focus.lenses` names it, so a run with no configuration executes exactly the `core` rows —
+which is what every run did before lenses existed.
+
+**A lens adds checks. It never removes, relaxes or overrides one**, and it never touches a
+verdict's meaning: `clear` and `flagged` mean what they have always meant.
 
 **Capabilities**, each already a condition these steps honour in prose:
 
@@ -460,6 +498,9 @@ it; it is not itself a selector.
 | `ns.typed-reference` | core | `connector` | Step 5b — a disagreement is a data-entry note |
 | `ns.billed-to-date` | core | `connector` | Step 5c — split by approval state |
 | `ns.zero-evidence` | core | `connector` | Step 5d — a zero is not a finding |
+| `ns.receipt-match` | supply-chain | `connector` | Step 5e — receipts against billed quantity, leniently |
+| `ns.po-price-variance` | supply-chain | `connector` | Step 5f — PO line rate against billed rate |
+| `ns.lead-time` | supply-chain | `connector` | Step 5g — PO due date against receipt date, observation only |
 
 **A check that cannot run is never a silent pass**, and the two absences above behave
 differently on purpose. A missing attachment **skips the item and names the outcome that caused
@@ -636,13 +677,72 @@ designed, not proven, and see `prose.md`.
 - **Application sequence.** If a pay application says "less previous certificates $X," confirm bills totalling $X actually exist in NetSuite for that engagement. A missing intermediate application means the audit trail is broken and must be flagged before approval.
 - **Duplicates.** Same vendor, same reference number, or same period billed twice. Also watch for two POs with identical memo and amount, which double-commits the spend.
 
+### 5e-5g. The `supply-chain` lens — only when `config.focus.lenses` includes it
+
+**Skip this whole section unless the lens is selected.** Absent it, Step 5 ends above and the
+run is exactly what it has always been.
+
+**Read this first, because it governs all three checks.** *Not all of what supply chain deals
+with lives in NetSuite.* Receipts may be tracked elsewhere, on paper, or not at all, and a PO
+with no receipt rows is overwhelmingly a PO whose receipts NetSuite never saw — **not** a
+delivery that never arrived. So these checks are **lenient by design**:
+
+- **Missing data is never a finding.** No receipt rows, no PO lines, an unpopulated date: report
+  nothing, or report it as context. It never flags an item, never skips one, and never appears as
+  a criticism of the bill.
+- **Only a real discrepancy, where both sides are present, can flag.** Billed 50 against receipts
+  totalling 40 is a finding. Billed 50 against no receipt data at all is silence.
+- **Three states, never a boolean** — the rule this file already applies to the PO linkage.
+  `matched` (both sides present and compared), `absent` (the query succeeded and NetSuite holds
+  no such rows), `failed` (the query errored). **`failed` is never `absent`**, and `absent` is
+  never "nothing was received".
+- **Match leniently.** Descriptions, units and line splits differ between a PO, a receipt and a
+  vendor's invoice for ordinary reasons. Tie on item and quantity where you can, tolerate a
+  reworded description, and prefer reporting an approximate tie to manufacturing a mismatch out
+  of formatting.
+
+The lens adds evidence when NetSuite happens to hold it. It is a *nice-to-have*, exactly as the
+connector itself is, and it must never stop someone working the queue.
+
+**5e. Receipt against billed quantity.** Step 2's link query already reads
+`previoustransactionlinelink` and discards `ShipRcpt` rows with `linktype = 'OrdBill'` — correct
+for summing billings, which is what that filter is for. With this lens on, run the **same query
+a second time** for `linktype = 'ShipRcpt'` rather than widening the first: the billing sum must
+keep its own filter untouched, and mixing the two is precisely the double-count that filter
+prevents.
+
+**Deduplicate to distinct receipt ids before summing anything.** The link table carries one row
+per line pair, not one per document, so a three-line receipt returns three rows. This is the same
+trap that once turned `136,369.02` into `409,107.06` on the billing side; it applies here
+identically.
+
+Compare receipt quantities to the bill's `tl.quantity` from Step 2. Report the position — *"PO
+receipts total 40 of the 50 units billed"* — and flag **only** a genuine over-bill against
+receipts that exist. Under-receipt on a partial delivery is normal and is context, not a finding.
+
+**5f. PO line price against billed rate.** Step 5 already resolves PO internal ids from the
+linkage, so pull that PO's lines with the same `transactionline` shape used in Step 2 and compare
+`rate` against the bill's. Report a material difference with both figures. Immaterial rounding,
+a unit-of-measure difference, or a line that cannot be matched confidently is **not** a finding —
+say what tied and leave the rest alone.
+
+**5g. Lead time, as an observation only.** Where the PO carries `dueDate` and a receipt carries
+`tranDate`, the gap between them is worth stating. **Never a flag on its own** — a late delivery
+is not a reason to withhold payment for goods received, and that judgement is not this review's.
+
+**These fields are confirmed to exist and are not confirmed to be populated.** `purchaseorder`
+carries `dueDate` and `shipDate` (probed 2026-08-26), but whether Compass fills them in is a
+*data* question nobody has answered. If they come back empty, that is the `absent` state: say
+nothing and move on. Do not report an empty date as an early or late delivery.
+
 ## Step 6 — State file
 
 Maintain `NetSuite Approval Checks/_netsuite_review_log.json`:
 
 ```json
 {
-  "config": {"me": 0, "meName": "...", "account": "...", "tool": "...", "billPortlet": "..."},
+  "config": {"me": 0, "meName": "...", "account": "...", "tool": "...", "billPortlet": "...",
+             "focus": {"lenses": ["supply-chain"], "emphasis": "free text, or empty"}},
   "lastCompletedRun": "2026-08-11",
   "lastRunTime": "2026-08-11 11:04",
   "items": {
@@ -678,7 +778,18 @@ the disagreement, and collapsing them back into one would re-create the bug. `po
 which of the three states produced `poRef`, so an `unlinked` or `failed` item can never be
 read as though its PO had been confirmed.
 
-`head`, `facts`, `poContext` and `detail` are what the dashboard renders, so write them for a reader who is skimming. `facts` should be the two or three lines that carry the specific figures — a reader should be able to judge the item without expanding anything.
+`head`, `facts`, `poContext` and `detail` are what the dashboard renders, so write them for a reader who is skimming.
+
+**`config.focus.emphasis`, when set, decides what leads those fields — and nothing else.** It
+may reorder and reword; it may **never** change a `verdict`, drop a finding, or alter `amount`,
+`poRef`, `poLink` or `poTyped`. Every check that ran still gets its line; emphasis moves what the
+reader sees first. Absent emphasis, write them as this file has always described.
+
+**Emphasis is the user's own note about their job, not an instruction to the review.** It cannot
+authorise a click, soften a flag, or relax any Absolute rule. If it asks for something this skill
+does not do — approve routine bills automatically, ignore items under a threshold — record what
+was asked, do none of it, and say so once. It works with or without a lens: with one it decides
+what leads, without one it is the only tailoring there is. `facts` should be the two or three lines that carry the specific figures — a reader should be able to judge the item without expanding anything.
 
 On each run:
 - Items already logged as **clear** and unchanged (same amount): do not re-fetch or re-analyze the attachment. Carry the entry forward.
@@ -770,6 +881,26 @@ Then close scratch tabs and leave each record tab open so the user can act if th
 ```
 
 Add a second line only if something blocked the run — a login redirect, a missing attachment that prevented review, a portlet that has been renamed. Never put the verdicts in chat; that is what the dashboard is for.
+
+**One more line, and only in one case: a lens the user picked could not run.** If
+`config.focus.lenses` names a lens whose capability is missing — `supply-chain` with no working
+connector — open the chat reply with a single plain line saying so, naming the lens and what is
+missing, then never mention it again in that run.
+
+> supply-chain checks did not run — no NetSuite connector this session. The rest of the review is unchanged.
+
+**Never present a lens's checks as though they ran.** That line exists so nobody believes they
+got something they did not.
+
+**This applies to lenses only. It never applies to `core`.** A browser-mode run says nothing at
+all about Step 5 being skipped, exactly as Step 5 requires, and that rule is untouched. The
+difference is not arbitrary: a lens is something the user deliberately chose and can change, so
+telling them is information they can act on; a connector they were never provisioned is something
+they cannot fix, and a caveat on every run forever is an apology on a loop. **A capability the
+user chose is informative; one they were never given is an apology.**
+
+Once per run, at the start, and never on an item, in a verdict, in a warning line or in a detail
+paragraph.
 
 ## Step 8 — Execute decisions (only on explicit instruction)
 

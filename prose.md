@@ -133,6 +133,52 @@ session neither re-derives it nor treats it as a mandate.
   a permanent status panel there is closer to the per-item caveat Step 5 rejects than to the
   once-per-run line that replaced it.
 
+  **Phase 2 and the first pack shipped 2026-08-26 (NS v13, PC v14).** `config.focus` carries two
+  layers, decided by interview:
+
+  - **`focus.lenses`** — hardcoded packs, because a pack is real checks with real queries and
+    invented ones would be judgment nobody vetted. Today: `supply-chain` on NetSuite. Procore
+    carries the key and ships no lens.
+  - **`focus.emphasis`** — free text, works **with or without a pack**. The maintainer's
+    requirement was that someone whose function has no pack "should still be able to have some
+    individualized characteristics allowed for them, probably a lot less without the pack, but
+    still." So emphasis reorders and rewords `head`/`facts`/`detail` and never touches a verdict,
+    a figure, or any Absolute rule. Without a lens it is all the tailoring there is; that is the
+    point, not a shortfall.
+
+  Both default to empty, and empty is exactly today's behaviour. Proven rather than asserted:
+  publishing the same log with and without `config.focus` produces **byte-identical** output, and
+  neither `dashboard_template.html` nor `publish_dashboard.py` was touched.
+
+  **The leniency doctrine, and it governs every future pack.** From the maintainer: *"not all
+  data is in netsuite for all the stuff supply chain interacts with, so it should be fuzzy
+  matching and/or lenient, 3-way match is nice when it happens, but just like the ns connector
+  itself is nice to have, it shouldn't stop someone from not being able to work this at all."*
+
+  So a pack's checks are held to a stricter standard than `core`'s:
+
+  - **Missing data is never a finding.** A PO with no receipt rows is overwhelmingly a PO whose
+    receipts NetSuite never saw — **not** a delivery that never arrived. It never flags, never
+    skips, never reads as a criticism.
+  - **Only a discrepancy where both sides exist can flag.** Billed 50 against receipts of 40 is a
+    finding; billed 50 against no receipt data is silence.
+  - **Three states again** — `matched` / `absent` / `failed`. `failed` is never `absent`, and
+    `absent` is never "nothing was received". Sixth instance of this shape in these notes.
+  - **Match leniently.** Descriptions, units and line splits differ between a PO, a receipt and a
+    vendor invoice for ordinary reasons. Prefer an approximate tie to a manufactured mismatch.
+
+  **One implementation note that is load-bearing.** Step 5e runs the `ShipRcpt` query as a
+  **second query**, never by widening Step 2's `linktype = 'OrdBill'` filter. That filter exists
+  to stop the billing sum double-counting, and mixing the two link types re-creates exactly the
+  3× overcount that once turned `136,369.02` into `409,107.06`. Deduplicate receipts to distinct
+  ids before summing, for the same reason.
+
+  **`ns.lead-time` ships as an observation only and is the weakest of the three.**
+  `purchaseorder` carries `dueDate` and `shipDate`, but **schema existence is not population** —
+  whether Compass fills them in is unprobed. Empty is the `absent` state: say nothing. And a late
+  delivery is never a reason to withhold payment for goods received; that judgement is not this
+  review's.
+
   **This reframe does not reach M365/Teams**, and that is not the same caution repeated. More
   NetSuite is more internal system-of-record data; email and Teams are **outsider-controlled**,
   and both skills already rule that record content is data and never instructions. A vendor

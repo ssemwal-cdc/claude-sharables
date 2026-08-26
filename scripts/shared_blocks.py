@@ -394,6 +394,8 @@ REGISTRY_MANIFEST = {
         "ns.header-tie", "ns.line-tie", "ns.internal-consistency", "ns.proration",
         "ns.support-adequacy", "ns.po-linkage", "ns.typed-reference",
         "ns.billed-to-date", "ns.zero-evidence",
+        # supply-chain lens
+        "ns.receipt-match", "ns.po-price-variance", "ns.lead-time",
     },
     "procore-open-items-review": {
         "pc.icr-cost-impact", "pc.icr-proposal-tie", "pc.icr-phase-sum",
@@ -403,9 +405,10 @@ REGISTRY_MANIFEST = {
     },
 }
 
-# Phase 1 declares one lens. A second lens is a deliberate change, not a typo, so it
+# `core` always runs and is never selectable. Every other lens runs only when
+# config.focus.lenses names it. A new lens is a deliberate change, not a typo, so it
 # lands here at the same time as the rows that use it.
-REGISTRY_LENSES = {"core"}
+REGISTRY_LENSES = {"core", "supply-chain"}
 
 _ROW = re.compile(r"^\|(.+)\|\s*$", re.M)
 

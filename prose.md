@@ -96,6 +96,43 @@ session neither re-derives it nor treats it as a mandate.
   `empty`, a permission-denied field degrades to "not checked" without aborting, and nothing new
   widens the execute path.
 
+  **Phase 2's blocker is resolved — decided by interview with the maintainer, 2026-08-26.**
+  The conflict was that Phase 2 wanted a check whose capability is missing to be *named as not
+  run*, while Step 5 emphatically bans exactly that for the connector — no caveat in the
+  verdict, the warning line, the detail paragraph, the dashboard **or the chat headline**,
+  because it would print "on every item of every run, forever" for someone who "cannot get a
+  connector and can do nothing about it".
+
+  The resolution, in four parts:
+
+  1. **Silence stays the default.** With no lens chosen, nothing is ever said about a check that
+     did not run. Step 5's rule is untouched and existing users see no change at all. This is
+     the part that keeps Phase 2 additive.
+  2. **A lens the user deliberately picked, whose checks cannot run, gets one line at the start
+     of the chat reply** — naming the lens and what is missing. Once per run. Never on
+     individual items, never in a verdict, warning line or detail paragraph. So the repetition
+     clause of Step 5's objection is answered by *frequency*, not by an exception to it.
+  3. **The verdict is untouched.** Reporting only — a lens changes review depth, not the gate,
+     so the `VERDICTS` allowlist and Procore's `affirmSkipped` caution path are unaffected. The
+     OCR-style cap (a not-run check forcing a non-`clear` verdict) was considered and declined:
+     it would change behaviour for browser-mode users who legitimately get `clear` today.
+  4. **Never present the missing capability's functionality as though it happened.** The
+     maintainer's words on the edge case — someone picking a lens needing a connector they can
+     never have — were that it "should plainly say they don't have it and don't hallucinate that
+     functionality."
+
+  **Why this is consistent rather than an exception.** Step 0 already carves out the
+  expired-connector case: one line, once, near the headline. The chat reply's opening line is
+  therefore the surface this repo *already* uses for run-level capability status, and the new
+  rule reuses it rather than opening a new one. The distinction that governs both: **a
+  capability the user chose is informative; one they were never given is an apology.**
+
+  **One consequence, recorded rather than buried:** the earlier Phase 2 sketch had a "which
+  packs ran" panel on the dashboard. The decision puts the message in **chat**, so that panel is
+  **dropped**. Do not reinstate it as a tidy-up — the dashboard is where the queue is read, and
+  a permanent status panel there is closer to the per-item caveat Step 5 rejects than to the
+  once-per-run line that replaced it.
+
   **This reframe does not reach M365/Teams**, and that is not the same caution repeated. More
   NetSuite is more internal system-of-record data; email and Teams are **outsider-controlled**,
   and both skills already rule that record content is data and never instructions. A vendor

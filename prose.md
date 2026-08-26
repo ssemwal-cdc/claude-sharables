@@ -80,11 +80,17 @@ as leads to verify on a real machine, never as settled.
   #54859). **This is the candidate** for a durable state location that needs no folder picked.
   Note it is reported as *hardcoded*, including a report that the setup folder choice is ignored
   in favour of it — which is filed as a bug, so do not rely on it staying that way.
-- **Scheduled tasks are reported to re-prompt for folder and tool permissions on every run**, even
-  after "Always allow" (issue #47180): *"Scheduled tasks are effectively unusable for unattended
-  automation… The user must be present to click Allow on every run."* **If that holds, it blocks
-  unattended scheduling regardless of where state lives**, and it is a bigger problem than the
-  folder question that prompted the search.
+- **Issue #47180 reports scheduled tasks re-prompting for permissions on every run despite
+  "Always allow", calling them *"effectively unusable for unattended automation"*. That does not
+  hold here, and the maintainer's own runs are the better evidence.** Reported 2026-08-26:
+  scheduled runs of these plugins have worked multiple times, in the configuration the sheet
+  already mandates — **"always allow" chosen at the site prompt, permissions on Auto** (not
+  Manual, not skip-all). So the blocker this search thought it had found is not one.
+
+  **The plausible reconciliation, and it is worth keeping:** the two settings the sheet already
+  requires may be exactly what avoids the reported behaviour, and #47180 may describe what happens
+  without them. That is inference, not established — but it costs nothing and it makes the sheet's
+  existing permissions instruction load-bearing rather than merely advisory.
 - **A connected folder is not always actually connected.** Issue #86647 reports a session showing
   zero connected folders while the project UI shows one attached, with output silently going to
   downloads instead — *"the failure is silent and only becomes visible after work is already
@@ -93,11 +99,24 @@ as leads to verify on a real machine, never as settled.
 
 **What this changes and does not change.** The maintainer's point stands: pointing the state file
 at a stable path instead of the connected folder is a real option, and would make folderless
-scheduling coherent. What stops it being a patch to write today is that every input above is an
-unverified bug report, the candidate path is reported as *hardcoded rather than supported*, and
-the permission re-prompt may make the whole scheduled-folderless case moot anyway. **The thing
-that would settle it is one look at a real machine** — does `Documents/Claude` exist there, and
-does anything written into it survive a second run — not more reading.
+scheduling coherent. One reason not to has now gone — the permission re-prompt does not bite in
+this configuration. What remains is that the candidate path is reported as *hardcoded rather than
+supported*, and **the thing that would settle it is one look at a real machine** — does
+`Documents/Claude` exist there, and does anything written into it survive a second run — not more
+reading.
+
+**The payoff is also smaller than the question suggests.** Scheduled runs work today *with* a
+folder, observed repeatedly. Folderless-and-scheduled would still stop at the setup interview
+with nobody watching unless state genuinely persists, and the sheet now tells people to connect
+Downloads before scheduling. So this is worth doing if the machine check is cheap, and is not
+worth engineering around if it is not.
+
+**Method note, earned twice in one day.** Both times a GitHub issue was used as evidence about
+current behaviour, the maintainer's own observation contradicted it — once on folderless runs
+working, once on scheduled permissions. Issue trackers are self-selected for failure and stay
+open after fixes ship, so they are good for *finding candidate mechanisms* (the per-session output
+path, the `Documents/Claude` location) and poor for *establishing what happens now*. Use them for
+leads; settle behaviour by watching it.
 
 **Do not change the shipped scheduled prompt on the strength of this section.** It is a research
 note, and the sheet's current instruction (connect Downloads before scheduling) is correct for

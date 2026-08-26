@@ -402,13 +402,17 @@ REGISTRY_MANIFEST = {
         "pc.icr-proposed-delta", "pc.icr-placeholder", "pc.inv-g702",
         "pc.inv-support-tie", "pc.inv-sequence", "pc.inv-duplicates",
         "pc.inv-retainage", "pc.cco-line-sum", "pc.cco-pci-tie", "pc.cco-icr-tie",
+        # delivery lens
+        "pc.del-schedule-impact", "pc.del-scope-affected", "pc.del-ofci",
+        # design lens
+        "pc.dsn-change-origin", "pc.dsn-drawing-ref", "pc.dsn-unknown-workflow",
     },
 }
 
 # `core` always runs and is never selectable. Every other lens runs only when
 # config.focus.lenses names it. A new lens is a deliberate change, not a typo, so it
 # lands here at the same time as the rows that use it.
-REGISTRY_LENSES = {"core", "supply-chain"}
+REGISTRY_LENSES = {"core", "supply-chain", "delivery", "design"}
 
 _ROW = re.compile(r"^\|(.+)\|\s*$", re.M)
 

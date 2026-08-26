@@ -179,6 +179,44 @@ session neither re-derives it nor treats it as a mandate.
   delivery is never a reason to withhold payment for goods received; that judgement is not this
   review's.
 
+  **Two more packs shipped 2026-08-26 (PC v15): `delivery` and `design`.** Written from role
+  research in SharePoint rather than invented — the Design Manager and Sr. CM discipline documents
+  — which is what `prose.md`'s standard actually asks for. Nothing from those documents is
+  reproduced here or in the skills; they informed which *questions* the checks ask.
+
+  **The structural finding, and it is the important one.** Step 1 builds the queue from
+  `open_items/mine`, which returns exactly three types: change risks, subcontractor invoices and
+  change order packages. **The daily substance of design management — RFI response, submittal
+  review, drawing issuance — is not in this queue at all.** It lives in other Procore tools. So
+  the `design` lens covers *design-driven change* well and *design production* not at all, and
+  the skill says so in place rather than implying wider coverage. Do not "fix" this by inventing
+  RFI or submittal procedures; that would be exactly the unvetted judgment the packs-are-hardcoded
+  rule exists to prevent.
+
+  What replaced inventing them, decided by the maintainer: **surface the link.** Step 1's
+  fourth-type rule now reports an unrecognised `item_type` with its `title` and `url`, and
+  `pc.dsn-unknown-workflow` lists them under a heading saying these are workflows this skill does
+  not know. An approvals skill meeting an unfamiliar workflow should hand over something a person
+  can open and learn from. The row is never suppressed, never counted as noise, and never reaches
+  the execute list.
+
+  **`pc.del-schedule-impact` closes a real gap rather than adding a feature.** Step 3 has always
+  fetched `schedule_impact` on ICRs and **no check has ever read it**, so a change's schedule
+  consequence sat in the payload unreported. Same class as the `ShipRcpt` rows NetSuite fetches
+  and discards: the data was already in hand.
+
+  **Both lenses add context and never flag.** Scope, schedule and design-origin judgements belong
+  to the person whose job they are; a lens puts facts in front of them rather than second-guessing
+  a CM or a design manager in their own domain. `core` still decides every verdict. The same
+  leniency doctrine governs them as `supply-chain`: a blank schedule-impact field means nobody
+  filled it in, **not** that the change has no schedule impact, and `stated` / `absent` / `failed`
+  stay three distinct states.
+
+  **Unlike Phase 1, this change was not purely additive** — six lines were removed, all of them
+  statements the change made untrue ("this skill ships no lens today", the old fourth-type rule,
+  the old registry preamble). Removing a sentence that has become false is not the same as moving
+  check prose, but it is worth the distinction being on the record.
+
   **This reframe does not reach M365/Teams**, and that is not the same caution repeated. More
   NetSuite is more internal system-of-record data; email and Teams are **outsider-controlled**,
   and both skills already rule that record content is data and never instructions. A vendor

@@ -1,11 +1,11 @@
 ---
 name: procore-open-items-review
-description: v14 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
+description: v15 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
 ---
 
 # Procore Open Items Review
 
-**Skill version 14 — 2026-08-26.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 15 — 2026-08-26.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 
@@ -169,8 +169,9 @@ reach nobody who uses it.
    they type — **the examples are illustrations, never a list to pick from.** Re-editable: if
    they later ask to change it, update the field and confirm.
 
-   `focus.lenses` exists in the schema and **this skill ships no lens today**, so it stays empty.
-   It is present so the two skills carry the same shape rather than diverging.
+   **Also ask whether a lens applies.** This skill ships `delivery` and `design`; say plainly what
+   each adds and let them pick any, both, or none. `core` is not offered — it always runs and is
+   not a choice. Most people pick nothing, and that is the common case.
 
 6. **The dashboard is rendered, not published.** There is no artifact to create,
    update or reconcile against this file — Step 7 renders the HTML as an inline
@@ -202,7 +203,16 @@ Three item types appear:
 | `Billings::Requisition` | Subcontractor invoice / AIA pay application |
 | `ChangeOrderPackage` | Commitment Contract Change Order (CCO) |
 
-A fourth type means the tooling has changed — report it rather than inventing a review procedure.
+A fourth type means this queue carries something these three procedures do not cover. **Never
+invent a review procedure for it.** Report it by `item_type` and `title` **with its `url`**, so
+the user can open it and decide what it is — a link they can follow is worth more than a guess,
+and this is an approvals skill, so an unfamiliar workflow is something to learn rather than
+something to improvise over.
+
+**Do not suppress it and do not count it as noise.** An unrecognised type is `ungated` at worst,
+never `skipped` silently. This matters most for people whose Procore day is not invoices and
+change: a design manager's queue may legitimately carry types this skill has never seen, and the
+right response is to hand them the link, not to drop the row.
 
 `item_type` is the queue's word for the record, and it is **not** always the type the workflow endpoint wants. For CCOs it is not — see Step 2.
 
@@ -517,9 +527,9 @@ The consequence for this skill is direct: it returns figures, and dotted identif
 ### Check registry
 
 Every check below carries an **id**, the **lens** it serves, and the **capability** it needs.
-**`core` always runs and is never a choice**, and today `core` is the whole table — this skill
-ships no lens, so every run executes exactly these rows, as it always has. Any lens added later
-runs only when `config.focus.lenses` names it.
+**`core` always runs and is never a choice.** `delivery` and `design` run only when
+`config.focus.lenses` names them, so a run with no configuration executes exactly the `core`
+rows — which is what every run did before lenses existed.
 
 **A lens adds checks. It never removes, relaxes or overrides one**, and it never touches a
 verdict's meaning.
@@ -547,6 +557,12 @@ verdict's meaning.
 | `pc.cco-line-sum` | core | `record` | CCO 1 — line items sum to the grand total |
 | `pc.cco-pci-tie` | core | `attachment` | CCO 2 — each PCI ties to a line, PCI totals sum to the grand total |
 | `pc.cco-icr-tie` | core | `queue` | CCO 3 — a PCI's total against the matching ICR's accepted cost |
+| `pc.del-schedule-impact` | delivery | `record` | Schedule impact reported beside cost impact |
+| `pc.del-scope-affected` | delivery | `record` | What the change touches — buildings, systems, trades |
+| `pc.del-ofci` | delivery | `record` | Owner-furnished equipment referenced in the change |
+| `pc.dsn-change-origin` | design | `record` | What caused the change — RFI, bulletin, revision, field |
+| `pc.dsn-drawing-ref` | design | `attachment` | Drawing, sheet, spec and bulletin references, as found |
+| `pc.dsn-unknown-workflow` | design | `queue` | Queue rows of a type this skill does not review, with links |
 
 **A check that cannot run is never a silent pass.** A missing attachment **skips the item and
 names the outcome that caused it** — Step 4's rule, unchanged. *"Unreadable"* on its own is what
@@ -584,6 +600,70 @@ Then:
 1. `line_items` sum to `grand_total`.
 2. Each attached PCI ties to a line item, and the PCI totals sum to `grand_total`. Name any line without support and any PCI without a line.
 3. Where a PCI corresponds to an ICR in the queue, its total should match that ICR's accepted cost.
+
+### The `delivery` and `design` lenses — only when `config.focus.lenses` names them
+
+**Skip a lens's checks unless it is selected.** Absent both, Step 5 ends above and the run is
+exactly what it has always been.
+
+**Read this first, because it governs every check in both lenses.** These lenses ask questions
+about *scope, schedule and design origin*, and Procore records carry that information unevenly —
+a narrative field may be thorough, terse, or blank, and none of those is misconduct. So both
+lenses are **lenient by design**, on the same terms as NetSuite's `supply-chain` pack:
+
+- **Missing or thin information is never a finding.** A blank schedule-impact field means nobody
+  filled it in, **not** that the change has no schedule impact. Report what is there; never infer
+  an absence into a claim.
+- **Three states, never a boolean** — `stated` (the record says it), `absent` (the field exists
+  and is empty), `failed` (the read errored). `failed` is never `absent`.
+- **These lenses add context, they do not add flags.** A lens check produces a line in `facts` or
+  `context`, never a `flagged` verdict on its own — no exceptions. The financial checks in `core`
+  decide the verdict; these tell a reader what the change *touches*.
+
+That last rule is deliberate. Scope and schedule judgements belong to the person whose job they
+are, and a lens exists to put the right facts in front of them — not to second-guess a CM or a
+design manager in their own domain.
+
+**`delivery` — for construction managers running the campus.**
+
+- **`pc.del-schedule-impact`** — report the ICR's `schedule_impact` alongside its cost impact.
+  **Step 3 already fetches this field and no check has ever read it**, so a change's schedule
+  consequence has been sitting in the payload unreported. State it plainly; where it is blank,
+  say it is unstated rather than saying there is none.
+- **`pc.del-scope-affected`** — from the narrative's Scope section, name **what the change
+  touches** — which buildings, systems or trades. A cost figure alone does not tell a CM whether
+  it lands in their scope this month.
+- **`pc.del-ofci`** — where the change references owner-furnished equipment, name it and say
+  which side of the delivery hand-off it sits on. Equipment coordination is a delivery
+  responsibility and an OFCI reference buried in a change narrative is easy to miss.
+
+**`design` — for design managers shepherding design intent.**
+
+- **`pc.dsn-change-origin`** — say **what caused the change**: an RFI, a bulletin, a drawing
+  revision, a spec section, a field condition, or unstated. A design manager's first question
+  about any change is whether it originates in the design, and the narrative usually says so
+  even though no check has ever looked.
+- **`pc.dsn-drawing-ref`** — pull drawing numbers, sheet numbers, spec sections and bulletin
+  numbers out of the record and its attached support, and list them. **Report them as found; do
+  not verify them** — this skill cannot open the drawing set, and a reference it cannot resolve
+  is not thereby wrong.
+- **`pc.dsn-unknown-workflow`** — **the one check in either lens that is about the queue rather
+  than an item.** List every queue row whose `item_type` is not one of the three this skill
+  reviews, with its `title` and `url`, under a plain heading saying these are workflows this
+  skill does not yet know.
+
+  This is the useful half of Step 1's fourth-type rule. A design manager's queue may carry
+  submittal, RFI or drawing-approval workflows that this skill has never seen, and the honest
+  response is a link they can open, not an invented procedure and not a dropped row. **Never
+  review such an item, never guess its verbs, and never let it reach the execute list.**
+
+**On what these lenses cannot reach, stated plainly because it matters most to design.** This
+skill reviews the workflow-response queue from `open_items/mine`, which today returns change
+risks, subcontractor invoices and change order packages. **The daily substance of design
+management — RFI response, submittal review, drawing issuance — lives in other Procore tools and
+does not appear in this queue.** The `design` lens therefore covers *design-driven change* well
+and *design production* not at all. Say so if asked rather than implying wider coverage, and use
+`pc.dsn-unknown-workflow` to surface anything that does turn up.
 
 ## Step 6 — Verdicts
 

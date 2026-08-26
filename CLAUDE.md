@@ -1096,6 +1096,55 @@ scrolls internally is not knowable from the agent side, and if it does not, stic
 silently degrades to an ordinary block. That is why both exist; do not delete one as
 redundant.
 
+**The iframe does not scroll, and the maintainer has never seen the sticky bar work.**
+Reported 2026-08-26, and reproduced mechanically the same day: rendering the page inside a
+frame sized to its own content, with the parent scrolling, gives `position:sticky;
+bottom:10px` zero travel — the bar sits at a fixed 3,874px down a 4,114px document and is
+simply not on screen while you work the queue. In the same arrangement the header mirror
+is 1,621px *above* the viewport. So "guaranteed to work" is true of rendering and false of
+reachability: in the middle of the queue there is no execute control on screen at all.
+
+Two consequences, and the second is the useful one. The overlap defect a scrolling frame
+produces — measured at five row buttons returning the bar from `elementFromPoint`, so
+genuinely unclickable — **cannot occur in this host**, so do not spend a version fixing it.
+And the sticky rule stays anyway: it costs nothing, `test_dashboard_view` pins it, and it
+starts working the day a host scrolls the frame. What is still open is giving the commit
+control a home that is not a page position; nothing here does that yet.
+
+**The card was re-pitched in both plugins, v8, from a blind design critique.** Eight
+critics were shown only screenshots — no code, no brief, no history — and 24 clustered
+findings were verified against the pixels before any of them was acted on. Four rules came
+out of it that are worth not undoing:
+
+- **The left rail carries the verdict; the mark state must not touch it.** `.row.mk` used
+  to set `border-left`, so marking a flagged row erased the only cue that it was flagged.
+  Marks are the card tint and the `Will …` pill now.
+- **The verdict label sits on the meta line, never before the title.** A token whose width
+  depends on its own word shifts every title it precedes — measured at 16px between `Clear`
+  and `Flagged` on NetSuite, and Procore's `Gate unknown` would have set a ~118px gutter for
+  every row. On the meta line, where widths already vary, it costs nothing and both
+  dashboards now start every title at the same x.
+- **Cap the measure on running prose only, never on the figures panel.** Capping `.po` as
+  well was tried and measured: its long figure strings wrapped over more lines and cost more
+  height than clamping the warning saved (216px → 221px). `.head` and `ul.f` cap at 90ch;
+  `.po` does not.
+- **A bare `! ` prefix is not a label.** The warning is its own block now, with a rule above
+  it and an uppercase heading, clamped to three lines behind `more`. The old glyph sat at the
+  same line pitch as the arithmetic above it, so two unrelated blocks read as one paragraph.
+
+**Amber was the real finding.** `· as of last review, not live-checked` closed every single
+NetSuite row while the same amber carried the genuine per-item unknowns, so the one colour
+that means *look here* was mostly boilerplate and a real warning had to shout over nine
+copies of a constant. The snapshot fact is already stated four times — header pill,
+freshness card, step 1 caption, footer note — so the per-row copy is gone. Do not restore
+it. Procore never had one; its staleness note lives in `#barnote`.
+
+**Two things were tried and measured wrong before landing**, both caught by measuring the
+render rather than looking at it: raising type sizes while trying to cut density (fewer type
+*settings* is the goal, larger type is not — it cost 435px across nine cards and bought
+nothing), and replacing a variable-width pill with a variable-width label, which shifts
+titles in exactly the same way. The first pass looked better and measured worse.
+
 **Procore's sticky bar carries only what you need in the second before clicking.** The
 stale-snapshot warning and the Stale-safe explainer moved below it into `#barnote`,
 because inside the bar they made it 249px — over a third of a 700px viewport. Both

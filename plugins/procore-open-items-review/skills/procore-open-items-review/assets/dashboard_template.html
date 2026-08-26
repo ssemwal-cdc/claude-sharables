@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Procore open items queue</title>
-<!-- layout template v7 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v8 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -25,20 +25,32 @@ button.primary:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px 14px;box-shadow:var(--sh1)}
 .card .l{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3)}
 .card .v{font-size:26px;font-weight:650;letter-spacing:-.02em;line-height:1.15;margin-top:4px;font-variant-numeric:tabular-nums}
-.row{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:15px 18px;margin-bottom:12px;box-shadow:var(--sh1);transition:box-shadow .18s ease,border-color .18s ease}
+.row{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--ctl);border-radius:var(--r2);padding:14px 18px 13px 16px;margin-bottom:10px;box-shadow:var(--sh1);transition:box-shadow .18s ease,border-color .18s ease}
 .row:hover{box-shadow:var(--sh2)}
-.row.mk{border:2px solid var(--acc-line);border-left:5px solid var(--acc-fg);background:var(--acc-bg);padding-left:13px}
-.row.mkr{border:2px solid var(--bad-line);border-left:5px solid var(--bad-fg);background:var(--bad-bg);padding-left:13px}
-.rh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.row.vclear{border-left-color:var(--ok-line)}
+.row.vflag{border-left-color:var(--bad-fg)}
+.row.vskip{border-left-color:var(--warn-fg)}
+.row.vgate{border-left-color:var(--acc-fg)}
+.row.mk{background:var(--acc-bg);border-top-color:var(--acc-line);border-right-color:var(--acc-line);border-bottom-color:var(--acc-line)}
+.row.mkr{background:var(--bad-bg);border-top-color:var(--bad-line);border-right-color:var(--bad-line);border-bottom-color:var(--bad-line)}
+.rh{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
 .doc{font-size:15px;font-weight:600;flex:1;min-width:150px}
 .amt{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
-.ven{font-size:13px;color:var(--ink2);margin:6px 0 0}
-.head{font-size:14px;font-weight:500;margin:9px 0 0}
-ul.f{margin:7px 0 0;padding-left:17px;font-size:12.5px;color:var(--ink2);line-height:1.65;font-variant-numeric:tabular-nums}
+.ven{font-size:12.5px;color:var(--ink2);margin:5px 0 0}
+.vlab{font-weight:650;letter-spacing:.07em;text-transform:uppercase}
+.head{font-size:14px;font-weight:500;margin:8px 0 0;max-width:90ch}
+ul.f{margin:6px 0 0;padding-left:16px;font-size:12.5px;color:var(--ink2);line-height:1.6;font-variant-numeric:tabular-nums;max-width:90ch}
 ul.f li{margin:1px 0}
-.po{font-size:12.5px;color:var(--ink2);background:var(--surf);padding:8px 11px;border-radius:10px;margin:10px 0 0;font-variant-numeric:tabular-nums}
+.po{font-size:12.5px;color:var(--ink2);background:var(--surf);border-left:2px solid transparent;padding:9px 13px;border-radius:8px;margin:10px 0 0;font-variant-numeric:tabular-nums}
+.pwarn{margin:9px 0 0;padding-top:9px;border-top:1px solid var(--warn-line);color:var(--warn-fg)}
+.pwarn .lbl{display:block;font-weight:650;letter-spacing:.07em;text-transform:uppercase;margin-bottom:2px}
+.pwarn .txt{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pwarn .txt.open{display:block}
+.pwarn .more{font:500 11.5px/1 inherit;background:none;border:0;padding:4px 0 0;color:var(--warn-fg);text-decoration:underline;cursor:pointer}
 .det{font-size:13px;color:var(--ink2);line-height:1.7;margin:10px 0 0;display:none}
-.acts{display:flex;gap:8px;align-items:center;margin-top:12px;padding-top:11px;border-top:1px solid var(--line);flex-wrap:wrap}
+.acts{display:flex;gap:8px;align-items:center;margin-top:11px;padding-top:10px;border-top:1px solid var(--line);flex-wrap:wrap}
+.acts a{font-size:12.5px;color:var(--ink2);text-decoration:none}
+.acts a:hover{color:var(--ink);text-decoration:underline}
 button{font:500 12.5px/1 inherit;padding:7px 13px;background:transparent;border:1px solid var(--ctl);border-radius:var(--r);color:var(--ink);cursor:pointer;transition:background .15s ease,border-color .15s ease,color .15s ease}
 button:hover{background:var(--sunk);border-color:var(--ctl2)}
 button:focus-visible{outline:2px solid var(--acc-fg);outline-offset:2px}
@@ -436,25 +448,31 @@ function byId(id){for(var i=0;i<REVIEW.items.length;i++){if(REVIEW.items[i].id==
 function itemRow(it){
   var m=marks[it.id]||null, cls="row"+(m?(needsReason(m.kind)?" mkr":" mk"):"");
   var a=daysSince(it.due);
-  var pill,pbg,pfg;
-  if(it.verdict==="flagged"){pill="Flagged";pbg="var(--bad-bg)";pfg="var(--bad-fg)"}
-  else if(it.verdict==="skipped"){pill="Skipped";pbg="var(--warn-bg)";pfg="var(--warn-fg)"}
-  else if(it.verdict==="ungated"){pill="Gate unknown";pbg="var(--acc-bg)";pfg="var(--acc-fg)"}
-  else{pill="Clear";pbg="var(--ok-bg)";pfg="var(--ok-fg)"}
+  // Verdict rides the card's left rail and a label on the meta line below. Four
+  // verdicts here against NetSuite's two, which is exactly why the label cannot sit
+  // before the title: "Gate unknown" would set the gutter for every row.
+  var vcls,vtxt,vcol;
+  if(it.verdict==="flagged"){vcls="vflag";vtxt="Flagged";vcol="var(--bad-fg)"}
+  else if(it.verdict==="skipped"){vcls="vskip";vtxt="Skipped";vcol="var(--warn-fg)"}
+  else if(it.verdict==="ungated"){vcls="vgate";vtxt="Gate unknown";vcol="var(--acc-fg)"}
+  else{vcls="vclear";vtxt="Clear";vcol="var(--ok-fg)"}
+  var vlab='<span class="vlab" style="color:'+vcol+'">'+vtxt+'</span> · ';
   var mk=m?'<span class="pill" style="background:'+(needsReason(m.kind)?"var(--bad-bg)":"var(--acc-bg)")+';color:'+(needsReason(m.kind)?"var(--bad-fg)":"var(--acc-fg)")+'">Will '+esc(m.kind.toLowerCase())+'</span>':"";
 
-  var h='<div class="'+cls+'" id="row'+it.id+'">'+
-   '<div class="rh"><span class="pill" style="background:'+pbg+';color:'+pfg+'">'+pill+'</span>'+
+  var h='<div class="'+cls+' '+vcls+'" id="row'+it.id+'">'+
+   '<div class="rh">'+
    '<span class="doc">'+esc(it.type)+' · '+esc(it.doc)+'</span>'+mk+
    '<span class="amt">'+money(it.amt)+'</span></div>'+
-   '<p class="ven">'+esc(it.projLabel)+' · '+esc(it.vendor)+
+   '<p class="ven">'+vlab+esc(it.projLabel)+' · '+esc(it.vendor)+
      (a!=null?' <span style="color:'+(a>30?"var(--bad-fg)":a>7?"var(--warn-fg)":"var(--ink3)")+'">· step due '+esc(it.due)+', '+dueText(a)+'</span>':'')+'</p>'+
    '<p class="head">'+esc(it.head)+'</p>'+
    '<ul class="f">'+it.facts.map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+
-   '<p class="po">'+esc(it.po)+(it.poWarn?'<br><span style="color:var(--warn-fg)">! '+esc(it.poWarn)+'</span>':'')+'</p>'+
+   '<div class="po">'+esc(it.po)+
+   (it.poWarn?'<div class="pwarn"><span class="lbl">Worth clearing separately</span>'+
+    '<span class="txt" id="pw'+it.id+'">'+esc(it.poWarn)+'</span>'+
+    '<button class="more" onclick="pwtog(\''+it.id+'\',this)">more</button></div>':'')+'</div>'+
    '<p class="det" id="det'+it.id+'">'+esc(it.detail)+'</p>'+
-   '<div class="acts">'+
-   '<button onclick="tog(\''+it.id+'\',this)">Show detail</button>';
+   '<div class="acts">';
 
   if(it.verdict==="ungated"){
     h+='<button class="acc" onclick="resolveGate(\''+it.id+'\')">Resolve the gate on this ↗</button>'+
@@ -468,12 +486,17 @@ function itemRow(it){
     });
   }
 
-  h+='<span style="flex:1"></span><a href="'+recUrl(it)+'" target="_blank" rel="noopener" onclick="return nav(this)">Open in Procore</a></div>';
+  h+='<span style="flex:1"></span>'+
+     '<a href="#" onclick="tog(\''+it.id+'\',this);return false">Show detail</a>'+
+     '<a href="'+recUrl(it)+'" target="_blank" rel="noopener" onclick="return nav(this)">Open in Procore</a></div>';
 
   if(m) h+='<input type="text" placeholder="'+(needsReason(m.kind)?"Reason (required — goes into the Procore response comment)":"Comment to record with the response (optional)")+'" value="'+esc(m.text||"")+'" oninput="setText(\''+it.id+'\',this.value)">';
   return h+'</div>';
 }
 
+function pwtog(id,btn){var t=document.getElementById("pw"+id);if(!t)return;
+  var open=t.className.indexOf("open")>=0;
+  t.className=open?"txt":"txt open";btn.textContent=open?"more":"less"}
 function tog(id,btn){var d=document.getElementById("det"+id);var open=d.style.display==="block";d.style.display=open?"none":"block";btn.textContent=open?"Show detail":"Hide detail"}
 function toggleSkipped(){showSkipped=!showSkipped;render()}
 function mark(id,kind){

@@ -57,6 +57,54 @@ with the machine off or Chrome closed.
 
 ---
 
+## Where Cowork actually keeps things, and why folderless does not persist
+
+2026-08-26. Researched after the maintainer's fair objection that *"the folder is required"* is a
+property of **the scheduled prompt we wrote**, not a law — so if Cowork has any other durable
+location, the prompt could point at it instead and folderless scheduling would work.
+
+**Standing of everything below: community bug reports on `anthropics/claude-code`, not Anthropic
+documentation.** `support.claude.com` is blocked by the sandbox egress proxy, so the primary
+source stayed unreadable and these are the best available substitute. They are reports of
+*defects*, so some may already be fixed and behaviour may differ by version and platform. Treat
+as leads to verify on a real machine, never as settled.
+
+- **A folderless session's writable area appears to be per-session.** Issue #47179 reports that
+  with no folder connected, output lands under
+  `AppData\Roaming\Claude\local-agent-mode-sessions…\outputs` — a **per-session** path. That
+  is the cleanest explanation of the maintainer's own observation: a folderless run works (there
+  is somewhere to write) but re-interviews every time (that somewhere does not survive the
+  session). It also means the state file is not merely misplaced — it is genuinely gone.
+- **`~/Documents/Claude/` is reported as a hardcoded, stable Cowork path**, used for artifacts and
+  for scheduled-task definitions at `~/Documents/Claude/Scheduled/<task-name>/` (issues #57177,
+  #54859). **This is the candidate** for a durable state location that needs no folder picked.
+  Note it is reported as *hardcoded*, including a report that the setup folder choice is ignored
+  in favour of it — which is filed as a bug, so do not rely on it staying that way.
+- **Scheduled tasks are reported to re-prompt for folder and tool permissions on every run**, even
+  after "Always allow" (issue #47180): *"Scheduled tasks are effectively unusable for unattended
+  automation… The user must be present to click Allow on every run."* **If that holds, it blocks
+  unattended scheduling regardless of where state lives**, and it is a bigger problem than the
+  folder question that prompted the search.
+- **A connected folder is not always actually connected.** Issue #86647 reports a session showing
+  zero connected folders while the project UI shows one attached, with output silently going to
+  downloads instead — *"the failure is silent and only becomes visible after work is already
+  done."* Same silent-misfile shape as everything else in these notes, one layer below the
+  plugins.
+
+**What this changes and does not change.** The maintainer's point stands: pointing the state file
+at a stable path instead of the connected folder is a real option, and would make folderless
+scheduling coherent. What stops it being a patch to write today is that every input above is an
+unverified bug report, the candidate path is reported as *hardcoded rather than supported*, and
+the permission re-prompt may make the whole scheduled-folderless case moot anyway. **The thing
+that would settle it is one look at a real machine** — does `Documents/Claude` exist there, and
+does anything written into it survive a second run — not more reading.
+
+**Do not change the shipped scheduled prompt on the strength of this section.** It is a research
+note, and the sheet's current instruction (connect Downloads before scheduling) is correct for
+the prompt as it actually ships today.
+
+---
+
 ## Open decisions, and what was deliberately deferred
 
 Written 2026-08-24 at the end of the modularity work, because the reasoning behind these

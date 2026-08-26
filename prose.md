@@ -23,6 +23,40 @@ opposite of what they are.
 
 ---
 
+## A folderless run works, and that is an observation
+
+2026-08-26, reported by the maintainer: running either plugin **with no workspace folder
+connected** works. It interviews from scratch first, so the run takes noticeably longer, but it
+completes.
+
+**That corrects a caveat written the same day** and is worth keeping as a method note. The
+inference was: no folder means every run is a first run, so Step 0's rung 3 (reuse the existing
+workspace copies) is never available; `CLAUDE.md` says rung 1 is known to fail on Cowork and
+rung 2 has never been observed; and the skill's rule for that case is to stop before Step 7. The
+chain was sound and the conclusion was wrong. Something in the ladder is working — most likely
+rung 2, or a surface where rung 1 works — and **the sheet now says what was observed rather than
+what was derived.** Which rung actually carried it is still unknown; nobody has checked.
+
+**Scheduled runs are the opposite case, and the folder is genuinely required there.** Not from a
+run — from reading the scheduled prompt the onboarding sheet ships. Its first instruction is to
+read `_netsuite_review_log.json` **in the connected workspace folder** and stop if
+`lastCompletedRun` is today, and its own fallback is *"if the file is missing or unreadable,
+treat that as no run today and continue."* So with no folder the idempotency gate can never
+trip: **every retry does the whole review** instead of the later fire times standing down, and
+each one stops at the setup interview with nobody there to answer. The sheet already warned about
+the interview for a never-run plugin; it now also requires the folder before scheduling.
+
+**What could not be checked.** Whether a Cowork scheduled task can reach a locally connected
+folder at all is unresolved here: `support.claude.com` is blocked by the sandbox egress proxy
+(as `CLAUDE.md` records), so the primary source was unreadable. Web search results suggested
+scheduled tasks work with connectors and files saved to the Claude account and cannot be tied to
+a local folder, with a cloud session reaching connected folders only while the desktop app is
+open — **treat that as unverified.** It does not change the instruction above, which rests on the
+shipped prompt's own text, and it is consistent with the sheet's existing line that nothing runs
+with the machine off or Chrome closed.
+
+---
+
 ## Open decisions, and what was deliberately deferred
 
 Written 2026-08-24 at the end of the modularity work, because the reasoning behind these

@@ -288,7 +288,7 @@ details.warn summary{color:var(--warn)}
     <summary>Where your work is saved</summary>
     <p>Inside <strong>Downloads</strong>: a <code>NetSuite Approval Checks</code> folder, a <code>Procore Open Items</code> folder, or both. Each holds your review history, the ids you confirmed, and the dashboard.</p>
     <p><strong>Choose Downloads every time.</strong> It's how a scheduled run knows whether it already ran today. Somewhere else — or renaming these — and the next run asks the setup questions again.</p>
-    <p><strong>Skipped the folder entirely?</strong> Then nothing is remembered between runs. You'll answer the setup questions <em>every single time</em>, and a scheduled run can't tell whether it already went today — so it may run twice. The dashboard's page layout is kept in that folder too, which means a run with nowhere to keep it can stop short of drawing the dashboard instead of showing you one. Pick Downloads once and none of this comes up.</p>
+    <p><strong>Skipped the folder entirely?</strong> It still works — it just interviews you from scratch every time, so each run takes noticeably longer. What you lose is memory: nothing carries from one run to the next. For a one-off that's only slow. <strong>For a scheduled run it doesn't work at all</strong> — see step 5.</p>
   </details>
 </section>
 
@@ -296,6 +296,7 @@ details.warn summary{color:var(--warn)}
   <div class="step-head"><span class="num">5</span><h2 id="step5">Run it on a schedule</h2></div>
   <p><strong>In that same chat from step 4</strong>, hit <strong>Copy</strong> on the block for the plugin you set up, then paste it in as one message. You don't need to read it.</p>
   <p>Claude asks about timing, then gives you an <strong>Add to schedule</strong> button. Click it. <strong>Do this once per plugin you installed</strong>, and only after you have done step 4 for that plugin — a schedule on a plugin whose first run never happened will stop to ask you setup questions with nobody watching. <strong>Both plugins?</strong> Do it twice — one block, add its schedule, then the other.</p>
+  <div class="note warn"><strong>Connect Downloads before you schedule — this one is not optional.</strong> The scheduled prompt's first act is to read that folder to see whether today's run already happened. With no folder there is nothing to read, so <em>every</em> retry does the whole review instead of the later ones seeing the day is done — and each one stops to ask you the setup questions with nobody there to answer them.</div>
   <p class="muted">A reasonable answer: first try 11am, retries 2pm and 4pm, weekdays only. Closed that chat already? Start a new Cowork chat, connect Downloads again, run the step 4 command once, then paste below.</p>
 
   <div class="note">

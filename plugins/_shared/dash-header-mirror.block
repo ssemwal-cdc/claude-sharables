@@ -1,6 +1,13 @@
   // Header mirror: the same one click, reachable the moment the page opens instead of only
-  // after scrolling the whole queue. Hidden until there is something to execute so it never
-  // competes with the toolbar for attention.
+  // after scrolling the whole queue. Silent until something is marked, so it never competes
+  // with the toolbar for attention.
+  //
+  // It also renders when execution is BLOCKED. Gating it on canRun alone left the top of the
+  // page saying nothing at exactly the moment something was standing in the way - which is
+  // when a reader is most likely to be looking up there for it.
   var te=document.getElementById("topexec");
-  if(te)te.innerHTML=canRun?'<button class="go big" onclick="go()">Execute '+ks.length+' ↗</button>':'';
+  if(te)te.innerHTML=canRun
+    ? '<button class="go big" onclick="go()">Execute '+ks.length+' ↗</button>'
+    : ks.length ? '<span class="pill blockedpill">'+ks.length+' marked · needs a reason</span>'
+    : '';
   window.__prompt=prompt;

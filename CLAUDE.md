@@ -1145,6 +1145,34 @@ render rather than looking at it: raising type sizes while trying to cut density
 nothing), and replacing a variable-width pill with a variable-width label, which shifts
 titles in exactly the same way. The first pass looked better and measured worse.
 
+**The freshness card folded into the header, and folding it wrong put its height straight
+back.** The card was a bordered box restating what the `Snapshot · fresh` pill already says,
+and the `Pending` / `Awaiting you` tile restated the subtitle directly above it. Both are
+gone. But the first attempt moved the freshness line *inside* `.top`, whose left column is a
+flex item sized to its own content — so a long line made that column wide, wrapped
+`.topright` onto a second row, and grew `.top` from 54px to 148px. Net saving: 6px, measured.
+The line is a sibling of `.top` now and the left column carries `flex:1 1 300px;min-width:0`
+so a long subtitle wraps inside its own column instead of pushing the pill and the re-run
+button down. Chrome above the first item: NetSuite 454px → 380px, Procore 467px → 401px.
+
+**The tiles follow the filter; `renderBar()` still must not.** A tile reading `9` above a list
+showing `2` was a real contradiction and is fixed by counting the filtered set against the
+whole queue (`ofTotal`, a shared block). The bar is the opposite case and the distinction is
+load-bearing: a marked item hidden by a filter still has to execute, so narrowing the bar to
+what is on screen would silently discard decisions. Both the shared block's comment and
+`test_dashboard_view` say so. One detail worth keeping: `ofTotal` emits the `of N` half in a
+small light span, because at full size a filtered `$148k of $432k` wraps inside a 136px tile
+and makes the whole row 18px taller.
+
+**`button.go.big[disabled]` was one rule serving two meanings** — *nothing marked* and *one
+sentence away from ready* were pixel-identical, so the second read as a broken button. Three
+states now: grey for idle, an amber outline with a full-contrast label for blocked, and the
+solid dark primary when it can run. `Clear all marks` went from a full-contrast bordered
+button to a text link, because at the blocked moment the loudest control on offer was the one
+that discards every decision. And the header mirror renders a blocked chip instead of
+vanishing: gating it on `canRun` alone left the top of the page silent at exactly the moment
+something was standing in the way.
+
 **Procore's sticky bar carries only what you need in the second before clicking.** The
 stale-snapshot warning and the Stale-safe explainer moved below it into `#barnote`,
 because inside the bar they made it 249px — over a third of a 700px viewport. Both

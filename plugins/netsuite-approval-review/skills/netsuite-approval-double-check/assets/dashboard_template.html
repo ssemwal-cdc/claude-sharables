@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>NetSuite approval queue</title>
-<!-- layout template v8 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v9 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -14,16 +14,16 @@ h1{font-size:24px;font-weight:650;letter-spacing:-.015em;line-height:1.2;margin:
 .sub{font-size:13px;color:var(--ink2);margin:4px 0 0}
 .pill{font-size:12px;font-weight:550;padding:4px 11px;border-radius:999px;white-space:nowrap;box-shadow:inset 0 0 0 1px var(--ring)}
 .top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.freshbox{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:12px 15px;margin:16px 0 0;box-shadow:var(--sh1)}
-.freshbox.stale{border-color:var(--warn-line);background:var(--warn-bg)}
-.freshtext{flex:1;min-width:160px;font-size:13px;line-height:1.45}
-.freshtext b{font-weight:600;font-size:13.5px}
+.top>div:first-child{flex:1 1 300px;min-width:0}
+.fresh{font-size:12.5px;color:var(--ink2);margin:8px 0 0}
+.fresh.stale{color:var(--warn-fg);font-weight:500}
 button.primary{background:var(--ink);border-color:var(--ink);color:var(--inv);font-size:13px;font-weight:550;padding:9px 16px;border-radius:10px}
 button.primary:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:20px 0 22px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:14px 0 16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px 14px;box-shadow:var(--sh1)}
 .card .l{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3)}
 .card .v{font-size:26px;font-weight:650;letter-spacing:-.02em;line-height:1.15;margin-top:4px;font-variant-numeric:tabular-nums}
+.card .v .of{font-size:13px;font-weight:500;letter-spacing:0;color:var(--ink3)}
 .row{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--ctl);border-radius:var(--r2);padding:14px 18px 13px 16px;margin-bottom:10px;box-shadow:var(--sh1);transition:box-shadow .18s ease,border-color .18s ease}
 .row:hover{box-shadow:var(--sh2)}
 .row.vclear{border-left-color:var(--ok-line)}
@@ -63,6 +63,11 @@ button.go.big{background:var(--ink);color:var(--bg);border-color:var(--ink);font
 button.go.big:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
 button.go.big[disabled]{background:transparent;color:var(--ink3);border-color:var(--ctl);cursor:not-allowed;box-shadow:none}
 button.go.big[disabled]:hover{background:transparent;border-color:var(--ctl)}
+button.go.big[disabled].blocked{color:var(--warn-fg);border-color:var(--warn-line);background:var(--warn-bg)}
+button.go.big[disabled].blocked:hover{background:var(--warn-bg);border-color:var(--warn-line)}
+.barbtns .clear{background:none;border:0;padding:7px 4px;font-size:12.5px;color:var(--ink2);text-decoration:underline;cursor:pointer}
+.barbtns .clear:hover{color:var(--ink);background:none}
+.blockedpill{background:var(--warn-bg);color:var(--warn-fg)}
 input[type=text]{width:100%;font:400 13px inherit;padding:8px 11px;border:1px solid var(--ctl);border-radius:var(--r);margin-top:10px;background:var(--card);color:var(--ink)}
 input[type=text]:focus{border-color:var(--acc-fg);outline:2px solid var(--acc-bg)}
 a{color:var(--acc-fg);text-decoration:none;font-size:12.5px}
@@ -76,7 +81,7 @@ a:hover{text-decoration:underline}
 .barlive{font-size:13px;color:var(--ink2);margin-top:4px}
 .barsum{font-size:12.5px;color:var(--ink3);margin-top:4px;font-variant-numeric:tabular-nums}
 .barbtns{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
-.stephead{display:flex;align-items:center;gap:10px;margin:26px 0 12px}
+.stephead{display:flex;align-items:center;gap:10px;margin:18px 0 10px}
 .stepnum{width:24px;height:24px;border-radius:50%;background:var(--acc-fg);color:var(--inv);font-size:12.5px;font-weight:650;display:flex;align-items:center;justify-content:center;flex:none}
 .stephead .st{font-size:14px;font-weight:600}
 .stephead .sd{font-size:12.5px;color:var(--ink2)}
@@ -129,14 +134,11 @@ document.addEventListener("DOMContentLoaded",function(){
   </div>
   <div class="topright">
     <span class="pill" id="conn" style="background:var(--warn-bg);color:var(--warn-fg)">Snapshot</span>
+    <button class="primary" onclick="sendRun()">Re-run the check now ↗</button>
     <span id="topexec"></span>
   </div>
 </div>
-
-<div class="freshbox" id="freshbox">
-  <div class="freshtext" id="freshtext"></div>
-  <button class="primary" onclick="sendRun()">Re-run the check now ↗</button>
-</div>
+<p class="fresh" id="freshtext"></p>
 
 <div class="cards" id="cards"></div>
 
@@ -339,28 +341,34 @@ function render(){
 
   document.getElementById("sub").textContent=pending+" pending your approval";
   var mins=ageOfRun(), stale=(mins!=null&&mins>180);
-  var fb=document.getElementById("freshbox");
-  fb.className="freshbox"+(stale?" stale":"");
-  document.getElementById("freshtext").innerHTML=
-    '<b>Reviewed '+ageText()+'</b> — '+esc(REVIEW.lastRun)+
-    '<br><span style="color:var(--ink2)">'+(stale
-      ? 'This snapshot is getting old. NetSuite may have moved on; re-run before acting on anything below.'
-      : 'This is a snapshot, not a live view. Each record is re-verified in NetSuite at execute time, immediately before it is clicked.')+'</span>';
+  var ft=document.getElementById("freshtext");
+  ft.className="fresh"+(stale?" stale":"");
+  ft.innerHTML='Reviewed '+ageText()+' · '+esc(REVIEW.lastRun)+(stale
+    ? ' — this snapshot is getting old. NetSuite may have moved on; re-run before acting on anything below.'
+    : '');
   var conn=document.getElementById("conn");
   conn.textContent=stale?"Snapshot · "+ageText():"Snapshot · fresh";
   conn.style.background=stale?"var(--bad-bg)":"var(--ok-bg)";
   conn.style.color=stale?"var(--bad-fg)":"var(--ok-fg)";
-
-  document.getElementById("cards").innerHTML=
-   cd("Pending",pending)+cd("Clear",clear,"var(--ok-fg)")+cd("Flagged",flagged,"var(--bad-fg)")+
-   cd("Oldest",oldest?oldest+"d":"–")+
-   cd("In queue",total?compactMoney(total):"$0");
 
   var b="";
   document.getElementById("banners").innerHTML=b;
 
   fillFilters(rows);
   var vrows=applyView(rows), hidden=rows.length-vrows.length;
+
+  // The Pending tile went with the freshness card: it restated the subtitle directly
+  // above it. The rest now count the filtered set against the whole queue.
+  var vClear=vrows.filter(function(r){return r.c.state==="clear"}).length;
+  var vFlagged=vrows.filter(function(r){return r.c.state==="flagged"}).length;
+  var vTotal=vrows.reduce(function(s,r){return s+r.it.amt},0);
+  var vAges=vrows.map(function(r){return ageDays(r.it.trandate)}).filter(function(a){return a!=null});
+  var vOldest=vAges.length?Math.max.apply(null,vAges):0;
+  document.getElementById("cards").innerHTML=
+   cd("Clear",ofTotal(vClear,clear),"var(--ok-fg)")+
+   cd("Flagged",ofTotal(vFlagged,flagged),"var(--bad-fg)")+
+   cd("Oldest",ofTotal(vOldest?vOldest+"d":"–",oldest?oldest+"d":"–"))+
+   cd("In queue",ofTotal(total?compactMoney(vTotal):"$0",total?compactMoney(total):"$0"));
 
   var body="";
   vrows.forEach(function(r){body+=itemRow(r.it,r.c)});
@@ -375,6 +383,14 @@ function render(){
 
   renderBar();
 }
+//__SHARED:dash-of-total__
+// Tiles follow the filter, so they can never disagree with the list underneath them.
+// renderBar() deliberately does NOT - a marked item hidden by a filter still has to
+// execute, and narrowing it to what is on screen would silently drop decisions the
+// user made before they filtered. Do not "fix" the bar to match these.
+function ofTotal(v,t){return String(v)===String(t)?String(t)
+  :v+'<span class="of"> of '+t+'</span>'}
+//__END_SHARED:dash-of-total__
 function cd(l,v,col){return '<div class="card"><div class="l">'+l+'</div><div class="v"'+(col?' style="color:'+col+'"':'')+'>'+v+'</div></div>'}
 
 // The PO the bill is APPLIED to, and how that was resolved. Three states, kept distinct on
@@ -530,14 +546,21 @@ function renderBar(){
       : 'Nothing reaches NetSuite until you press execute.')+'</div>'+
    (missing.length?'<div class="note" style="color:var(--bad-fg);margin-top:6px">Reason required before executing: '+missing.map(esc).join(", ")+'</div>':'')+
    '<div class="barbtns">'+
-   '<button class="go big" '+(canRun?'onclick="go()"':'disabled')+'>Execute '+ks.length+' decision'+(ks.length===1?"":"s")+' in NetSuite ↗</button>'+
-   (ks.length?'<button onclick="clearAll()">Clear all marks</button>':'')+'</div></div>';
+   '<button class="go big'+(blocked?" blocked":"")+'" '+(canRun?'onclick="go()"':'disabled')+'>Execute '+ks.length+' decision'+(ks.length===1?"":"s")+' in NetSuite ↗</button>'+
+   (ks.length?'<button class="clear" onclick="clearAll()">Clear all marks</button>':'')+'</div></div>';
   //__SHARED:dash-header-mirror__
   // Header mirror: the same one click, reachable the moment the page opens instead of only
-  // after scrolling the whole queue. Hidden until there is something to execute so it never
-  // competes with the toolbar for attention.
+  // after scrolling the whole queue. Silent until something is marked, so it never competes
+  // with the toolbar for attention.
+  //
+  // It also renders when execution is BLOCKED. Gating it on canRun alone left the top of the
+  // page saying nothing at exactly the moment something was standing in the way - which is
+  // when a reader is most likely to be looking up there for it.
   var te=document.getElementById("topexec");
-  if(te)te.innerHTML=canRun?'<button class="go big" onclick="go()">Execute '+ks.length+' ↗</button>':'';
+  if(te)te.innerHTML=canRun
+    ? '<button class="go big" onclick="go()">Execute '+ks.length+' ↗</button>'
+    : ks.length ? '<span class="pill blockedpill">'+ks.length+' marked · needs a reason</span>'
+    : '';
   window.__prompt=prompt;
   //__END_SHARED:dash-header-mirror__
 }

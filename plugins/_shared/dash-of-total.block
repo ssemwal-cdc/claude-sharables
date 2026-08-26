@@ -1,0 +1,6 @@
+// Tiles follow the filter, so they can never disagree with the list underneath them.
+// renderBar() deliberately does NOT - a marked item hidden by a filter still has to
+// execute, and narrowing it to what is on screen would silently drop decisions the
+// user made before they filtered. Do not "fix" the bar to match these.
+function ofTotal(v,t){return String(v)===String(t)?String(t)
+  :v+'<span class="of"> of '+t+'</span>'}

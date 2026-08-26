@@ -318,6 +318,38 @@ in any run, while the skill's carry-forward rule retained items to feed it. Noth
 checks that a page's branches are reachable. If a new verdict is ever added, it goes in
 three places together: the allowlist, Step 6's vocabulary, and the template.
 
+**And a third, added 2026-08-26: `check_check_registry()`.** Each skill's verify step now opens
+with a **check registry** — every check it runs, declared with an **id**, the **lens** it serves
+and the **capability** it needs, above a capability table saying what happens when each one is
+absent. The registry is **descriptive, not a selector**: `core` is the whole table, so a run
+with no `config.lenses` does exactly what every run did before it existed. It exists so a later
+lens can select checks by id without anyone having to re-derive what the checks are.
+
+The gate is what makes it worth having. `REGISTRY_MANIFEST` in `shared_blocks.py` hardcodes
+every id, so **a check that silently stops being declared fails the build** — the failure prose
+is not, and a row can vanish in an edit with nothing noticing. Lenses are checked against
+`REGISTRY_LENSES`; capabilities are checked against **the skill's own capability table**, so a
+new capability needs no change to the script but one with no stated absence behaviour is
+rejected. Mutation-tested three ways on the day it landed: drop a row, invent a capability,
+invent a lens — all three fail. Adding a check therefore takes two edits, the registry row and
+the manifest entry. That friction is the feature.
+
+**The registry was added purely additively, and that was the whole design.** Not one line of
+existing check prose was moved, reworded or removed — `git diff` on both `SKILL.md` files shows
+additions only, apart from the version lines. That is a stronger behaviour-neutrality guarantee
+than restructuring and then verifying, and it is the reason this phase was safe to ship without
+a live run. **Note for anyone extending it:** the obvious next move is to rewrite the checks
+underneath into the registry's shape. Do not. The registry naming prose that stays put is what
+makes it free; a rewrite puts Step 4 and Step 5's calibration decisions back in play.
+
+**One asymmetry inside it is load-bearing and must not be tidied.** A missing *attachment*
+skips the item and **names the outcome**; a missing *connector* skips Step 5 and **says nothing
+at all**. Both registries state this. They look like an inconsistency and they are not — Step 5
+explains why silence is right there (a caveat nobody can act on is an apology on a loop) and
+Step 4 explains why naming is right there (*"unreadable"* is what once hid whole file formats
+going unread). Any future lens that reports "not run" inherits this split: **a capability the
+user chose not to have is informative; one they cannot obtain is an apology.**
+
 **What is deliberately *not* shared:** anything genuinely per-domain — NetSuite's
 type/vendor filter axes against Procore's campus/building/type, the `M/D/YYYY` vs ISO
 date parsing, NetSuite's three fixed buttons against Procore's verbs read from the

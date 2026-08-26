@@ -380,6 +380,116 @@ def check_onboarding_page():
     return problems
 
 
+# Every check each skill runs, as declared by its Step 4/5 check registry. Hardcoded on
+# purpose: the registry is prose, and prose can lose a row in an edit without anything
+# noticing. That is the failure this guards - not a wrong id, but a check that quietly
+# stops being declared. Adding or removing a check therefore takes two edits, which is
+# the intended friction rather than an oversight.
+#
+# The capability column is NOT hardcoded. It is validated against the capability table
+# the same SKILL.md declares immediately above its registry, so the two cannot drift
+# apart and a new capability needs no change here.
+REGISTRY_MANIFEST = {
+    "netsuite-approval-double-check": {
+        "ns.header-tie", "ns.line-tie", "ns.internal-consistency", "ns.proration",
+        "ns.support-adequacy", "ns.po-linkage", "ns.typed-reference",
+        "ns.billed-to-date", "ns.zero-evidence",
+    },
+    "procore-open-items-review": {
+        "pc.icr-cost-impact", "pc.icr-proposal-tie", "pc.icr-phase-sum",
+        "pc.icr-proposed-delta", "pc.icr-placeholder", "pc.inv-g702",
+        "pc.inv-support-tie", "pc.inv-sequence", "pc.inv-duplicates",
+        "pc.inv-retainage", "pc.cco-line-sum", "pc.cco-pci-tie", "pc.cco-icr-tie",
+    },
+}
+
+# Phase 1 declares one lens. A second lens is a deliberate change, not a typo, so it
+# lands here at the same time as the rows that use it.
+REGISTRY_LENSES = {"core"}
+
+_ROW = re.compile(r"^\|(.+)\|\s*$", re.M)
+
+
+def _table_rows(block, ncols):
+    """Body rows of the markdown tables in `block` that have exactly ncols cells.
+
+    Walks in order so the row immediately before each `|---|` rule can be dropped as that
+    table's header - a header whose first cell happens to look like an id would otherwise
+    be validated as one. Cells are unwrapped from backticks, since the tables render ids
+    and capabilities as code spans.
+    """
+    rows = []
+    for m in _ROW.finditer(block):
+        cells = [c.strip().strip("`") for c in m.group(1).split("|")]
+        if set("".join(cells)) <= set("-: "):
+            if rows:
+                rows.pop()          # the line above a rule is the header
+            continue
+        rows.append(cells)
+    return [r for r in rows if len(r) == ncols]
+
+
+def check_check_registry():
+    """Each SKILL.md's check registry must declare every check, with a known lens and a
+    capability its own capability table defines.
+
+    The registry exists so a later lens can select on checks by id. It is descriptive in
+    this phase - `core` is the whole table, so absent config runs exactly what these
+    skills have always run. This check is what stops it silently ceasing to be complete.
+    """
+    problems = []
+    for entry in sorted(os.listdir(PLUGINS)):
+        if entry.startswith("_"):
+            continue
+        skills = os.path.join(PLUGINS, entry, "skills")
+        if not os.path.isdir(skills):
+            continue
+        for skill in sorted(os.listdir(skills)):
+            expected = REGISTRY_MANIFEST.get(skill)
+            if expected is None:
+                continue
+            fp = os.path.join(skills, skill, "SKILL.md")
+            if not os.path.isfile(fp):
+                continue
+            text = open(fp, encoding="utf-8").read()
+            m = re.search(r"^### Check registry$(.*?)^### ", text, re.M | re.S)
+            if not m:
+                problems.append(
+                    "%s/%s: SKILL.md has no '### Check registry' section. Every check must "
+                    "declare an id, a lens and a capability, or a lens can never select on "
+                    "it." % (entry, skill))
+                continue
+            block = m.group(1)
+            caps = {c[0] for c in _table_rows(block, 3)}
+            rows = _table_rows(block, 4)
+            found = {r[0] for r in rows}
+            for bad in sorted(expected - found):
+                problems.append(
+                    "%s/%s: check %s is in REGISTRY_MANIFEST but no longer declared in the "
+                    "Check registry table. A check that stops being declared cannot be "
+                    "selected, gated, or reported as not run - re-add the row, or drop it "
+                    "from the manifest in the same commit." % (entry, skill, bad))
+            for bad in sorted(found - expected):
+                problems.append(
+                    "%s/%s: Check registry declares %s, which is not in REGISTRY_MANIFEST "
+                    "in scripts/shared_blocks.py. Add it there in the same commit."
+                    % (entry, skill, bad))
+            for cells in rows:
+                cid, lens, cap = cells[0], cells[1], cells[2]
+                if lens not in REGISTRY_LENSES:
+                    problems.append(
+                        "%s/%s: check %s declares lens %r, which is not in REGISTRY_LENSES "
+                        "(%s)." % (entry, skill, cid, lens,
+                                   ", ".join(sorted(REGISTRY_LENSES))))
+                if cap not in caps:
+                    problems.append(
+                        "%s/%s: check %s needs capability %s, which its own capability table "
+                        "does not define (%s). A capability with no stated absence behaviour "
+                        "is a check that can fail silently."
+                        % (entry, skill, cid, cap, ", ".join(sorted(caps)) or "none"))
+    return problems
+
+
 def orphan_canonicals(seen):
     if not os.path.isdir(SHARED):
         return []
@@ -398,6 +508,7 @@ def main():
     problems += pin_problems
     problems += check_template_versions()
     problems += check_verdict_vocabulary()
+    problems += check_check_registry()
     problems += check_execute_prompt_purity()
     problems += check_onboarding_page()
     if sync:

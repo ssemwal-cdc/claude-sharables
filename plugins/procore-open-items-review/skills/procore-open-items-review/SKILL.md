@@ -1,11 +1,11 @@
 ---
 name: procore-open-items-review
-description: v12 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
+description: v13 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
 ---
 
 # Procore Open Items Review
 
-**Skill version 12 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 13 — 2026-08-26.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 
@@ -489,6 +489,42 @@ Notes:
 The consequence for this skill is direct: it returns figures, and dotted identifiers are ordinary in construction — spec sections like `09.21.16`, phase codes, drawing revisions. **A `[BLOCKED: …]` string is never a value.** If one appears where a figure or identifier should be, re-return that field in a different shape (spaced out, or split across keys) and read it again. Never let the marker itself reach a verdict, a comment or the dashboard, and never treat it as evidence the underlying field was empty.
 
 ## Step 5 — Verify
+
+### Check registry
+
+Every check below carries an **id**, the **lens** it serves, and the **capability** it needs.
+**Nothing here changes what runs.** Absent `config.lenses`, the `core` lens runs and `core` is
+the whole table, so a run with no configuration behaves exactly as every run before this
+registry existed. The registry *names* what already happens so a later lens can select on it;
+it is not itself a selector.
+
+**Capabilities**, each already a condition this step honours in prose:
+
+| capability | means | when it is absent |
+|---|---|---|
+| `record` | fields from the Step 3 record reads | never absent — the queue is built from them |
+| `attachment` | a Step 4 attachment outcome of `text` or `spreadsheet` | the item is `skipped`, **naming which outcome** — Step 4 |
+| `queue` | the other items in this run, not this item alone | never absent; marks the check as cross-item |
+
+| id | lens | capability | check |
+|---|---|---|---|
+| `pc.icr-cost-impact` | core | `record` | ICR 1 — Cost Impact against Compass Accepted |
+| `pc.icr-proposal-tie` | core | `attachment` | ICR 2 — Compass Accepted against the proposal total |
+| `pc.icr-phase-sum` | core | `attachment` | ICR 3 — the proposal's phase lines sum to its total |
+| `pc.icr-proposed-delta` | core | `record` | ICR 4 — report both figures; flag only if accepted exceeds proposed |
+| `pc.icr-placeholder` | core | `record` | ICR 5 — `yes_known` carrying a placeholder value |
+| `pc.inv-g702` | core | `record` | Invoice — the six G702 identities, re-derived |
+| `pc.inv-support-tie` | core | `attachment` | Invoice — each headline figure located in the pay application |
+| `pc.inv-sequence` | core | `record` | Invoice — sequence integrity against previous certificates |
+| `pc.inv-duplicates` | core | `queue` | Invoice — same vendor and period, or the same number twice |
+| `pc.inv-retainage` | core | `record` | Invoice — withheld percent consistent and matching the contract |
+| `pc.cco-line-sum` | core | `record` | CCO 1 — line items sum to the grand total |
+| `pc.cco-pci-tie` | core | `attachment` | CCO 2 — each PCI ties to a line, PCI totals sum to the grand total |
+| `pc.cco-icr-tie` | core | `queue` | CCO 3 — a PCI's total against the matching ICR's accepted cost |
+
+**A check that cannot run is never a silent pass.** A missing attachment **skips the item and
+names the outcome that caused it** — Step 4's rule, unchanged. *"Unreadable"* on its own is what
+once hid whole file formats going unread, and a check quietly not running is the same shape.
 
 ### ICR
 

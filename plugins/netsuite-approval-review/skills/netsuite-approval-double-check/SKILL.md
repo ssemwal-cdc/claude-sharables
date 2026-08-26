@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v11 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: v12 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 11 — 2026-08-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 12 — 2026-08-26.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
@@ -431,6 +431,41 @@ Notes:
 - **On a two-column page, left and right rows sharing a y-coordinate merge into one line.** `pdftotext -layout` does the same, so this is not a regression — but do not split such a line on whitespace to recover the columns. Split on an x-threshold, or take the figures off the record instead.
 
 ## Step 4 — Verify
+
+### Check registry
+
+Every check in Steps 4 and 5 carries an **id**, the **lens** it serves, and the **capability**
+it needs. **Nothing here changes what runs.** Absent `config.lenses`, the `core` lens runs and
+`core` is the whole table, so a run with no configuration behaves exactly as every run before
+this registry existed. The registry *names* what already happens so a later lens can select on
+it; it is not itself a selector.
+
+**Capabilities**, each already a condition these steps honour in prose:
+
+| capability | means | when it is absent |
+|---|---|---|
+| `record` | fields from the Step 1a/2 queries, or read off the record page | never absent — the queue is built from them |
+| `attachment` | a Step 4 attachment outcome of `text` or `spreadsheet` | the item is `skipped`, **naming which outcome** — Step 4 |
+| `connector` | a working NetSuite SuiteQL tool | Step 5 does not run and **nothing is said about it** — Step 5 |
+| `queue` | the other items in this run, not this item alone | never absent; marks the check as cross-item |
+
+| id | lens | capability | check |
+|---|---|---|---|
+| `ns.header-tie` | core | `attachment` | Step 4 Math 1 — PDF total against the NetSuite amount |
+| `ns.line-tie` | core | `attachment` | Step 4 Math 2 — every line reproduces, both sums foot |
+| `ns.internal-consistency` | core | `attachment` | Step 4 Math 3 — AIA and phased re-derivation |
+| `ns.proration` | core | `attachment` | Step 4 Math 4 — the factor against each plausible basis |
+| `ns.support-adequacy` | core | `attachment` | Step 4 — what was done, for which period, at what rate |
+| `ns.po-linkage` | core | `connector` | Step 5a — three states, never a boolean |
+| `ns.typed-reference` | core | `connector` | Step 5b — a disagreement is a data-entry note |
+| `ns.billed-to-date` | core | `connector` | Step 5c — split by approval state |
+| `ns.zero-evidence` | core | `connector` | Step 5d — a zero is not a finding |
+
+**A check that cannot run is never a silent pass**, and the two absences above behave
+differently on purpose. A missing attachment **skips the item and names the outcome that caused
+it**; a missing connector **skips Step 5 and says nothing at all**. Step 5 gives the reason —
+a caveat nobody can act on is an apology on a loop, while a skip with no named cause is what
+once hid whole file formats going unread. Do not normalise them into one rule.
 
 ### Math
 

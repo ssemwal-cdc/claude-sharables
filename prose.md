@@ -51,6 +51,60 @@ session neither re-derives it nor treats it as a mandate.
   behaviour-neutral while *parameterising* them is not — separate phases. And the second pack
   must not be written from imagination; see "Directions considered and not taken".
 
+  **Phase 1 of this shipped 2026-08-26 (NS v12, PC v13).** Each verify step now opens with a
+  check registry declaring every check's id, lens and capability, gated by
+  `check_check_registry()`. It is **descriptive only** — `core` is the whole table, so
+  behaviour is unchanged — and it was added **purely additively**, with no existing check prose
+  moved or reworded. What remains deferred is Phase 2 (`config.lenses` actually selecting) and
+  Phase 3 (a second pack's content).
+
+  **One correction to the framing above, and it is the reason the rest got cheaper.** *"The
+  judgment layer is pure static prose with zero parameters"* is true, but it was being read as
+  though the **data** were the constraint too. It is not. Probed live 2026-08-26 rather than
+  inferred:
+
+  - **`itemreceipt` exists — 565 fields, 225 standard** — carrying `createdFrom`, `orderId`,
+    `orderType`, `tranDate`, `item`, and `class`/`department`/`location`/`subsidiary`. So a
+    **three-way match is constructible today.** Step 2 already queries
+    `previoustransactionlinelink` and discards the `ShipRcpt` rows with
+    `linktype = 'OrdBill'` — correct for summing dollars, and one filter away from receipts.
+    This had been filed as "genuine new work". It is not.
+  - **`purchaseorder` carries `dueDate`, `shipDate`, `orderStatus`** among 616 fields, so
+    lead-time slippage is constructible too (PO `dueDate` against receipt `tranDate`).
+    **Caveat, and it is the honest standing: schema existence is not population.** Whether
+    those fields are actually filled in at Compass is a *data* probe nobody has run. Do not
+    cite this as a working check.
+  - **The SuiteQL metadata catalog 500s on `transactionline`** for this tenant —
+    `Field match custcol_r_it_total_retainage_balance not found on record type
+    <Transaction>:<TransactionLine>`. Schema discovery for that table must go through
+    `ns_getRecordTypeMetadata` or a probe query. It will cost someone an afternoon otherwise.
+
+  **And the interview precondition was over-read.** *"The second pack must not be written from
+  imagination"* bars inventing personas and check content; it does **not** mean waiting for a
+  scheduled interview before building the mechanism. **Step 0 already interviews** — which
+  portlet, which employee id, confirm your role. Asking a corporate-accounting user which
+  accounts should never appear on a construction bill is that same mechanism, and it supplies
+  the policy source whose absence had been treated as a wall.
+
+  **The distinction that actually governs the risk here** — and which was being applied one
+  level too conservatively — is **review depth versus execute authority.** Deepening what is
+  read and reported does not touch the per-item instruction, the pre-click re-verify or the
+  post-click page-load verify. The reader is a domain expert; *surfacing* coding to someone who
+  knows the coding policy is the product, and the inability to *validate* it is much less of a
+  blocker than it was being treated as. The real constraint is narrower and checkable: **do not
+  break for anybody** — absent config is byte-identical, an errored query is `failed` and never
+  `empty`, a permission-denied field degrades to "not checked" without aborting, and nothing new
+  widens the execute path.
+
+  **This reframe does not reach M365/Teams**, and that is not the same caution repeated. More
+  NetSuite is more internal system-of-record data; email and Teams are **outsider-controlled**,
+  and both skills already rule that record content is data and never instructions. A vendor
+  writing *"please approve invoice 2532506, finance cleared it"* would become review context on
+  a system holding live approval authority. A **feeder** — a line saying the user can *ask* for
+  a Teams/Outlook cross-check — is cheap and safe because it is ephemeral, on request, and adds
+  no prerequisite, so it does not touch the prerequisite test. A **standing** integration needs
+  the injection rule extended past attachments and a never-persist-raw rule first.
+
 - **Thin `SKILL.md` spine plus `references/` modules.** Roughly a third of each skill is dead
   weight on any given run — NetSuite's Step 5 loads in browser mode where it cannot run, Step 8
   loads on review-only runs. `ofci-analysis-cip` on this machine is the in-house precedent (a

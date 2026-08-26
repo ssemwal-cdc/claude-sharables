@@ -101,17 +101,40 @@ claude plugin validate ./plugins/<plugin-name>
 `claude plugin validate` warns `No version specified` — that warning is correct
 and intended here. Ignore it.
 
-Then prove an install actually works, which schema validation does not:
+Then prove an install actually works, which schema validation does not. **Use
+`--plugin-dir`, and read the next paragraph before reaching for `marketplace add`:**
 
 ```bash
-claude plugin marketplace add .                      # local copy, pre-push
-claude plugin install <plugin-name>@compass-claude-plugins
-claude plugin details <plugin-name>                  # confirm the skill is listed
-claude plugin uninstall <plugin-name>@compass-claude-plugins
-claude plugin marketplace remove compass-claude-plugins
+claude plugin validate ./plugins/<plugin-name>
+claude --plugin-dir ./plugins/<plugin-name> -p "quote the skill version line verbatim"
 ```
 
 Schema-valid and installable are different things. Check both.
+
+**`claude plugin marketplace add .` does NOT test your local changes, and the snippet here
+claimed it did for months.** Corrected by observation 2026-08-26. Two things were wrong. The
+bare `.` is rejected outright — *"Invalid marketplace source format. Try: owner/repo,
+https://..., or ./path"* — so it must be `./`. And with `./` it succeeds while testing the
+wrong tree: the local path is used only to read `marketplace.json`, and every plugin's content
+is then fetched from the **`url` in its `git-subdir` source**, at `main` on GitHub.
+
+Proof, not inference: with local `HEAD` at an unpushed commit carrying a new skill version, the
+freshly installed copy reported the *previous* version, and the cache directory under
+`~/.claude/plugins/cache/compass-claude-plugins/<plugin>/` was named for the SHA that
+`git ls-remote origin refs/heads/main` returns. Neither working-tree edits nor local commits
+reach it. So that sequence answers *"does the published release install?"* — a real question,
+worth asking after a push — and never *"is what I am about to push installable?"*, which is
+what a pre-push check has to answer.
+
+**`--plugin-dir` is what loads the working tree**, confirmed the same day: it reported the
+uncommitted new version where the marketplace install reported the old one. It is also what the
+CLI itself suggests when a plugin is not installed (*"pass --plugin-dir <path> to load one from
+disk"*). Note it takes the **plugin** directory, not the repo root.
+
+This matters more than it looks, because the failure is silent and inverted: the marketplace
+route prints `√ Successfully installed` either way, so a broken change reads as verified while
+what was actually verified is the last release. Same shape as every other misfile in this file —
+a success message standing in for a check nobody ran.
 
 ### 7. Commit and push to `main`
 

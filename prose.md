@@ -57,6 +57,51 @@ with the machine off or Chrome closed.
 
 ---
 
+## Folderless scheduled runs work, and self-serve their own onboarding
+
+2026-08-26, third correction of the day from the maintainer, and the one that settles the folder
+question. **A scheduled run with no folder connected works** — schedule set to automatic,
+computer left on — and it **goes through the onboarding by itself** rather than stalling for
+answers. Also reported: nothing is written to `Documents/Claude`, so that candidate path is dead
+and the per-session-storage explanation stands.
+
+**Two claims written into `docs/onboarding.html` earlier the same day were falsified and have been
+pulled**: that a folderless run "doesn't work at all" when scheduled, and that connecting
+Downloads before scheduling is "not optional". Both were derived from the shipped prompt's text
+rather than observed, and both were wrong. What survives is the mild version, which is still true
+by construction: with nothing persisted the idempotency gate cannot trip, so **every fire time
+repeats the whole review** instead of the later ones standing down. That is waste, not danger —
+the review is read-only and execute still needs an explicit per-item instruction — so the sheet
+now recommends Downloads rather than requiring it.
+
+**Net answer to "should the state file point somewhere stable instead": no, drop it.** The
+motivating problem was that folderless scheduling did not work. It does. The remaining cost is a
+repeated review, which a connected folder already fixes and which the sheet already advises.
+
+### The open question this turned up, which is worth more than the folder was
+
+**How did an unattended run satisfy Step 0's identity confirmation?** Step 0 is explicit:
+*"Always report the name found and ask the user to confirm it is them before writing it… If the
+query returns zero or more than one active row, list the candidates with their titles and ask
+which is theirs. **Never pick one silently.**"* A scheduled run has nobody to ask.
+
+Most of Step 0 is genuinely self-serviceable — the account id is in the URL, the connector tool
+name is readable from the session, the employee id is a query on the user's own email. So a clean
+single-match case may simply have proceeded, which is defensible. **But the two branches are not
+equally safe and nobody has looked at which one fired:**
+
+- one unambiguous active employee row → proceeding is reasonable
+- zero or several rows → the rule says stop and ask, and an unattended run that picked anyway
+  would have chosen an identity silently, which `config.me` then uses to scope the entire review
+
+The second is the failure this repo would normally catch, and the reason it matters is in the
+Absolute rules already: *"Never copy identity between people… Using someone else's shows them a
+queue that is not theirs."* **Unknown, not established as broken.** What would settle it: read
+`config.meName` in a log written by a scheduled run and confirm it is the right person, or watch
+one such run. Until then do not assume either that it is fine or that it is broken.
+
+---
+
 ## Where Cowork actually keeps things, and why folderless does not persist
 
 2026-08-26. Researched after the maintainer's fair objection that *"the folder is required"* is a

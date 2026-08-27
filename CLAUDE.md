@@ -1251,6 +1251,40 @@ One rule inside it is load-bearing: when `described` cannot be resolved, **ask o
 substitute the nearest queue found, because a review of the wrong queue looks exactly like a
 review of the right one.
 
+**The workspace write works, and the folder appears in Downloads.** Confirmed 2026-08-27 after
+`<workspace>` was defined: the folders are created and the log persists. The earlier run that
+wrote to a session path and blamed the never-attach rule was resolving an undefined placeholder,
+not hitting a surface limit — so the fix was the definition, and attempt-the-write is now the
+stated rule. Do not re-diagnose this as a platform constraint without a fresh observation.
+
+**Step 1b had a rule for a renamed portlet and nothing for "found none", and the gap produced a
+silently partial queue.** Reported from a first run on an account with no stored
+`config.billPortlet`: the run inspected Home and Approvals, found no approval portlets, said so,
+and published bills and purchase orders with **change orders structurally absent** — because
+Step 1b is the only place they can be identified and `transaction` cannot be queried for their
+pending status. Not a regression; the navigation instruction is byte-identical to what it always
+was. What was missing was the empty case.
+
+The fix is a ladder, in the maintainer's shape: **go and look first, surface what is actually on
+the dashboard as candidates, and only then ask for a link.** Rung 2 is the common case — the
+portlet exists and its saved-search title simply does not announce itself — so asking for a URL
+before enumerating what is there would skip the answer most accounts already have on screen. The
+answer is recorded either way, *there is no such portlet* included, so it is asked once. And a
+partial queue is never presented as the whole one: the missing type is named in the same breath
+as the count, not in a separate note.
+
+**Never create anything in the workspace folder that needs deleting, and never hand the user a
+cleanup chore.** The same run made temp files during the asset sync, could not delete them
+because the folder refuses deletes, invented a `_to_delete/` folder and asked the user to empty
+it. `_to_delete` appears nowhere in this repo — it was improvised into a gap. The rule already
+existed in two places and had simply never been stated for Step 0: `publish_dashboard.py` survives
+a refused move (`cloud-synced folders can refuse the move; keep working`), and the `renders/`
+archive is seven weekday slots overwritten in place precisely because *"anything that accumulates
+can never be cleaned up"*. Step 0 now says it too — write straight over the destination, no temp
+file, no write-then-move. Worth noting the mechanism was never established: the maintainer was
+unsure why deletes fail and so was I, and the fix does not depend on knowing, because nothing is
+created that would need removing.
+
 **Procore's sticky bar carries only what you need in the second before clicking.** The
 stale-snapshot warning and the Stale-safe explainer moved below it into `#barnote`,
 because inside the bar they made it 249px — over a third of a 700px viewport. Both

@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v20 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: v21 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 20 — 2026-08-27.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 21 — 2026-08-27.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
@@ -54,11 +54,27 @@ render stays frozen at whatever version was copied the first time.
 plugin was set up. Resolve it once, here, and use that same path for every step below.
 
 **Attempt the write. Never put it to the user as a question.** Create the folder if it is not
-there and keep the state file in it. Some surfaces mount that folder read-only, or sandbox the
-shell away from it entirely, so the write can fail — and when it does, fall back to a
-session-local path, say so in **one short line** near the headline, and carry on. Do not describe
-the alternatives, do not offer to hand the file over, and never write somewhere the session will
-discard while describing it as kept.
+there, keep the state file in it, and then **read it back** — a write is proven by reading it, not
+by issuing it.
+
+**Three outcomes, and the third is the one that goes wrong.** `kept` — written and read back.
+`refused` — attempted, and the surface returned an error. `not attempted` — nobody tried, which is
+never reportable as either of the others. The session-local fallback belongs to `refused` alone,
+and it is not a conclusion to reason your way into: **never infer the outcome from a property of
+the folder.** Cloud-synced, OneDrive-backed, on a network share, a shell that "looks sandboxed" —
+none of that predicts a refused write. Cloud sync refuses deletes and renames rather than creates
+and overwrites, as the overwrite-in-place rule below says, and the connected workspace folder is
+the one path a Cowork shell is known to reach: the note further down about the sandbox says the
+*plugin* assets may be invisible there, and that only the workspace folder, outputs and uploads
+are mounted. A run that declared state would not persist because the folder was OneDrive-synced,
+having never attempted the write, was wrong on both counts — and it sounded authoritative because
+every phrase in it came from this file.
+
+**If the fallback is genuinely reached, name what refused it.** One short line near the headline,
+carrying the error the write actually returned. "State will not persist" on its own is the same
+defect as calling an attachment "unreadable": it reads identically whether the folder rejected the
+write, the path never resolved, or nobody tried. Do not describe the alternatives, do not offer to
+hand the file over, and never write somewhere the session will discard while describing it as kept.
 
 **Overwrite in place. Never create anything in this folder that would need deleting.** It is
 usually cloud-synced, where creating and overwriting work but deleting and renaming are typically
@@ -68,10 +84,12 @@ over its destination: no temp file, no write-then-move, no dated copies. If a st
 behind anyway, say so once in the same one line; **never invent a quarantine folder such as
 `_to_delete/`, and never hand the user a cleanup chore.**
 
-**A failed write costs wasted work, not a broken review.** The state does not outlive the
+**A refused write costs wasted work, not a broken review.** The state does not outlive the
 session, so the next run repeats first-run setup and re-reads every attachment instead of
 carrying forward the items already logged `clear`. Say the one line and move on; this is not
-worth a paragraph, an apology, or a workaround.
+worth a paragraph, an apology, or a workaround. **That sentence is only true of `refused`** —
+offered after a write nobody attempted it is not a caveat, it is a false claim about what the
+user's next run will do.
 
 <!--__END_SHARED:skill-step0-preamble__-->
 ```bash

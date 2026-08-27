@@ -586,6 +586,37 @@ in them.
   gate catches it — but nobody has read that button's handler to check, and
   there is no note-carrying equivalent of the URL recovery.
 
+### 8a. Three runs have now blamed the platform for a write nobody attempted
+
+Worth its own entry because the pattern is stable across three different excuses
+and the fix keeps landing in the wrong file.
+
+| Run | What it said | What was actually true |
+|---|---|---|
+| earlier | wrote to a session path, blamed the never-attach rule | `<workspace>` was an undefined placeholder |
+| 2026-08-27 | confirmed working, folders appear in Downloads | — |
+| 2026-08-27 | *"your connected folder is OneDrive-synced and the container can't write there"* | never attempted; cloud sync refuses deletes, not writes |
+
+The third one is the instructive one. It contradicted two things in the file it was
+reading: Step 0 says cloud-synced folders refuse deletes and renames while creates
+and overwrites work, and the 2026-08-15 sandbox note says the connected workspace
+folder is exactly what *is* mounted — the **plugin** directory is the thing that
+goes missing. And every phrase of its message was drawn from `SKILL.md`, which had
+listed plausible causes a run could match against before trying and then supplied
+the degradation script verbatim. That is why it read as a finding rather than a guess.
+
+**The rule against it already existed — in `CLAUDE.md`, which no run reads.** Step 0
+now carries it: three named outcomes, the fallback tied to `refused` alone, the write
+proven by reading it back, no inferring from folder properties, and a genuine fallback
+required to name the error. `test_step0_write_states()` fails the build if those stop
+being stated, mutation-tested four ways.
+
+**What is still not established:** whether the write ever genuinely fails on any
+surface. Two of the three reports were misdiagnoses and the third was a success, so
+`refused` currently has **no confirmed instance at all** — the fallback path is
+specified and unexercised. If a run ever does hit a real refusal, the error it names
+is the thing to record here, because it would be the first.
+
 ### 9. The dashboard UI change — measured in a browser, unseen in the widget host
 
 The 2026-08-20 change (newest-first default, sticky execute bar, numbered steps,

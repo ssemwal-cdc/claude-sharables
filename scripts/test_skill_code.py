@@ -35,6 +35,9 @@ Covered:
                            produced false "coded to the wrong PO" flags.
   9. NetSuite `poLine`  - the dashboard keeps linked / unlinked / failed distinct,
                            so an unconfirmed PO cannot render as confirmed.
+ 10. Step 0 write states - the workspace write keeps kept / refused / not attempted
+                           distinct, so a run cannot announce that state will not
+                           persist without having tried to write it.
 
 Usage:  python3 scripts/test_skill_code.py
 Needs node on PATH for 1-3; those are skipped with a notice if it is missing.
@@ -406,6 +409,45 @@ def test_template_version():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_step0_write_states():
+    """A run declared that state would not persist because the workspace folder was
+    OneDrive-synced, and went session-local without ever attempting the write
+    (reported 2026-08-27). Every phrase in that message came from Step 0, which
+    described the fallback without ever saying the failure has to be observed - and
+    helpfully listed plausible causes a run can match against in advance. Same bug
+    class as `empty` vs `failed` and `scanned` vs `unsupported`: two states collapsed,
+    so the one that means "nobody looked" reports as the one that means "it failed".
+
+    The rule that would have caught it existed only in CLAUDE.md, which the running
+    skill never reads. These assertions live here so it cannot quietly leave the
+    prompt again."""
+    for label, root in (("netsuite", NS), ("procore", PC)):
+        txt = open(os.path.join(root, "SKILL.md"), encoding="utf-8").read()
+        step0 = txt.split("## Step 0")[1].split("## Step 1")[0] if "## Step 0" in txt else ""
+        check("%s: Step 0 is where the workspace write is specified" % label, bool(step0))
+
+        # The three outcomes, each named. `not attempted` is the one that was missing.
+        for state in ("kept", "refused", "not attempted"):
+            check("%s: Step 0 names the `%s` outcome" % (label, state),
+                  "`%s`" % state in step0)
+        check("%s: the fallback is tied to `refused`, not to a failure in general" % label,
+              "belongs to `refused` alone" in step0)
+
+        # A write is proven by reading it back, not by having issued it.
+        check("%s: the write is confirmed by reading it back" % label,
+              "read it back" in step0)
+
+        # The actual defect: reasoning from a property of the folder to a refused write.
+        check("%s: inferring the outcome from the folder is forbidden" % label,
+              "never infer the outcome from a property of" in step0)
+        check("%s: the OneDrive reasoning is named as wrong, not left implicit" % label,
+              "OneDrive" in step0)
+
+        # "State will not persist" with no error named is the `unreadable` defect again.
+        check("%s: a genuine fallback has to name what refused it" % label,
+              "name what refused it" in step0)
+
+
 # ------------------------------------------------------- 8. PO identity rules
 def test_dashboard_view():
     """The toolbar had no coverage at all, and the default sort is the one setting every
@@ -600,6 +642,7 @@ def main():
               "sniff, sheets and poLine not run")
     test_cco_demotion()
     test_template_version()
+    test_step0_write_states()
     test_dashboard_view()
     test_po_identity_rules()
     print()

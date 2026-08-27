@@ -1318,6 +1318,39 @@ wrote to a session path and blamed the never-attach rule was resolving an undefi
 not hitting a surface limit — so the fix was the definition, and attempt-the-write is now the
 stated rule. Do not re-diagnose this as a platform constraint without a fresh observation.
 
+**It happened a third time the same day, with a new excuse, and the interesting part is where the
+rule was living.** A run announced *"State won't persist between sessions. Your connected folder is
+OneDrive-synced and the container can't write there directly, so I'm keeping
+`_procore_review_log.json` session-local"* — and never attempted the write. Both halves were
+wrong. Cloud sync refuses **deletes and renames**, not creates and overwrites, which Step 0 says
+two paragraphs above the fallback the run invoked; and the connected workspace folder is precisely
+what a Cowork shell *can* reach — the 2026-08-15 note says only that folder, outputs and uploads
+are mounted, and it is the **plugin** directory that goes missing there. The run inverted a note
+that was in the file it was reading.
+
+**Every phrase in that message came from `SKILL.md`, which is what made it sound authoritative.**
+Step 0 offered a list of plausible causes ("some surfaces mount that folder read-only, or sandbox
+the shell away from it entirely") that a run can match against *before* trying, and then supplied
+the exact degradation script — "the next run repeats first-run setup and re-reads every
+attachment". So a run could assemble a confident, correct-sounding announcement out of the skill's
+own words with the one precondition, an actual attempt, never stated. The cause list is gone.
+
+**Same bug class as everything else in these notes — the sixth instance, after the five the PO
+note enumerates:** `kept`,
+`refused` and `not attempted` were three states collapsed into two, so the one that means *nobody
+looked* reported as the one that means *it failed*. Step 0 names all three now, ties the
+session-local fallback to `refused` **alone**, requires the write to be **read back** rather than
+merely issued, forbids inferring the outcome from any property of the folder, and requires a
+genuine fallback to name the error that refused it — *"state will not persist"* with no error in it
+is the `unreadable` defect again.
+
+**The rule that would have caught it existed, in this file, where the running skill cannot see
+it.** The paragraph above — *"do not re-diagnose this as a platform constraint without a fresh
+observation"* — is maintainer-facing prose, and `SKILL.md` is the prompt. That is the transferable
+lesson: a rule about what a run may claim has to be in the file the run reads, and
+`test_step0_write_states()` now fails the build if the three outcomes stop being named. Mutation-
+tested four ways.
+
 **Step 1b had a rule for a renamed portlet and nothing for "found none", and the gap produced a
 silently partial queue.** Reported from a first run on an account with no stored
 `config.billPortlet`: the run inspected Home and Approvals, found no approval portlets, said so,

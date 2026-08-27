@@ -1173,6 +1173,42 @@ that discards every decision. And the header mirror renders a blocked chip inste
 vanishing: gating it on `canRun` alone left the top of the page silent at exactly the moment
 something was standing in the way.
 
+**The 60-second tick must never call `render()`, and for a while it did.** Reported from a
+live run as *"Show detail worked for some and not all, it felt kinda random"*. It was not
+random: `render()` rebuilds `#rows` from innerHTML, so every expanded detail and every opened
+`more` collapsed, and which rows survived depended only on where the 60s boundary fell relative
+to the clicks. Measured on v9 — click gives `display:"block"`, one `render()` later it is `""`
+and the label is back to *Show detail*. The old `activeElement` guard covered `INPUT` and
+`SELECT` only, so typing a rejection reason was safe and reading a card was not.
+
+The tick now calls `freshTick()`, which ages the freshness line and flips the Snapshot pill and
+touches nothing else. **That is the whole job a tick has here** — the page is a snapshot and the
+data never changes — so this is not a narrower guard, it is the removal of work that should never
+have been in the interval. Any future expandable is safe by construction rather than by
+remembering to opt in.
+
+**A clamp needs its `more` control conditioned on actually clipping.** Shipped v9 emitted the
+button whenever `poWarning` was non-empty, so a one-line warning offered a control that did
+nothing visible. `trimMores()` compares `scrollHeight` against `clientHeight` after each render
+and hides the button when nothing is cut. Verified with a deliberately short warning in the
+fixture: two unclipped warnings hide it, one clipped warning keeps it.
+
+**`attachmentFile` reaches the dashboard now, inside Show detail.** It is the only field that
+evidences a verdict rather than asserting one, and it was invisible — a `clear` item could not be
+asked what was actually read to make it clear. NetSuite only; Procore's log has no equivalent
+field, so nothing was invented for it.
+
+**A capability table may only name verdicts its own publish script can emit, and
+`check_capability_verdicts()` now enforces that.** NetSuite's attachment row said a missing
+attachment makes the item `skipped` — a verdict its `VERDICTS` tuple does not contain and
+`publish_dashboard.py` aborts on, almost certainly copied from Procore where `skipped` is real.
+`check_verdict_vocabulary()` did not catch it because that reads the *template's* branches, not
+the SKILL.md prose telling a run which verdict to assign; the two are different surfaces and both
+now have a gate. Mutation-tested: putting `skipped` back fails the build. Worth knowing, because it
+bit on the first attempt — the gate reads every backticked verdict in the absence-behaviour column,
+so a sentence *explaining* that `skipped` does not exist here failed it too. The row says "no
+skipped verdict on this side" in plain words for that reason; do not re-add the backticks.
+
 **Procore's sticky bar carries only what you need in the second before clicking.** The
 stale-snapshot warning and the Stale-safe explainer moved below it into `#barnote`,
 because inside the bar they made it 249px — over a third of a 700px viewport. Both

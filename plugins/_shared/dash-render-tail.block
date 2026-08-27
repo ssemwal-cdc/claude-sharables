@@ -1,8 +1,9 @@
 function go(){say(window.__prompt)}
 
 render();
-setInterval(function(){
-  var a=document.activeElement;
-  if(a&&(a.tagName==="INPUT"||a.tagName==="SELECT"))return; // don't blow away focus mid-edit
-  render();
-}, 60000);
+// The tick ages the freshness line and flips the Snapshot pill. It must NEVER call
+// render(), which rebuilds #rows from scratch: that silently collapsed every expanded
+// detail and every opened warning, and which rows survived depended only on where the
+// 60s boundary fell relative to the clicks - so it read as random. Measured on v9.
+// The data is a snapshot and never changes, so there is nothing else for a tick to do.
+setInterval(freshTick, 60000);

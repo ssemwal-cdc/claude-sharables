@@ -294,6 +294,49 @@ PROCEDURE_TOKENS = (
 PROMPT_STMT = re.compile(r"^  var prompt\s*=(.*?);\s*$", re.M | re.S)
 
 
+def check_capability_verdicts():
+    """A capability table may only name verdicts its own publish script can emit.
+
+    NetSuite's table said a missing attachment makes the item `skipped` -- a verdict its
+    VERDICTS tuple does not contain and publish_dashboard.py aborts on. The row was almost
+    certainly copied from Procore, where `skipped` is real. Nothing caught it, because
+    check_verdict_vocabulary() reads the *template's* branches, not the SKILL.md prose that
+    tells a run which verdict to assign. This closes that side.
+    """
+    problems = []
+    for entry in sorted(os.listdir(PLUGINS)):
+        if entry.startswith("_"):
+            continue
+        skills = os.path.join(PLUGINS, entry, "skills")
+        if not os.path.isdir(skills):
+            continue
+        for skill in sorted(os.listdir(skills)):
+            sd = os.path.join(skills, skill)
+            script = os.path.join(sd, "assets", "publish_dashboard.py")
+            md = os.path.join(sd, "SKILL.md")
+            if not (os.path.isfile(script) and os.path.isfile(md)):
+                continue
+            m = VERDICT_ALLOWLIST.search(open(script, encoding="utf-8").read())
+            if not m:
+                continue
+            allowed = set(re.findall(r'"([a-z]+)"', m.group(1)))
+            text = open(md, encoding="utf-8").read()
+            # Only the capability table's absence-behaviour column, which is where a run is
+            # told what to do when a capability is missing.
+            for row in re.findall(r"^\|\s*`(?:core|connector|attachment|record|queue)`\s*\|"
+                                  r"[^|]*\|([^|]*)\|\s*$", text, re.M):
+                for verdict in re.findall(r"`([a-z]+)`", row):
+                    if verdict in ("core", "connector", "attachment", "record", "queue"):
+                        continue
+                    if verdict in ("clear", "flagged", "skipped", "ungated") and verdict not in allowed:
+                        problems.append(
+                            "%s/%s: the capability table tells a run to mark an item `%s`, "
+                            "which is not in that plugin's VERDICTS (%s) - publish_dashboard.py "
+                            "aborts on it."
+                            % (entry, skill, verdict, ", ".join(sorted(allowed))))
+    return problems
+
+
 def check_execute_prompt_purity():
     """The message the Execute button posts into chat authorises; it must not also specify.
 

@@ -1,6 +1,6 @@
 {
   "name": "netsuite-approval-review",
-  "description": "Double-checks the NetSuite bills and change orders sitting in your approval queue and publishes the findings to a live dashboard. Verifies invoice math, judges whether the supporting document is adequate, cross-checks the real purchase order and billing history, and lets you approve or reject from the dashboard without opening NetSuite. Skill version 15 — 2026-08-26.",
+  "description": "Double-checks the NetSuite bills and change orders sitting in your approval queue and publishes the findings to a live dashboard. Verifies invoice math, judges whether the supporting document is adequate, cross-checks the real purchase order and billing history, and lets you approve or reject from the dashboard without opening NetSuite. Skill version 16 — 2026-08-26.",
   "author": {
     "name": "Shivam Semwal"
   },

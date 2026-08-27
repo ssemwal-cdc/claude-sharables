@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v9"
+TEMPLATE_VERSION = "v10"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -105,6 +105,9 @@ def main():
             "poRef": it.get("poRef", ""),
             "poLink": it.get("poLink", ""),
             "detail": it.get("detail", ""),
+            # The one field that evidences the verdict rather than asserting it. Rendered
+            # inside Show detail, so a clear item can be asked what was actually read.
+            "att": it.get("attachmentFile", ""),
         })
 
     if bad:

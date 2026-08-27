@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Procore open items queue</title>
-<!-- layout template v9 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v10 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -369,6 +369,28 @@ function knownVerb(v){return AFFIRM_VERBS.indexOf(v)>=0||SENTBACK_VERBS.indexOf(
 function isAffirmative(v){return AFFIRM_VERBS.indexOf(v)>=0||!knownVerb(v)}
 function needsReason(v){return SENTBACK_VERBS.indexOf(v)>=0||!knownVerb(v)}
 
+var STALE_NOTE=" — this snapshot is getting old. Procore may have moved on; re-check before acting on anything below.";
+// Split out of render() so the 60s tick can age this without rebuilding the queue.
+function freshTick(){
+  var stale=isStale();
+  var ft=document.getElementById("freshtext");
+  ft.className="fresh"+(stale?" stale":"");
+  ft.innerHTML='Reviewed '+ageText()+' \u00b7 '+esc(REVIEW.lastRun)+(stale?STALE_NOTE:'');
+  var conn=document.getElementById("conn");
+  conn.textContent=stale?"Snapshot \u00b7 "+ageText():"Snapshot \u00b7 fresh";
+  conn.style.background=stale?"var(--bad-bg)":"var(--ok-bg)";
+  conn.style.color=stale?"var(--bad-fg)":"var(--ok-fg)";
+}
+function isStale(){var m=ageOfRun();return m!=null&&m>180}
+// A clamped warning offers `more` only when three lines actually clip something.
+// Emitted unconditionally, a one-line warning got a control that did nothing.
+function trimMores(){
+  var t=document.querySelectorAll(".pwarn .txt");
+  for(var i=0;i<t.length;i++){
+    var b=t[i].parentNode.querySelector(".more");
+    if(b)b.style.display=(t[i].scrollHeight>t[i].clientHeight+1)?"":"none";
+  }
+}
 function render(){
   var all=REVIEW.items;   // no filter: "gone" is not in VERDICTS, so nothing can ever be excluded
   var ready=all.filter(function(i){return i.verdict==="clear"||i.verdict==="flagged"});
@@ -384,16 +406,7 @@ function render(){
   document.getElementById("sub").textContent =
     all.length+" awaiting your response · "+REVIEW.suppressed+" suppressed because you cannot respond to them";
 
-  var mins=ageOfRun(), stale=(mins!=null&&mins>180);
-  var ft=document.getElementById("freshtext");
-  ft.className="fresh"+(stale?" stale":"");
-  ft.innerHTML='Reviewed '+ageText()+' · '+esc(REVIEW.lastRun)+(stale
-    ? ' — this snapshot is getting old. Procore may have moved on; re-check before acting on anything below.'
-    : '');
-  var conn=document.getElementById("conn");
-  conn.textContent = stale ? "Snapshot · "+ageText() : "Snapshot · fresh";
-  conn.style.background = stale ? "var(--bad-bg)" : "var(--ok-bg)";
-  conn.style.color = stale ? "var(--bad-fg)" : "var(--ok-fg)";
+  freshTick();
 
 
   var b="";
@@ -446,6 +459,7 @@ function render(){
       (showSkipped?'':' <a href="#" onclick="toggleSkipped();return false">Show them</a>')+'</p>'+
       (showSkipped ? vSkipped.map(function(i){return itemRow(i)}).join("") : "")
     : "";
+  trimMores();
 }
 //__SHARED:dash-of-total__
 // Tiles follow the filter, so they can never disagree with the list underneath them.
@@ -647,11 +661,12 @@ function renderBar(){
 function go(){say(window.__prompt)}
 
 render();
-setInterval(function(){
-  var a=document.activeElement;
-  if(a&&(a.tagName==="INPUT"||a.tagName==="SELECT"))return; // don't blow away focus mid-edit
-  render();
-}, 60000);
+// The tick ages the freshness line and flips the Snapshot pill. It must NEVER call
+// render(), which rebuilds #rows from scratch: that silently collapsed every expanded
+// detail and every opened warning, and which rows survived depended only on where the
+// 60s boundary fell relative to the clicks - so it read as random. Measured on v9.
+// The data is a snapshot and never changes, so there is nothing else for a tick to do.
+setInterval(freshTick, 60000);
 //__END_SHARED:dash-render-tail__
 </script>
 <div id="__complete" hidden></div>

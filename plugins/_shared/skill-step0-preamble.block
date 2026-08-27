@@ -5,3 +5,18 @@ publish script are a *cache* of the plugin's assets. Refresh them, or a plugin u
 reaches the dashboard — `SKILL.md` updates with the plugin while the HTML your runs actually
 render stays frozen at whatever version was copied the first time.
 
+**`<workspace>` is the workspace folder connected to this session** — the one chosen when the
+plugin was set up. Resolve it once, here, and use that same path for every step below.
+
+**Attempt the write. Never put it to the user as a question.** Create the folder if it is not
+there and keep the state file in it. Some surfaces mount that folder read-only, or sandbox the
+shell away from it entirely, so the write can fail — and when it does, fall back to a
+session-local path, say so in **one short line** near the headline, and carry on. Do not describe
+the alternatives, do not offer to hand the file over, and never write somewhere the session will
+discard while describing it as kept.
+
+**A failed write costs wasted work, not a broken review.** The state does not outlive the
+session, so the next run repeats first-run setup and re-reads every attachment instead of
+carrying forward the items already logged `clear`. Say the one line and move on; this is not
+worth a paragraph, an apology, or a workaround.
+

@@ -240,6 +240,13 @@ ones have already been weighed and declined, and it says why.
 [Shared blocks](#shared-blocks-edit-pluginsshared-then-sync). `validate.py` runs it, so
 it is a build gate rather than a habit.
 
+**`scripts/measure_float.js`** is the one check that needs a browser and therefore is **not**
+in CI. It reproduces the widget host — the dashboard in a cross-origin iframe sized to its own
+content, the parent scrolling — and measures where the floating header actually lands in the
+top-level viewport. Everything positional this repo now claims about that bar comes from it, so
+run it by hand after touching the dashboard layout; see [the note on the floating
+header](#traps-proven-not-guessed) for why a static check cannot stand in for it.
+
 **`scripts/test_skill_code.py`** runs the executable code the skills carry —
 the pdf.js layout extractor, the size-budgeted page reads, the Procore gate's
 three-state fan-out, and the CCO ungated demotion. It extracts each one **from
@@ -1108,8 +1115,62 @@ Two consequences, and the second is the useful one. The overlap defect a scrolli
 produces — measured at five row buttons returning the bar from `elementFromPoint`, so
 genuinely unclickable — **cannot occur in this host**, so do not spend a version fixing it.
 And the sticky rule stays anyway: it costs nothing, `test_dashboard_view` pins it, and it
-starts working the day a host scrolls the frame. What is still open is giving the commit
-control a home that is not a page position; nothing here does that yet.
+starts working the day a host scrolls the frame.
+
+**That closed 2026-08-27, and the mechanism is worth understanding before touching it.** The
+question asked was whether the header could persist while scrolling, or whether that was
+simply not possible. In CSS it is not, and the reason is the paragraph above: reproduced
+again in Chromium, `window.innerHeight === document.scrollHeight` and `window.scrollY` never
+leaves `0`, so `position:fixed` freezes at a document coordinate exactly as `sticky` does.
+Neither has anywhere to travel. **What does reach across the frame boundary is
+`IntersectionObserver`** — its `intersectionRect` is clipped by every ancestor viewport,
+cross-origin ones included, so from inside the widget it is possible to read exactly which
+slice of the page the reader is looking at. `rootBounds` comes back `null`; the clipped rect
+does not, and the clipped rect is all this needs. Both plugins now place a compact
+`#floathdr` against that band from JavaScript.
+
+**The instrument has to be a column of contiguous tiles, and that is the whole trick.**
+Thresholds are *ratios*, so a 700px viewport over a 4,000px sentinel is 17% of it and stays
+17% however far you scroll: nothing is ever crossed. Measured with 401 thresholds on one
+full-height sentinel — **4 callbacks for a whole page of scrolling, and a stale band at three
+of six offsets.** Tiled at 100px, the tile straddling the top edge of the band is clipped *by*
+that edge, so its `intersectionRect.top` is the band top exactly, and its own visible ratio
+changes continuously as the reader scrolls, which is what keeps the callbacks coming. Measured
+against a window-scrolling host and a div-scrolling host: **0.0px error at every offset**, and a
+distinct position for all 26 steps of an 8px-step scroll. Do not replace the tiles with one
+sentinel, and do not reach for a scroll listener — this document never scrolls, so the event
+never fires.
+
+Four things about it are load-bearing:
+
+- **Re-tiling hangs off a `ResizeObserver` on `.wrap`, not off a render path.** Filtering the
+  queue and opening a detail both change the page height, and tiles that stopped short of the
+  new bottom read as *off screen* down there, so the bar would vanish mid-queue. Observing the
+  wrapper covers every cause including the first layout, so no render path has to remember.
+  The sentinel column is absolutely positioned and contributes no height, so it cannot feed
+  itself.
+- **The bar is a way back to the header, not a replacement for it.** `Filters ↑` calls
+  `scrollIntoView` on the real toolbar, which — verified — does scroll the *host's* scroller
+  from inside a cross-origin frame. What floats is only what is worth having in the second
+  before a click: where you are in the filter, that one press back, and the commit button. The
+  full header is ~380px and reproducing it would cost half a 700px viewport.
+- **It is a visual duplicate, so it is `aria-hidden` with `tabindex="-1"` throughout.** These
+  are controls already in the page; a screen reader gains nothing from meeting them twice.
+- **The count on it follows the filter and the Execute mirror does not**, which is the
+  `ofTotal`/`renderBar` split above, not an inconsistency. A marked item hidden behind a filter
+  still has to execute.
+
+**Everything this feature claims is positional, and the static checks cannot see position.**
+This repo has now shipped a "pinned" bar that was not pinned twice — `#bar` on `.bar` with zero
+travel, then `#bar` in a frame that turned out not to scroll — and both times the CSS read
+correctly. So `scripts/measure_float.js` reproduces the host arrangement and measures it:
+cross-origin iframe sized to its own content, parent scrolling, both dashboards published from
+fixtures. It is **not in CI** and validate.py may not assume a browser — run it by hand
+(`NODE_PATH=$(npm root -g) node scripts/measure_float.js`) after touching `dash-band-track`,
+`dash-float-css`, `dash-header-mirror`, or anything that changes the page's height.
+`test_dashboard_view` pins the mechanism either way — tiles not a single sentinel, a threshold
+list not one ratio, no scroll listener, a containing block to be placed in — and each of those
+is mutation-tested.
 
 **The card was re-pitched in both plugins, v8, from a blind design critique.** Eight
 critics were shown only screenshots — no code, no brief, no history — and 24 clustered

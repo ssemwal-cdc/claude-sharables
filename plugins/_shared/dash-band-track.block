@@ -1,0 +1,93 @@
+// ---- the host's visible band, and the floating header that rides it ---------------------
+// This frame does not scroll. It is sized to its own content and the HOST page scrolls, so
+// window.innerHeight === document.scrollHeight and window.scrollY never leaves 0. Both
+// position:sticky and position:fixed freeze at a document coordinate and slide off screen
+// with everything else - which is why the header could not just be made sticky, and why
+// nobody has ever seen the execute bar pinned.
+//
+// IntersectionObserver is the one instrument that reaches across the frame boundary. Its
+// intersectionRect is clipped by every ancestor viewport, cross-origin ones included, so from
+// in here it is possible to read exactly which slice of this document the reader is looking
+// at. rootBounds does come back null - that part really is withheld - but the clipped rect is
+// not, and the clipped rect is all this needs.
+//
+// The instrument has to be a column of CONTIGUOUS TILES rather than one full-height sentinel,
+// and that is the whole trick. Thresholds are ratios: a 700px viewport over a 4,000px
+// sentinel is 17% of it and stays 17% however far you scroll, so no threshold is ever crossed
+// and the callback fires a handful of times for a whole page of scrolling - measured at 4,
+// reporting a stale band at three of six offsets. Tiled, the tile straddling the top edge of
+// the band is clipped BY that edge, so its intersectionRect.top is the band top exactly, and
+// its own visible ratio changes continuously as the reader scrolls, which is what keeps the
+// callbacks coming. Measured against both host arrangements: 0.0px error at every offset, and
+// a distinct position for all 26 steps of an 8px-step scroll.
+var BAND_TILE=100, BAND_MIN=140, bandSeen=new Map(), bandIO=null, bandH=-1;
+
+function bandBuild(){
+  var sen=document.getElementById("bandsen");
+  if(!sen||!window.IntersectionObserver)return;
+  var h=sen.clientHeight;              // height:100% of .wrap, so this measures the page
+  if(h===bandH)return;                 // nothing moved, and re-tiling would only churn
+  bandH=h;
+  if(bandIO)bandIO.disconnect();
+  bandSeen.clear();
+  sen.innerHTML="";
+  var n=Math.max(1,Math.ceil(h/BAND_TILE));
+  for(var k=0;k<n;k++){
+    var t=document.createElement("i");
+    t.style.height=(k===n-1?Math.max(1,h-k*BAND_TILE):BAND_TILE)+"px";
+    sen.appendChild(t);
+  }
+  // 20 steps per tile puts a threshold every 5px of scroll. Fewer and the bar steps visibly;
+  // more buys nothing a reader can see and costs a callback every time one is crossed.
+  var th=[]; for(var i=0;i<=20;i++)th.push(i/20);
+  bandIO=new IntersectionObserver(bandSaw,{threshold:th});
+  for(var j=0;j<sen.children.length;j++)bandIO.observe(sen.children[j]);
+}
+
+function bandSaw(es){
+  es.forEach(function(e){
+    if(e.isIntersecting&&e.intersectionRect.height>0)bandSeen.set(e.target,e.intersectionRect);
+    else bandSeen.delete(e.target);
+  });
+  var top=Infinity,bot=-Infinity;
+  bandSeen.forEach(function(r){if(r.top<top)top=r.top; if(r.bottom>bot)bot=r.bottom});
+  bandPlace(top===Infinity?null:top,bot);
+}
+
+// Show the floating bar only once the real header has left the band, and put it at the top of
+// what the reader can actually see. While the real controls are on screen nothing is
+// duplicated: a second copy of a control you are already looking at is only clutter.
+function bandPlace(top,bot){
+  var fh=document.getElementById("floathdr"), tb=document.querySelector(".toolbar"),
+      wrap=document.querySelector(".wrap");
+  if(!fh||!tb||!wrap)return;
+  // BAND_MIN is a design constant, not a measurement: the bar is about 44px, so below this
+  // much visible page the bar would be most of what is on screen and would hang out of the
+  // sliver it is meant to sit in.
+  if(top==null||bot-top<BAND_MIN){fh.style.display="none";return}
+  if(tb.getBoundingClientRect().bottom>=top){fh.style.display="none";return}
+  // intersectionRect arrives in this document's client coordinates and #floathdr is absolute
+  // inside .wrap, so .wrap's own offset has to come off. That offset is read live rather than
+  // cached because a host that DID scroll this frame would otherwise place the bar wrongly.
+  fh.style.top=Math.round(top-wrap.getBoundingClientRect().top+10)+"px";
+  fh.style.display="block";
+}
+
+function toFilters(){
+  var t=document.querySelector(".toolbar");
+  // scrollIntoView from inside a cross-origin frame really does scroll the host's scroller -
+  // verified in Chromium, a host at 2500 landing on the frame's own top. It is the only
+  // control this page has over where the reader is looking, and it is what makes the floating
+  // bar a way BACK to the header rather than a replacement for it.
+  if(t)t.scrollIntoView({block:"start"});
+}
+
+if(window.ResizeObserver){
+  // The page's height changes whenever a filter narrows the queue or a reader opens a detail,
+  // and tiles that stopped short of the new bottom would leave the band unreadable down there
+  // - no tile intersecting reads as "off screen", so the bar would vanish mid-queue. Observing
+  // the wrapper covers every cause at once, the first layout included, so no render path has
+  // to remember to call bandBuild(). The sentinel column is absolutely positioned and
+  // contributes no height, so re-tiling cannot feed itself.
+  new ResizeObserver(function(){bandBuild()}).observe(document.querySelector(".wrap"));
+} else { bandBuild(); }

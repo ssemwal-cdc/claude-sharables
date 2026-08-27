@@ -601,15 +601,12 @@ of it matters again, re-measure. The pattern across this whole corpus is worth t
 every number a command regenerates has verified correct on demand; almost every number a human
 typed into prose has since moved.
 
-**What is not established is the one thing that cannot be checked from here:
-whether `position:sticky` does anything in the widget host.** The measurement was
-taken at `file://`, where the document itself scrolls. The dashboard renders inside
-an iframe on `*.claudemcpcontent.com`, and whether that iframe scrolls internally
-or auto-sizes while the *conversation* scrolls is not knowable from the agent side
-— the same wall the note in `CLAUDE.md` describes about `show_widget` returning
-"Content rendered" whatever it rendered. If it auto-sizes, there is no scroll
-container, and sticky degrades silently to an ordinary block. No error, no
-console output; it simply sits in flow.
+**`position:sticky` was the open question here, and it is answered: it does
+nothing on this host.** The 2026-08-20 measurement was taken at `file://`, where
+the document itself scrolls. The maintainer reported on 2026-08-26 that the widget
+frame auto-sizes while the *conversation* scrolls, and that the pinned bar has never
+been seen working — so sticky degrades silently to an ordinary block, no error and
+no console output, exactly as the earlier draft of this section feared.
 
 That is why the header mirror exists and why it must not be deleted as redundant:
 it is the half that works on either host. `docs/onboarding.html` is worded to be
@@ -618,11 +615,36 @@ header, and deliberately does **not** promise the bottom one follows you down th
 page. An earlier draft did promise that and it was removed unshipped, because it
 would have been a claim about a host nobody has observed.
 
-**One question settles it, and it needs a person at the keyboard:** on the next
-real run, scroll the queue inside the conversation and say whether the dark
-Execute bar stays pinned near the bottom edge or scrolls away with the rows. If it
-scrolls away, sticky is inert on that host — which is not a bug to fix so much as a
-fact to record here, and the header mirror is then carrying the feature alone.
+**2026-08-27: a floating header replaced the sticky one, and its standing is
+different from anything else in this list.** Asked whether the header could persist
+while scrolling, or whether that was not possible. Not possible in CSS, for the reason
+above; possible through `IntersectionObserver`, whose `intersectionRect` is clipped by
+ancestor viewports across a cross-origin boundary. The mechanism is in `CLAUDE.md`.
+What matters for this list is what was and was not observed:
+
+- **Reproducibly measured, and the reproduction ships.** `scripts/measure_float.js`
+  publishes both dashboards from fixtures, serves the widget cross-origin into a
+  scrolling host, and measures the bar's position in the *top-level* viewport. Every
+  positional claim in `CLAUDE.md` — 0.0px band error, the bar riding the top edge at
+  five host offsets, the back-jump scrolling the host, the tiled-vs-single-sentinel
+  finding of 4 callbacks and a stale band — comes from a command a future session can
+  re-run. That is deliberately unlike the 2026-08-20 fixtures, which were never
+  committed and so can only be taken on trust.
+- **Measured in three host arrangements**, two of which are guesses about the real one:
+  a window-scrolling parent, a div-scrolling parent, and a frame with its own scrollport.
+  All three place the bar correctly. The feature therefore does not rest on the
+  2026-08-26 report being right about which arrangement this host uses — which is the
+  point of having measured the third.
+- **Not observed in the real widget host, by anyone.** The frame arrangement is a
+  reproduction built from a report, not from `*.claudemcpcontent.com`. The same wall as
+  everywhere else applies: `show_widget` returns "Content rendered" whatever it
+  rendered, so an agent cannot see where the bar landed.
+
+**One question settles that last part, and it needs a person at the keyboard:** on the
+next real run, scroll into the middle of the queue and say whether a thin bar carrying
+the item count, `Filters ↑` and `Execute` is sitting at the top of the screen. If it is
+not, the reproduction and the host disagree and that is the fact to record here — the
+row buttons still work either way, since nothing was taken away to add this.
 
 **Also unseen at real scale.** The fixtures were 6 NetSuite bills and 8 Procore
 items. A real Procore queue has run to 43–73. A sticky bar overlays the rows

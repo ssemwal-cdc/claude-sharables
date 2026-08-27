@@ -5,9 +5,25 @@
   // It also renders when execution is BLOCKED. Gating it on canRun alone left the top of the
   // page saying nothing at exactly the moment something was standing in the way - which is
   // when a reader is most likely to be looking up there for it.
+  function execMirror(dup){
+    var x=dup?' tabindex="-1"':'';
+    return canRun
+      ? '<button class="go big"'+x+' onclick="go()">Execute '+ks.length+' ↗</button>'
+      : ks.length ? '<span class="pill blockedpill">'+ks.length+' marked · needs a reason</span>'
+      : '';
+  }
   var te=document.getElementById("topexec");
-  if(te)te.innerHTML=canRun
-    ? '<button class="go big" onclick="go()">Execute '+ks.length+' ↗</button>'
-    : ks.length ? '<span class="pill blockedpill">'+ks.length+' marked · needs a reason</span>'
-    : '';
+  if(te)te.innerHTML=execMirror(false);
+  // And a third home for it, on the bar that rides the host's visible band. The full header is
+  // ~380px of chrome and reproducing that mid-queue would cost half a 700px viewport, so what
+  // floats is only what is worth having in the second before a click: where you are in the
+  // filter, one press back to the real controls, and the commit button itself. The whole bar
+  // is aria-hidden with tabindex="-1" throughout, because it duplicates controls that are
+  // already in the page and a screen reader gains nothing from meeting them twice.
+  var fh=document.getElementById("floathdr");
+  if(fh)fh.innerHTML='<div class="floatbar">'+
+    '<span class="fc">'+esc(window.__vsum||"")+'</span>'+
+    '<span class="fsp"></span>'+
+    '<button tabindex="-1" onclick="toFilters()">Filters ↑</button>'+
+    execMirror(true)+'</div>';
   window.__prompt=prompt;

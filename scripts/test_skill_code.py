@@ -460,6 +460,45 @@ def test_dashboard_view():
         check("%s: the header mirror is wired" % label,
               'id="topexec"' in tpl and 'getElementById("topexec")' in tpl)
 
+        # ---- the floating header ------------------------------------------------------
+        # The frame is sized to its own content and the HOST scrolls, so nothing in CSS can
+        # pin anything: measured in Chromium, window.innerHeight === document.scrollHeight
+        # and window.scrollY stays 0. #floathdr is therefore placed from JavaScript against
+        # a band read through IntersectionObserver, whose intersectionRect is clipped by
+        # ancestor viewports across the cross-origin boundary. These assertions pin the
+        # mechanism; the positions themselves need a browser (scripts/measure_float.js).
+        check("%s: the floating header and its sentinel are in the markup" % label,
+              'id="floathdr"' in tpl and 'id="bandsen"' in tpl)
+        check("%s: the floating header has a containing block to be placed in" % label,
+              ".wrap{position:relative}" in tpl and "#floathdr{position:absolute" in tpl)
+        m_float = re.search(r"#floathdr\{[^}]*\}", tpl)
+        check("%s: the floating header is NOT sticky - it has nowhere to travel" % label,
+              bool(m_float) and "sticky" not in m_float.group(0) and "fixed" not in m_float.group(0))
+
+        # A scroll listener is the obvious-looking way to do this and it is dead code here:
+        # this document never scrolls, so the event never fires and the bar never moves.
+        check("%s: the band is not tracked by a scroll event" % label,
+              'addEventListener("scroll"' not in tpl and "onscroll" not in tpl)
+
+        # One full-height sentinel is the trap. Thresholds are ratios, so a 700px viewport
+        # over a 4,000px sentinel stays at 17% however far you scroll and no threshold is
+        # ever crossed - observed at 4 callbacks for a whole page, with a stale band at
+        # three of six offsets. Contiguous tiles are what make the top edge readable.
+        check("%s: the sentinel is a tiled column, not one full-height element" % label,
+              "BAND_TILE" in tpl and "bandBuild" in tpl and "sen.appendChild(t)" in tpl)
+        check("%s: the observer gets a threshold list, not a single ratio" % label,
+              "for(var i=0;i<=20;i++)th.push(i/20)" in tpl and "{threshold:th}" in tpl)
+
+        # Filtering the queue changes the page height. Tiles that stopped short of the new
+        # bottom read as "off screen" down there, and the bar would vanish mid-queue.
+        check("%s: re-tiling is wired to the page's height, not to a render path" % label,
+              "new ResizeObserver(function(){bandBuild()}).observe(" in tpl)
+
+        # The bar duplicates controls that are already in the page, so it is out of the tab
+        # order and hidden from screen readers rather than announced twice.
+        check("%s: the floating bar is a visual duplicate only" % label,
+              'id="floathdr" aria-hidden="true"' in tpl and 'tabindex="-1"' in tpl)
+
 
 def test_po_identity_rules():
     """A bill's PO must come from the transaction linkage, never from the typed

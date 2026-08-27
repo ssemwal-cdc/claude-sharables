@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>NetSuite approval queue</title>
-<!-- layout template v11 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v12 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -103,6 +103,25 @@ input.search{width:auto;flex:1;min-width:130px;margin-top:0;font-size:12.5px;pad
 .chip:hover{background:var(--ctl-on)}
 .chip.on{background:var(--acc-bg);color:var(--acc-fg);border-color:var(--acc-line)}
 .hid{font-size:12.5px;color:var(--warn-fg);margin:9px 0 0}
+/*__SHARED:dash-float-css__*/
+/* The widget iframe never scrolls. It is sized to its own content and the HOST page does the
+   scrolling, so in here window.innerHeight === document.scrollHeight and window.scrollY is
+   pinned at 0 - measured in Chromium at six host scroll offsets, against a window-scrolling
+   host and a div-scrolling host alike. position:sticky and position:fixed therefore have
+   nowhere to travel: both freeze at a document coordinate and leave the screen with the rest
+   of the page. That is why the header cannot be made to persist in CSS, and why #floathdr is
+   positioned from JavaScript against a band this frame has to measure for itself. The how is
+   in bandBuild(); do not "simplify" this back to a sticky rule. */
+.wrap{position:relative}
+#bandsen{position:absolute;top:0;left:0;width:1px;height:100%;pointer-events:none}
+#bandsen i{display:block;width:1px}
+#floathdr{position:absolute;left:0;right:0;z-index:6;display:none}
+.floatbar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:9px 13px;box-shadow:var(--sh2)}
+.floatbar .fc{font-size:12.5px;color:var(--ink2);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.floatbar .fsp{flex:1;min-width:8px}
+.floatbar button{white-space:nowrap}
+.floatbar .go.big{padding:8px 14px;font-size:13px;box-shadow:none}
+/*__END_SHARED:dash-float-css__*/
 @media (prefers-color-scheme:dark){:root{--ink:#eceae4;--ink2:#a6a49d;--ink3:#9a978d;--line:#35342f;--bg:#191816;--card:#22201d;--surf:#272521;--sunk:#2d2a26;--ctl:#46433d;--ctl2:#6b6860;--ctl-on:#37342e;--inv:#191816;--ink-hi:#ffffff;--ok-bg:#16301d;--ok-fg:#79c78c;--ok-line:#2b5436;--bad-bg:#381d1b;--bad-fg:#ef8b84;--bad-line:#61302c;--warn-bg:#31260f;--warn-fg:#dfb25e;--warn-line:#57431e;--acc-bg:#16283c;--acc-fg:#7db3ed;--acc-line:#2a4868;--sh1:0 1px 2px rgba(0,0,0,.25),0 4px 14px rgba(0,0,0,.28);--sh2:0 2px 6px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.38);--sh3:0 -1px 6px rgba(0,0,0,.25),0 12px 34px rgba(0,0,0,.5);--ring:rgba(255,255,255,.07)}
 select{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%23a6a49d' stroke-width='1.4'/%3E%3C/svg%3E")}
 button.go.big{box-shadow:0 2px 10px rgba(0,0,0,.4)}
@@ -160,6 +179,11 @@ document.addEventListener("DOMContentLoaded",function(){
   <input class="search" id="fQ" type="text" placeholder="Search document, vendor, id…" oninput="setView('q',this.value)">
   <span class="chip" id="fReset" onclick="resetView()">Reset</span>
 </div>
+
+<!-- The instrument that measures which slice of this page the reader can see, and the bar that
+     rides it. Both are absolutely positioned inside .wrap and contribute no layout height. -->
+<div id="bandsen" aria-hidden="true"></div>
+<div id="floathdr" aria-hidden="true"></div>
 
 <div id="banners"></div>
 
@@ -378,6 +402,12 @@ function render(){
   var vTotal=vrows.reduce(function(s,r){return s+r.it.amt},0);
   var vAges=vrows.map(function(r){return ageDays(r.it.trandate)}).filter(function(a){return a!=null});
   var vOldest=vAges.length?Math.max.apply(null,vAges):0;
+
+  // The one line the floating header carries that depends on the filter, so it has to be set
+  // before renderBar(), which is what paints that bar.
+  window.__vsum=(hidden>0?vrows.length+" of "+rows.length+" shown":rows.length+" pending")+
+                (vFlagged?" · "+vFlagged+" flagged":"");
+
   document.getElementById("cards").innerHTML=
    cd("Clear",ofTotal(vClear,clear),"var(--ok-fg)")+
    cd("Flagged",ofTotal(vFlagged,flagged),"var(--bad-fg)")+
@@ -572,14 +602,125 @@ function renderBar(){
   // It also renders when execution is BLOCKED. Gating it on canRun alone left the top of the
   // page saying nothing at exactly the moment something was standing in the way - which is
   // when a reader is most likely to be looking up there for it.
+  function execMirror(dup){
+    var x=dup?' tabindex="-1"':'';
+    return canRun
+      ? '<button class="go big"'+x+' onclick="go()">Execute '+ks.length+' ↗</button>'
+      : ks.length ? '<span class="pill blockedpill">'+ks.length+' marked · needs a reason</span>'
+      : '';
+  }
   var te=document.getElementById("topexec");
-  if(te)te.innerHTML=canRun
-    ? '<button class="go big" onclick="go()">Execute '+ks.length+' ↗</button>'
-    : ks.length ? '<span class="pill blockedpill">'+ks.length+' marked · needs a reason</span>'
-    : '';
+  if(te)te.innerHTML=execMirror(false);
+  // And a third home for it, on the bar that rides the host's visible band. The full header is
+  // ~380px of chrome and reproducing that mid-queue would cost half a 700px viewport, so what
+  // floats is only what is worth having in the second before a click: where you are in the
+  // filter, one press back to the real controls, and the commit button itself. The whole bar
+  // is aria-hidden with tabindex="-1" throughout, because it duplicates controls that are
+  // already in the page and a screen reader gains nothing from meeting them twice.
+  var fh=document.getElementById("floathdr");
+  if(fh)fh.innerHTML='<div class="floatbar">'+
+    '<span class="fc">'+esc(window.__vsum||"")+'</span>'+
+    '<span class="fsp"></span>'+
+    '<button tabindex="-1" onclick="toFilters()">Filters ↑</button>'+
+    execMirror(true)+'</div>';
   window.__prompt=prompt;
   //__END_SHARED:dash-header-mirror__
 }
+//__SHARED:dash-band-track__
+// ---- the host's visible band, and the floating header that rides it ---------------------
+// This frame does not scroll. It is sized to its own content and the HOST page scrolls, so
+// window.innerHeight === document.scrollHeight and window.scrollY never leaves 0. Both
+// position:sticky and position:fixed freeze at a document coordinate and slide off screen
+// with everything else - which is why the header could not just be made sticky, and why
+// nobody has ever seen the execute bar pinned.
+//
+// IntersectionObserver is the one instrument that reaches across the frame boundary. Its
+// intersectionRect is clipped by every ancestor viewport, cross-origin ones included, so from
+// in here it is possible to read exactly which slice of this document the reader is looking
+// at. rootBounds does come back null - that part really is withheld - but the clipped rect is
+// not, and the clipped rect is all this needs.
+//
+// The instrument has to be a column of CONTIGUOUS TILES rather than one full-height sentinel,
+// and that is the whole trick. Thresholds are ratios: a 700px viewport over a 4,000px
+// sentinel is 17% of it and stays 17% however far you scroll, so no threshold is ever crossed
+// and the callback fires a handful of times for a whole page of scrolling - measured at 4,
+// reporting a stale band at three of six offsets. Tiled, the tile straddling the top edge of
+// the band is clipped BY that edge, so its intersectionRect.top is the band top exactly, and
+// its own visible ratio changes continuously as the reader scrolls, which is what keeps the
+// callbacks coming. Measured against both host arrangements: 0.0px error at every offset, and
+// a distinct position for all 26 steps of an 8px-step scroll.
+var BAND_TILE=100, BAND_MIN=140, bandSeen=new Map(), bandIO=null, bandH=-1;
+
+function bandBuild(){
+  var sen=document.getElementById("bandsen");
+  if(!sen||!window.IntersectionObserver)return;
+  var h=sen.clientHeight;              // height:100% of .wrap, so this measures the page
+  if(h===bandH)return;                 // nothing moved, and re-tiling would only churn
+  bandH=h;
+  if(bandIO)bandIO.disconnect();
+  bandSeen.clear();
+  sen.innerHTML="";
+  var n=Math.max(1,Math.ceil(h/BAND_TILE));
+  for(var k=0;k<n;k++){
+    var t=document.createElement("i");
+    t.style.height=(k===n-1?Math.max(1,h-k*BAND_TILE):BAND_TILE)+"px";
+    sen.appendChild(t);
+  }
+  // 20 steps per tile puts a threshold every 5px of scroll. Fewer and the bar steps visibly;
+  // more buys nothing a reader can see and costs a callback every time one is crossed.
+  var th=[]; for(var i=0;i<=20;i++)th.push(i/20);
+  bandIO=new IntersectionObserver(bandSaw,{threshold:th});
+  for(var j=0;j<sen.children.length;j++)bandIO.observe(sen.children[j]);
+}
+
+function bandSaw(es){
+  es.forEach(function(e){
+    if(e.isIntersecting&&e.intersectionRect.height>0)bandSeen.set(e.target,e.intersectionRect);
+    else bandSeen.delete(e.target);
+  });
+  var top=Infinity,bot=-Infinity;
+  bandSeen.forEach(function(r){if(r.top<top)top=r.top; if(r.bottom>bot)bot=r.bottom});
+  bandPlace(top===Infinity?null:top,bot);
+}
+
+// Show the floating bar only once the real header has left the band, and put it at the top of
+// what the reader can actually see. While the real controls are on screen nothing is
+// duplicated: a second copy of a control you are already looking at is only clutter.
+function bandPlace(top,bot){
+  var fh=document.getElementById("floathdr"), tb=document.querySelector(".toolbar"),
+      wrap=document.querySelector(".wrap");
+  if(!fh||!tb||!wrap)return;
+  // BAND_MIN is a design constant, not a measurement: the bar is about 44px, so below this
+  // much visible page the bar would be most of what is on screen and would hang out of the
+  // sliver it is meant to sit in.
+  if(top==null||bot-top<BAND_MIN){fh.style.display="none";return}
+  if(tb.getBoundingClientRect().bottom>=top){fh.style.display="none";return}
+  // intersectionRect arrives in this document's client coordinates and #floathdr is absolute
+  // inside .wrap, so .wrap's own offset has to come off. That offset is read live rather than
+  // cached because a host that DID scroll this frame would otherwise place the bar wrongly.
+  fh.style.top=Math.round(top-wrap.getBoundingClientRect().top+10)+"px";
+  fh.style.display="block";
+}
+
+function toFilters(){
+  var t=document.querySelector(".toolbar");
+  // scrollIntoView from inside a cross-origin frame really does scroll the host's scroller -
+  // verified in Chromium, a host at 2500 landing on the frame's own top. It is the only
+  // control this page has over where the reader is looking, and it is what makes the floating
+  // bar a way BACK to the header rather than a replacement for it.
+  if(t)t.scrollIntoView({block:"start"});
+}
+
+if(window.ResizeObserver){
+  // The page's height changes whenever a filter narrows the queue or a reader opens a detail,
+  // and tiles that stopped short of the new bottom would leave the band unreadable down there
+  // - no tile intersecting reads as "off screen", so the bar would vanish mid-queue. Observing
+  // the wrapper covers every cause at once, the first layout included, so no render path has
+  // to remember to call bandBuild(). The sentinel column is absolutely positioned and
+  // contributes no height, so re-tiling cannot feed itself.
+  new ResizeObserver(function(){bandBuild()}).observe(document.querySelector(".wrap"));
+} else { bandBuild(); }
+//__END_SHARED:dash-band-track__
 //__SHARED:dash-render-tail__
 function go(){say(window.__prompt)}
 

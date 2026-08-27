@@ -1,0 +1,17 @@
+/* The widget iframe never scrolls. It is sized to its own content and the HOST page does the
+   scrolling, so in here window.innerHeight === document.scrollHeight and window.scrollY is
+   pinned at 0 - measured in Chromium at six host scroll offsets, against a window-scrolling
+   host and a div-scrolling host alike. position:sticky and position:fixed therefore have
+   nowhere to travel: both freeze at a document coordinate and leave the screen with the rest
+   of the page. That is why the header cannot be made to persist in CSS, and why #floathdr is
+   positioned from JavaScript against a band this frame has to measure for itself. The how is
+   in bandBuild(); do not "simplify" this back to a sticky rule. */
+.wrap{position:relative}
+#bandsen{position:absolute;top:0;left:0;width:1px;height:100%;pointer-events:none}
+#bandsen i{display:block;width:1px}
+#floathdr{position:absolute;left:0;right:0;z-index:6;display:none}
+.floatbar{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:9px 13px;box-shadow:var(--sh2)}
+.floatbar .fc{font-size:12.5px;color:var(--ink2);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.floatbar .fsp{flex:1;min-width:8px}
+.floatbar button{white-space:nowrap}
+.floatbar .go.big{padding:8px 14px;font-size:13px;box-shadow:none}

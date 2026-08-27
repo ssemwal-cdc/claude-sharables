@@ -96,8 +96,8 @@ than in Cowork, that case is different: declare the plugin in that repo's
 
 | Plugin | Version | What it does | Needs |
 |---|---|---|---|
-| `netsuite-approval-review` | v18 | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | Claude in Chrome, signed in to NetSuite. NetSuite MCP connector optional — adds bulk queries and the PO cross-check |
-| `procore-open-items-review` | v20 | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
+| `netsuite-approval-review` | v19 | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | Claude in Chrome, signed in to NetSuite. NetSuite MCP connector optional — adds bulk queries and the PO cross-check |
+| `procore-open-items-review` | v21 | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
 
 **Checking what you have installed:** the easiest read is **profile (bottom
 left) → Settings → Plugins → click the plugin** — the last sentence of its
@@ -166,6 +166,17 @@ exist. It runs in CI on every push and pull request.
 
 ```bash
 python3 scripts/validate.py
+```
+
+One check does **not** run in CI, because it needs a browser: the dashboards' floating
+header is placed from JavaScript against the slice of the page the reader can actually
+see, and where it lands is not visible to any static check. `scripts/measure_float.js`
+publishes both dashboards from fixtures, serves them cross-origin into a scrolling host,
+and measures the bar's real viewport position. Run it by hand after changing the dashboard
+layout:
+
+```bash
+NODE_PATH=$(npm root -g) node scripts/measure_float.js   # needs playwright + chromium
 ```
 
 ## Distribution: why this repo is public

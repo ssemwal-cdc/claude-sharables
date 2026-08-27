@@ -1209,6 +1209,48 @@ bit on the first attempt — the gate reads every backticked verdict in the abse
 so a sentence *explaining* that `skipped` does not exist here failed it too. The row says "no
 skipped verdict on this side" in plain words for that reason; do not re-add the backticks.
 
+**A parity audit was run across the two skills, and two of its five findings were wrong.**
+Asked for before a commit, 2026-08-26: check whether the stated best practices are actually
+followed rather than asserted, and raise rather than fix. Worth recording both what it caught
+and what it got wrong, because the false positives came from the same move — grepping one
+plugin for the other's vocabulary.
+
+Caught, and fixed:
+
+- **Procore recorded nothing about which file backed a verdict.** It runs six
+  `attachment`-capability checks and had no equivalent of NetSuite's `attachmentFile`, and no
+  prose telling a run to name one either — so a Procore `clear` could not be asked what was read
+  to produce it. It has `supportRead` now, a **list** rather than a single name because one item
+  can carry several PCIs, rendered inside Show detail on both dashboards. An empty list beside a
+  `skipped` verdict is the honest pairing; beside a `clear` one it is a contradiction.
+- **NetSuite's `record` capability row still assumed pre-opened tabs**, an hour after Step 1b
+  stopped opening them. Reworded to the mechanism that now holds rather than left true by luck.
+
+Raised and **withdrawn** on inspection:
+
+- *"NetSuite never names the `ok` state."* It has no `ok`/`empty`/`failed` fan-out at all. Its
+  three-state instances are `linked`/`unlinked`/`failed` for the PO linkage and
+  `present`/`absent`/`failed` elsewhere, and every leg of each is named. The finding was a grep
+  for Procore's words in NetSuite's file.
+- *"Procore's workflow gate is missing from its capability table."* It is handled in Step 2 with
+  the strictest three-state code in either plugin, and it belongs there: the capability table
+  answers *what happens to a check when its input is missing*, while the gate decides whether an
+  item is reviewable at all. Two different kinds of absence, correctly filed apart. **Do not
+  re-raise this by diffing the two capability tables** — the asymmetry is the point.
+
+**The audit's real finding came from the maintainer correcting the question.** Procore's queue
+is a fixed endpoint (`open_items/mine`, self-scoping server-side) and NetSuite's is a
+user-named portlet on a homepage dashboard — so NetSuite already had per-user configuration and
+Procore needed none. But neither could be *told* where a queue actually lives: NetSuite took a
+portlet name, not a link, and Procore took nothing. `config.queueSource` now carries a `url` and
+a free-text `described` on both, optional, empty by default, and empty is exactly the old
+behaviour. Both queue steps consult it before assuming their default. **A declared field that no
+step reads is worse than no field** — the wiring into Step 1 is the change, not the schema entry.
+
+One rule inside it is load-bearing: when `described` cannot be resolved, **ask once** — never
+substitute the nearest queue found, because a review of the wrong queue looks exactly like a
+review of the right one.
+
 **Procore's sticky bar carries only what you need in the second before clicking.** The
 stale-snapshot warning and the Stale-safe explainer moved below it into `#barnote`,
 because inside the bar they made it 249px — over a third of a 700px viewport. Both

@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v10"
+TEMPLATE_VERSION = "v11"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -142,6 +142,10 @@ def main():
             "po": it.get("context", ""),
             "poWarn": it.get("warning", ""),
             "detail": it.get("detail", ""),
+            # The one field that evidences the verdict rather than asserting it. A list
+            # here rather than NetSuite's single name: one Procore item can carry several
+            # PCIs, each with its own attachment.
+            "att": ", ".join(it.get("supportRead") or []),
         })
 
     if bad:

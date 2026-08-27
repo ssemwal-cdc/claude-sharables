@@ -1033,3 +1033,16 @@ What actually went wrong, in rough order of cost:
 for a large source file, because those tokens then sit in context for every later
 turn. The heuristic is file size, not a principle. Slicing discipline appropriate
 to a big codebase backfired on files small enough to just read.
+
+
+## Visual-read prose is much thinner on NetSuite, and nobody has run the branch
+
+Noticed during the 2026-08-26 parity audit, recorded rather than acted on. Mention counts across
+the two `SKILL.md` files: Procore says `image` 11 times and `scanned` 10; NetSuite says them 2
+and 3. Both name all six attachment outcomes, so the doctrine holds formally.
+
+It is left alone deliberately. `CLAUDE.md` records that the `scanned` → rasterise → look branch
+and the OCR cap are **unfired on both sides** — no run has exercised either. Writing more
+procedure for a path nobody has walked is what the packs-are-hardcoded rule exists to prevent, so
+the honest move is to note that NetSuite has less written down about the branch that has never
+run, and to fix it from a real observation when one arrives rather than from symmetry.

@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v17 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: v18 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 17 — 2026-08-26.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 18 — 2026-08-26.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
@@ -109,13 +109,13 @@ down this ladder and take the first rung that works:
    template to inject into, and inventing one is forbidden by the Absolute rules. This is the case
    to expect on Cowork, where rung 1 is known to fail and rung 2 has never been observed.
 
-**This plugin ships layout template `v10`. Confirm the sync landed by reading it back:**
+**This plugin ships layout template `v11`. Confirm the sync landed by reading it back:**
 
 ```bash
 head -n 8 "<workspace>/NetSuite Approval Checks/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
 
-If that does not say `v10`, the sync did not land and the dashboard you are about to publish is
+If that does not say `v11`, the sync did not land and the dashboard you are about to publish is
 stale. Say so once near the headline, naming both versions, and carry on — same fail-open rule as
 rung 3.
 
@@ -199,6 +199,7 @@ as shipping a new default under an old view key.
        "account": "1234567",
        "tool": "mcp__<server id>__ns_runCustomSuiteQL",
        "billPortlet": "<portlet name>",
+       "queueSource": {"url": "", "described": ""},
        "focus": {
          "lenses": [],
          "emphasis": ""
@@ -305,9 +306,27 @@ Two data quirks that will bite:
 
 **1b. Dashboard (authoritative, and the only place change orders appear):**
 
-Navigate to the NetSuite dashboard and scroll to the bottom. Three kinds of portlet matter: one holding change orders, one holding purchase orders (frequently empty), and one holding vendor bills — named in `config.billPortlet`.
+**Check `config.queueSource` first.** If it names a `url`, go there instead of the default dashboard; if it only `described` somewhere, resolve that description before navigating and ask once if you cannot. With both empty — the normal case — navigate to the NetSuite dashboard and scroll to the bottom. Three kinds of portlet matter: one holding change orders, one holding purchase orders (frequently empty), and one holding vendor bills — named in `config.billPortlet`.
 
 Portlet names are user-specific saved searches and can be arbitrary, so do not assume a name is a placeholder. If a portlet has been renamed since setup, report it rather than guessing.
+
+**`config.queueSource` — where this user's queue actually lives.** Optional, empty by default,
+and empty means exactly what every run did before it existed. Two fields, either or both:
+
+```json
+"queueSource": {"url": "", "described": ""}
+```
+
+- **`url`** — a link the user gave you. Navigate there instead of assuming the default location.
+  Verify it loaded and holds a queue before reading it; if it does not, say so and fall back to
+  the default rather than reviewing whatever the page happened to be.
+- **`described`** — the user's own words for where their items are, stored verbatim. Resolve it on
+  each run rather than guessing once and caching a guess. **If you cannot resolve what they
+  described, ask — once — and store the answer.** Never substitute the nearest thing you found:
+  a review of the wrong queue looks exactly like a review of the right one.
+
+Ask for both at first-run setup, alongside the other identifiers, and make clear that skipping
+them is normal and costs nothing. Re-editable at any time, like `config.focus`.
 
 Use `get_page_text` on the dashboard tab rather than screenshots — the portlet tables extract cleanly as text. **Do not open a tab per row here.** A twelve-row queue is twelve tabs, and every card on the dashboard links straight to its own record, so the reader opens the ones they want. Open a record tab only where a later step actually needs one — Step 2's field reads in browser mode, and Step 4's attachment fetch. When you do: **ctrl+click** the row's **date link**, and note that ctrl+click may silently fail on the very first attempt, so verify with `tabs_context_mcp` and retry once if no new tab appeared.
 
@@ -495,7 +514,7 @@ verdict's meaning: `clear` and `flagged` mean what they have always meant.
 
 | capability | means | when it is absent |
 |---|---|---|
-| `record` | fields from the Step 1a/2 queries, or read off the record page | never absent — the queue is built from them |
+| `record` | fields from the Step 1a/2 queries, or read off the record page — Step 2 opens that item's tab when it needs one, since Step 1b no longer pre-opens them | never absent — the queue is built from them |
 | `attachment` | a Step 4 attachment outcome of `text` or `spreadsheet` | the item is `flagged`, **naming which outcome** — Step 4. There is no skipped verdict on this side: `VERDICTS` is `clear` and `flagged` only, and the publish script aborts on anything else |
 | `connector` | a working NetSuite SuiteQL tool | Step 5 does not run and **nothing is said about it** — Step 5 |
 | `queue` | the other items in this run, not this item alone | never absent; marks the check as cross-item |
@@ -755,6 +774,7 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`:
 ```json
 {
   "config": {"me": 0, "meName": "...", "account": "...", "tool": "...", "billPortlet": "...",
+             "queueSource": {"url": "", "described": ""},
              "focus": {"lenses": ["supply-chain"], "emphasis": "free text, or empty"}},
   "lastCompletedRun": "2026-08-11",
   "lastRunTime": "2026-08-11 11:04",

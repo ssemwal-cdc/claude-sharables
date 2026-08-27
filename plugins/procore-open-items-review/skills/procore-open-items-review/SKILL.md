@@ -1,11 +1,11 @@
 ---
 name: procore-open-items-review
-description: v19 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
+description: v20 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
 ---
 
 # Procore Open Items Review
 
-**Skill version 19 — 2026-08-26.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 20 — 2026-08-26.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 
@@ -116,13 +116,13 @@ of the surface, not an error to fix. Sync down this ladder and take the first ru
    template to inject into, and inventing one is forbidden by the Absolute rules. This is the case
    to expect on Cowork, where rung 1 is known to fail and rung 2 has never been observed.
 
-**This plugin ships layout template `v10`. Confirm the sync landed by reading it back:**
+**This plugin ships layout template `v11`. Confirm the sync landed by reading it back:**
 
 ```bash
 head -n 8 "<workspace>/Procore Open Items/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
 
-If that does not say `v10`, the sync did not land and the dashboard you are about to publish is
+If that does not say `v11`, the sync did not land and the dashboard you are about to publish is
 stale. Say so once near the headline, naming both versions, and carry on — same fail-open rule as
 rung 3.
 
@@ -161,6 +161,7 @@ reach nobody who uses it.
        "company": "<your company id>",
        "companyName": "<your company name>",
        "icrToolId": "<the change-risk tool id>",
+       "queueSource": {"url": "", "described": ""},
        "icrSubtype": "Internal Change Risk (88)",
        "costFields": {
          "vendorProposed": "custom_field_<id>",
@@ -202,7 +203,9 @@ There is no user id to configure. The queue endpoint and the permission gate are
 
 ## Step 1 — Build the queue
 
-Open one tab on the Open Items tool (this also confirms the session is alive), then fetch from inside it:
+**Check `config.queueSource` first.** With both fields empty — the normal case — open one tab on the Open Items tool and use the endpoint below. If it names a `url`, open that instead and read the queue there; if it only `described` somewhere, resolve that description first and ask once if you cannot. Either way the tab confirms the session is alive, and the gate in Step 2 still decides which of whatever you found is actually yours to answer.
+
+With no override, fetch from inside that tab:
 
 ```
 GET /rest/v2.0/companies/<company>/open_items/mine    l=200  o=0  s=due_date:desc  include_count=true
@@ -701,13 +704,15 @@ Maintain `Procore Open Items/_procore_review_log.json`:
 
 ```json
 {
-  "config": { "company": "...", "icrToolId": "...", "costFields": {} },
+  "config": { "company": "...", "icrToolId": "...", "costFields": {},
+              "queueSource": {"url": "", "described": ""} },
   "lastCompletedRun": "2026-08-11",
   "lastRunTime": "2026-08-11 16:20",
   "suppressed": 41,
   "items": {
     "<item_type>:<item_id>": {
       "itemId": "<item id>", "projectId": "<project id>", "commitmentId": "<commitment id>",
+      "supportRead": ["what was actually opened and parsed, one entry per file, e.g. 'PCI 42 — proposal.pdf'; empty when nothing was readable"],
       "wfId": "CCOs only - the commitment change order id, from line_items[].holder.id; omit for ICRs and invoices",
       "kind": "inv", "type": "Invoice", "docNo": "#2 · INV-0002 (PR-02)",
       "project": "Campus A - Building 1", "counterparty": "Example Contractor LLC",
@@ -731,6 +736,8 @@ Maintain `Procore Open Items/_procore_review_log.json`:
 ```
 
 These field names are the contract with `publish_dashboard.py`. Do not rename them.
+
+**`supportRead` names every file this run actually opened and parsed for the item**, one entry each, and is the only field that evidences a verdict rather than asserting it — a `clear` that cannot say what it read is worth much less than one that can. It renders inside Show detail. Leave it empty when nothing was readable; an empty list beside a `skipped` verdict is the honest pairing, and an empty list beside a `clear` one is a contradiction worth catching in review.
 
 **`config.focus.emphasis`, when set, decides what leads `head`, `facts`, `context` and `detail`
 — and nothing else.** It may reorder and reword; it may never change a `verdict`, drop a finding,

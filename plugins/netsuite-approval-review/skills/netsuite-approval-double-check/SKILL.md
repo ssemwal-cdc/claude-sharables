@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v19 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: v20 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 19 — 2026-08-27.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 20 — 2026-08-27.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
@@ -59,6 +59,14 @@ shell away from it entirely, so the write can fail — and when it does, fall ba
 session-local path, say so in **one short line** near the headline, and carry on. Do not describe
 the alternatives, do not offer to hand the file over, and never write somewhere the session will
 discard while describing it as kept.
+
+**Overwrite in place. Never create anything in this folder that would need deleting.** It is
+usually cloud-synced, where creating and overwriting work but deleting and renaming are typically
+refused — `publish_dashboard.py` already survives a refused move, and the `renders/` archive is
+seven weekday slots overwritten in place for exactly this reason. So write every file straight
+over its destination: no temp file, no write-then-move, no dated copies. If a stray file is left
+behind anyway, say so once in the same one line; **never invent a quarantine folder such as
+`_to_delete/`, and never hand the user a cleanup chore.**
 
 **A failed write costs wasted work, not a broken review.** The state does not outlive the
 session, so the next run repeats first-run setup and re-reads every attachment instead of
@@ -309,6 +317,28 @@ Two data quirks that will bite:
 **Check `config.queueSource` first.** If it names a `url`, go there instead of the default dashboard; if it only `described` somewhere, resolve that description before navigating and ask once if you cannot. With both empty — the normal case — navigate to the NetSuite dashboard and scroll to the bottom. Three kinds of portlet matter: one holding change orders, one holding purchase orders (frequently empty), and one holding vendor bills — named in `config.billPortlet`.
 
 Portlet names are user-specific saved searches and can be arbitrary, so do not assume a name is a placeholder. If a portlet has been renamed since setup, report it rather than guessing.
+
+**If no approval portlet is on the dashboard, do not conclude there is none.** That conclusion
+produces a queue permanently missing change orders, and it reads as a complete queue. Work down
+this ladder and stop at the first rung that resolves it:
+
+1. **Go and look, and name what is actually there.** Open the NetSuite home page in the browser
+   and enumerate *every* portlet by title — including the ones that plainly are not approval
+   queues — rather than inferring from an earlier read. Portlet titles are arbitrary saved-search
+   names, so the one holding change orders may announce nothing.
+2. **Surface the candidates and ask which is theirs.** Show the list and what each portlet holds.
+   This is the common case: the portlet exists and its title simply did not identify it. Store the
+   answer in `config.billPortlet`.
+3. **Ask for a link.** Only when nothing on the dashboard is a plausible candidate: ask for a URL
+   or a description of where their change orders are, store it in `config.queueSource`, and use it
+   from then on.
+
+**Record the answer either way — including *there is no such portlet*** — so this is asked once
+rather than every run.
+
+**Never present a partial queue as the whole one.** With no change-order source, bills and
+purchase orders are covered and change orders cannot be identified at all; say that in the same
+breath as the count, not as a separate note the reader may miss.
 
 **`config.queueSource` — where this user's queue actually lives.** Optional, empty by default,
 and empty means exactly what every run did before it existed. Two fields, either or both:

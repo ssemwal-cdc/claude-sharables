@@ -15,6 +15,14 @@ session-local path, say so in **one short line** near the headline, and carry on
 the alternatives, do not offer to hand the file over, and never write somewhere the session will
 discard while describing it as kept.
 
+**Overwrite in place. Never create anything in this folder that would need deleting.** It is
+usually cloud-synced, where creating and overwriting work but deleting and renaming are typically
+refused — `publish_dashboard.py` already survives a refused move, and the `renders/` archive is
+seven weekday slots overwritten in place for exactly this reason. So write every file straight
+over its destination: no temp file, no write-then-move, no dated copies. If a stray file is left
+behind anyway, say so once in the same one line; **never invent a quarantine folder such as
+`_to_delete/`, and never hand the user a cleanup chore.**
+
 **A failed write costs wasted work, not a broken review.** The state does not outlive the
 session, so the next run repeats first-run setup and re-reads every attachment instead of
 carrying forward the items already logged `clear`. Say the one line and move on; this is not

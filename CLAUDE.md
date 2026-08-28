@@ -1568,10 +1568,15 @@ Facts it carries that are not obvious from the skills:
   Added 2026-08-20 on request, and it is the one permissions instruction the sheet carries.
   Note what it is *not*: the deleted onboarding section warned against above was
   troubleshooting for a scheduled-run hang that never existed. This is a setup instruction
-  resting on two settled facts — every operation either plugin performs has run clean in
-  auto, and skip-all is ruled out on Anthropic's own grounds for a browser holding live
-  approval authority. The sheet gives that reason rather than just the prohibition, because
-  a rule with no reason is the one people talk themselves out of.
+  resting on **one** settled fact — skip-all is ruled out on Anthropic's own grounds for a
+  browser holding live approval authority. It used to cite a second, that every operation
+  either plugin performs had run clean in auto, and the auto-mode note above retracts
+  precisely that: one re-run of one snippet cannot support it. **The retraction was applied
+  there and not here**, so this file asserted a claim it had already withdrawn 600 lines
+  earlier. Nothing shipped wrong — the sheet itself never carried the over-claim, it gives
+  the skip-all reason and nothing else — but a later session reading only this bullet would
+  have cited it as established. The sheet gives that reason rather than just the prohibition,
+  because a rule with no reason is the one people talk themselves out of.
 - **Restart the computer, not the app.** Observed on Windows: an app restart is
   not reliably enough for a plugin install or update to show up. Updates land on
   the next reboot, which for most people is the following morning, so auto sync

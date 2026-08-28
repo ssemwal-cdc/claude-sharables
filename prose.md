@@ -1160,3 +1160,32 @@ and the OCR cap are **unfired on both sides** — no run has exercised either. W
 procedure for a path nobody has walked is what the packs-are-hardcoded rule exists to prevent, so
 the honest move is to note that NetSuite has less written down about the branch that has never
 run, and to fix it from a real observation when one arrives rather than from symmetry.
+
+
+## The onboarding sheet's copy buttons work, including the case the comment worries about
+
+Rendered and driven in Chromium, 2026-08-28, during a pre-share freshness audit. Nothing about
+this page had ever been checked in a browser — `check_onboarding_page()` reads the file as text,
+and the repo's one browser check (`measure_float.js`) is about the dashboards.
+
+Three things the code reasons about in comments are now observed rather than argued:
+
+- **Copy from a *closed* `<details>` returns the whole prompt.** This is the case the handler's
+  comment is written for: `innerText` is layout-dependent and a `<pre>` with no layout returns
+  `""`, so without the `textContent` fallback the button would put an empty string on the
+  clipboard *and still report success*. Measured: 2,272 chars for the NetSuite block and 2,224
+  for the Procore one, both while shut.
+- **Copy does not toggle the block.** The button sits inside `<summary>`, where a click would
+  ordinarily open the `<details>`; `preventDefault`/`stopPropagation` holds. `open` was `false`
+  before and after on both.
+- **`<n>` arrives literal.** The source must stay escaped as `&lt;n&gt;`, and what lands on the
+  clipboard is `<n>` — the placeholder the chat should actually receive. No `&lt;` survives.
+
+Also measured, at 1600 / 1200 / 390px and in both colour schemes: no horizontal scroll, no element
+wider than the viewport, no console or page errors, and the nav rail correctly absent below
+1300px. The page is 5,926px tall on desktop and 9,191px on mobile.
+
+**What this does not cover:** whether it *looks* right. Layout metrics are not typography, spacing
+or hierarchy, and `CLAUDE.md`'s rule that anything genuinely visual has to be eyeballed by a person
+still stands. Two dead tokens turned up on the way — `--accent-soft` and `--danger` are defined in
+both themes and referenced nowhere — left alone as harmless.

@@ -709,14 +709,25 @@ Step 2 fan-out sent the queue's `item_type` verbatim and the endpoint accepted i
 maintainer's report of a run rather than a transcript — the same evidence class as the sniff
 table's confirmation, weaker than the CCO gate's record ids.
 
-**What is not observed: the record payload.** `purchase_order_contracts` / `work_order_contracts`
-are documented Procore endpoints, but `developers.procore.com` is blocked by this sandbox's
-egress proxy, so the field names in Step 3 (`grand_total`, `line_items[]`, `retainage_percent`,
-the contract dates) are taken from the `change_order_packages` read that shares the collection.
-**They are a guess, and the first run against a real commitment is what settles them.** Step 3
-therefore asks for the payload's top-level keys back on the first commitment of a run, and Step 5
-makes a missing field a named not-run rather than a silent pass — an item whose arithmetic never
-ran cannot be `clear`. Correct the names here and in Step 3 the moment one comes back wrong.
+**The record payload was a guess for one day, and it is now observed — for half the type.**
+`developers.procore.com` is blocked by this sandbox's egress proxy, so Step 3's field names were
+taken from the `change_order_packages` read that shares the collection, shipped as an explicit
+guess with an instruction to report the payload's keys back. The maintainer's next run did that,
+2026-08-28: against a real **purchase order contract**, `grand_total`, `line_items` and
+`retainage_percent` were all present as named. **One correction: the counterparty's display string
+is `vendor.company`, not `vendor.name`** — which is the obvious guess and is wrong here.
+
+Two things worth taking from that, beyond the field names.
+
+**Borrowing names from the sibling endpoint was the right method, and it is not the same as
+guessing.** Three of four held because they came from a payload in the same collection rather
+than from imagination. That is a reason to keep using the family as the source and not a reason to
+stop labelling it unconfirmed — one name in four was still wrong, and it was the one a check does
+not run on, so nothing would have failed loudly.
+
+**`WorkOrderContract` is still unread**, and Step 3 now narrows the report-the-keys instruction to
+the first one of those rather than dropping it. Same tool, separate collection, very likely
+identical — which is exactly the reasoning that produced `vendor.name`.
 
 **One design decision is worth defending, because it looks like over-caution.** `com` covers two
 collections, and `publish_dashboard.py` demotes a commitment with no `wfType` to `ungated` rather

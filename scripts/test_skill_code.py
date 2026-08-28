@@ -512,6 +512,22 @@ def test_step0_write_states():
         check("%s: a genuine fallback has to name what refused it" % label,
               "name what refused it" in step0)
 
+        # A run left a 6 KB `log.gz.b64` in the workspace folder and could not delete it
+        # (reported 2026-08-28) - the second improvisation into this gap after `_to_delete/`.
+        # Both times the rule was present and listed *mechanisms* ("no temp file, no
+        # write-then-move"), which a transfer encoding does not obviously match. The property
+        # is what has to be stated, so these assert the property rather than the list.
+        check("%s: the folder's permitted contents are an allowlist, not a list of bad habits"
+              % label, "the only files that may exist in this folder" in step0)
+        check("%s: staging a file to move bytes in or out is forbidden by name" % label,
+              "never stage a file to move bytes into or out of this folder" in step0)
+        check("%s: re-encoded copies are named, since that is the form it took" % label,
+              all(w in step0 for w in ("base64-encoded", "chunked")))
+        check("%s: the alternative is stated, not just the prohibition" % label,
+              "Write the destination file itself" in step0)
+        check("%s: an impossible write is `refused`, never a workaround that leaves a stray"
+              % label, "not a workaround that leaves something behind" in step0)
+
 
 # ------------------------------------------------------- 8. PO identity rules
 def test_dashboard_view():

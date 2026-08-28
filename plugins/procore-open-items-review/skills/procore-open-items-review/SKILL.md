@@ -1,11 +1,11 @@
 ---
 name: procore-open-items-review
-description: v24 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
+description: v25 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
 ---
 
 # Procore Open Items Review
 
-**Skill version 24 — 2026-08-28.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 25 — 2026-08-28.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 
@@ -91,6 +91,23 @@ seven weekday slots overwritten in place for exactly this reason. So write every
 over its destination: no temp file, no write-then-move, no dated copies. If a stray file is left
 behind anyway, say so once in the same one line; **never invent a quarantine folder such as
 `_to_delete/`, and never hand the user a cleanup chore.**
+
+**The test is what the file is, not what it is called, and naming mechanisms is what let this
+through twice.** The rule is: **the only files that may exist in this folder are the ones this
+skill's own steps name** — the state file, the synced assets, whatever the publish script writes,
+and its `renders/` archive. Anything else is a stray, whatever its purpose and however briefly it
+was meant to live. In particular, **never stage a file to move bytes into or out of this folder** — no
+compressed, base64-encoded, chunked, split or otherwise re-encoded copy of a file that is going to
+be written properly a moment later. Observed 2026-08-28: a run left a 6 KB `log.gz.b64` beside the
+state file, having encoded the log to transfer it, and could not delete it afterwards. That is the
+`_to_delete/` improvisation again, from a run that read this rule and filed its own transfer file
+outside it because the rule had listed *mechanisms* rather than stated the property.
+
+**Write the destination file itself, in one write, with the file tools.** That is rung 2 of the
+sync ladder below and it is the whole method — the same byte-for-byte contract, applied to state
+as well as to assets. A file too large or awkward for one write is still written whole to its
+final path; it is never staged beside itself. If a write genuinely cannot be made, that is
+`refused` and it takes the one-line report above, not a workaround that leaves something behind.
 
 **A refused write costs wasted work, not a broken review.** The state does not outlive the
 session, so the next run repeats first-run setup and re-reads every attachment instead of
@@ -248,15 +265,15 @@ Four item types are reviewed:
 | `ChangeOrderPackage` | Commitment Contract Change Order (CCO) | `cco` |
 | `PurchaseOrderContract`, `WorkOrderContract` | The commitment itself, out for approval before it is executed | `com` |
 
-**The commitment types were added in v24 and are the newest and least-observed of the four.**
-Until 2026-08-28 this queue was believed to carry only the first three, so a commitment fell to
-the unknown-type rule below and was handed over as a link with no response buttons — reported by
-the maintainer as a live Financial Analyst Review item due that day. **The gate is observed and
-the record read is not**: that run's own output shows the workflow endpoint accepting the type
-string (Step 2), while Step 3's field names are taken from the contracts endpoints the CCO read
-already uses and have never been checked against a commitment payload. Where a stated field name
-turns out to be wrong, **say so in the run report and correct it here — never let the check
-quietly not run.**
+**The commitment types were added in v24 and are the newest of the four.** Until 2026-08-28 this
+queue was believed to carry only the first three, so a commitment fell to the unknown-type rule
+below and was handed over as a link with no response buttons — reported by the maintainer as a
+live Financial Analyst Review item due that day. Both halves are now observed for
+`PurchaseOrderContract`: the gate accepted the queue's type string as sent (Step 2), and the
+record payload carries the fields Step 3 names, with `vendor.company` the one correction.
+**`WorkOrderContract` is the half nobody has read** — same tool, separate collection, and treated
+as unconfirmed until one turns up. Where a stated field name turns out to be wrong, **say so in
+the run report and correct it here — never let the check quietly not run.**
 
 A fifth type means this queue carries something these four procedures do not cover. **Never
 invent a review procedure for it.** Report it by `item_type` and `title` **with its `url`**, so
@@ -436,13 +453,16 @@ GET /rest/v1.0/work_order_contracts/<item_id>        project_id=<project_id>
 
 Two endpoints because Procore keeps purchase orders and subcontracts in separate collections under one Commitments tool. **Pick by the queue's `item_type`, never by trying both** — a 404 from the wrong collection is a `failed`, and `failed` is not `empty`.
 
-Expected: `number`, `title`, `status`, `executed`, `grand_total`, `line_items[]`, `vendor`, `retainage_percent`, `attachments[]`, and the contract dates. `line_items[]` is the schedule of values — return it **flat**, one row per line carrying description, quantity, unit cost and extended amount, on the same reasoning as the invoice G703: reduce the nesting, never the rows.
+`number`, `title`, `status`, `executed`, `grand_total`, `line_items[]`, `retainage_percent`, `attachments[]`, and the contract dates. `line_items[]` is the schedule of values — return it **flat**, one row per line carrying description, quantity, unit cost and extended amount, on the same reasoning as the invoice G703: reduce the nesting, never the rows.
 
-**This payload has not been observed from this repo, and that changes what you do with it rather than whether you use it.** The field names above are the contracts family's, taken from the `change_order_packages` read directly above, which shares the collection — they are the best available guess and they are still a guess. So:
+**The counterparty is on `vendor`, and its display string is `vendor.company` — not `vendor.name`.** That one is worth stating separately because `name` is the obvious guess and it is wrong here. Where it is blank, say the counterparty was not on the payload rather than leaving the dashboard's `counterparty` empty with nothing to explain it.
 
-- **Return the payload's top-level key names alongside the values on the first commitment of a run.** It costs one array and it is what turns a guess into an observation.
+**Confirmed against a real purchase order contract, 2026-08-28** — `grand_total`, `line_items` and `retainage_percent` were all present as named, and `vendor` was the one correction. These field names came from the `change_order_packages` read directly above, which shares the collection; that they held is the reason to trust the family, not a reason to stop checking.
+
+**`WorkOrderContract` is still unobserved.** It is the other half of the same Commitments tool and very likely identical, but nobody has read one. So on the **first work order contract of a run**, return the payload's top-level key names alongside the values, say it once in the run report (the second line Step 7 allows), and correct this paragraph. Until then:
+
 - **A field this step names and the payload does not carry makes every check that needed it *not run*, by name.** It is never a silent pass and never a `clear` — Step 5's rule, and this is the case it was written for.
-- **Say it once in the run report** (the second line Step 7 allows) and correct the names in this file. A wrong name that nobody reports is a check that never runs again.
+- A name that turns out wrong is a correction to make here, in this file. A wrong name that nobody reports is a check that never runs again.
 
 ## Step 4 — Read the attached support without downloading it
 

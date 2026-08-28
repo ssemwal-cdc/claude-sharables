@@ -764,13 +764,18 @@ returns **200 with zero rows** rather than a 400 — and Step 8 reads an empty i
 seventh instance of the shape these notes keep recording. `test_commitment_kind` pins it,
 mutation-tested.
 
-**The record payload is unread and the field names are a guess.** `developers.procore.com` is
-blocked by the sandbox's egress proxy, so Step 3's `grand_total` / `line_items[]` /
-`retainage_percent` come from the `change_order_packages` read that shares the collection. Step 3
-asks for the payload's top-level keys back on the first commitment of a run and Step 5 makes a
-missing field a **named not-run**, never a silent pass — an item whose arithmetic never ran
-cannot be `clear`. Correct the names from the first real payload; do not cite them as observed
-until then. And the five checks that shipped are **mechanical only** — a commitment out for
+**The record payload was read the next day, and three names in four held.** `developers.procore.com`
+is blocked by the sandbox's egress proxy, so Step 3's field names were borrowed from the
+`change_order_packages` read that shares the collection and shipped as an explicit guess, with an
+instruction to report the payload's keys back. Confirmed 2026-08-28 against a real **purchase order
+contract**: `grand_total`, `line_items` and `retainage_percent` all present as named. **The
+correction is `vendor.company`, not `vendor.name`** — and note which one broke: the counterparty
+feeds a dashboard column rather than an arithmetic check, so a wrong name there fails *quietly*,
+which is why the report-the-keys instruction was worth its one line. **`WorkOrderContract` is still
+unread** and the instruction now narrows to the first of those. Borrowing from the sibling endpoint
+is a good method and not a substitute for confirming — one in four was wrong.
+
+And the five checks that shipped are **mechanical only** — a commitment out for
 approval is the baseline the other three types are checked against, so whether the scope, rate
 and counterparty are right is the reviewer's call. A substantive FA checklist comes from asking
 the maintainer, never from inventing one.
@@ -1414,6 +1419,27 @@ can never be cleaned up"*. Step 0 now says it too — write straight over the de
 file, no write-then-move. Worth noting the mechanism was never established: the maintainer was
 unsure why deletes fail and so was I, and the fix does not depend on knowing, because nothing is
 created that would need removing.
+
+**It happened again on 2026-08-28, and the shape of the rule is what let it through.** A run left a
+6 KB `log.gz.b64` beside the state file — the review log gzipped and base64-encoded to move it —
+could not delete it, and handed the maintainer the cleanup chore this rule exists to prevent. The
+rule was present and the run had read it. What it listed were **mechanisms**: *"no temp file, no
+write-then-move, no dated copies."* A transfer encoding is none of those three by name, so the run
+filed its own file outside a rule that plainly covered it. That is `_to_delete/` again, one
+prohibition-list along.
+
+Step 0 now states the **property**, with the mechanisms demoted to examples: the only files that
+may exist in that folder are the ones the skill's own steps name; anything else is a stray whatever
+its purpose; staging a file to move bytes in or out is forbidden by name; and the alternative is
+stated rather than implied — write the destination file itself, whole, with the file tools, and
+where that genuinely cannot be done it is `refused` and takes the one-line report. Shared block, so
+both skills carry it identically, and `test_step0_write_states` now asserts the property survives an
+edit. Mutation-tested.
+
+**The transferable lesson is about how to write a prohibition, and it generalises past this
+folder.** A list of the forms a mistake has taken is not a rule — the next instance arrives in a
+form the list does not name, and a run checking itself against the list passes. State what may
+exist, not what may not.
 
 **Procore's sticky bar carries only what you need in the second before clicking.** The
 stale-snapshot warning and the Stale-safe explainer moved below it into `#barnote`,

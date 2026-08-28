@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v21 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: v22 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 21 — 2026-08-27.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 22 — 2026-08-28.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
@@ -83,6 +83,23 @@ seven weekday slots overwritten in place for exactly this reason. So write every
 over its destination: no temp file, no write-then-move, no dated copies. If a stray file is left
 behind anyway, say so once in the same one line; **never invent a quarantine folder such as
 `_to_delete/`, and never hand the user a cleanup chore.**
+
+**The test is what the file is, not what it is called, and naming mechanisms is what let this
+through twice.** The rule is: **the only files that may exist in this folder are the ones this
+skill's own steps name** — the state file, the synced assets, whatever the publish script writes,
+and its `renders/` archive. Anything else is a stray, whatever its purpose and however briefly it
+was meant to live. In particular, **never stage a file to move bytes into or out of this folder** — no
+compressed, base64-encoded, chunked, split or otherwise re-encoded copy of a file that is going to
+be written properly a moment later. Observed 2026-08-28: a run left a 6 KB `log.gz.b64` beside the
+state file, having encoded the log to transfer it, and could not delete it afterwards. That is the
+`_to_delete/` improvisation again, from a run that read this rule and filed its own transfer file
+outside it because the rule had listed *mechanisms* rather than stated the property.
+
+**Write the destination file itself, in one write, with the file tools.** That is rung 2 of the
+sync ladder below and it is the whole method — the same byte-for-byte contract, applied to state
+as well as to assets. A file too large or awkward for one write is still written whole to its
+final path; it is never staged beside itself. If a write genuinely cannot be made, that is
+`refused` and it takes the one-line report above, not a workaround that leaves something behind.
 
 **A refused write costs wasted work, not a broken review.** The state does not outlive the
 session, so the next run repeats first-run setup and re-reads every attachment instead of

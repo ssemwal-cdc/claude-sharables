@@ -96,8 +96,8 @@ than in Cowork, that case is different: declare the plugin in that repo's
 
 | Plugin | Version | What it does | Needs |
 |---|---|---|---|
-| `netsuite-approval-review` | v21 | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | Claude in Chrome, signed in to NetSuite. NetSuite MCP connector optional — adds bulk queries and the PO cross-check |
-| `procore-open-items-review` | v24 | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders, and the commitments themselves — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
+| `netsuite-approval-review` | v22 | Reviews the bills and change orders in your NetSuite approval queue, publishes verdicts to a live dashboard, and lets you approve or reject from it | Claude in Chrome, signed in to NetSuite. NetSuite MCP connector optional — adds bulk queries and the PO cross-check |
+| `procore-open-items-review` | v25 | Filters your Procore open items down to the ones actually awaiting your workflow response — change risks, subcontractor invoices, commitment change orders, and the commitments themselves — verifies their figures against the attached support, and lets you respond from a dashboard | Claude in Chrome, signed in to Procore |
 
 **Checking what you have installed:** the easiest read is **profile (bottom
 left) → Settings → Plugins → click the plugin** — the last sentence of its

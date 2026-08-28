@@ -274,7 +274,7 @@ details.warn summary{color:var(--warn)}
       <tr><th>Run this</th><th>It asks you to confirm</th></tr>
       <tr>
         <td><strong>NetSuite</strong><br><code>/netsuite-approval-double-check</code></td>
-        <td>Which dashboard portlet holds your bills, and — if you connected one in step 2 — your NetSuite identity and which connector it's calling.</td>
+        <td>Which dashboard portlet holds your bills — if it can't tell which one that is, it lists the portlets it found and asks you to pick. Then, if you connected one in step 2, your NetSuite identity and which connector it's calling.</td>
       </tr>
       <tr>
         <td><strong>Procore</strong><br><code>/procore-open-items-review</code></td>
@@ -282,6 +282,7 @@ details.warn summary{color:var(--warn)}
       </tr>
     </table>
   </div>
+  <div class="note"><strong>Both also ask what you want it to focus on</strong> — whether any of the optional lenses apply, and then, in your own words, what matters most in your queue. <strong>Blank is a fine answer to both</strong>, and it is what most people give; it reviews everything either way. You can change your mind later by just saying so.</div>
   <div class="note warn"><strong>It will ask permission to use each site — pick <em>always</em>, not <em>just once</em>.</strong> You'll see it about three times. Pick "just once" and you'll be asked again on nearly every action.</div>
   <div class="done"><b>Done when</b><span>A dashboard appears in the conversation listing the items waiting on you. <strong>Red banner across the top?</strong> It got cut off in transit — your figures are fine; say so and it re-renders smaller.</span></div>
   <details>
@@ -344,7 +345,8 @@ Hard constraints, restated because a scheduled run has nobody watching it:
   which a scheduled run by definition does not have.
 - Never call ns_createRecord or ns_updateRecord. The connector is read-only.
 - Review every item in the queue regardless of dollar amount.
-- Leave each record's tab open so I can act on it.
+- Leave open any record tab the run actually needed, but do not open a tab per
+  queue row — every card on the dashboard links to its own record.
 - If NetSuite is not authenticated, stop and report that the session expired.
   Never attempt to log in.
 
@@ -415,7 +417,7 @@ fallback window retries. Report what blocked it.</pre>
     <li>Read it. Each item shows a verdict, the figures behind it, and a link to the record.</li>
     <li><strong>Newest is at the top</strong> — most recent first on NetSuite, longest deadline first on Procore. Sort, filter or search if it's long: by amount, age, vendor or type. Both dashboards remember what you set.</li>
     <li><strong>Step 1 — mark what you want to action.</strong> Nothing has left the page yet, and you can change your mind on any of them.</li>
-    <li><strong>Step 2 — press Execute.</strong> There's a button at the bottom of the queue, and a second in the header once you've marked anything. Either one puts the instruction into the chat.</li>
+    <li><strong>Step 2 — press Execute.</strong> Once you've marked anything, a slim bar follows you down the queue carrying the Execute button and a <strong>Filters &uarr;</strong> link back to the top. The same button also sits at the very bottom of the queue and in the page header, but on a long queue both of those scroll away — the bar that follows you is the one you'll actually reach. Any of them puts the instruction into the chat.</li>
     <li>They run through your own browser session, one record at a time.</li>
   </ol>
   <div class="tbl">

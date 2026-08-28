@@ -1,11 +1,11 @@
 ---
 name: procore-open-items-review
-description: v23 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices and commitment change orders — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
+description: v24 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
 ---
 
 # Procore Open Items Review
 
-**Skill version 23 — 2026-08-27.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 24 — 2026-08-28.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 
@@ -142,13 +142,13 @@ of the surface, not an error to fix. Sync down this ladder and take the first ru
    template to inject into, and inventing one is forbidden by the Absolute rules. This is the case
    to expect on Cowork, where rung 1 is known to fail and rung 2 has never been observed.
 
-**This plugin ships layout template `v12`. Confirm the sync landed by reading it back:**
+**This plugin ships layout template `v13`. Confirm the sync landed by reading it back:**
 
 ```bash
 head -n 8 "<workspace>/Procore Open Items/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
 
-If that does not say `v12`, the sync did not land and the dashboard you are about to publish is
+If that does not say `v13`, the sync did not land and the dashboard you are about to publish is
 stale. Say so once near the headline, naming both versions, and carry on — same fail-open rule as
 rung 3.
 
@@ -239,15 +239,26 @@ GET /rest/v2.0/companies/<company>/open_items/mine    l=200  o=0  s=due_date:des
 
 Returns `data.count` and `data.tasks[]`. Per task: `item_type`, `item_id`, `project_id`, `project_name`, `title`, `status`, `url`, `due_date`.
 
-Three item types appear:
+Four item types are reviewed:
 
-| `item_type` | What it is |
-|---|---|
-| `GenericToolItem` | Internal Change Risk (ICR) |
-| `Billings::Requisition` | Subcontractor invoice / AIA pay application |
-| `ChangeOrderPackage` | Commitment Contract Change Order (CCO) |
+| `item_type` | What it is | `kind` |
+|---|---|---|
+| `GenericToolItem` | Internal Change Risk (ICR) | `icr` |
+| `Billings::Requisition` | Subcontractor invoice / AIA pay application | `inv` |
+| `ChangeOrderPackage` | Commitment Contract Change Order (CCO) | `cco` |
+| `PurchaseOrderContract`, `WorkOrderContract` | The commitment itself, out for approval before it is executed | `com` |
 
-A fourth type means this queue carries something these three procedures do not cover. **Never
+**The commitment types were added in v24 and are the newest and least-observed of the four.**
+Until 2026-08-28 this queue was believed to carry only the first three, so a commitment fell to
+the unknown-type rule below and was handed over as a link with no response buttons — reported by
+the maintainer as a live Financial Analyst Review item due that day. **The gate is observed and
+the record read is not**: that run's own output shows the workflow endpoint accepting the type
+string (Step 2), while Step 3's field names are taken from the contracts endpoints the CCO read
+already uses and have never been checked against a commitment payload. Where a stated field name
+turns out to be wrong, **say so in the run report and correct it here — never let the check
+quietly not run.**
+
+A fifth type means this queue carries something these four procedures do not cover. **Never
 invent a review procedure for it.** Report it by `item_type` and `title` **with its `url`**, so
 the user can open it and decide what it is — a link they can follow is worth more than a guess,
 and this is an approvals skill, so an unfamiliar workflow is something to learn rather than
@@ -330,6 +341,12 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 
 Return only those fields. The full `action_card` payload is not needed and is the reason this step used to dominate the run.
 
+**Commitments gate on the ordinary path — the queue's own `item_type`, verbatim, and the record's own id.** No second id, no translation. That is the evidence rather than the assumption: on 2026-08-28 a `com` row that this skill did not yet review still came back from this fan-out with a step name of Financial Analyst Review, a due date and a live responder, which can only have come from a workflow instance. The type string was accepted as sent.
+
+**Record the queue's `item_type` on every `com` item as `wfType`, always — not only when something goes wrong.** One `kind` covers two collections, and `wfType` is the only thing that tells a purchase order contract from a work order contract afterwards. It decides both the type the execute step re-queries with and which collection the record link points at, so an omitted `wfType` sends the reader to the wrong URL and the execute step to the wrong endpoint. The dashboard defaults it to `PurchaseOrderContract`, which is right for the common case and wrong in exactly the case that matters.
+
+**If a commitment type is ever rejected, resolve it — do not try candidates.** A 400 here means the queue's word for the record is not the workflow endpoint's word for it, exactly as with a CCO. Read the real string from `/rest/v2.0/companies/<company>/workflows/tools` (below) and gate with that, keeping the queue's own string for the link. **Never substitute a different id for a commitment**: the queue id is the contract id, and the wrong-id failure below is silent on this endpoint for every type, not only CCOs.
+
 **CCOs need a different type *and* a different id.** `ChangeOrderPackage` returns a 400 here, as do the other package-style type strings and the record's own `CommitmentContractChangeOrder`. **The workflow is not attached to the package at all** — it is attached to the underlying commitment change order, which carries its own id.
 
 **The 400 body names the fix, and it is worth reading rather than dismissing.** It points at a company-level `workflows/tools` endpoint. On **v1.0** that endpoint 403s for an ordinary account, which is what made this look like a permissions wall — it is not one. **On v2.0 it works:**
@@ -409,6 +426,23 @@ GET /rest/v1.0/change_order_packages/<item_id>    project_id=<project_id>
 `number`, `title`, `status`, `executed`, `grand_total`, `line_items[]`, `attachments[]`, `contract_id`.
 
 **Run this one before the Step 2 gate, not after it.** `line_items[].holder.id` is the commitment change order id the gate needs, so for CCOs this read is a prerequisite of the gate rather than a consequence of passing it. Capture `holder.id` per line here and dedupe it as Step 2 describes.
+
+**Commitment — `PurchaseOrderContract` / `WorkOrderContract`**
+
+```
+GET /rest/v1.0/purchase_order_contracts/<item_id>    project_id=<project_id>
+GET /rest/v1.0/work_order_contracts/<item_id>        project_id=<project_id>
+```
+
+Two endpoints because Procore keeps purchase orders and subcontracts in separate collections under one Commitments tool. **Pick by the queue's `item_type`, never by trying both** — a 404 from the wrong collection is a `failed`, and `failed` is not `empty`.
+
+Expected: `number`, `title`, `status`, `executed`, `grand_total`, `line_items[]`, `vendor`, `retainage_percent`, `attachments[]`, and the contract dates. `line_items[]` is the schedule of values — return it **flat**, one row per line carrying description, quantity, unit cost and extended amount, on the same reasoning as the invoice G703: reduce the nesting, never the rows.
+
+**This payload has not been observed from this repo, and that changes what you do with it rather than whether you use it.** The field names above are the contracts family's, taken from the `change_order_packages` read directly above, which shares the collection — they are the best available guess and they are still a guess. So:
+
+- **Return the payload's top-level key names alongside the values on the first commitment of a run.** It costs one array and it is what turns a guess into an observation.
+- **A field this step names and the payload does not carry makes every check that needed it *not run*, by name.** It is never a silent pass and never a `clear` — Step 5's rule, and this is the case it was written for.
+- **Say it once in the run report** (the second line Step 7 allows) and correct the names in this file. A wrong name that nobody reports is a check that never runs again.
 
 ## Step 4 — Read the attached support without downloading it
 
@@ -582,7 +616,7 @@ verdict's meaning.
 
 | capability | means | when it is absent |
 |---|---|---|
-| `record` | fields from the Step 3 record reads | never absent — the queue is built from them |
+| `record` | fields from the Step 3 record reads | the read is never absent — the queue is built from it. A **named field the payload does not carry** is a different thing and is not covered by that: every check needing it is reported as not run, by name, and an item whose arithmetic never ran cannot be `clear`. See Step 3's commitment read |
 | `attachment` | a Step 4 attachment outcome of `text` or `spreadsheet` | the item is `skipped`, **naming which outcome** — Step 4 |
 | `queue` | the other items in this run, not this item alone | never absent; marks the check as cross-item |
 
@@ -601,6 +635,11 @@ verdict's meaning.
 | `pc.cco-line-sum` | core | `record` | CCO 1 — line items sum to the grand total |
 | `pc.cco-pci-tie` | core | `attachment` | CCO 2 — each PCI ties to a line, PCI totals sum to the grand total |
 | `pc.cco-icr-tie` | core | `queue` | CCO 3 — a PCI's total against the matching ICR's accepted cost |
+| `pc.com-line-sum` | core | `record` | Commitment 1 — schedule-of-values lines sum to the contract total |
+| `pc.com-support-tie` | core | `attachment` | Commitment 2 — the contract total against the attached agreement, bid tab or proposal |
+| `pc.com-line-integrity` | core | `record` | Commitment 3 — duplicated, zero-value and unpriced SOV lines |
+| `pc.com-retainage` | core | `record` | Commitment 4 — retainage percent, reported whether or not one is withheld |
+| `pc.com-queue-context` | core | `queue` | Commitment 5 — other items in this run drawing on the same contract |
 | `pc.del-schedule-impact` | delivery | `record` | Schedule impact reported beside cost impact |
 | `pc.del-scope-affected` | delivery | `record` | What the change touches — buildings, systems, trades |
 | `pc.del-ofci` | delivery | `record` | Owner-furnished equipment referenced in the change |
@@ -644,6 +683,39 @@ Then:
 1. `line_items` sum to `grand_total`.
 2. Each attached PCI ties to a line item, and the PCI totals sum to `grand_total`. Name any line without support and any PCI without a line.
 3. Where a PCI corresponds to an ICR in the queue, its total should match that ICR's accepted cost.
+
+### Commitment
+
+**These five are mechanical, and that is the whole of what this skill claims about a commitment.**
+A CCO or an invoice arrives with the contract already agreed, so the review is arithmetic against
+a fixed baseline. A commitment out for approval **is** the baseline, and whether the scope, the
+rate and the counterparty are the right ones is a judgement this skill has no basis for. So it
+checks that the document is internally consistent and says what it is drawing on — and leaves the
+commercial question to the reviewer, who is the one qualified to answer it. **Do not add a check
+here that infers a commercial judgement from the numbers.**
+
+1. **The schedule-of-values lines sum to the contract total.** `line_items[]` extended amounts
+   against `grand_total`. A mismatch is a FLAG, with both figures and the residual.
+2. **The contract total appears in the attached support** — the executed agreement, the bid tab,
+   or the accepted proposal. Locate it verbatim; a figure shown rounded in the PDF is
+   presentation, not a discrepancy. Nothing attached, or nothing readable, is a `skipped` naming
+   the Step 4 outcome — never a `clear`.
+3. **Line integrity.** Name any line that is duplicated, carries a zero or absent amount, or is
+   priced without a quantity or unit. **Not automatically a flag** — an allowance or a
+   provisional line is a normal way to write a contract — but every one gets named, because a
+   line nobody priced is the one that turns into a change order later.
+4. **Retainage.** Report the withheld percent. **A commitment withholding none is worth naming,
+   not flagging** — same rule the invoice check already applies, and this is the document the
+   invoice check ties back to.
+5. **Queue context.** Where another item in this run draws on the same contract — an invoice
+   whose `commitment_id` matches, a CCO whose `contract_id` matches — name it with its amount.
+   A first draw or a change order arriving in the same queue as the contract it hangs off is
+   context the reviewer would otherwise have to assemble by hand. **Context, never a flag.**
+
+**A commitment that could not be added up is not clear.** If `line_items[]` or the contract total
+is missing from the payload, checks 1 and 3 did not run: say which, by name, and the verdict is
+`skipped` with that as its stated cause. Step 3 says why this is the likely failure and what to do
+about it.
 
 ### The `delivery` and `design` lenses — only when `config.focus.lenses` names them
 
@@ -692,7 +764,7 @@ design manager in their own domain.
   not verify them** — this skill cannot open the drawing set, and a reference it cannot resolve
   is not thereby wrong.
 - **`pc.dsn-unknown-workflow`** — **the one check in either lens that is about the queue rather
-  than an item.** List every queue row whose `item_type` is not one of the three this skill
+  than an item.** List every queue row whose `item_type` is not one of the four this skill
   reviews, with its `title` and `url`, under a plain heading saying these are workflows this
   skill does not yet know.
 
@@ -703,7 +775,7 @@ design manager in their own domain.
 
 **On what these lenses cannot reach, stated plainly because it matters most to design.** This
 skill reviews the workflow-response queue from `open_items/mine`, which today returns change
-risks, subcontractor invoices and change order packages. **The daily substance of design
+risks, subcontractor invoices, change order packages and commitments. **The daily substance of design
 management — RFI response, submittal review, drawing issuance — lives in other Procore tools and
 does not appear in this queue.** The `design` lens therefore covers *design-driven change* well
 and *design production* not at all. Say so if asked rather than implying wider coverage, and use
@@ -715,10 +787,12 @@ Four outcomes:
 
 - **clear** — figures tie, support is adequate.
 - **flagged** — a specific number is wrong or unsupported. Say which, with figures.
-- **skipped** — not ready for review. **Not approved, not rejected, not a criticism.** Either no attachment at all, or support that could not be read. This is a deliberate third state: an item with nothing to check against must not be given a verdict.
+- **skipped** — not ready for review. **Not approved, not rejected, not a criticism.** No attachment at all, support that could not be read, or — commitments only — a record payload that did not carry the fields the arithmetic needs. This is a deliberate third state: an item with nothing to check against must not be given a verdict.
 
   **A skip must name which of the Step 4 outcomes caused it**, in the words that outcome uses — "support is a scanned image, text not extractable", "support is a .xlsx and the workbook reader was unavailable", "the attachment link expired twice". *"Unreadable"* on its own is what hid this bug for weeks: it reads identically whether the file was a scan, a spreadsheet, or a link that timed out, so nobody could tell that whole formats were never being read at all. If a skip cannot name its cause, that is a defect in Step 4, not a property of the item.
-- **ungated** — the arithmetic was checked but Procore would not confirm the user is a responder. Since the CCO recipe in Step 2 this should be rare: it means a CCO carrying no `holder.id` that the record redirect could not resolve either, or one whose lines name several different commitment change orders. No response buttons are offered. Say which of the two it was — they need different things from the user.
+- **ungated** — the arithmetic was checked but Procore would not confirm the user is a responder. Since the CCO recipe in Step 2 this should be rare: a CCO carrying no `holder.id` that the record redirect could not resolve either, one whose lines name several different commitment change orders, or a commitment whose `wfType` is missing or could not be resolved. No response buttons are offered. Say which of the three it was — they need different things from the user.
+
+**A commitment with no `wfType` is demoted here by the publish script, and that is deliberate rather than strict.** `com` covers two collections and both are valid workflowable types, so the wrong one carrying the right id comes back 200 with zero rows — which Step 8 reads as *already actioned elsewhere*. A live contract would be logged as done without a click. Recording the queue's `item_type` is one field and it removes the whole failure.
 
 Items where `can_respond` is `false` are **suppressed**, not skipped — they collapse to a single count.
 
@@ -739,7 +813,8 @@ Maintain `Procore Open Items/_procore_review_log.json`:
     "<item_type>:<item_id>": {
       "itemId": "<item id>", "projectId": "<project id>", "commitmentId": "<commitment id>",
       "supportRead": ["what was actually opened and parsed, one entry per file, e.g. 'PCI 42 — proposal.pdf'; empty when nothing was readable"],
-      "wfId": "CCOs only - the commitment change order id, from line_items[].holder.id; omit for ICRs and invoices",
+      "wfId": "CCOs only - the commitment change order id, from line_items[].holder.id; omit for ICRs, invoices and commitments",
+      "wfType": "commitments: the queue's item_type verbatim, always - PurchaseOrderContract or WorkOrderContract. Other kinds: omit, unless workflows/tools resolved a different string",
       "kind": "inv", "type": "Invoice", "docNo": "#2 · INV-0002 (PR-02)",
       "project": "Campus A - Building 1", "counterparty": "Example Contractor LLC",
       "amount": 500000, "dueDate": "2026-08-02", "step": "FA Review",
@@ -768,7 +843,7 @@ These field names are the contract with `publish_dashboard.py`. Do not rename th
 **`config.focus.emphasis`, when set, decides what leads `head`, `facts`, `context` and `detail`
 — and nothing else.** It may reorder and reword; it may never change a `verdict`, drop a finding,
 or edit a figure. Every check that ran still gets its line; emphasis moves what the reader sees
-first. Absent emphasis, write them as this file has always described. `kind` is one of `icr` / `inv` / `cco` and decides the record URL and the workflow type. `project` must keep Procore's full `"<Campus> - <Building>"` form — the script splits it, and campus is the outer filter axis because every campus has its own Building 1.
+first. Absent emphasis, write them as this file has always described. `kind` is one of `icr` / `inv` / `cco` / `com` and decides the record URL and the workflow type. **`com` covers both commitment collections and therefore cannot decide either on its own** — `wfType` is what separates `purchase_order_contracts` from `work_order_contracts`, in the link and at the workflow endpoint alike. For a `com`, set `commitmentId` to the item's own id: the record *is* the commitment. `project` must keep Procore's full `"<Campus> - <Building>"` form — the script splits it, and campus is the outer filter axis because every campus has its own Building 1.
 
 On each run:
 - Previously **clear** and unchanged amount → carry the entry forward, no attachment re-read.

@@ -38,6 +38,11 @@ Covered:
  10. Step 0 write states - the workspace write keeps kept / refused / not attempted
                            distinct, so a run cannot announce that state will not
                            persist without having tried to write it.
+ 11. Commitment kind    - a `com` item without a wfType is demoted to `ungated`
+                           rather than defaulting to one of the two commitment
+                           collections. Both are valid workflowable types, so the
+                           wrong one with the right id returns an empty instance,
+                           which the execute step reads as already-actioned.
 
 Usage:  python3 scripts/test_skill_code.py
 Needs node on PATH for 1-3; those are skipped with a notice if it is missing.
@@ -360,6 +365,66 @@ def test_cco_demotion():
         shutil.rmtree(d, ignore_errors=True)
 
 
+# ------------------------------------------------- 11. commitment kind (`com`)
+def test_commitment_kind():
+    """A commitment must carry the queue's item_type, and must not be guessed without it.
+
+    `com` covers PurchaseOrderContract and WorkOrderContract. Both are valid workflowable
+    types, so the wrong one carrying the right id comes back 200 with zero rows rather than
+    a 400 - and Step 8 reads an empty instance as "already actioned elsewhere, skip it". A
+    live contract would be logged as done with no click, which is the CCO wrong-id failure
+    one type along. Hence: fail closed, and say so.
+    """
+    d = tempfile.mkdtemp()
+    try:
+        assets = os.path.join(PC, "assets")
+        for f in ("publish_dashboard.py", "dashboard_template.html"):
+            shutil.copy(os.path.join(assets, f), d)
+        base = {"projectId": "9", "kind": "com", "project": "A - B", "counterparty": "X",
+                "amount": 1000, "step": "Financial Analyst Review",
+                "responses": ["Approve", "Revise and Resubmit"], "verdict": "clear",
+                "head": "h", "facts": ["f"], "detail": "d"}
+        log = {
+            "lastCompletedRun": "2026-08-28", "lastRunTime": "2026-08-28 09:00",
+            "suppressed": 0, "config": {"company": "0", "icrToolId": "0"},
+            "items": {
+                "po": dict(base, itemId="111", commitmentId="111", docNo="#PO-1",
+                           wfType="PurchaseOrderContract"),
+                "wo": dict(base, itemId="222", commitmentId="222", docNo="#WO-1",
+                           wfType="WorkOrderContract"),
+                "untyped": dict(base, itemId="333", commitmentId="333", docNo="#UN-1"),
+            },
+        }
+        json.dump(log, open(os.path.join(d, "_procore_review_log.json"), "w"))
+        out_html = os.path.join(d, "index.html")
+        r = subprocess.run([sys.executable, os.path.join(d, "publish_dashboard.py"), out_html],
+                           capture_output=True, text=True, timeout=60)
+        if r.returncode != 0:
+            check("publish script runs on commitments", False,
+                  (r.stderr or r.stdout).strip().splitlines()[-1:] or "")
+            return
+        page = open(out_html, encoding="utf-8").read()
+        blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/", page, re.S).group(1)
+        items = {i["doc"]: i for i in json.loads(blob)["items"]}
+        po, wo, un = items["#PO-1"], items["#WO-1"], items["#UN-1"]
+        check("com: a purchase order contract keeps its response buttons",
+              po["verdict"] == "clear" and po["resp"], po["verdict"])
+        check("com: the queue's item_type survives as the workflow type",
+              po["wf"] == "PurchaseOrderContract" and wo["wf"] == "WorkOrderContract",
+              "%s / %s" % (po["wf"], wo["wf"]))
+        check("com: the workflow id is the record's own id, never a second lookup",
+              po["wfId"] == po["id"] == "111", po["wfId"])
+        check("com: no wfType is demoted to ungated", un["verdict"] == "ungated", un["verdict"])
+        check("com: an untyped commitment offers no response buttons", un["resp"] == [])
+        check("com: the demotion is announced, not silent", "wfType" in (r.stdout + r.stderr))
+        # The link's collection is the same fork. Getting it from `wf` rather than from `kind`
+        # is what makes one kind able to address two collections at all.
+        check("com: the record link branches on the collection, not on kind alone",
+              "work_order_contracts" in page and 'it.kind==="com"' in page)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 # ------------------------------------------------------- 7. template version
 def _marker(path):
     m = re.search(r"layout template (v\d+)", open(path, encoding="utf-8").read())
@@ -641,6 +706,7 @@ def main():
         print("  SKIP  node not on PATH - extractor, page budget, gate states, "
               "sniff, sheets and poLine not run")
     test_cco_demotion()
+    test_commitment_kind()
     test_template_version()
     test_step0_write_states()
     test_dashboard_view()

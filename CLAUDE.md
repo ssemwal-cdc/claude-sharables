@@ -739,6 +739,42 @@ The type is per item now (`wf`) with `wfId` beside it, because the queue's
 `item_type` and the workflow endpoint's type are not the same thing and the old
 kind-keyed constant assumed they were.
 
+**The Procore queue has a fourth type, and the rule that surfaced it was right while its scope
+was wrong.** Reported from a live run 2026-08-28: a purchase order contract, live responder at
+Financial Analyst Review, due that day, handed over as a link with no response buttons because
+`open_items/mine` had only ever been observed returning three types. The unknown-type rule had
+been written two days earlier and *deliberately* — the design lens weighed *surface the link*
+against *invent a procedure* and the link won. But it was written about **RFIs and submittals**,
+which genuinely are outside this skill, and a commitment is not: it is the document the invoice
+and CCO checks already tie back to. The rule stands; PC v24 adds the fourth procedure it should
+have had. **When an unknown type turns up, ask whether it is out of domain or merely unbuilt —
+the rule is for the first case only.**
+
+Three things about it are load-bearing.
+
+**`com` covers two collections, so `kind` cannot decide anything on its own.**
+`PurchaseOrderContract` and `WorkOrderContract` are separate Procore collections under one
+Commitments tool, and the item's `wfType` — the queue's `item_type`, verbatim — is what picks
+between them in the record link and at the workflow endpoint alike.
+
+**A commitment with no `wfType` is demoted to `ungated`, and that is the CCO guard one type
+along.** Both strings are valid workflowable types, so the wrong one carrying the *right* id
+returns **200 with zero rows** rather than a 400 — and Step 8 reads an empty instance as
+*already actioned elsewhere*. A live contract would be logged as done with no click. This is the
+seventh instance of the shape these notes keep recording. `test_commitment_kind` pins it,
+mutation-tested.
+
+**The record payload is unread and the field names are a guess.** `developers.procore.com` is
+blocked by the sandbox's egress proxy, so Step 3's `grand_total` / `line_items[]` /
+`retainage_percent` come from the `change_order_packages` read that shares the collection. Step 3
+asks for the payload's top-level keys back on the first commitment of a run and Step 5 makes a
+missing field a **named not-run**, never a silent pass — an item whose arithmetic never ran
+cannot be `clear`. Correct the names from the first real payload; do not cite them as observed
+until then. And the five checks that shipped are **mechanical only** — a commitment out for
+approval is the baseline the other three types are checked against, so whether the scope, rate
+and counterparty are right is the reviewer's call. A substantive FA checklist comes from asking
+the maintainer, never from inventing one.
+
 **A bill's PO comes from the transaction linkage. `custbody3` is a typed reference and
 has never been the coding.** Found by a teammate running the plugin and confirmed against
 production 2026-08-20. The skill flagged bills as *"coded to the wrong PO"*; NetSuite's

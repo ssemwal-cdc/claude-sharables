@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v12"
+TEMPLATE_VERSION = "v13"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -63,7 +63,11 @@ VERDICTS = ("clear", "flagged", "skipped", "ungated")
 # The type the workflows/instances endpoint wants, which is NOT always the queue's item_type.
 # A CCO's workflow hangs off the underlying commitment change order, not the package, and that
 # object has its own id - carried per item as wfId. See Step 2 of SKILL.md.
-WF = {"icr": "GenericToolItem", "inv": "Billings::Requisition", "cco": "CommitmentChangeOrder"}
+# "com" has no single answer here: one kind covers PurchaseOrderContract and WorkOrderContract,
+# and only the item's own wfType says which. This entry is the link's floor, not a gate default -
+# a com with no wfType is demoted below rather than allowed to ride on it.
+WF = {"icr": "GenericToolItem", "inv": "Billings::Requisition", "cco": "CommitmentChangeOrder",
+      "com": "PurchaseOrderContract"}
 
 
 def split_project(name):
@@ -101,7 +105,7 @@ def main():
                      "Run the first-time setup before publishing."
                      % (key, os.path.basename(LOG), hint))
 
-    items, bad, ungated = [], [], []
+    items, bad, ungated, untyped = [], [], [], []
     for key, it in (log.get("items") or {}).items():
         kind = it.get("kind", "icr")
         verdict = it.get("verdict", "skipped")
@@ -118,13 +122,23 @@ def main():
             if verdict not in ("skipped", "ungated"):
                 ungated.append(key)
             verdict = "ungated"
+        # Same shape one type along. A commitment's kind cannot say whether the workflow wants
+        # PurchaseOrderContract or WorkOrderContract, and guessing is not safe: both are valid
+        # workflowable types, so the wrong one with the right id returns 200 with zero rows rather
+        # than a 400 - and Step 8 reads an empty instance as "already actioned elsewhere, skip it".
+        # A live contract would be logged as done without a click. Fail closed instead.
+        wf_type = str(it.get("wfType", "") or "")
+        if kind == "com" and not wf_type:
+            if verdict not in ("skipped", "ungated"):
+                untyped.append(key)
+            verdict = "ungated"
         items.append({
             "key": key,
             "id": str(it.get("itemId", "")),
             "pid": str(it.get("projectId", "")),
             "cid": str(it.get("commitmentId", "") or ""),
             "kind": kind,
-            "wf": it.get("wfType") or WF.get(kind, "GenericToolItem"),
+            "wf": wf_type or WF.get(kind, "GenericToolItem"),
             "wfId": wf_id or str(it.get("itemId", "")),
             "type": it.get("type", kind.upper()),
             "doc": it.get("docNo", ""),
@@ -157,6 +171,14 @@ def main():
               ", ".join(ungated) + ". Resolve each one's commitment change order id "
               "from line_items[].holder.id on the package payload (Step 2) and "
               "re-publish to make them respondable.")
+
+    if untyped:
+        print("WARNING: no wfType on a commitment, so demoted to ungated with no response "
+              "buttons: " + ", ".join(untyped) + ". Record the queue's item_type verbatim - "
+              "PurchaseOrderContract or WorkOrderContract (Step 2) - and re-publish to make "
+              "them respondable. It decides both the record link's collection and the type the "
+              "execute step re-queries with, and the wrong one returns an empty instance rather "
+              "than an error.")
 
     thin = [i["doc"] for i in items if not i["head"] or not i["facts"]]
     if thin:

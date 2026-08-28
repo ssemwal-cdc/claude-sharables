@@ -28,6 +28,16 @@ own phase lines. Catches placeholder values that pass a naive has-a-value check.
 **Commitment change orders** — foots line items to the package grand total and
 ties each attached PCI to a line.
 
+**Commitments** — the purchase order and work order contracts themselves, when
+one comes to you for approval before it is executed. Foots the schedule of
+values to the contract total, finds that total in the attached agreement or bid
+tab, names duplicated and unpriced lines, reports the retainage, and points out
+anything else in the same queue drawing on the same contract. **Only the
+mechanical checks.** A change order or an invoice arrives with the contract
+already agreed, so the review is arithmetic against a fixed baseline; a
+commitment out for approval *is* the baseline, and whether the scope, the rate
+and the counterparty are the right ones is left to you.
+
 Each item lands as clear, flagged, skipped or gate-unknown. **Skipped is a real
 verdict**: an item with no support attached is not ready for review, so it is
 not approved, not rejected, and not given a verdict it hasn't earned.

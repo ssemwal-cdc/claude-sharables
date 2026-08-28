@@ -445,6 +445,8 @@ REGISTRY_MANIFEST = {
         "pc.icr-proposed-delta", "pc.icr-placeholder", "pc.inv-g702",
         "pc.inv-support-tie", "pc.inv-sequence", "pc.inv-duplicates",
         "pc.inv-retainage", "pc.cco-line-sum", "pc.cco-pci-tie", "pc.cco-icr-tie",
+        "pc.com-line-sum", "pc.com-support-tie", "pc.com-line-integrity",
+        "pc.com-retainage", "pc.com-queue-context",
         # delivery lens
         "pc.del-schedule-impact", "pc.del-scope-affected", "pc.del-ofci",
         # design lens

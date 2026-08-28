@@ -16,7 +16,7 @@ it as established.
 `python3 scripts/test_skill_code.py` covers the logic against mocks. It cannot
 cover any of this, because all of it is about the real systems.
 
-**The nine numbered gaps are below, after the open-decisions section.** They belong to this
+**The ten numbered gaps are below, after the open-decisions section.** They belong to this
 heading, not to that one — a section inserted between the two on 2026-08-24 left them reading
 as deferred work under a heading that opens *"none of this is a commitment"*, which is the
 opposite of what they are.
@@ -683,6 +683,56 @@ beneath it, and 153px of overlay against a six-row fixture is not the same
 experience as against seventy — nobody has watched that. The step headings and the
 restyled marked rows are likewise cosmetic-only and unseen by anyone but the
 person who wrote them.
+
+---
+
+### 10. The commitment (`com`) type — the queue's fourth type, and its payload is unread
+
+2026-08-28, PC v24. The maintainer's run hit a queue row that was none of the three types the
+skill reviews: a purchase order contract, live responder, Financial Analyst Review, due that
+day. Step 1's unknown-type rule did its job and handed over a link with no buttons, which is
+what prompted *"how has this not been resolved yet?"*
+
+**Why it had not been.** Three reasons, and only the third is a mistake worth naming.
+`open_items/mine` had returned exactly three types in every observation anyone had recorded, so
+a fourth was hypothetical. The unknown-type rule was written two days earlier, 2026-08-26,
+deliberately, and the deliberation is on the record above — the design lens asked what to do
+about workflows this skill does not know, and *surface the link* beat *invent a procedure*. And
+the rule was written with **RFIs and submittals** in mind, which really are out of this skill's
+domain. A commitment is not: it is the document the invoice and CCO checks already tie back to.
+**The rule was right and its scope was wrong**, which is why the fix is a fourth procedure
+rather than a change to the rule — the rule still stands, one type further along.
+
+**What is observed, and it is exactly one thing.** The run reported the step name, the due date
+and a live responder for that row. Those can only have come from a workflow instance, so the
+Step 2 fan-out sent the queue's `item_type` verbatim and the endpoint accepted it. That is a
+maintainer's report of a run rather than a transcript — the same evidence class as the sniff
+table's confirmation, weaker than the CCO gate's record ids.
+
+**What is not observed: the record payload.** `purchase_order_contracts` / `work_order_contracts`
+are documented Procore endpoints, but `developers.procore.com` is blocked by this sandbox's
+egress proxy, so the field names in Step 3 (`grand_total`, `line_items[]`, `retainage_percent`,
+the contract dates) are taken from the `change_order_packages` read that shares the collection.
+**They are a guess, and the first run against a real commitment is what settles them.** Step 3
+therefore asks for the payload's top-level keys back on the first commitment of a run, and Step 5
+makes a missing field a named not-run rather than a silent pass — an item whose arithmetic never
+ran cannot be `clear`. Correct the names here and in Step 3 the moment one comes back wrong.
+
+**One design decision is worth defending, because it looks like over-caution.** `com` covers two
+collections, and `publish_dashboard.py` demotes a commitment with no `wfType` to `ungated` rather
+than defaulting to `PurchaseOrderContract`. Both strings are valid workflowable types, so the
+wrong one carrying the right id returns **200 with zero rows**, not a 400 — and Step 8 reads an
+empty instance as *already actioned elsewhere*. That is the CCO wrong-id failure exactly, one
+type along: a live contract logged as done with no click. `test_commitment_kind` pins it and it
+is mutation-tested (removing the guard fails three assertions).
+
+**What was deliberately not written.** Five mechanical checks shipped — the SOV foots, the total
+appears in the support, line integrity, retainage, queue context. Nothing commercial. Whether the
+scope, the rate or the counterparty are right is the reviewer's judgement and this skill has no
+basis for it; a commitment out for approval *is* the baseline that the other three types are
+checked against. **If a substantive FA checklist for a new commitment is ever wanted, it comes
+from asking the maintainer, not from inventing it** — the same rule the second check pack is
+under.
 
 ---
 

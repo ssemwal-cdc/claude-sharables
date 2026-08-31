@@ -296,25 +296,7 @@ details.warn summary{color:var(--warn)}
 <section>
   <div class="step-head"><span class="num">5</span><h2 id="step5">Run it on a schedule</h2></div>
   <p><strong>In that same chat from step 4</strong>, hit <strong>Copy</strong> on the block for the plugin you set up, then paste it in as one message. You don't need to read it.</p>
-  <p>Claude asks about timing, then gives you an <strong>Add to schedule</strong> button. Click it. <strong>Do this once per plugin you installed</strong>, and only after you have done step 4 for that plugin — a schedule on a plugin whose first run never happened will stop to ask you setup questions with nobody watching. <strong>Both plugins?</strong> Do it twice — one block, add its schedule, then the other.</p>
-  <div class="note"><strong>Connect Downloads before you schedule.</strong> The scheduled prompt's first act is to read that folder to see whether today's run already happened. With no folder there is nothing to read, so <em>every</em> try does the whole review instead of the later ones seeing the day is done. It still works either way — this just saves it repeating itself.</div>
-  <p class="muted">A reasonable answer: first try 11am, retries 2pm and 4pm, weekdays only. Closed that chat already? Start a new Cowork chat, connect Downloads again, run the step 4 command once, then paste below.</p>
 
-  <div class="note">
-    <strong>The words in that daily headline.</strong>
-    <p style="margin-top:8px"><strong>Flagged</strong> means the numbers did not tie or the support
-    did not back them &mdash; read it before you decide anything. <strong>Skipped</strong> (Procore
-    only) means nothing was attached to review, so it has no verdict yet and no verdict has been
-    guessed for it; it is not a rejection. You may also see a row marked <strong>gate
-    unknown</strong>, which means the plugin could not establish that the item is genuinely yours to
-    answer &mdash; those rows deliberately carry no response buttons, and there is a link on them to
-    go sort that out in Procore instead.</p>
-  </div>
-
-  <div class="note warn">
-    <strong>It only runs while your computer is on and Chrome is open.</strong>
-    <p style="margin-top:8px">Laptop shut at 11am and nothing happens — it doesn't queue up and run later. <strong>That's what the retries are for:</strong> if 11am misses, 2pm catches it; if 11am succeeded, the later ones see the day is done and stop.</p>
-  </div>
   <details class="paste">
     <summary><span>Paste this — NetSuite schedule</span></summary>
     <pre>I'd like to make this run on a schedule. Everything below the line is the exact
@@ -405,6 +387,26 @@ in chat.
 If the run fails partway, do NOT set `lastCompletedRun` — leave it so the next
 fallback window retries. Report what blocked it.</pre>
   </details>
+
+  <p>Claude asks about timing, then gives you an <strong>Add to schedule</strong> button. Click it. <strong>Do this once per plugin you installed</strong>, and only after you have done step 4 for that plugin — a schedule on a plugin whose first run never happened will stop to ask you setup questions with nobody watching. <strong>Both plugins?</strong> Do it twice — one block, add its schedule, then the other.</p>
+  <div class="note"><strong>Connect Downloads before you schedule.</strong> The scheduled prompt's first act is to read that folder to see whether today's run already happened. With no folder there is nothing to read, so <em>every</em> try does the whole review instead of the later ones seeing the day is done. It still works either way — this just saves it repeating itself.</div>
+  <p class="muted">A reasonable answer: first try 11am, retries 2pm and 4pm, weekdays only. Closed that chat already? Start a new Cowork chat, connect Downloads again, run the step 4 command once, then paste the block above.</p>
+
+  <div class="note">
+    <strong>The words in that daily headline.</strong>
+    <p style="margin-top:8px"><strong>Flagged</strong> means the numbers did not tie or the support
+    did not back them &mdash; read it before you decide anything. <strong>Skipped</strong> (Procore
+    only) means nothing was attached to review, so it has no verdict yet and no verdict has been
+    guessed for it; it is not a rejection. You may also see a row marked <strong>gate
+    unknown</strong>, which means the plugin could not establish that the item is genuinely yours to
+    answer &mdash; those rows deliberately carry no response buttons, and there is a link on them to
+    go sort that out in Procore instead.</p>
+  </div>
+
+  <div class="note warn">
+    <strong>It only runs while your computer is on and Chrome is open.</strong>
+    <p style="margin-top:8px">Laptop shut at 11am and nothing happens — it doesn't queue up and run later. <strong>That's what the retries are for:</strong> if 11am misses, 2pm catches it; if 11am succeeded, the later ones see the day is done and stop.</p>
+  </div>
   <div class="done"><b>Done when</b><span>The task fires and posts a one-line summary. <strong>You won't see that until the next fire time</strong> — check the chat tomorrow to confirm it ran.</span></div>
 </section>
 

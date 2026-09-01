@@ -6,7 +6,7 @@ through the NetSuite UI.
 
 ## What it does
 
-For every bill and change order awaiting your approval:
+For every bill, purchase order and change order awaiting your approval:
 
 - ties the PDF total and every line to the NetSuite record
 - re-derives the arithmetic on AIA-style pay applications and phased
@@ -22,10 +22,10 @@ For every bill and change order awaiting your approval:
 The dashboard is a snapshot and shows its own age, warning once it passes
 three hours; a re-run button refreshes it in one click. Every record is
 re-verified at execute time, immediately before it is clicked, so an item
-actioned since the review is skipped rather than clicked twice. Bills are
-re-checked by query; change orders carry no approval-status field, so they are
-re-checked by reading the record page, where the approval buttons are present
-only while the item is still pending and still yours.
+actioned since the review is skipped rather than clicked twice. Bills and
+purchase orders are re-checked by query; change orders carry no approval-status
+field, so they are re-checked by reading the record page, where the approval
+buttons are present only while the item is still pending and still yours.
 
 You mark approve / approve with notes / reject per item, then execute them
 together. Execute sends the instruction straight into the conversation in one

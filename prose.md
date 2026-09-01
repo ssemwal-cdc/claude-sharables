@@ -16,7 +16,7 @@ it as established.
 `python3 scripts/test_skill_code.py` covers the logic against mocks. It cannot
 cover any of this, because all of it is about the real systems.
 
-**The ten numbered gaps are below, after the open-decisions section.** They belong to this
+**The eleven numbered gaps are below, after the open-decisions section.** They belong to this
 heading, not to that one — a section inserted between the two on 2026-08-24 left them reading
 as deferred work under a heading that opens *"none of this is a commitment"*, which is the
 opposite of what they are.
@@ -744,6 +744,41 @@ basis for it; a commitment out for approval *is* the baseline that the other thr
 checked against. **If a substantive FA checklist for a new commitment is ever wanted, it comes
 from asking the maintainer, not from inventing it** — the same rule the second check pack is
 under.
+
+### 11. The purchase-order execute route — shipped 2026-09-01, never fired
+
+NS v23. The maintainer's run put five purchase orders through the review, all `clear`, and Step 8
+refused every one of them: its record-type rule named bills and change orders only. The route now
+exists. **Nothing has been clicked through it.**
+
+**What is observed, and it is precise.** The run re-verified all five records and reported that
+each carries `approvalstatus`, `custbody_sna_cdc_next_approver`, `custbody_sna_cdc_previous_approver`
+and `custbody_sna_cdc_app_count`, still pending and still assigned to the user. That is the whole
+basis for putting purchase orders on the bill route, and it is a good one — those four fields are
+exactly what the pre-click gate and the post-click verification read. It is a maintainer's report
+of a run rather than a transcript, the same evidence class as the sniff table's confirmation.
+
+**What is not observed, and must not be cited as though it were.**
+
+- **The buttons.** Nobody has read a purchase order's approval buttons. Whether it offers Approve
+  With Notes at all is unknown, which is why Step 4 now has a branch for it not being there and
+  why that branch is itself unfired. If a run ever does hit it, the thing worth reporting back is
+  the button labels verbatim.
+- **The note.** Every approval this skill has ever made carried `Approved by Claude` through
+  Approve With Notes. A purchase order approved without one has never happened, so the log line
+  `approved without a note — this record type offers no notes button` has never been written.
+- **The plain-Approve no-op.** The dropped-`win.open` failure and its read-the-handler-URL
+  recovery were pinned on a bill (record 2534442). Whether a purchase order's button behaves the
+  same way is untested; the recovery is written to apply, and applying is not the same as working.
+- **The gate in browser mode.** v23 states the general rule — no connector means the buttons are
+  the gate for every type, not just change orders. That was always implied and never written down,
+  and it has not been run either.
+
+**What is now impossible rather than merely unlikely**: the same gap reopening quietly.
+`check_execute_type_coverage()` compares the schema's type vocabulary, the execute step's route
+table and `ITEM_TYPE_MANIFEST`, and fails the build on any disagreement. It says nothing about
+whether a route is *correct* — only that one exists for every type the queue can hold. Everything
+in the list above is exactly the part a build gate cannot reach.
 
 ---
 

@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v22 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: v23 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 22 — 2026-08-28.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 23 — 2026-09-01.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
@@ -288,7 +288,7 @@ as shipping a new default under an old view key.
 | 2 — record fields | bulk `transactionline` query | `get_page_text` per record |
 | 3 — attachment URL | `SELECT url FROM file` | read the link off the record page |
 | 5 — PO and history cross-check | **yes** | **not performed** |
-| 8 — verify a click landed | page load (already the rule) | page load, unchanged |
+| 8 — gate and verify a click | query on bills and purchase orders, the record page on change orders | the record page, all three |
 
 Attachment *reading*, every arithmetic check, and every approval click are identical
 either way. Those never used the connector: pdf.js runs same-origin in the record
@@ -663,6 +663,13 @@ interchangeable:
 has no PO" — that is the same misfile as the fan-out's `empty` vs `failed` and the CCO
 wrong-id returning 200-empty. A timeout is not an absence of linkage.
 
+**A queue row that *is* a purchase order has no linkage question, so do not ask it one.** The
+record is the PO: nothing links it in `nextdoc`, so 5a would return `unlinked` and print *no PO
+is applied* on the purchase order itself. Leave `poLink` and `poRef` unset on that item and say
+nothing about linkage — an absence that was never a question is not a finding. 5b, 5c and 5d
+follow it, since all three are about a bill's position against a commitment and a commitment has
+no position against itself.
+
 **Then pull the PO records you resolved**, by internal id from the linkage rather than by
 matching a document-number string:
 
@@ -845,7 +852,7 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`:
   "lastRunTime": "2026-08-11 11:04",
   "items": {
     "<transaction id>": {
-      "docNo": "...", "type": "Bill|Change Order", "vendor": "...", "amount": 0,
+      "docNo": "...", "type": "Bill|Purchase Order|Change Order", "vendor": "...", "amount": 0,
       "trandate": "8/4/2026",
       "verdict": "clear|flagged",
       "reviewedOn": "YYYY-MM-DD", "lastSeenPending": "YYYY-MM-DD",
@@ -869,6 +876,13 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`:
 ```
 
 These field names are the contract with `publish_dashboard.py`. Do not rename them.
+
+**`type` is required, and those three strings are the whole vocabulary.** They are also what
+Step 8's record-type table routes on, and the two lists are gated against each other in the
+plugin repo — a type this review can produce and that step cannot action is a build failure
+there rather than a batch that stops at the click. Write it on every item: the publish script
+falls back to `Bill` when it is missing, which is a legacy default that silently mislabels a
+purchase order, and Step 8 reads the type off the record for exactly that reason.
 
 **`poRef` is the PO the bill is applied to** — resolved from the Step 2 linkage, never from
 `poTyped`. The two are separate fields on purpose: keeping the typed value lets a reader see
@@ -1006,19 +1020,73 @@ The user marks decisions in the dashboard and presses execute, which posts an in
 
 Before clicking anything, check the instruction names specific documents. If it says "approve everything" or "approve the clear ones," stop and ask which.
 
+### Record types and their routes
+
+**Every type Step 1 puts in the queue has a row here.** The queue's vocabulary is the `type`
+field in Step 6's schema, and the two lists are kept in step by a build gate in the plugin repo.
+They drifted apart once and it was invisible until the click: Step 1 has reviewed purchase orders
+since the day this skill shipped, this step named only bills and change orders, and two separate
+batches of reviewed purchase orders stopped at the same gate before anyone called it a defect.
+
+| record type | pre-click gate | post-click verification |
+|---|---|---|
+| `Bill` | the query in step 1 | the query in step 7 |
+| `Purchase Order` | the query in step 1 — the same four fields | the query in step 7 |
+| `Change Order` | the record page's approval buttons — it carries none of those fields | a fresh page load |
+
+**Purchase orders take the bill route on the strength of the fields, not the resemblance.**
+Confirmed on live records 2026-09-01: a purchase order pending approval carries
+`approvalstatus`, `custbody_sna_cdc_next_approver`, `custbody_sna_cdc_previous_approver` and
+`custbody_sna_cdc_app_count` — exactly what step 1's gate and step 7's verification read, which
+is why the route transfers with nothing changed.
+
+**The button set is a separate question and it is not settled.** Nobody has read a purchase
+order's approval buttons. Step 4 reads the labels off the page, as it already does for every
+type, and says what to do when Approve With Notes is not among them. Do not assume a purchase
+order offers the three buttons a bill does, and do not report that it does.
+
+**With no connector, no type can be gated by query.** The change-order rule is then the rule for
+all three: the approval buttons are the gate, a fresh page load is the verification, and a gate
+that cannot be read is unknown rather than a pass. Nothing else in this step changes.
+
+**Compare amounts by magnitude.** `foreigntotal` is negative on vendor bills (Step 1a) and no
+observation says every type signs it the same way, so the gate and step 3's confirmation both
+compare absolute values. A sign convention that differs by record type is not a changed amount,
+and stopping a batch over one would be a false alarm on a record that is fine.
+
 Then, **one record at a time**:
 
-1. **Re-verify it is still yours to action, before opening anything.** Run:
+1. **Re-verify it is still yours to action, before opening anything.**
+
+   **Pick the route from the item's `type`.** It is the only thing available before the record is
+   open, and the change-order branch below already depends on it. It is also a field with a legacy
+   default (Step 6), so it can be wrong in the one direction that matters — a change order routed
+   as a bill gets a query that cannot gate it — which is why the skip below is confirmed on the
+   page rather than on an empty result. Step 2 re-checks the type against the record.
 
    ```sql
    SELECT t.id, t.tranid, t.foreigntotal FROM transaction t
    WHERE t.id = <id> AND t.approvalstatus = 1 AND t.custbody_sna_cdc_next_approver = <me>
    ```
 
-   No row means it was approved, rejected or rerouted since the snapshot was taken. **Skip it**, log
-   it as `skipped: already actioned elsewhere — no click made`, and move on. Do not open it, do not
-   click, do not retry. If a row comes back but the amount differs from the instruction, **stop the
-   batch** — the record changed underneath the review.
+   A row back, amount matching, means it is still yours: carry on into step 2. If a row comes back
+   but the amount differs from the instruction, **stop the batch** — the record changed underneath
+   the review.
+
+   **No row is two different things, and only one of them is a skip.** It means the record was
+   approved, rejected or rerouted since the snapshot — *or* that this type carries no
+   `approvalstatus` and no next-approver for the query to gate on, which returns exactly the same
+   nothing. Never log a skip off the empty result alone: open the record and read the buttons.
+
+   - **Buttons absent** → actioned elsewhere. Log `skipped: already actioned elsewhere — no click
+     made` and move on. Do not click, do not retry.
+   - **Buttons present** → the query could not gate this type. Use the buttons as the gate,
+     exactly as the change-order bracket below does, and carry on into step 3.
+   - **The page will not load, or the buttons cannot be read** → **stop the batch.**
+
+   **If *every* item comes back with no row, suspect the identity before the queue.** A wrong or
+   stale `config.me` empties this query for a batch that is entirely live, and a batch-wide skip
+   reads as a queue somebody else already cleared. Say so and stop rather than logging nine skips.
 
    This check is why the dashboard no longer queries the queue when it opens. A page-load check goes
    stale between opening the dashboard and pressing execute; this one runs against the record in the
@@ -1028,8 +1096,11 @@ Then, **one record at a time**:
    it into one up-front sweep is cheaper and reintroduces exactly the staleness bug this step exists
    to close. It runs per item, immediately before that item's click, always.
 
-   **Change orders carry no `approvalstatus` and no next-approver, so this query cannot gate them —
-   but the record page can.** Their approval buttons render only while the record is still pending
+   **Change orders skip the query entirely.** They carry no `approvalstatus` and no next-approver,
+   so it cannot gate them — but the record page can. This bracket is the primary gate for that
+   type, and it is also what the no-row branch above lands in when the route was picked on a wrong
+   type: the same bracket reached from two directions, so do not collapse them into one. Their
+   approval buttons render only while the record is still pending
    *and* still assigned to the signed-in approver, so on that record type the buttons **are** the
    gate. Open it (step 2) and read the page before touching anything:
 
@@ -1046,9 +1117,24 @@ Then, **one record at a time**:
 
 2. Open the record by internal id at `https://<account>.app.netsuite.com/app/accounting/transactions/transaction.nl?id=<id>`.
 
-   **A record type this step has no procedure for — anything that is neither a bill nor a change
-   order — means the queue has changed shape. Report it rather than inventing a review procedure
-   for it, and never click on it.**
+   **Confirm the type against the record while you are here.** The label on the dashboard card
+   and in the instruction comes from a field with a legacy default, so it can say `Bill` about
+   something that is not one; the record page cannot. If the record is a different type from the
+   one step 1 routed on, re-pick the row from the table before going any further and say so in
+   the log — the gate that already ran was the wrong one for it.
+
+   **A record type with no row in the table above is never clicked.** Report it and stop there —
+   but say which of these two it is, because the answer decides whose problem it is:
+
+   - **Step 1 does not admit that type either** → the queue has changed shape. Name the type and
+     the record, invent no procedure for it, and leave it.
+   - **Step 1 reviewed it and this step cannot action it** → that is a **defect in this skill**,
+     not a property of the record. Say so in those words, name the type, and say the fix is a row
+     in the table above. Do not offer it to the user as a decision they have to make: they cannot
+     authorise their way out of a missing procedure, and asking reads as though they could.
+     Purchase orders were exactly this for as long as the table named two types.
+
+   Neither case is a licence to improvise, and neither is a reason to click.
 3. **Confirm before clicking.** Read the document number, vendor and amount off the page and check all three against the instruction. Any mismatch → **stop the whole batch**, do not click, report it. This is a stop, not a skip: the two other outcomes in this step continue to the next item, and a record that changed underneath the review is not one of them.
 
    **If the record opens but the approval buttons are absent, the first hypothesis is that the item
@@ -1069,9 +1155,18 @@ Then, **one record at a time**:
    - A **rejection** goes through **Reject**, exactly as named.
    - **Never substitute across the two.** An approve instruction must never reach Reject, and a
      reject instruction must never reach either approve button.
+   - **A record that offers no Approve With Notes button** — read off the page, never assumed;
+     the three buttons are confirmed on bills and have never been read on a purchase order —
+     takes the affirmative button it does offer, and the note is then **lost, not relocated**.
+     Log it as `approved without a note — this record type offers no notes button`, and put the
+     note nowhere else: not in a memo field, not in a comment, and not in chat as though it had
+     been recorded. Do not run this the other way either — a missing notes button never holds
+     back an authorised affirmative click, because the note is attribution and the click is the
+     instruction. A **rejection** with no Reject button is a **stop**, not a substitution.
 5. **Enter the note.** Approve With Notes loads a **normal page in the same tab** — it is not a
    popup and not a dialog. Read that page rather than assuming its layout, fill the note field,
-   submit.
+   submit. Where step 4 clicked a plain affirmative button because no notes button was on the
+   record, there is no note page and nothing to type: go straight to step 7 and log the loss.
 
    - The user gave a note for this item → enter it **verbatim**.
    - They did not, and the response is affirmative → enter exactly `Approved by Claude`.
@@ -1132,7 +1227,7 @@ Then, **one record at a time**:
      same reason as the lag rule below.
    - **Cannot be read** → **stop the batch.**
 
-   For bills, query that one record:
+   For bills and purchase orders, query that one record:
 
    ```sql
    SELECT id, approvalstatus,

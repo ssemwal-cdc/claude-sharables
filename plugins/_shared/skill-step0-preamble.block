@@ -39,6 +39,24 @@ over its destination: no temp file, no write-then-move, no dated copies. If a st
 behind anyway, say so once in the same one line; **never invent a quarantine folder such as
 `_to_delete/`, and never hand the user a cleanup chore.**
 
+**When overwriting in place is what fails, the property still decides, not the mechanism.** Observed
+2026-09-01: on a OneDrive folder holding *dehydrated* files — cloud-only placeholders, present in the
+listing with no local content — every pre-existing file in the folder was unreadable **and**
+unwritable through the bridge, `EINVAL` on open, while writing a new name and renaming it over the
+placeholder worked. That is the opposite way round from what the paragraph above expects, so take it
+as a fact about that surface rather than an error to fix. A write that lands on the destination and
+leaves nothing beside it satisfies this rule whatever call sequence got it there; if the intermediate
+file survives, that is a stray and takes the one-line report. What stays forbidden is a file staged
+**to move bytes** — encoded, chunked or copied so its content can be reassembled somewhere else. That
+one is left behind by design rather than by a failed rename, which is why it is named separately
+below.
+
+**A dehydrated placeholder is not a refused write, and it is not an empty file either.** `EINVAL` on
+a file that is listed but has no local content is its own state: the folder is writable, this file is
+not readable yet. Name it if it comes up, and never report the state file as absent on the strength
+of a failed read — an absent log means first-run setup, and running that against a log that exists
+discards a review history that was only ever unavailable for a moment.
+
 **The test is what the file is, not what it is called, and naming mechanisms is what let this
 through twice.** The rule is: **the only files that may exist in this folder are the ones this
 skill's own steps name** — the state file, the synced assets, whatever the publish script writes,

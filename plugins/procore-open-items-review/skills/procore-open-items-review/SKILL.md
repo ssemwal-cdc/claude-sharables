@@ -1,11 +1,11 @@
 ---
 name: procore-open-items-review
-description: v25 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
+description: v26 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
 ---
 
 # Procore Open Items Review
 
-**Skill version 25 — 2026-08-28.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 26 — 2026-09-01.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every Procore item that is genuinely **waiting on the user's workflow response**. Verify each item's figures against its attached support and publish a per-item verdict to the dashboard.
 
@@ -30,6 +30,18 @@ An instruction to review is never an instruction to execute. A verdict of "clear
 - **Every affirmative response carries the comment `Approved by Claude`, unless the user supplied their own for that item — theirs replaces it verbatim.** Those two are the only text this skill writes into a comment box; see Step 8. Do not ask permission for the default and do not vary its wording.
 - **`config.focus.emphasis` changes what leads the write-up. It never changes what a verdict means, and never authorises anything.** It may reorder and reword `head`, `facts`, `context` and `detail`; it never alters a `verdict`, drops a finding, or edits a figure. Every check that ran still gets its line. It is the user's note about their own job, not a standing instruction — it cannot respond to an item, soften a flag, or set aside any rule in this list.
 - **This skill owns exactly one state file:** `Procore Open Items/_procore_review_log.json`. Never read or write the NetSuite skill's log, and never let NetSuite records into yours. Both files used to share the name `_review_log.json` and both folders sit under the same parent, so this went wrong in practice. If you find foreign records in your log, move them to a `_quarantined` block, say so in chat, and carry on — never merge them into `items`, and never act on them. **The idempotency gate reads this one path on the next run**, so whether it carries anything forward depends on the Step 0 write having landed. Where it did not, every run is a first run — the setup questions again, and every attachment read again. That is the accepted cost of a surface whose folder cannot be written to, not a fault to work around.
+
+  **A cloud-sync conflict copy is a third state, and neither of the two above.** A file like
+  `_procore_review_log-DESKTOP-AB12CD.json` or `_procore_review_log (1).json` is this skill's own log, in the right folder,
+  with a diverged history — not a foreign record to quarantine and not the canonical file. Observed
+  2026-09-01: a machine-suffixed copy carried **newer `config`** than the canonical one, including a
+  setting the user had asked for. So: the canonical path stays the only file read for `items` and
+  `actions` and the only one ever written. From a conflict copy, adopt **`config` keys the canonical
+  file lacks and nothing else**, and say in the run report that you did, naming both files. Never
+  merge its `items` — a stale verdict returning looks exactly like a fresh one — and never its
+  `actions`, which record what was actually clicked and must not gain an entry nobody observed.
+  Leave the copy where it is and say so once; the sync client made it, not this skill, so it is not
+  a stray and not the user's chore.
 
 ## What this review is, and what it is not
 
@@ -91,6 +103,24 @@ seven weekday slots overwritten in place for exactly this reason. So write every
 over its destination: no temp file, no write-then-move, no dated copies. If a stray file is left
 behind anyway, say so once in the same one line; **never invent a quarantine folder such as
 `_to_delete/`, and never hand the user a cleanup chore.**
+
+**When overwriting in place is what fails, the property still decides, not the mechanism.** Observed
+2026-09-01: on a OneDrive folder holding *dehydrated* files — cloud-only placeholders, present in the
+listing with no local content — every pre-existing file in the folder was unreadable **and**
+unwritable through the bridge, `EINVAL` on open, while writing a new name and renaming it over the
+placeholder worked. That is the opposite way round from what the paragraph above expects, so take it
+as a fact about that surface rather than an error to fix. A write that lands on the destination and
+leaves nothing beside it satisfies this rule whatever call sequence got it there; if the intermediate
+file survives, that is a stray and takes the one-line report. What stays forbidden is a file staged
+**to move bytes** — encoded, chunked or copied so its content can be reassembled somewhere else. That
+one is left behind by design rather than by a failed rename, which is why it is named separately
+below.
+
+**A dehydrated placeholder is not a refused write, and it is not an empty file either.** `EINVAL` on
+a file that is listed but has no local content is its own state: the folder is writable, this file is
+not readable yet. Name it if it comes up, and never report the state file as absent on the strength
+of a failed read — an absent log means first-run setup, and running that against a log that exists
+discards a review history that was only ever unavailable for a moment.
 
 **The test is what the file is, not what it is called, and naming mechanisms is what let this
 through twice.** The rule is: **the only files that may exist in this folder are the ones this
@@ -159,13 +189,13 @@ of the surface, not an error to fix. Sync down this ladder and take the first ru
    template to inject into, and inventing one is forbidden by the Absolute rules. This is the case
    to expect on Cowork, where rung 1 is known to fail and rung 2 has never been observed.
 
-**This plugin ships layout template `v13`. Confirm the sync landed by reading it back:**
+**This plugin ships layout template `v14`. Confirm the sync landed by reading it back:**
 
 ```bash
 head -n 8 "<workspace>/Procore Open Items/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
 
-If that does not say `v13`, the sync did not land and the dashboard you are about to publish is
+If that does not say `v14`, the sync did not land and the dashboard you are about to publish is
 stale. Say so once near the headline, naming both versions, and carry on — same fail-open rule as
 rung 3.
 
@@ -188,13 +218,37 @@ means asked and declined. Collapsing them turns a one-time question into a promp
 Everyone already running this skill has a `config` block, so without this the question would
 reach nobody who uses it.
 
+**Back-fill, for a `config` written before `customTools` existed.** A config carrying `icrToolId`,
+`icrSubtype` or a top-level `costFields` and **no `customTools`** describes exactly one custom
+tool. Restructure it in place, no question asked — it is a rewrite, not a decision:
+
+```json
+"customTools": { "<the old icrSubtype, or 'unknown subtype' if it was never recorded>":
+                 { "toolId": "<the old icrToolId>", "costFields": { <the old costFields> } } }
+```
+
+Leave `icrToolId` where it is. `publish_dashboard.py` still reads it as the floor for items logged
+before subtypes were recorded, and removing it would strip the record link off every carried-forward
+row for one run. Drop `icrSubtype` — it is now the key.
+
+**`icrSubtype` was written by setup and read by nothing**, in any step or either asset, from the day
+it shipped. That is the one thing that would have caught the second custom tool: the field naming
+which tool the config describes existed, and nothing ever compared it to what the queue contained.
+A declared field no step reads is worse than no field, because it reads as coverage.
+
 1. **Confirm Claude in Chrome is connected and Procore is authenticated.** Before navigating, warn the user about the site-access prompt: Claude in Chrome asks whether to allow access to a site the first time it acts on one, offering a once-only option and an always option. **Tell them to pick the always option** — once for Procore, and again for the S3 host when Step 4 first reads an attachment. On once-only they are re-prompted on effectively every action, and a run that stalls waiting for a prompt nobody is watching reads as a hang. Then navigate to the company Open Items tool. **If Procore is already authenticated, do not touch the login form at all** — the teammate-facing sheet promises the plugin never logs in for you, and that promise is the correct one. The only case this covers is an email-plus-Continue screen that then hands off to SSO with no password: `find` the email field, set it with `form_input`, click **Continue**, and stop there. Anything beyond that — a password box, MFA, a CAPTCHA — is a hand-off to the user, never a retry. NetSuite's skill has no login procedure at all and does not need one; this is the single asymmetry between the two plugins on authentication.
 
 2. **Find the company id.** It is in the Open Items URL: `https://app.procore.com/webclients/host/companies/<company>/tools/opentasks`.
 
-3. **Identify the custom tool that holds change risks.** Open one such item from the queue; its URL carries `tool_id=<id>` and the queue payload carries `item_subtype`. Record both. Tool ids are per-company — never copy one from documentation.
+3. **Identify every custom tool the queue draws `GenericToolItem` rows from. There is usually more than one.** Group the queue's `GenericToolItem` rows by `item_subtype` and take each **distinct** value; for each, open one item of that subtype and read `tool_id=<id>` out of its URL. Record the subtype string verbatim and the id beside it. Tool ids are per-company — never copy one from documentation.
 
-4. **Map the cost custom fields by label, not by id.** Custom field ids differ per company. `get_page_text` on a change-risk record renders the fields with their human labels; the API returns them as `custom_field_<id>`. Match them up and record the mapping. At Compass these are Cost: Vendor Proposed, Cost: Compass Accepted and Change Reason.
+   **Sampling one item is what this step used to say, and it is how a whole subtype went unchecked.** Observed 2026-09-01: a 62-item queue carried two custom tools, Internal Change Risk and Customer Change Request, and the second was **37 of the 62** — reviewed against the first one's fields because the config had only ever been told about one tool. `item_subtype` is the discriminator and it is on every queue row, so there is nothing to guess: enumerate, do not sample.
+
+   **This is the fourth-type defect one level down.** The queue gained a `PurchaseOrderContract` and nothing compared the queue's types to the ones the skill handled; here the split is *inside* `GenericToolItem`, where a second tool looks like the first one until you read its fields. Step 1 now reconciles the two lists on every run for that reason.
+
+4. **Map the cost custom fields by label, not by id — and map them per tool.** Custom field ids differ per company **and per tool**. `get_page_text` on a record of that subtype renders the fields with their human labels; the API returns them as `custom_field_<id>`. Match them up and record the mapping under that subtype. At Compass, Internal Change Risk carries Cost: Vendor Proposed, Cost: Compass Accepted and Change Reason; Customer Change Request carries ROM Cost and Approved Customer Cost instead — a different set, not a renamed one.
+
+   **Map by label every time, including when an id looks familiar.** From the same run: `custom_field_522888` on Customer Change Request is **Duration in Weeks**, not money. Carried across from another tool's mapping as a cost, a `52` there becomes `$52` on a dashboard, and nothing downstream can tell it was a duration — the check ties, the figure is fiction. The by-label rule already existed; what it was missing is that a mapping belongs to one tool and travels to no other.
 
 5. **Write the config:**
 
@@ -203,13 +257,23 @@ reach nobody who uses it.
      "config": {
        "company": "<your company id>",
        "companyName": "<your company name>",
-       "icrToolId": "<the change-risk tool id>",
        "queueSource": {"url": "", "described": ""},
-       "icrSubtype": "Internal Change Risk (88)",
-       "costFields": {
-         "vendorProposed": "custom_field_<id>",
-         "compassAccepted": "custom_field_<id>",
-         "changeReason": "custom_field_<id>"
+       "customTools": {
+         "Internal Change Risk (<tool id>)": {
+           "toolId": "<tool id>",
+           "costFields": {
+             "vendorProposed": "custom_field_<id>",
+             "compassAccepted": "custom_field_<id>",
+             "changeReason": "custom_field_<id>"
+           }
+         },
+         "Customer Change Request (<tool id>)": {
+           "toolId": "<tool id>",
+           "costFields": {
+             "romCost": "custom_field_<id>",
+             "approvedCustomerCost": "custom_field_<id>"
+           }
+         }
        },
        "focus": {
          "lenses": [],
@@ -220,6 +284,12 @@ reach nobody who uses it.
      "actions": []
    }
    ```
+
+   **Each `customTools` key is the queue's `item_subtype`, character for character**, because that
+   string is what every later step looks the tool up by. The cost-field names inside are this
+   skill's own words for the figures — they differ per tool because the fields do, and Step 5 says
+   which checks each one feeds. A tool with no accepted-cost field is a real case, not a
+   half-finished mapping.
 
 6. **Ask what they care about most, in their own words.** Free text, a sentence or two, stored
    verbatim as `config.focus.emphasis`. Asked once; empty is the default and means exactly
@@ -274,6 +344,25 @@ record payload carries the fields Step 3 names, with `vendor.company` the one co
 **`WorkOrderContract` is the half nobody has read** — same tool, separate collection, and treated
 as unconfirmed until one turns up. Where a stated field name turns out to be wrong, **say so in
 the run report and correct it here — never let the check quietly not run.**
+
+**`GenericToolItem` is one row in that table and can be several tools in the queue.** Capture
+`item_subtype` on every `GenericToolItem` row — it goes into the log as `subtype` and decides the
+record link and which cost fields the checks can read. Then **reconcile, every run**: take the
+distinct subtypes present and subtract the keys of `config.customTools`.
+
+- **Nothing left over** — the normal case. Carry on.
+- **A subtype the config has never seen** → run setup steps 3 and 4 for that subtype alone: open one
+  item of it, read `tool_id` from the URL, map its cost fields by label, write the entry into
+  `config.customTools`, and **name it in the run report** — the second line Step 7 allows. It is
+  asked once and answers itself thereafter.
+- **A subtype whose tool or fields cannot be resolved** → review it anyway. It keeps its response
+  buttons, because the gate is per item and has nothing to do with this. But it carries **no record
+  link** rather than one built from another tool's id, and it cannot be `clear`: Step 5 names the
+  checks that did not run. `publish_dashboard.py` enforces both and prints a warning.
+
+**Reconciling on every run rather than at setup is the point.** A company adds a custom tool without
+telling anyone, and the run it first appears in is the run that has to notice. Sampling one item at
+setup is what let 37 of 62 items go through against another tool's fields.
 
 A fifth type means this queue carries something these four procedures do not cover. **Never
 invent a review procedure for it.** Report it by `item_type` and `title` **with its `url`**, so
@@ -414,7 +503,9 @@ So the package id does not fail safely. It produces a clean, successful, empty r
 GET /rest/v1.0/generic_tool_items/<item_id>    project_id=<project_id>
 ```
 
-`cost_impact.status` (`yes_known` / `yes_unknown` / `tbd` / `no_impact`) and `cost_impact.value`; the mapped cost custom fields; `description` (narrative: General Background / Entitlement / Need v. Want / Scope / Cost); `attachments[]`; `status`; `schedule_impact`.
+`cost_impact.status` (`yes_known` / `yes_unknown` / `tbd` / `no_impact`) and `cost_impact.value`; the cost custom fields mapped for **this item's own subtype**, `config.customTools[subtype].costFields`; `description` (narrative: General Background / Entitlement / Need v. Want / Scope / Cost); `attachments[]`; `status`; `schedule_impact`.
+
+**Read only that subtype's mapping. Never another's, and never an id that merely looks right.** `cost_impact` is a native generic-tool field and means the same thing on every custom tool; the cost custom fields are not, and one company's `custom_field_522888` was Duration in Weeks on one tool while the same shape of id was money on another. A figure read through the wrong mapping arrives as a plausible number with nothing marking it wrong.
 
 **Invoice — `Billings::Requisition`**
 
@@ -673,12 +764,35 @@ once hid whole file formats going unread, and a check quietly not running is the
 
 ### ICR
 
-1. **Cost Impact = Compass Accepted.** A mismatch is a FLAG.
-2. **Compass Accepted = the total on the attached proposal.** Always tie to *accepted*, never to vendor-proposed. A mismatch is a FLAG.
+**These read the mapping for the item's own subtype**, so *accepted cost* below means whichever
+field that tool records an accepted figure in — Cost: Compass Accepted on an Internal Change Risk,
+Approved Customer Cost on a Customer Change Request. *Proposed cost* likewise. The check is the
+same; the field it reads is per tool.
+
+1. **Cost Impact = the accepted cost.** A mismatch is a FLAG.
+2. **The accepted cost = the total on the attached proposal.** Always tie to *accepted*, never to proposed. A mismatch is a FLAG.
 3. **The proposal's own phase lines sum to its total.**
-4. **Vendor Proposed vs Accepted delta:** report both figures. **Not a flag** — that gap is negotiation. Flag only if accepted *exceeds* proposed.
+4. **Proposed vs accepted delta:** report both figures. **Not a flag** — that gap is negotiation. Flag only if accepted *exceeds* proposed.
 5. **A `yes_known` status with a placeholder value** (e.g. `$0.01`) is a FLAG. It passes a naive has-a-value check but is not a cost.
 6. **Narrative fields blank** (Entitlement, Need v. Want, 5 Whys, Options to Mitigate) — **not a flag**. Mention only if a blank field is what prevents judging the cost.
+
+**Three states for a cost field, and only the first lets these checks run.** They need different
+things and they must not be collapsed:
+
+- **mapped and populated** — the check runs.
+- **mapped and blank** — the check does **not** run, and the item is `skipped` naming the field:
+  *"Approved Customer Cost is blank on the record"*. This is a property of the record and the fix is
+  in Procore. Observed on all 37 Customer Change Requests in one queue, which is worth reporting as
+  a pattern rather than 37 separate findings.
+- **not mapped** — the check does not run either, and the reason is different: the field's id is not
+  in `config.customTools[subtype]`, so this run does not know where to look. The fix is the config
+  (Step 1), not the record. Say which of the two it was.
+
+Checks 1, 2 and 4 need an accepted cost; 2 and 4 also need a proposed one; **3 and 5 need neither**
+— 3 is arithmetic inside the attachment and 5 reads the native `cost_impact`, so both still run on a
+tool with no cost mapping at all, and both can still produce a FLAG. **An ICR whose cost checks
+never ran is not `clear`**, no matter how many of the others passed. Naming which is the whole
+requirement: *"cost checks did not run"* on its own is the `unreadable` defect again.
 
 ### Invoice
 
@@ -807,10 +921,12 @@ Four outcomes:
 
 - **clear** — figures tie, support is adequate.
 - **flagged** — a specific number is wrong or unsupported. Say which, with figures.
-- **skipped** — not ready for review. **Not approved, not rejected, not a criticism.** No attachment at all, support that could not be read, or — commitments only — a record payload that did not carry the fields the arithmetic needs. This is a deliberate third state: an item with nothing to check against must not be given a verdict.
+- **skipped** — not ready for review. **Not approved, not rejected, not a criticism.** No attachment at all, support that could not be read, or a record that did not carry the figures the arithmetic needs — for a commitment, fields the payload never held; for a change risk, an accepted cost that is blank on the record or whose field is absent from the tool's mapping. This is a deliberate third state: an item with nothing to check against must not be given a verdict.
 
   **A skip must name which of the Step 4 outcomes caused it**, in the words that outcome uses — "support is a scanned image, text not extractable", "support is a .xlsx and the workbook reader was unavailable", "the attachment link expired twice". *"Unreadable"* on its own is what hid this bug for weeks: it reads identically whether the file was a scan, a spreadsheet, or a link that timed out, so nobody could tell that whole formats were never being read at all. If a skip cannot name its cause, that is a defect in Step 4, not a property of the item.
 - **ungated** — the arithmetic was checked but Procore would not confirm the user is a responder. Since the CCO recipe in Step 2 this should be rare: a CCO carrying no `holder.id` that the record redirect could not resolve either, one whose lines name several different commitment change orders, or a commitment whose `wfType` is missing or could not be resolved. No response buttons are offered. Say which of the three it was — they need different things from the user.
+
+**A change risk whose subtype maps to no custom tool is demoted by the publish script too, but not as far, and the difference is the point.** It loses its record link and, if it was `clear`, becomes `skipped` — it keeps its response buttons. A commitment's missing `wfType` risks the *click* landing on nothing, so the buttons have to go. An unmapped subtype risks only the *reading*: the gate already confirmed this person is a responder, and `GenericToolItem` is the workflow type for every custom tool, so responding is exactly as safe as it ever was. Removing the buttons would cost the user 37 live items to fix a link.
 
 **A commitment with no `wfType` is demoted here by the publish script, and that is deliberate rather than strict.** `com` covers two collections and both are valid workflowable types, so the wrong one carrying the right id comes back 200 with zero rows — which Step 8 reads as *already actioned elsewhere*. A live contract would be logged as done without a click. Recording the queue's `item_type` is one field and it removes the whole failure.
 
@@ -824,7 +940,8 @@ Maintain `Procore Open Items/_procore_review_log.json`:
 
 ```json
 {
-  "config": { "company": "...", "icrToolId": "...", "costFields": {},
+  "config": { "company": "...", "customTools": {"<item_subtype>": {"toolId": "...", "costFields": {}}},
+              "icrToolId": "... — kept as the link floor for rows logged before subtypes were recorded",
               "queueSource": {"url": "", "described": ""} },
   "lastCompletedRun": "2026-08-11",
   "lastRunTime": "2026-08-11 16:20",
@@ -835,7 +952,8 @@ Maintain `Procore Open Items/_procore_review_log.json`:
       "supportRead": ["what was actually opened and parsed, one entry per file, e.g. 'PCI 42 — proposal.pdf'; empty when nothing was readable"],
       "wfId": "CCOs only - the commitment change order id, from line_items[].holder.id; omit for ICRs, invoices and commitments",
       "wfType": "commitments: the queue's item_type verbatim, always - PurchaseOrderContract or WorkOrderContract. Other kinds: omit, unless workflows/tools resolved a different string",
-      "kind": "inv", "type": "Invoice", "docNo": "#2 · INV-0002 (PR-02)",
+      "kind": "inv", "subtype": "GenericToolItem rows only — the queue's item_subtype verbatim; it is the config.customTools key",
+      "type": "Invoice", "docNo": "#2 · INV-0002 (PR-02)",
       "project": "Campus A - Building 1", "counterparty": "Example Contractor LLC",
       "amount": 500000, "dueDate": "2026-08-02", "step": "FA Review",
       "responses": ["Approve", "Revise and Resubmit"],
@@ -863,7 +981,7 @@ These field names are the contract with `publish_dashboard.py`. Do not rename th
 **`config.focus.emphasis`, when set, decides what leads `head`, `facts`, `context` and `detail`
 — and nothing else.** It may reorder and reword; it may never change a `verdict`, drop a finding,
 or edit a figure. Every check that ran still gets its line; emphasis moves what the reader sees
-first. Absent emphasis, write them as this file has always described. `kind` is one of `icr` / `inv` / `cco` / `com` and decides the record URL and the workflow type. **`com` covers both commitment collections and therefore cannot decide either on its own** — `wfType` is what separates `purchase_order_contracts` from `work_order_contracts`, in the link and at the workflow endpoint alike. For a `com`, set `commitmentId` to the item's own id: the record *is* the commitment. `project` must keep Procore's full `"<Campus> - <Building>"` form — the script splits it, and campus is the outer filter axis because every campus has its own Building 1.
+first. Absent emphasis, write them as this file has always described. `kind` is one of `icr` / `inv` / `cco` / `com` and decides the record URL and the workflow type. **Two of the four cannot decide it on their own.** `com` covers both commitment collections, and `wfType` is what separates `purchase_order_contracts` from `work_order_contracts`, in the link and at the workflow endpoint alike. `icr` covers every custom tool the queue draws from, and `subtype` is what supplies the `tool_id` the link needs — the workflow type is `GenericToolItem` for all of them, so this one is the link only. For a `com`, set `commitmentId` to the item's own id: the record *is* the commitment. `project` must keep Procore's full `"<Campus> - <Building>"` form — the script splits it, and campus is the outer filter axis because every campus has its own Building 1.
 
 On each run:
 - Previously **clear** and unchanged amount → carry the entry forward, no attachment re-read.
@@ -875,8 +993,10 @@ On each run:
 **Do not write HTML.** The layout lives in `dashboard_template.html`. Publish by injecting data:
 
 ```bash
-cd "<workspace>/Procore Open Items" && python3 publish_dashboard.py
+cd "<workspace>/Procore Open Items" && python3 -B publish_dashboard.py
 ```
+
+**`-B` is not optional.** Without it Python may leave a `__pycache__/` beside the script — observed 2026-09-01 in a folder that then refused to delete it, which is the stray-file rule broken by the tooling rather than by a step. It is the one file in this folder no step names and nobody chose, so the fix is to never create it.
 
 **Render `index.html` as an inline widget with `show_widget`, passing its contents.** The publish
 script also writes a slim `widget.html` beside it, which keeps full detail for every `clear` or
@@ -942,6 +1062,18 @@ path, so the HTML never travelled through a model response; a widget takes the c
 which puts the layout through the tool call. If a rendered dashboard is missing a card, a control
 or a colour, suspect this before suspecting the template.
 
+**Reading the file is part of the render, and it is where this failed on 2026-09-01.** A run
+declined a 62-item dashboard saying the file could not be handed over intact — not a claim about
+`show_widget`, a claim about the read before it, and the rule above had nothing to say about that
+half. So: **read the whole file, and if the read comes back short, read the rest by offset and
+continue** — a file arriving in two reads is still passed byte for byte, and concatenating your own
+reads is not retyping. The publish script now emits the data one compact line per item for exactly
+this reason, which brought that same dashboard from 2,834 lines to 886.
+
+**A byte count is not an observed truncation.** *"The harness will not hand me a file that size
+intact"* predicted from the size, before reading, is the same move as predicting the render will not
+fit — the thing this step already forbids, arriving one stage earlier. What licenses a fallback is a
+read that actually came back short, or the red banner. Nothing else.
 <!--__END_SHARED:skill-render-fidelity__-->
 The script writes `index.html` beside the state file and keeps the last seven renders in
 `renders/<weekday>.html`. Both matter when a render goes wrong: diff today against the last good

@@ -1,0 +1,24 @@
+def serialise(payload):
+    """The data block, one compact line per item rather than a pretty-printed tree.
+
+    Nothing reads this JSON by eye - the template parses it - so indentation buys nothing
+    and costs both bytes and *lines*, and lines are what turned out to matter. Rendering
+    the dashboard means reproducing the whole file through a tool call, so the file has to
+    survive being read first, and a file that runs past a single read cannot be handed over
+    byte for byte at all. Measured 2026-09-01 on a 62-item Procore queue: 174 KB over 2,834
+    lines pretty-printed, past the 2,000-line default read, and the run refused to render
+    it. The same payload compact-per-item is 886 lines and 6% smaller.
+
+    Per item, not one blob: compacting the whole payload into a single line is 63 bytes
+    smaller again and puts 110 KB on one line, trading the line count for a line long
+    enough to be truncated on its own. One item per line is bounded on both axes - here
+    the longest came to 1,774 characters.
+
+    So this is load-bearing and not a style choice. Do not tidy it back to indent=.
+    """
+    parts = ['"%s":%s' % (k, json.dumps(v, ensure_ascii=False, separators=(",", ":")))
+             for k, v in payload.items() if k != "items"]
+    parts.append('"items":[\n%s\n]' % ",\n".join(
+        json.dumps(i, ensure_ascii=False, separators=(",", ":"))
+        for i in (payload.get("items") or [])))
+    return "{" + ",".join(parts) + "}"

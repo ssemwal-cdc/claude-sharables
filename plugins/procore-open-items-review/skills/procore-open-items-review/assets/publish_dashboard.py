@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v13"
+TEMPLATE_VERSION = "v14"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -58,6 +58,33 @@ def check_template_version(tpl):
           % (found or "unversioned", TEMPLATE_VERSION), file=sys.stderr)
 #__END_SHARED:pub-version-check__
 
+
+#__SHARED:pub-payload-serialise__
+def serialise(payload):
+    """The data block, one compact line per item rather than a pretty-printed tree.
+
+    Nothing reads this JSON by eye - the template parses it - so indentation buys nothing
+    and costs both bytes and *lines*, and lines are what turned out to matter. Rendering
+    the dashboard means reproducing the whole file through a tool call, so the file has to
+    survive being read first, and a file that runs past a single read cannot be handed over
+    byte for byte at all. Measured 2026-09-01 on a 62-item Procore queue: 174 KB over 2,834
+    lines pretty-printed, past the 2,000-line default read, and the run refused to render
+    it. The same payload compact-per-item is 886 lines and 6% smaller.
+
+    Per item, not one blob: compacting the whole payload into a single line is 63 bytes
+    smaller again and puts 110 KB on one line, trading the line count for a line long
+    enough to be truncated on its own. One item per line is bounded on both axes - here
+    the longest came to 1,774 characters.
+
+    So this is load-bearing and not a style choice. Do not tidy it back to indent=.
+    """
+    parts = ['"%s":%s' % (k, json.dumps(v, ensure_ascii=False, separators=(",", ":")))
+             for k, v in payload.items() if k != "items"]
+    parts.append('"items":[\n%s\n]' % ",\n".join(
+        json.dumps(i, ensure_ascii=False, separators=(",", ":"))
+        for i in (payload.get("items") or [])))
+    return "{" + ",".join(parts) + "}"
+#__END_SHARED:pub-payload-serialise__
 
 VERDICTS = ("clear", "flagged", "skipped", "ungated")
 # The type the workflows/instances endpoint wants, which is NOT always the queue's item_type.
@@ -98,14 +125,24 @@ def main():
                  "regenerate the template - restore it from the plugin assets and retry.")
 
     cfg = log.get("config") or {}
-    for key, hint in (("company", "your Procore company id"),
-                      ("icrToolId", "the tool_id of the change-risk custom tool")):
-        if not cfg.get(key):
-            sys.exit("ABORT: config.%s missing from %s (%s). "
-                     "Run the first-time setup before publishing."
-                     % (key, os.path.basename(LOG), hint))
+    if not cfg.get("company"):
+        sys.exit("ABORT: config.company missing from %s (your Procore company id). "
+                 "Run the first-time setup before publishing." % os.path.basename(LOG))
 
-    items, bad, ungated, untyped = [], [], [], []
+    # A GenericToolItem belongs to a custom tool, and one queue can carry several of them -
+    # observed 2026-09-01: Internal Change Risk (88) and Customer Change Request (77), the
+    # second one 37 of 62 items and unknown to the config. config.customTools maps the queue's
+    # item_subtype to that tool's id and its own cost-field mapping, because both differ per
+    # tool. config.icrToolId is the floor for a config written before customTools existed,
+    # where one tool really was all there was.
+    tools = cfg.get("customTools") or {}
+    floor = str(cfg.get("icrToolId", "") or "")
+    if not tools and not floor:
+        sys.exit("ABORT: neither config.customTools nor config.icrToolId is set in %s, so no "
+                 "custom tool id is known and no change-risk record can be linked. Run the "
+                 "first-time setup before publishing." % os.path.basename(LOG))
+
+    items, bad, ungated, untyped, unmapped = [], [], [], [], []
     for key, it in (log.get("items") or {}).items():
         kind = it.get("kind", "icr")
         verdict = it.get("verdict", "skipped")
@@ -132,12 +169,31 @@ def main():
             if verdict not in ("skipped", "ungated"):
                 untyped.append(key)
             verdict = "ungated"
+        # Which custom tool this item lives in decides its record link, and - through the cost
+        # field mapping - which figures the ICR checks were able to read at all. Guessing is the
+        # silent failure: a link built with the wrong tool id resolves to a page in the wrong
+        # tool, and cost fields read from the wrong mapping are simply absent, which reads as a
+        # blank field rather than as a check that never ran. So fail closed on both counts - no
+        # link rather than a wrong one, and an item whose cost fields were never located cannot
+        # be `clear`. Its response buttons are untouched: the workflow gate is per item and
+        # independent of this, so responding is still safe. Only the reading is incomplete.
+        subtype = str(it.get("subtype", "") or "")
+        tool_id = ""
+        if kind == "icr":
+            tool_id = (str((tools.get(subtype) or {}).get("toolId", "") or "") if tools
+                       else floor)
+            if not tool_id:
+                unmapped.append("%s (%s)" % (key, subtype or "no subtype recorded"))
+                if verdict == "clear":
+                    verdict = "skipped"
         items.append({
             "key": key,
             "id": str(it.get("itemId", "")),
             "pid": str(it.get("projectId", "")),
             "cid": str(it.get("commitmentId", "") or ""),
             "kind": kind,
+            "subtype": subtype,
+            "toolId": tool_id,
             "wf": wf_type or WF.get(kind, "GenericToolItem"),
             "wfId": wf_id or str(it.get("itemId", "")),
             "type": it.get("type", kind.upper()),
@@ -172,6 +228,15 @@ def main():
               "from line_items[].holder.id on the package payload (Step 2) and "
               "re-publish to make them respondable.")
 
+    if unmapped:
+        print("WARNING: no custom tool mapped for: " + ", ".join(unmapped) +
+              ". These rows render without an Open in Procore link, and any that were clear "
+              "are demoted to skipped, because the cost fields the ICR checks read are mapped "
+              "per tool and none was found for this subtype. Add the subtype to "
+              "config.customTools with its toolId and costFields (Step 1) and re-publish. Do "
+              "not point them at another tool's id - the link resolves to a real page in the "
+              "wrong tool, which is indistinguishable from the right one.")
+
     if untyped:
         print("WARNING: no wfType on a commitment, so demoted to ungated with no response "
               "buttons: " + ", ".join(untyped) + ". Record the queue's item_type verbatim - "
@@ -197,13 +262,15 @@ def main():
         "lastRunISO": log.get("lastRunISO", "") or (
             (log.get("lastRunTime") or "").replace(" ", "T")),
         "suppressed": log.get("suppressed", 0),
-        "config": {"company": str(cfg["company"]), "icrToolId": str(cfg["icrToolId"])},
+        # icrToolId stays as the template's floor for items with no toolId of their own -
+        # a render from a log written before subtypes were recorded. Per-item toolId wins.
+        "config": {"company": str(cfg["company"]), "icrToolId": floor},
         "items": items,
     }
 
     a = tpl.index(S) + len(S)
     b = tpl.index(E)
-    blob = json.dumps(payload, ensure_ascii=False, indent=1)
+    blob = serialise(payload)
     out = tpl[:a] + blob + tpl[b:]
 
     # the injected block must be the only difference
@@ -211,12 +278,21 @@ def main():
 
     open(OUT, "w", encoding="utf-8").write(out)
 
-    # A widget carries its HTML inline through a tool call, so the whole dashboard has to be
-    # reproduced byte for byte to render. Past roughly 90 KB that stops being reliable and the
-    # render gets refused, which costs one-click execute entirely. So write a second, smaller
-    # file carrying only what the user can actually act on: items with a verdict of clear or
+    # A second, smaller file carrying only what the user can act on: items verdicted clear or
     # flagged, which are the ones with a cost and a response to give. Everything else becomes a
-    # count and a one-line row, and index.html keeps the complete record.
+    # one-line row, and index.html keeps the complete record.
+    #
+    # Reached only when the template's integrity banner actually fires. There is no byte
+    # threshold here, and the sentence that used to sit in this comment - "past roughly 90 KB
+    # that stops being reliable" - was invented: nothing in show_widget documents a capacity,
+    # and SKILL.md Step 7 calls a claim of exactly that form a prediction written as a fact. It
+    # mattered because a run reads this file. On 2026-09-01 a 62-item queue was refused at
+    # 164 KB, and the refusal was argued in this comment's own terms.
+    #
+    # It is also not a size fallback, measured: only two verdicts fold, so a live queue saves
+    # 0-12%. A deliberately even 62-item fixture - half the queue foldable, which no real one is
+    # - still only came down 129 KB from 174 KB. What made a large queue renderable was
+    # serialise() above, not this.
     ACTIONABLE = ("clear", "flagged")
     slim, folded = [], []
     for i in items:
@@ -227,11 +303,11 @@ def main():
             # they carry no buttons here - an item with no cost at a step that demands one is
             # not something to action from a trimmed view. index.html keeps the full record.
             folded.append({k: i.get(k) for k in
-                           ("key", "id", "pid", "cid", "kind", "wf", "type", "doc", "vendor",
-                            "projLabel", "amt", "due", "verdict")})
+                           ("key", "id", "pid", "cid", "kind", "subtype", "toolId", "wf",
+                            "type", "doc", "vendor", "projLabel", "amt", "due", "verdict")})
     wpayload = dict(payload)
     wpayload["items"] = slim + folded
-    wout = tpl[:a] + json.dumps(wpayload, ensure_ascii=False, indent=1) + tpl[b:]
+    wout = tpl[:a] + serialise(wpayload) + tpl[b:]
     WIDGET = os.path.join(os.path.dirname(os.path.abspath(OUT)), "widget.html")
     open(WIDGET, "w", encoding="utf-8").write(wout)
     print("wrote %s  (fallback only; %d KB vs %d KB full; %d actionable, %d folded)" % (

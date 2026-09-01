@@ -780,6 +780,41 @@ approval is the baseline the other three types are checked against, so whether t
 and counterparty are right is the reviewer's call. A substantive FA checklist comes from asking
 the maintainer, never from inventing one.
 
+**NetSuite's queue was wider than the step that acts on it, and two batches stopped at the same
+gate before it was called a defect.** Reported 2026-09-01: five purchase orders, all reviewed,
+all `clear`, all refused at the click because Step 8's record-type rule named bills and change
+orders only. The run behaved correctly — it re-verified all five, clicked nothing, reported the
+gap — and it was still a defect, because Step 1 has reviewed purchase orders since the day the
+skill shipped. **This is Procore's fourth type one skill along**, with the split *inside* a
+skill rather than at its edge: the review half knew a type the execute half did not, and nothing
+compared the two lists. NS v23 adds the route, and three things about it are load-bearing.
+
+**Purchase orders take the bill route on the strength of the fields, not the resemblance.** The
+run confirmed live that a pending PO carries `approvalstatus`, `custbody_sna_cdc_next_approver`,
+`custbody_sna_cdc_previous_approver` and `custbody_sna_cdc_app_count` — exactly what the
+pre-click gate and the post-click verification read, so the route transfers unchanged. **The
+button set is a separate question and is still unread**: nobody has looked at a purchase order's
+approval buttons, so Step 8 reads the labels (as it always did) and now says what happens when
+Approve With Notes is not among them — the affirmative button is still clicked and the note is
+logged as **lost**, never written somewhere else. That is the one improvised-looking part, and it
+is the existing frozen-tab fallback's rule reused rather than a new invention.
+
+**The two lists are gated against each other now.** `check_execute_type_coverage()` in
+`shared_blocks.py` asserts that Step 6's `type` vocabulary, Step 8's record-type route table and
+`ITEM_TYPE_MANIFEST` all name the same three types — so a reviewed-but-unactionable type is a
+failed build rather than a stopped batch. Same shape and same friction as `REGISTRY_MANIFEST`,
+for the same reason: both lists are prose, and prose gains a type on one side without the other.
+Mutation-tested five ways (drop the row, shrink the schema, invent a fourth type, rename the
+heading, blank a gate cell).
+
+**The rule that stopped the batch was right and keeps its place — it gained a second branch.**
+*Never click a type this step has no procedure for* stands. What it lacked is the question the
+Procore note above already teaches, **out of domain or merely unbuilt**, so Step 8 now makes a run
+say which, and name an unbuilt type as a defect in the skill rather than as a property of the
+record. The tell that it was missing: the run offered the user a choice between authorising a
+workaround and having the plugin fixed. A missing procedure is not something a user can authorise
+their way out of, and asking implies it is.
+
 **A bill's PO comes from the transaction linkage. `custbody3` is a typed reference and
 has never been the coding.** Found by a teammate running the plugin and confirmed against
 production 2026-08-20. The skill flagged bills as *"coded to the wrong PO"*; NetSuite's

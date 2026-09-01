@@ -313,6 +313,7 @@ if shared_blocks is not None:
     _problems += shared_blocks.check_template_versions()
     _problems += shared_blocks.check_verdict_vocabulary()
     _problems += shared_blocks.check_check_registry()
+    _problems += shared_blocks.check_execute_type_coverage()
     _problems += shared_blocks.check_capability_verdicts()
     _problems += shared_blocks.check_execute_prompt_purity()
     _problems += shared_blocks.check_onboarding_page()

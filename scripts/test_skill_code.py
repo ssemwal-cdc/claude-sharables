@@ -38,6 +38,13 @@ Covered:
  10. Step 0 write states - the workspace write keeps kept / refused / not attempted
                            distinct, so a run cannot announce that state will not
                            persist without having tried to write it.
+ 12. Custom tool subtype - a GenericToolItem's record link and cost fields come from
+                           its own custom tool, and an unmapped subtype gets no link and no
+                           `clear` verdict rather than another tool's id.
+ 13. Large render       - a 62-item dashboard stays inside one default file read on both
+                           axes: under 2,000 lines and no single very long line. Rendering
+                           means reproducing the file through a tool call, so a file that
+                           cannot be read cannot be rendered at all.
  11. Commitment kind    - a `com` item without a wfType is demoted to `ungated`
                            rather than defaulting to one of the two commitment
                            collections. Both are valid workflowable types, so the
@@ -709,6 +716,192 @@ console.log(JSON.stringify(out));
     check("poLine: an older payload renders nothing rather than guessing", r["empty"] == "")
 
 
+# ------------------------------------------- 12. custom tool subtypes (`icr`)
+def test_custom_tool_subtype():
+    """A GenericToolItem's record link and cost fields come from its own custom tool.
+
+    One queue carried two custom tools - Internal Change Risk and Customer Change Request,
+    the second one 37 of 62 items - and the config had only ever been told about one. Every
+    one of those 37 got a link built with the other tool's id, which resolves to a real page
+    in the wrong tool rather than 404ing, and cost fields read through a mapping that does not
+    describe them. Fail closed on both: no link rather than a wrong one, and an item whose
+    cost checks could not run is not `clear`.
+    """
+    d = tempfile.mkdtemp()
+    try:
+        assets = os.path.join(PC, "assets")
+        for f in ("publish_dashboard.py", "dashboard_template.html"):
+            shutil.copy(os.path.join(assets, f), d)
+        base = {"projectId": "9", "kind": "icr", "project": "A - B", "counterparty": "X",
+                "amount": 1000, "step": "Cost Gate", "responses": ["Yes", "Reject"],
+                "verdict": "clear", "head": "h", "facts": ["f"], "detail": "d"}
+        cfg = {"company": "0", "customTools": {
+            "Internal Change Risk (88)": {"toolId": "88", "costFields": {
+                "vendorProposed": "custom_field_1", "compassAccepted": "custom_field_2"}},
+            "Customer Change Request (77)": {"toolId": "77", "costFields": {
+                "romCost": "custom_field_3"}}}}
+        log = {"lastCompletedRun": "2026-09-01", "lastRunTime": "2026-09-01 09:00",
+               "suppressed": 0, "config": cfg, "items": {
+                   "icr": dict(base, itemId="111", docNo="#ICR-1",
+                               subtype="Internal Change Risk (88)"),
+                   "ccr": dict(base, itemId="222", docNo="#CCR-1",
+                               subtype="Customer Change Request (77)"),
+                   "unmapped": dict(base, itemId="333", docNo="#NEW-1",
+                                    subtype="Some Other Tool (99)"),
+                   "nosubtype": dict(base, itemId="444", docNo="#OLD-1", verdict="flagged")}}
+        json.dump(log, open(os.path.join(d, "_procore_review_log.json"), "w"))
+        out_html = os.path.join(d, "index.html")
+        r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
+                            out_html], capture_output=True, text=True, timeout=60)
+        if r.returncode != 0:
+            check("publish script runs (subtypes)", False,
+                  (r.stderr or r.stdout).strip().splitlines()[-1:] or "")
+            return
+        blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/",
+                         open(out_html, encoding="utf-8").read(), re.S).group(1)
+        items = {i["doc"]: i for i in json.loads(blob)["items"]}
+        check("subtype: each tool keeps its own tool id",
+              items["#ICR-1"]["toolId"] == "88" and items["#CCR-1"]["toolId"] == "77",
+              "%s / %s" % (items["#ICR-1"]["toolId"], items["#CCR-1"]["toolId"]))
+        check("subtype: an unmapped subtype gets no tool id rather than another tool's",
+              items["#NEW-1"]["toolId"] == "", items["#NEW-1"]["toolId"])
+        check("subtype: an unmapped subtype cannot stay clear",
+              items["#NEW-1"]["verdict"] == "skipped", items["#NEW-1"]["verdict"])
+        check("subtype: it keeps its response buttons - the gate is unaffected",
+              items["#NEW-1"]["resp"] == ["Yes", "Reject"])
+        check("subtype: an item with no subtype recorded is not guessed either",
+              items["#OLD-1"]["toolId"] == "")
+        check("subtype: a flagged item stays flagged - a flag found is still a flag",
+              items["#OLD-1"]["verdict"] == "flagged", items["#OLD-1"]["verdict"])
+        check("subtype: the demotion is announced, not silent",
+              "Some Other Tool (99)" in (r.stdout + r.stderr))
+
+        # A config predating customTools describes exactly one tool, and must keep working.
+        log["config"] = {"company": "0", "icrToolId": "88"}
+        json.dump(log, open(os.path.join(d, "_procore_review_log.json"), "w"))
+        r2 = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
+                             out_html], capture_output=True, text=True, timeout=60)
+        blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/",
+                         open(out_html, encoding="utf-8").read(), re.S).group(1)
+        items = {i["doc"]: i for i in json.loads(blob)["items"]}
+        check("subtype: a pre-customTools config still links every row",
+              r2.returncode == 0 and all(items[k]["toolId"] == "88" for k in items),
+              {k: items[k]["toolId"] for k in items})
+
+        # The template must read the item's tool id, not only the config-level floor.
+        tpl = open(os.path.join(d, "dashboard_template.html"), encoding="utf-8").read()
+        rec = tpl[tpl.index("function recUrl"):]
+        rec = rec[:rec.index("\n}")]
+        check("subtype: recUrl prefers the item's own tool id", "it.toolId" in rec)
+        check("subtype: recUrl returns no link rather than a wrong one",
+              "if(!tid) return " in rec)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+# ------------------------------------------ 13. a large render survives a read
+def test_render_fits_one_read():
+    """The rendered dashboard has to be readable before it can be handed to show_widget.
+
+    A widget takes its HTML inline, so rendering means reproducing the file through a tool
+    call - which means reading it first. On 2026-09-01 a 62-item Procore queue published to
+    2,834 lines, past a default file read, and the run declined to render it. serialise()
+    emits one compact line per item for that reason. This pins both axes: the line count a
+    default read has to cover, and no single line long enough to be truncated on its own.
+
+    Bounds, not thresholds: they are properties of the read, and the point is that a real
+    queue stays well inside them. 62 items is the largest queue observed.
+    """
+    for name, root, log in (("procore", PC, _big_procore_log()),
+                            ("netsuite", NS, _big_netsuite_log())):
+        d = tempfile.mkdtemp()
+        try:
+            assets = os.path.join(root, "assets")
+            for f in ("publish_dashboard.py", "dashboard_template.html"):
+                shutil.copy(os.path.join(assets, f), d)
+            stem = "_procore_review_log.json" if name == "procore" else "_netsuite_review_log.json"
+            json.dump(log, open(os.path.join(d, stem), "w"))
+            out_html = os.path.join(d, "index.html")
+            r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
+                                out_html], capture_output=True, text=True, timeout=60)
+            if r.returncode != 0:
+                check("%s: publish script runs (large queue)" % name, False,
+                      (r.stderr or r.stdout).strip().splitlines()[-1] if (r.stderr or r.stdout)
+                      else "non-zero exit")
+                continue
+            text = open(out_html, encoding="utf-8").read()
+            lines = text.split("\n")
+            check("%s: a 62-item render fits one default file read" % name,
+                  len(lines) < 2000, "%d lines" % len(lines))
+            check("%s: no single line is long enough to truncate on its own" % name,
+                  max(len(l) for l in lines) < 8000,
+                  "longest %d chars" % max(len(l) for l in lines))
+            blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/", text, re.S).group(1)
+            payload = json.loads(blob)
+            check("%s: the compact payload still parses" % name,
+                  len(payload["items"]) == 62, len(payload.get("items", [])))
+            check("%s: one line per item, not one line for all of them" % name,
+                  blob.count("\n") >= 62, blob.count("\n"))
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+
+def _filler():
+    """Field lengths in the range a real write-up produces - the byte count is the test."""
+    return {"head": "Arithmetic ties; the accepted cost matches the attached proposal total.",
+            "facts": ["Cost Impact $412,880.00 = accepted $412,880.00 (status yes_known).",
+                      "Proposal total $412,880.00 located verbatim on page 2 of the support.",
+                      "Phase lines sum to $412,880.00; proposed $451,200.00, accepted lower."],
+            "detail": ("Cost Impact is recorded as yes_known at $412,880.00 and the accepted "
+                       "cost carries the same figure, so check 1 ties. The attached proposal "
+                       "parsed as text and its total appears verbatim on page 2, so check 2 "
+                       "ties to accepted rather than to proposed. The phase lines sum to the "
+                       "same total. No placeholder value is present. Two narrative fields are "
+                       "blank and neither prevents judging the cost." * 2),
+            "context": "Commitment 4488213 · 6.08% complete · balance to finish $9,412,004.00",
+            "warning": ("The proposal is dated eleven days after the change risk was raised "
+                        "and its entitlement narrative names no RFI.")}
+
+
+def _big_procore_log():
+    items = {}
+    for n in range(62):
+        items["GenericToolItem:%d" % (900000 + n)] = dict(
+            _filler(), itemId=str(900000 + n), projectId=str(4400 + n % 9),
+            commitmentId=str(4488000 + n), supportRead=["PCI %d — proposal.pdf" % n],
+            kind="icr", subtype="Internal Change Risk (88)", type="Internal Change Risk",
+            docNo="ICR-%04d · CR-%03d" % (n, n),
+            project="Campus %d - Building %d" % (n % 3 + 1, n % 6 + 1),
+            counterparty="Example Mechanical Contractors of the Midwest LLC",
+            amount=412880 + n * 1013, dueDate="2026-09-%02d" % (n % 28 + 1),
+            step="Financial Analyst Review", responses=["Approve", "Revise and Resubmit"],
+            verdict=("clear", "flagged")[n % 2], reviewedOn="2026-09-01",
+            attachments=["Proposal-%04d-Final.pdf" % n])
+    return {"lastCompletedRun": "2026-09-01", "lastRunTime": "2026-09-01 09:12",
+            "suppressed": 41,
+            "config": {"company": "0", "customTools": {
+                "Internal Change Risk (88)": {"toolId": "88", "costFields": {}}}},
+            "items": items}
+
+
+def _big_netsuite_log():
+    """Keyed by record id, and poContext/poWarning where Procore has context/warning."""
+    items = {}
+    for n in range(62):
+        f = _filler()
+        items[str(2530000 + n)] = {
+            "type": "Bill", "docNo": "BILL-%05d" % n,
+            "vendor": "Example Mechanical Contractors of the Midwest LLC",
+            "amount": 412880 + n * 1013, "trandate": "2026-08-%02d" % (n % 28 + 1),
+            "verdict": ("clear", "flagged")[n % 2], "reviewedOn": "2026-09-01",
+            "head": f["head"], "facts": f["facts"], "detail": f["detail"],
+            "poContext": f["context"], "poWarning": f["warning"],
+            "poRef": "PO16093", "poLink": "linked",
+            "attachmentFile": "Invoice-%05d.pdf" % n}
+    return {"lastCompletedRun": "2026-09-01", "lastRunTime": "2026-09-01 09:12",
+            "config": {"me": "0", "tool": "0", "account": "0"}, "items": items}
+
+
 def main():
     print("Skill code checks\n")
     if shutil.which("node"):
@@ -723,6 +916,8 @@ def main():
               "sniff, sheets and poLine not run")
     test_cco_demotion()
     test_commitment_kind()
+    test_custom_tool_subtype()
+    test_render_fits_one_read()
     test_template_version()
     test_step0_write_states()
     test_dashboard_view()

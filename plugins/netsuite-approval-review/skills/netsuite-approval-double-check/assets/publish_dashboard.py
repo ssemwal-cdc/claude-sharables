@@ -63,6 +63,33 @@ def check_template_version(tpl):
 # fall straight through the template's pill logic into "Clear" - a fail-open on the one field
 # that decides what gets approved - so it aborts the publish instead. Procore's script has
 # had this guard since it shipped; this side never got it.
+#__SHARED:pub-payload-serialise__
+def serialise(payload):
+    """The data block, one compact line per item rather than a pretty-printed tree.
+
+    Nothing reads this JSON by eye - the template parses it - so indentation buys nothing
+    and costs both bytes and *lines*, and lines are what turned out to matter. Rendering
+    the dashboard means reproducing the whole file through a tool call, so the file has to
+    survive being read first, and a file that runs past a single read cannot be handed over
+    byte for byte at all. Measured 2026-09-01 on a 62-item Procore queue: 174 KB over 2,834
+    lines pretty-printed, past the 2,000-line default read, and the run refused to render
+    it. The same payload compact-per-item is 886 lines and 6% smaller.
+
+    Per item, not one blob: compacting the whole payload into a single line is 63 bytes
+    smaller again and puts 110 KB on one line, trading the line count for a line long
+    enough to be truncated on its own. One item per line is bounded on both axes - here
+    the longest came to 1,774 characters.
+
+    So this is load-bearing and not a style choice. Do not tidy it back to indent=.
+    """
+    parts = ['"%s":%s' % (k, json.dumps(v, ensure_ascii=False, separators=(",", ":")))
+             for k, v in payload.items() if k != "items"]
+    parts.append('"items":[\n%s\n]' % ",\n".join(
+        json.dumps(i, ensure_ascii=False, separators=(",", ":"))
+        for i in (payload.get("items") or [])))
+    return "{" + ",".join(parts) + "}"
+#__END_SHARED:pub-payload-serialise__
+
 VERDICTS = ("clear", "flagged")
 
 
@@ -152,10 +179,11 @@ def main():
 
     a = tpl.index(S) + len(S)
     b = tpl.index(E)
-    out = tpl[:a] + json.dumps(payload, ensure_ascii=False, indent=1) + tpl[b:]
+    blob = serialise(payload)
+    out = tpl[:a] + blob + tpl[b:]
 
     # the injected block must be the only difference
-    assert len(out) - len(tpl) == len(json.dumps(payload, ensure_ascii=False, indent=1)) - (b - a)
+    assert len(out) - len(tpl) == len(blob) - (b - a)
 
     open(OUT, "w", encoding="utf-8").write(out)
 

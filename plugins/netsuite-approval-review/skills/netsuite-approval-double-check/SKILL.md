@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v23 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: v24 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 23 — 2026-09-01.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
+**Skill version 24 — 2026-09-01.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub (github.com/ssemwal-cdc/claude-sharables); that table does not ship with the plugin, so there is nothing local to compare against — when asked for the version, report this line and leave the comparison to the reader. If GitHub shows a higher number, this copy is stale: the fix is updating or reinstalling the plugin, never adding a version field to plugin.json — its absence is deliberate.
 
 Review every bill, purchase order and change order sitting in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document, cross-check against the real purchase order and billing history, and publish a per-item verdict to the dashboard.
 
@@ -33,6 +33,18 @@ An instruction to review is never an instruction to execute. A verdict of "clear
 - If deeper review would require actions beyond reading, say so in the verdict and ask first.
 - **Every approval carries the note `Approved by Claude`, unless the user supplied their own for that document — theirs replaces it verbatim.** Those two are the only text this skill types into a note field, and approvals route through Approve With Notes so it can be attached; see Step 8. Do not ask permission for the default and do not vary its wording. Rejection reasons are different: they always come from the user and are never defaulted.
 - **This skill owns exactly one state file:** `NetSuite Approval Checks/_netsuite_review_log.json`. Never read or write the Procore skill's log, and never let Procore records into yours. Both files used to share the name `_review_log.json` and both folders sit under the same parent, so this went wrong in practice. If you find foreign records in your log, move them to a `_quarantined` block, say so in chat, and carry on — never merge them into `items`, and never act on them. **The idempotency gate reads this one path on the next run**, so whether it carries anything forward depends on the Step 0 write having landed. Where it did not, every run is a first run — the setup questions again, and every attachment read again. That is the accepted cost of a surface whose folder cannot be written to, not a fault to work around.
+
+  **A cloud-sync conflict copy is a third state, and neither of the two above.** A file like
+  `_netsuite_review_log-DESKTOP-AB12CD.json` or `_netsuite_review_log (1).json` is this skill's own log, in the right folder,
+  with a diverged history — not a foreign record to quarantine and not the canonical file. Observed
+  2026-09-01: a machine-suffixed copy carried **newer `config`** than the canonical one, including a
+  setting the user had asked for. So: the canonical path stays the only file read for `items` and
+  `actions` and the only one ever written. From a conflict copy, adopt **`config` keys the canonical
+  file lacks and nothing else**, and say in the run report that you did, naming both files. Never
+  merge its `items` — a stale verdict returning looks exactly like a fresh one — and never its
+  `actions`, which record what was actually clicked and must not gain an entry nobody observed.
+  Leave the copy where it is and say so once; the sync client made it, not this skill, so it is not
+  a stray and not the user's chore.
 
 ## What this review is, and what it is not
 
@@ -83,6 +95,24 @@ seven weekday slots overwritten in place for exactly this reason. So write every
 over its destination: no temp file, no write-then-move, no dated copies. If a stray file is left
 behind anyway, say so once in the same one line; **never invent a quarantine folder such as
 `_to_delete/`, and never hand the user a cleanup chore.**
+
+**When overwriting in place is what fails, the property still decides, not the mechanism.** Observed
+2026-09-01: on a OneDrive folder holding *dehydrated* files — cloud-only placeholders, present in the
+listing with no local content — every pre-existing file in the folder was unreadable **and**
+unwritable through the bridge, `EINVAL` on open, while writing a new name and renaming it over the
+placeholder worked. That is the opposite way round from what the paragraph above expects, so take it
+as a fact about that surface rather than an error to fix. A write that lands on the destination and
+leaves nothing beside it satisfies this rule whatever call sequence got it there; if the intermediate
+file survives, that is a stray and takes the one-line report. What stays forbidden is a file staged
+**to move bytes** — encoded, chunked or copied so its content can be reassembled somewhere else. That
+one is left behind by design rather than by a failed rename, which is why it is named separately
+below.
+
+**A dehydrated placeholder is not a refused write, and it is not an empty file either.** `EINVAL` on
+a file that is listed but has no local content is its own state: the folder is writable, this file is
+not readable yet. Name it if it comes up, and never report the state file as absent on the strength
+of a failed read — an absent log means first-run setup, and running that against a log that exists
+discards a review history that was only ever unavailable for a moment.
 
 **The test is what the file is, not what it is called, and naming mechanisms is what let this
 through twice.** The rule is: **the only files that may exist in this folder are the ones this
@@ -919,8 +949,10 @@ The deliverable is the inline dashboard widget.
 **Do not write HTML.** The layout lives in `dashboard_template.html` and is the single source of truth for how the dashboard looks and behaves. Every run publishes by injecting data into it:
 
 ```bash
-cd "<workspace>/NetSuite Approval Checks" && python3 publish_dashboard.py
+cd "<workspace>/NetSuite Approval Checks" && python3 -B publish_dashboard.py
 ```
+
+**`-B` is not optional.** Without it Python may leave a `__pycache__/` beside the script — observed 2026-09-01 in a folder that then refused to delete it, which is the stray-file rule broken by the tooling rather than by a step. It is the one file in this folder no step names and nobody chose, so the fix is to never create it.
 
 **Render it as an inline widget with `show_widget`, passing the file's contents. Always attempt
 this, whatever the file size.** A large queue makes a large file; that is normal and not a reason
@@ -959,6 +991,18 @@ path, so the HTML never travelled through a model response; a widget takes the c
 which puts the layout through the tool call. If a rendered dashboard is missing a card, a control
 or a colour, suspect this before suspecting the template.
 
+**Reading the file is part of the render, and it is where this failed on 2026-09-01.** A run
+declined a 62-item dashboard saying the file could not be handed over intact — not a claim about
+`show_widget`, a claim about the read before it, and the rule above had nothing to say about that
+half. So: **read the whole file, and if the read comes back short, read the rest by offset and
+continue** — a file arriving in two reads is still passed byte for byte, and concatenating your own
+reads is not retyping. The publish script now emits the data one compact line per item for exactly
+this reason, which brought that same dashboard from 2,834 lines to 886.
+
+**A byte count is not an observed truncation.** *"The harness will not hand me a file that size
+intact"* predicted from the size, before reading, is the same move as predicting the render will not
+fit — the thing this step already forbids, arriving one stage earlier. What licenses a fallback is a
+read that actually came back short, or the red banner. Nothing else.
 <!--__END_SHARED:skill-render-fidelity__-->
 The script writes `index.html` beside the state file and keeps the last seven renders in
 `renders/<weekday>.html`. Both matter when a render goes wrong: diff today against the last good

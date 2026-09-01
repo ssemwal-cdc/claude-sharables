@@ -107,8 +107,16 @@ re-verified as still yours to action immediately before it is clicked.
 ## First run
 
 Say "run my Procore review". Setup happens once and asks you to confirm your
-company id, the tool id of your change-risk custom tool, and the cost custom
-field mapping — all of which differ per company.
+company id, then — for each custom tool your queue draws change items from —
+that tool's id and its cost custom field mapping. All of those differ per
+company, and the field mapping differs per tool as well.
+
+**More than one custom tool is normal**, and every run reconciles the tools it
+finds in the queue against the ones it has been told about. A tool it has not
+seen before is set up then and there and named in the run report; one it cannot
+resolve is still reviewed and still respondable, but it carries no record link
+and cannot come back `clear`, because the cost fields those checks read are
+mapped per tool.
 
 There is no user id to configure. Procore's queue endpoint and permission gate
 are both scoped to the signed-in session, so the review is automatically yours.

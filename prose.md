@@ -16,7 +16,7 @@ it as established.
 `python3 scripts/test_skill_code.py` covers the logic against mocks. It cannot
 cover any of this, because all of it is about the real systems.
 
-**The eleven numbered gaps are below, after the open-decisions section.** They belong to this
+**The twelve numbered gaps are below, after the open-decisions section.** They belong to this
 heading, not to that one — a section inserted between the two on 2026-08-24 left them reading
 as deferred work under a heading that opens *"none of this is a commitment"*, which is the
 opposite of what they are.
@@ -779,6 +779,51 @@ of a run rather than a transcript, the same evidence class as the sniff table's 
 table and `ITEM_TYPE_MANIFEST`, and fails the build on any disagreement. It says nothing about
 whether a route is *correct* — only that one exists for every type the queue can hold. Everything
 in the list above is exactly the part a build gate cannot reach.
+
+---
+
+### 12. Custom tool subtypes and the compact render — both shipped 2026-09-01, neither watched
+
+PC v26, NS v24. Both came out of one Procore run's report, which is a maintainer's account of a
+run rather than a transcript — the same evidence class as the sniff table's confirmation and the
+purchase-order fields above.
+
+**What is observed, and it is worth separating from what was designed on top of it.**
+
+- **Two custom tools in one queue**, Internal Change Risk and Customer Change Request, the second
+  37 of 62 items. Reported, with tool ids and the queue's `item_subtype` as the discriminator.
+- **`custom_field_522888` on the second tool is Duration in Weeks**, not money. Reported.
+- **Its two cost fields were blank on all 37 items.** Reported.
+- **The file sizes.** 164 KB, 62 items, 55 KB of template before data — all three reproduced here
+  against a fixture (174 KB, 2,834 lines, 55,118 bytes) and now pinned by
+  `test_render_fits_one_read`.
+
+**What is not observed.**
+
+- **The reconciliation has never run.** Step 1 subtracting `config.customTools`' keys from the
+  queue's distinct subtypes, setting up a new tool mid-run, and naming it in the run report is
+  designed and fixture-tested. No run has done it.
+- **`ROM Cost` and `Approved Customer Cost` are names off a rendered record**, mapped by label by
+  that run. They are almost certainly right and they are not confirmed against a payload — and
+  because they were blank on every item seen, **no ICR check has ever tied on that tool.** A
+  `clear` verdict on a Customer Change Request has never been produced by anything.
+- **Nothing has rendered at 161 KB.** The compact serialiser makes the file *readable* in one
+  read, which is the wall the run actually hit. Whether `show_widget` accepts 161 KB inline is
+  still unknown, and 99 KB / 43 items remains the largest render anyone has observed. The
+  integrity banner is what settles it; it has never fired.
+- **The dehydrated-file write path.** `EINVAL` on every pre-existing file and rename-over
+  succeeding is one report from one mount. Step 0's property-shaped rule accommodates it; nobody
+  has watched a run take that route with the rule in place.
+- **The conflict-copy rule.** A machine-suffixed state file with newer `config` happened once and
+  was merged by hand. The rule written for it — canonical for `items` and `actions`, adopt only
+  missing `config` keys, say so — has never been exercised.
+- **`python3 -B`.** Trivially correct, never run in anger.
+
+**What is now a failed build rather than a silent miss**: an unmapped subtype taking another
+tool's tool id or keeping a `clear` verdict (`test_custom_tool_subtype`), and a large render
+running past one file read on either axis (`test_render_fits_one_read`, mutation-tested — restoring
+`indent=1` fails at 3,013 lines). Neither says anything about whether the field mapping is
+*right*, which is the part above that a gate cannot reach.
 
 ---
 

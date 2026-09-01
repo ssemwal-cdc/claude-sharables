@@ -494,6 +494,11 @@ carries a guard that turns a truncated render into a red banner precisely so the
 question can be settled by observation rather than by estimate — an estimate is
 not an observed failure.
 
+**Both sentences above are about `show_widget` and remain true of it. A ceiling has
+since been observed one stage earlier**, on reading the file into a tool call at all —
+see the 2026-09-01 note below. Do not read *"no known ceiling"* as *"nothing about size
+matters"*; read it as *"the tool has never been the limit"*.
+
 `publish_dashboard.py` still writes a slim `widget.html` beside the full
 `index.html`. It is a fallback for a queue that one day genuinely does not fit,
 not the default, because folding rows costs their response buttons and nothing
@@ -543,7 +548,116 @@ written files, and no skill wording can suppress it.
 handed over as a file instead, on the reasoning that it might truncate — which cost one-click
 execute entirely to avoid a risk that had not happened. The truncation guard exists precisely to
 catch that case after the fact. Render first, believe the guard, fall back only on an observed
-failure.
+failure. **A fourth refusal on 2026-09-01 argued the read rather than
+the render, and that half was real** — the note below has the measurements and the fix.
+
+**A fourth run declined the render, 2026-09-01 — and this one had a real mechanical wall under
+it, on the side none of the rules were about.** 62 items, 164 KB. The excuse was not *"it might
+truncate on the way out"*, which is what the three earlier refusals argued and what Step 7 answers
+at length. It was *"the harness won't hand me a file that size intact in the first place"* — a claim
+about **reading** `index.html`, before `show_widget` is reached at all. Step 7's entire argument is
+about the output side, so the run broke a rule that genuinely did not cover it.
+
+Measured the same day against a 62-item fixture, and the claim substantially holds: `indent=1`
+published **174 KB over 2,834 lines**, past a default file read's 2,000, so the tail of the file was
+simply not visible in one read. The run's own arithmetic checked out too — the template is 55,118
+bytes before any data.
+
+**The fix is cosmetic and the effect is not.** Nothing reads that JSON by eye, so the indentation was
+buying nothing while costing the lines that mattered. `serialise()` — now a shared block in both
+publish scripts — emits one compact line per item: **886 lines, 161 KB**, longest line 1,780
+characters. Compacting to a *single* line is 63 bytes smaller again and puts 110 KB on one line,
+trading the line count for a line long enough to be truncated on its own; per item is bounded on both
+axes, which is why it is a join and not one `dumps`. `test_render_fits_one_read` pins both axes
+against a 62-item fixture in both plugins, and is mutation-tested — restoring `indent=1` fails the
+build at 3,013 lines.
+
+**Two things the run got wrong anyway, and one the repo had coming.**
+
+It **predicted** the wall from the byte count rather than observing a short read, which is the
+forbidden move relocated one stage earlier; the shared render-fidelity block now says what licenses a
+fallback (a read that actually came back short) and what does not. And it handed over the file as the
+deliverable, which Step 7 already names a failure of the step — while never rendering `widget.html`,
+the fallback the step specifies. That last one would not have saved it: measured, the slim build
+folds only two verdicts, so a deliberately even fixture came down just 174 KB → 129 KB and a real
+queue saves 0–12%. **The slim copy is not a size fallback and never was.**
+
+What the repo had coming: `publish_dashboard.py` shipped the sentence *"Past roughly 90 KB that stops
+being reliable and the render gets refused"* in a comment, for months, while `SKILL.md` twelve lines
+away called a claim of exactly that form a prediction written as a fact. A run reads both. **This is
+the Step 0 shape again — the authoritative-sounding refusal assembled out of the repo's own words** —
+and it is the third time. The comment is gone. Grep for invented thresholds after writing prose that
+forbids them; the prose does not police the assets.
+
+**A queue can hold several custom tools, and one of them went unchecked for as long as the plugin has
+existed.** Same run: 62 items across **two** custom tools — Internal Change Risk and Customer Change
+Request — and the second was **37 of the 62**, unknown to the config, reviewed against the first
+one's fields. Three defects behind it, all now fixed:
+
+- **`config.icrToolId` was singular**, and `recUrl()` built every `icr` link from it. A tool id that
+  is wrong does not 404 — it resolves to a real page in the wrong tool, indistinguishable from the
+  right one. **Seventh instance of the shape these notes keep recording**, and the second where the
+  wrong-but-valid identifier is the whole danger.
+- **`costFields` was one flat mapping** for all custom tools. The two tools' field sets are
+  *different, not renamed* (ROM Cost and Approved Customer Cost against Cost: Compass Accepted and
+  Cost: Vendor Proposed), so checks 1, 2 and 4 read fields that do not exist there. And the by-label
+  rule earned its keep from the other direction: `custom_field_522888` on the second tool is
+  **Duration in Weeks**. Carried across as a cost, a `52` becomes `$52` and the check ties on
+  fiction.
+- **`config.icrSubtype` was written by setup and read by nothing** — one occurrence in the whole
+  repo, from the day it shipped. It is the field that names which tool the config describes, so it is
+  precisely what would have caught this, and *"a declared field that no step reads is worse than no
+  field"* was already written down. Worse than absent: it reads as coverage.
+
+`config.customTools` is now keyed by the queue's `item_subtype`, carrying that tool's id and its own
+cost-field mapping; **Step 1 reconciles the queue's subtypes against the config's keys on every run**,
+because the run a new tool first appears in is the run that has to notice. `icrToolId` survives as the
+link floor for rows logged before subtypes existed, and the back-fill restructures an old config in
+place.
+
+**The fail-closed here is deliberately narrower than the CCO's, and the difference is the rule.** An
+unmapped subtype loses its record link and cannot be `clear` — but **keeps its response buttons**. A
+commitment's missing `wfType` risks the *click* landing on nothing, so the buttons must go; an
+unmapped subtype risks only the *reading*, since the gate is per item and `GenericToolItem` is the
+workflow type for every custom tool. Stripping buttons would have cost the user 37 live items to fix
+a link. `test_custom_tool_subtype` pins both halves.
+
+**This is Procore's fourth item type one level down**, and NetSuite's purchase-order gap one plugin
+over: a discriminator the review half knew (`item_subtype` is on every queue row) that the config half
+never compared itself to. When a queue turns out to be wider than the config, ask what field already
+carries the distinction — it is usually already in the payload.
+
+**Three smaller things from the same run.**
+
+**A dehydrated OneDrive file is unreadable *and* unwritable, and rename-over is what works.** Every
+pre-existing file in the workspace folder was a cloud-only placeholder returning `EINVAL` on open,
+while writing a new name and renaming it over the placeholder succeeded — the opposite way round from
+what Step 0's overwrite-in-place paragraph expects. The 2026-08-28 rewrite of that rule as a
+**property** rather than a list of mechanisms is what made this resolvable without contradicting
+itself: a write that lands on the destination and leaves nothing beside it satisfies the rule whatever
+sequence got it there, and what stays forbidden is a file staged *to move bytes*. Had the rule still
+been the mechanism list (*"no write-then-move"*), the only working write on that mount would have been
+against the rules.
+
+**`python3 publish_dashboard.py` can leave a `__pycache__` in a folder that refuses deletes.** Both
+skills say `python3 -B` now. It is the one file in that folder no step names and nobody chose, so the
+fix is to never create it — the stray-file rule broken by the tooling rather than by a step.
+
+**A cloud-sync conflict copy of the state file is a third state, and it had no rule.** A
+machine-suffixed copy carried **newer `config`** than the canonical file, including a setting the user
+had asked for, and the run merged the two. It is neither a foreign record to quarantine nor the
+canonical file. Both skills now say: canonical for `items` and `actions` and the only file written;
+adopt `config` keys it lacks and say so; **never merge `items`** (a stale verdict returning looks like
+a fresh one) and **never `actions`** (they record what was clicked and must not gain an entry nobody
+observed). The copy is left in place and named once — the sync client made it, so it is not a stray
+and not the user's chore.
+
+**Credit where it is due, because it bears on how much to trust the rest.** The same run cross-checked
+the gate against the live UI before believing it, clicked nothing, named the error that refused each
+write, reported the stale template rather than working around it, and reported its own divergence from
+Step 7 instead of presenting the file as the deliverable. The 55 KB template floor, the EINVAL, the
+second custom tool and the Duration-in-Weeks field are all findings this repo could not have produced
+on its own. A run can be wrong about one thing and be the reason four others got fixed.
 
 **NetSuite runs pdf.js in-page, so neither skill downloads attachments now.**
 Tested live 2026-08-13 against bill 2532506 before any file was changed, which is

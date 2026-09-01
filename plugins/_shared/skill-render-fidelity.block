@@ -10,3 +10,15 @@ path, so the HTML never travelled through a model response; a widget takes the c
 which puts the layout through the tool call. If a rendered dashboard is missing a card, a control
 or a colour, suspect this before suspecting the template.
 
+**Reading the file is part of the render, and it is where this failed on 2026-09-01.** A run
+declined a 62-item dashboard saying the file could not be handed over intact — not a claim about
+`show_widget`, a claim about the read before it, and the rule above had nothing to say about that
+half. So: **read the whole file, and if the read comes back short, read the rest by offset and
+continue** — a file arriving in two reads is still passed byte for byte, and concatenating your own
+reads is not retyping. The publish script now emits the data one compact line per item for exactly
+this reason, which brought that same dashboard from 2,834 lines to 886.
+
+**A byte count is not an observed truncation.** *"The harness will not hand me a file that size
+intact"* predicted from the size, before reading, is the same move as predicting the render will not
+fit — the thing this step already forbids, arriving one stage earlier. What licenses a fallback is a
+read that actually came back short, or the red banner. Nothing else.

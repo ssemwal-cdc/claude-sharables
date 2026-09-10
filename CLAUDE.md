@@ -1590,6 +1590,31 @@ folder.** A list of the forms a mistake has taken is not a rule — the next ins
 form the list does not name, and a run checking itself against the list passes. State what may
 exist, not what may not.
 
+**A permission rewritten as a bolded absolute with the permission demoted underneath it stops
+being a permission.** Reported 2026-09-10: a Procore run reached the sign-in screen, cited a
+*"hard constraint"* that appears nowhere in `SKILL.md`, reviewed nothing, and said the next
+scheduled window would retry. Nothing about the login behaviour had changed — the prose had, in
+`6df1570`. A plain instruction (*"Procore login is email + Continue … `find` the email field, set
+it, click Continue"*) became a bolded *do not touch the login form at all* plus an appeal to the
+onboarding sheet's promise at full generality (*"never logs in for you"*), with the permitted step
+following as *"The only case this covers is…"*. Same permission, opposite reading: top-down, the
+prohibition lands first and the carve-out reads as grudging. **Fourth instance of the Step 0
+shape, third where the refusal was assembled out of this repo's own words.** The rung is three
+named outcomes now — `authenticated`, `email-only`, `wall` — decided on what is on screen, with
+the email step stated as permitted rather than as an exception.
+
+**The half worth more is not about wording.** *"A hand-off to the user, never a retry"* named a
+category and never said what the action is — the `_to_delete/` shape one rung along — so the run
+improvised the one recovery that cannot work. An expired session does not heal on its own, so
+every window until someone signs in fails identically, and a report promising a retry tells the
+user their queue is being handled when it is not. Step 0 now specifies the hand-off as an action
+and forbids that sentence by name, with its reason attached. **And the two surfaces disagreed,
+which is what gave the misreading something to cite**: the sheet promised *never logs in for you*
+while `SKILL.md` permitted typing an email — so the sheet now says what is true (it never types
+your password, it fills an email-only SSO screen, it stops at a password box, MFA or a CAPTCHA).
+Where two files describe one behaviour to two audiences, a contradiction is a defect in both.
+`test_login_states()` pins every clause; mutation-tested three ways. Full account in `prose.md`.
+
 **Procore's sticky bar carries only what you need in the second before clicking.** The
 stale-snapshot warning and the Stale-safe explainer moved below it into `#barnote`,
 because inside the bar they made it 249px — over a third of a 700px viewport. Both

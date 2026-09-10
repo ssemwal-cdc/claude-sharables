@@ -45,6 +45,10 @@ Covered:
                            axes: under 2,000 lines and no single very long line. Rendering
                            means reproducing the file through a tool call, so a file that
                            cannot be read cannot be rendered at all.
+ 14. Login states       - Procore's authentication rung keeps authenticated / email-only /
+                           wall distinct, states the email step as permitted rather than as
+                           an exception under a ban, and forbids reporting that a later
+                           scheduled window will retry an expired session.
  11. Commitment kind    - a `com` item without a wfType is demoted to `ungated`
                            rather than defaulting to one of the two commitment
                            collections. Both are valid workflowable types, so the
@@ -536,6 +540,58 @@ def test_step0_write_states():
               % label, "not a workaround that leaves something behind" in step0)
 
 
+def test_login_states():
+    """A run reached the Procore sign-in screen, cited a "hard constraint" that appears
+    nowhere in SKILL.md, reviewed nothing, and reported that the next scheduled window
+    would retry (reported 2026-09-10). Two defects, both in the prose rather than in the
+    behaviour.
+
+    The rung had stated the sheet's never-types-your-password promise as a bolded absolute
+    and demoted the permitted email-plus-Continue step to a subordinate clause underneath
+    it, so the narrow permission became unreachable and the refusal was assembled out of
+    the skill's own words - the Step 0 shape again, one rung along. And "a hand-off to the
+    user, never a retry" named a category without ever saying what the action is, so the
+    run improvised the one recovery that cannot work: an expired session does not heal on
+    its own, so every window until someone signs in fails identically.
+
+    These assertions live here so neither half can quietly leave the prompt again."""
+    txt = open(os.path.join(PC, "SKILL.md"), encoding="utf-8").read()
+    # The authentication rung sits in Step 0, alongside first-run setup - not in Step 1,
+    # which builds the queue once a session already exists.
+    step1 = txt.split("## Step 0")[1].split("## Step 1")[0] if "## Step 0" in txt else ""
+    check("procore: Step 0 is where authentication is specified", bool(step1))
+
+    # The three outcomes, each named. `email-only` is the one that became unreachable.
+    for state in ("authenticated", "email-only", "wall"):
+        check("procore: Step 0 names the `%s` outcome" % state, "`%s`" % state in step1)
+
+    # The email step is a permission, not an exception grudgingly carved out of a ban.
+    check("procore: the email step is stated as permitted",
+          "This step is permitted, not an exception" in step1)
+    # A password box makes it a `wall` even when an email field sits beside it - the run
+    # that failed described the screen as an "email/password form".
+    check("procore: a password box decides `wall` regardless of an email field",
+          "whether or not an email field sits beside it" in step1)
+
+    # The hand-off has to be an action with a stated shape, not a category.
+    check("procore: a hand-off is named as an action, not the end of the run",
+          "A hand-off is an action, not the end of the run" in step1)
+    check("procore: the unwatched case is answered rather than left to improvisation",
+          "a scheduled window" in step1)
+
+    # The recovery the run invented, forbidden by name.
+    check("procore: claiming a later window will retry is forbidden",
+          "never report that a later window will retry" in step1)
+    check("procore: and the reason is stated, not just the prohibition",
+          "does not heal on its own" in step1)
+
+    # The misreading itself, named in the file the run actually reads.
+    check("procore: the sheet's promise is scoped to the password",
+          "never types your password" in step1)
+    check("procore: the defect is recorded where the running skill can see it",
+          "hard constraint" in step1)
+
+
 # ------------------------------------------------------- 8. PO identity rules
 def test_dashboard_view():
     """The toolbar had no coverage at all, and the default sort is the one setting every
@@ -920,6 +976,7 @@ def main():
     test_render_fits_one_read()
     test_template_version()
     test_step0_write_states()
+    test_login_states()
     test_dashboard_view()
     test_po_identity_rules()
     print()

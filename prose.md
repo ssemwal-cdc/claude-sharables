@@ -1269,3 +1269,62 @@ wider than the viewport, no console or page errors, and the nav rail correctly a
 or hierarchy, and `CLAUDE.md`'s rule that anything genuinely visual has to be eyeballed by a person
 still stands. Two dead tokens turned up on the way — `--accent-soft` and `--danger` are defined in
 both themes and referenced nowhere — left alone as harmless.
+
+## A run banned itself out of the skill's own words, again
+
+Reported 2026-09-10. A Procore run reached the sign-in screen and returned:
+
+> Procore session expired — the Open Items tool redirected straight to the Procore login
+> screen (email/password form), not authenticated. Per the hard constraint, I did not
+> attempt to log in and did not review anything. `lastCompletedRun` was left unchanged so
+> the next scheduled window will retry.
+
+Nothing about the plugin's login behaviour had changed. **The prose had.** Compare the rung
+before `6df1570` with the rung after it:
+
+> Procore login is email + Continue, then SSO with no password — `find` the email field,
+> set it with `form_input`, click **Continue**. Anything beyond that (password, MFA,
+> CAPTCHA) is a hand-off to the user, not a retry.
+
+> **If Procore is already authenticated, do not touch the login form at all** — the
+> teammate-facing sheet promises the plugin never logs in for you, and that promise is the
+> correct one. The only case this covers is an email-plus-Continue screen …
+
+Same permission, opposite reading. The rewrite led with a **bolded absolute** and an appeal
+to an outside promise stated at full generality (*"never logs in for you"*), then demoted the
+permitted step to a subordinate clause beginning *"The only case this covers"*. A run that
+reads top-down meets the prohibition first and the carve-out second, and the carve-out reads
+as a grudging exception to a rule rather than as the instruction it actually is. The "hard
+constraint" the run cited **appears nowhere in the file** — it is the shape of that sentence,
+quoted back as though it were a rule.
+
+**This is the Step 0 shape for the fourth time**, and the third where the refusal was
+assembled out of the repo's own words: the workspace-write announcement built from Step 0's
+own cause list, the four render refusals built from the *do not trust this tool's success
+message* note, the invented 90 KB ceiling that `publish_dashboard.py` shipped in a comment.
+The rung is three named outcomes now — `authenticated`, `email-only`, `wall` — decided on
+what is on screen, with the email step stated as **permitted, not an exception**.
+
+**The second half is the one worth more, because it is not about wording.** *"A hand-off to
+the user, never a retry"* named a category and never said what the action is — the
+`_to_delete/` and `log.gz.b64` shape one rung along, a prohibition with no stated
+alternative. So the run improvised, and picked the one recovery that cannot work: *"the next
+scheduled window will retry."* An expired session does not heal on its own, so every window
+until someone signs in fails identically, and a report promising a retry tells the user their
+queue is being handled when it is not. That is worse than silence. Step 0 now specifies the
+hand-off as an action (say it, name the field that made it a `wall`, ask them to sign in, then
+carry on **in the same run**), answers the unwatched case explicitly, and forbids the retry
+sentence by name with its reason attached.
+
+**One thing the run may have got right, and the fix keeps it right.** It described the screen
+as an *"email/password form"*. If a password box really was on it, `wall` was the correct call
+and only the wording and the recovery were wrong — so the table decides on the password box
+regardless of an email field beside it, rather than on whether an email field is present.
+
+**The two surfaces also disagreed, which is what gave the misreading something to cite.**
+`docs/onboarding.html` promised *"It never logs in for you"* while `SKILL.md` permitted typing
+an email and pressing Continue. Both were shipped, and a run resolving the contradiction picks
+the louder one. The sheet now says what is actually true — it never types your password, it
+will fill in an email-only SSO screen, and it stops at a password box, MFA or a CAPTCHA.
+**Where two files describe one behaviour to two audiences, a contradiction is a defect in
+both.** `test_login_states()` pins every clause above.

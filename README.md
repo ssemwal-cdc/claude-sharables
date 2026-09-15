@@ -100,7 +100,7 @@ session start.
 | Plugin | Version | What it does | Needs |
 |---|---|---|---|
 | `netsuite-approval-review` | v25 | Reviews the bills, purchase orders and change orders in your NetSuite approval queue. Publishes a verdict per item to a live dashboard. Lets you approve or reject from it. | Claude in Chrome, signed in to NetSuite. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. The NetSuite MCP connector is optional. It adds bulk queries and the PO cross-check. |
-| `procore-open-items-review` | v27 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Lets you respond from a dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
+| `procore-open-items-review` | v28 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Lets you respond from a dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
 
 Purchase orders are reviewed. Their execute route has never fired against a
 real purchase order. See G16, PO execute route

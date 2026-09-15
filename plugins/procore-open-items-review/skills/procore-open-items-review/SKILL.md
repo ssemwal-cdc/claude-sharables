@@ -523,7 +523,7 @@ cd "<workspace>/Procore Open Items" && python3 -B publish_dashboard.py
 - **Reading the file is part of the render.** Read the whole file. When the read comes back short, read the rest by offset and continue. A file arriving in two reads is still passed byte for byte, and concatenating your own reads is not retyping. Measured 2026-09-01: the publish script's one-compact-line-per-item output brought a 62-item dashboard from 2,834 lines to 886.
 - **A byte count is not an observed truncation.** Predicting from the size that the harness will not hand the file over intact is the move this step forbids, one stage earlier. What licenses a fallback is a read that came back short, or the red banner. Nothing else.
 <!--__END_SHARED:skill-render-fidelity__-->
-**The banner is designed, not yet observed firing.** Believe it when it fires. Report the byte count beside it.
+
 - The script writes `index.html` beside the state file, keeps the last seven renders in `renders/<weekday>.html`, and prints the headline line.
 - Diff today against the last good render to see what changed. **Re-render from `index.html` rather than re-running the review.**
 - **Do not write a cleanup step for `renders/`.** The slots are overwritten in place for that reason.

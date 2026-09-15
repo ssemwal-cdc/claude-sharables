@@ -1,0 +1,33 @@
+---
+id: pending
+slug: po-takes-bill-route
+kind: decision
+status: settled
+date: 2026-09-01
+---
+# Purchase orders take bill route
+
+**Rule.** Action a purchase order by the bill route. Log a lost note when Approve With Notes is absent.
+
+**Outcome protected.** A reviewed purchase order can be approved in the same run.
+
+**Argument.**
+
+Purchase orders take the bill route on the strength of the fields, not the resemblance.
+
+A pending purchase order carries the approval status and the three approver custom fields that the pre-click gate and the post-click verification read. So the route transfers unchanged.
+
+The button set is a separate question and is still unread. Nobody has looked at the approval buttons of a purchase order.
+
+So the step reads the labels, as it always did, and now says what happens when Approve With Notes is not among them.
+
+The affirmative button is still clicked, and the note is logged as lost. It is never written somewhere else.
+
+That is the existing frozen-tab fallback rule reused, not a new invention.
+
+**Evidence.**
+
+- The fields were confirmed live 2026-09-01 on a pending purchase order.
+- The button set is `unmeasured`. See G‹po-execute-route-unfired›, the purchase order route is unfired.
+
+**Checks.** `check_execute_type_coverage()` in `scripts/shared_blocks.py`.

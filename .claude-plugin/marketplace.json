@@ -13,7 +13,7 @@
         "url": "https://github.com/ssemwal-cdc/claude-sharables.git",
         "path": "plugins/netsuite-approval-review"
       },
-      "description": "Double-checks the NetSuite bills and change orders in your approval queue and publishes findings to a live dashboard you can approve or reject from."
+      "description": "Double-checks the NetSuite bills, purchase orders and change orders in your approval queue and publishes findings to a live dashboard you can approve or reject from."
     },
     {
       "name": "procore-open-items-review",

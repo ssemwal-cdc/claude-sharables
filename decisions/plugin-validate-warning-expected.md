@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D83
 slug: plugin-validate-warning-expected
 kind: decision
 status: settled
@@ -13,7 +13,7 @@ date: 2026-09-15
 
 **Argument.**
 
-The warning is correct here. D‹no-version-field›, no version field, bans the field the warning asks for.
+The warning is correct here. D9, no version field, bans the field the warning asks for.
 
 The instruction used to read `Ignore it`. That told a reader to discard a command output, which the global mandate forbids.
 

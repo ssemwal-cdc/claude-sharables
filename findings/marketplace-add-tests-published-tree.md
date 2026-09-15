@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F78
 slug: marketplace-add-tests-published-tree
 kind: finding
 status: observed
@@ -21,7 +21,7 @@ So the sequence answers whether the published release installs. It never answers
 
 The failure is silent and inverted. The route prints `Successfully installed` either way, so a broken change reads as verified.
 
-The pre-push check is F‹plugin-dir-loads-working-tree›, plugin-dir loads the working tree.
+The pre-push check is F81, plugin-dir loads the working tree.
 
 **Evidence.**
 

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F57
 slug: disabled-button-three-states
 kind: finding
 status: observed
@@ -22,6 +22,6 @@ At the blocked moment the loudest control on offer was the one that discards eve
 **Evidence.**
 
 - Landed 2026-08-24.
-- The header mirror change is in D‹execute-bar-always-rendered›, render the execute bar always.
+- The header mirror change is in D37, render the execute bar always.
 
 **Checks.** `test_dashboard_view` in `scripts/test_skill_code.py`.

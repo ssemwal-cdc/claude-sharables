@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D11
 slug: plugin-json-only-in-claude-plugin
 kind: decision
 status: settled

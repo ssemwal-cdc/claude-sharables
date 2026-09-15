@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D6
 slug: no-plugin-acts-on-own-judgement
 kind: decision
 status: settled
@@ -19,7 +19,7 @@ Both only approve or respond on an explicit per-item instruction.
 
 Preserve that in anything ported in.
 
-The instruction arrives through the composed execute message. See D‹execute-message-authorises-only›, the message authorises only.
+The instruction arrives through the composed execute message. See D48, the message authorises only.
 
 **Evidence.**
 

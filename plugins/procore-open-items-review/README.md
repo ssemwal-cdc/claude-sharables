@@ -77,7 +77,7 @@ item replaces it verbatim. Rejection reasons are never defaulted, and the
 plugin stops and asks if one is missing.
 
 A response recorded with no comment reads as though you clicked it by hand. See
-D‹approved-by-claude-comment›, Approved by Claude comment.
+D20, Approved by Claude comment.
 
 ## The dashboard
 
@@ -97,7 +97,7 @@ from the dashboard itself. The responses run from that message, and each item is
 re-verified as still yours to action immediately before it is clicked.
 
 The controls and the floating header were measured in a browser. Nobody has
-seen them in the widget host. See G‹dashboard-widget-host-unseen›, widget host
+seen them in the widget host. See G12, widget host
 unseen.
 
 ## Requirements
@@ -105,7 +105,7 @@ unseen.
 - **Claude in Chrome, signed in to Procore.** That is the requirement.
 - **A connected workspace folder is recommended, not required.** It holds the
   review state between runs. A run without the folder works. See
-  F‹folderless-run-works›, folderless runs work.
+  F76, folderless runs work.
 - **No connector.** Procore has no MCP connector, so the dashboard is a
   snapshot with a prominent re-check control rather than a live view. It says
   so plainly and ages its own timestamp.
@@ -144,7 +144,7 @@ batch instead. Success is confirmed by re-querying the API, never by the click
 appearing to work.
 
 This execute path has never been observed on real data. See
-G‹no-end-to-end-run›, no end-to-end run.
+G4, no end-to-end run.
 
 ## Versioning
 
@@ -156,7 +156,7 @@ table does not ship with the plugin, so compare there, never against an
 installed file.
 
 `plugin.json` carries no `version` field. Do not add one, and do not suggest
-adding one. See D‹no-version-field›, no version field.
+adding one. See D9, no version field.
 
 ## Known limits
 
@@ -166,10 +166,10 @@ adding one. See D‹no-version-field›, no version field.
   has its own id, carried on the package payload at `line_items[].holder.id`.
   Change orders therefore gate and respond like anything else. It only means
   the package is fetched before the gate runs rather than after it. Observed
-  2026-08-14 against 5 packages. See F‹cco-holder-id-route›, CCO holder id
+  2026-08-14 against 5 packages. See F18, CCO holder id
   route.
 - **The gate fan-out has not been observed against real Procore.** See
-  G‹procore-gate-fanout›, gate fan-out unobserved.
+  G9, gate fan-out unobserved.
 - If the change order id cannot be resolved, the item is shown with its
   arithmetic verified, no response buttons, and a button to go resolve the
   gate. The same applies when the package spans several change orders, because

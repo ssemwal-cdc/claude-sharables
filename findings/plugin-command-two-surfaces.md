@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F64
 slug: plugin-command-two-surfaces
 kind: finding
 status: observed
@@ -20,6 +20,6 @@ A sheet that says terminal and then shows the slash command is wrong.
 **Evidence.**
 
 - Corrected 2026-08-24.
-- The sheet now carries neither. See D‹sheet-has-no-terminal-commands›, no terminal commands in sheet.
+- The sheet now carries neither. See D59, no terminal commands in sheet.
 
 **Checks.** none

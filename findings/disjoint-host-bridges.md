@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F3
 slug: disjoint-host-bridges
 kind: finding
 status: observed
@@ -24,6 +24,6 @@ Zero overlap. So an artifact cannot send a message to chat, and a button that tr
 **Evidence.**
 
 - Probed live from inside each surface 2026-08-11.
-- The consequence is D‹widget-not-artifact›, render dashboards with show_widget.
+- The consequence is D16, render dashboards with show_widget.
 
 **Checks.** none

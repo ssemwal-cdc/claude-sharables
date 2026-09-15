@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D52
 slug: never-delete-workspace-folder
 kind: decision
 status: settled
@@ -24,6 +24,6 @@ The narrow version, deleting the two asset files and keeping the log, only helps
 **Evidence.**
 
 - Recorded 2026-08-24.
-- The reachability limit is F‹cowork-shell-no-plugin-dir›, the Cowork shell cannot see the plugin.
+- The reachability limit is F28, the Cowork shell cannot see the plugin.
 
 **Checks.** none

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F66
 slug: restart-computer-not-app
 kind: finding
 status: observed

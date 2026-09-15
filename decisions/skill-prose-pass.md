@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D85
 slug: skill-prose-pass
 kind: decision
 status: open
@@ -19,7 +19,7 @@ Second, whether each prompt splits into a router plus a `references/` folder.
 A prompt is read by a model on every run, not by a maintainer looking something up.
 So the prose form and engineering rules apply to it.
 The chat output shape does not, because skills run in teammate sessions.
-See D‹skill-spine-plus-references›, never move safety prose into an on-demand file.
+See D62, never move safety prose into an on-demand file.
 
 **Options.**
 

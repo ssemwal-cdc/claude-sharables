@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G5
 slug: small-unknowns
 kind: gap
 status: unobserved
@@ -40,6 +40,6 @@ Do not cite any of them as established.
 `python3 scripts/test_skill_code.py` covers the logic against mocks.
 It cannot cover these gaps, because they are about real systems.
 The shell's inability to see `${CLAUDE_PLUGIN_ROOT}` was observed 2026-08-15 in a Cowork run.
-G‹netsuite-notes-page›, the notes page nobody has seen, carries the fourth unknown's consequence.
+G3, the notes page nobody has seen, carries the fourth unknown's consequence.
 
 **Checks.** none.

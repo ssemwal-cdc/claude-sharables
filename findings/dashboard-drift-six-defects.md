@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F56
 slug: dashboard-drift-six-defects
 kind: finding
 status: settled
@@ -34,7 +34,7 @@ That is why this is six defects and not seven.
 `me` and `tool` were injected and read by the page and never used.
 Only `account` is used.
 
-**The drift check came out of this.** See D‹shared-blocks›, canonical copy plus a check.
+**The drift check came out of this.** See D58, canonical copy plus a check.
 What is established by construction and by test: adding the markers changed no content.
 The check catches a one-sided edit, a reworded comment, a missing canonical file and an orphaned one.
 Each failure names the file and the differing line.
@@ -45,7 +45,7 @@ What is not established: nobody has yet fixed a real shared bug by editing the c
 **The honest limit.** The `SKILL.md` duplication is mostly near-identical rather than identical.
 It is the same paragraph with the plugin's own name and workspace folder substituted.
 So the block mechanism can never cover most of that surface as written.
-See D‹extend-shared-blocks›, do not widen a block over near-identical prose.
+See D49, do not widen a block over near-identical prose.
 
 **What made this findable is the repo's own device.** Two independent sources said different things.
 Neither copy could detect its own miss.

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D81
 slug: device-usability-check
 kind: decision
 status: open
@@ -39,7 +39,7 @@ Do not commit the images, because a binary baseline rots and nothing reads it.
 `scripts/measure_float.js` covers one arrangement per dashboard today.
 Widths covered by a repeatable command today: zero.
 The onboarding sheet measured 5,926px tall on desktop and 9,191px on mobile, once, on 2026-08-28.
-F‹onboarding-copy-buttons›, measured at three widths in both schemes, is that one-off.
-G‹dashboard-widget-host-unseen›, fixtures never committed, is why a one-off measurement is not enough.
+F89, measured at three widths in both schemes, is that one-off.
+G12, fixtures never committed, is why a one-off measurement is not enough.
 
 **Checks.** `scripts/measure_float.js`, by hand, not in CI.

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D40
 slug: newest-first-default-sort
 kind: decision
 status: settled
@@ -26,9 +26,9 @@ Do not quietly restore the old default.
 **Evidence.**
 
 - Asked for 2026-08-20.
-- Shipping it needed a new view key. See D‹new-default-new-view-key›, a new default needs a new key.
-- The toolbar came from Procore. See F‹netsuite-view-controls-port›, NetSuite got the Procore toolbar.
-- Procore newest is a deadline proxy. See F‹procore-newest-is-deadline-proxy›, Procore newest is a proxy.
-- The ordering key must not be clamped. See F‹age-clamp-wrong-in-comparator›, never clamp an ordering key.
+- Shipping it needed a new view key. See D39, a new default needs a new key.
+- The toolbar came from Procore. See F40, NetSuite got the Procore toolbar.
+- Procore newest is a deadline proxy. See F44, Procore newest is a proxy.
+- The ordering key must not be clamped. See F41, never clamp an ordering key.
 
 **Checks.** `test_dashboard_view` in `scripts/test_skill_code.py`.

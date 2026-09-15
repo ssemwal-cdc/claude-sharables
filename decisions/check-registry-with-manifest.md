@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D66
 slug: check-registry-with-manifest
 kind: decision
 status: settled
@@ -32,6 +32,6 @@ Adding a check therefore takes two edits, the row and the manifest entry. That f
 **Evidence.**
 
 - Added 2026-08-26. Mutation-tested three ways on the day it landed. Dropping a row, inventing a capability and inventing a lens all fail.
-- The absence asymmetry inside it is D‹silent-connector-absence›, silence on an absent connector.
+- The absence asymmetry inside it is D69, silence on an absent connector.
 
 **Checks.** `check_check_registry()` in `scripts/shared_blocks.py`.

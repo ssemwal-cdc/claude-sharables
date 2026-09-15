@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D76
 slug: po-takes-bill-route
 kind: decision
 status: settled
@@ -28,6 +28,6 @@ That is the existing frozen-tab fallback rule reused, not a new invention.
 **Evidence.**
 
 - The fields were confirmed live 2026-09-01 on a pending purchase order.
-- The button set is `unmeasured`. See G‹po-execute-route-unfired›, the purchase order route is unfired.
+- The button set is `unmeasured`. See G16, the purchase order route is unfired.
 
 **Checks.** `check_execute_type_coverage()` in `scripts/shared_blocks.py`.

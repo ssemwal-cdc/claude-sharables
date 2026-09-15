@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G11
 slug: scheduled-identity-unconfirmed
 kind: gap
 status: unobserved

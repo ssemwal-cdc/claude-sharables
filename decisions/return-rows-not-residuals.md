@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D19
 slug: return-rows-not-residuals
 kind: decision
 status: settled

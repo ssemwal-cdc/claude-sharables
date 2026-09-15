@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F59
 slug: more-button-needs-clipping
 kind: finding
 status: observed

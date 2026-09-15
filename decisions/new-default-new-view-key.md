@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D39
 slug: new-default-new-view-key
 kind: decision
 status: settled
@@ -19,7 +19,7 @@ So shipping a new default under the old key reaches nobody who has ever touched 
 
 Both templates migrate the old key. Filters and search carry across, and only the sort resets.
 
-The marks-key rule is untouched and still absolute. See D‹never-rename-mark-keys›, never rename a marks key.
+The marks-key rule is untouched and still absolute. See D38, never rename a marks key.
 
 **Evidence.**
 

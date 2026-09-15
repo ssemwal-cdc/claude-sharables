@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F47
 slug: sticky-needs-taller-parent
 kind: finding
 status: observed
@@ -24,6 +24,6 @@ The same measurement is the only honest way to check the next one.
 **Evidence.**
 
 - Measured 2026-08-20 in a real browser.
-- The frame turned out not to scroll at all. See F‹widget-iframe-does-not-scroll›, the widget frame does not scroll.
+- The frame turned out not to scroll at all. See F82, the widget frame does not scroll.
 
 **Checks.** `test_dashboard_view` in `scripts/test_skill_code.py`.

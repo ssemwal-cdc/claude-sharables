@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D18
 slug: never-batch-click-checks
 kind: decision
 status: settled
@@ -26,6 +26,6 @@ Both were costed as small savings. Neither is worth the trade.
 **Evidence.**
 
 - Recorded 2026-08-13. The saving was costed as small. The figure is `unmeasured`.
-- The lag case is F‹connector-lag-verify-record›, verify the record not queue.
+- The lag case is F10, verify the record not queue.
 
 **Checks.** none

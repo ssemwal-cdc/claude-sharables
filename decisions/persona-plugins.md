@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D55
 slug: persona-plugins
 kind: decision
 status: abandoned
@@ -15,7 +15,7 @@ date: 2026-08-24
 One answer was a plugin per persona, plus a concierge plugin to route people to them.
 
 **Reason abandoned.** The work went into modularity inside the two existing plugins instead.
-See D‹check-packs-next-phase›, packs written from role research.
+See D65, packs written from role research.
 Nothing about the prerequisite test changed.
 A genuinely new prerequisite such as M365 or Teams is still a new plugin.
 Name that plugin for the prerequisite rather than for its first task.
@@ -39,7 +39,7 @@ interview and let one run be watched.
 Nothing here should be designed from imagination, by this repo's own standard.
 Second, whether a NetSuite-only supply-chain skill would be split out of the NetSuite bucket by the
 audience rule, or given to everyone.
-See D‹prerequisite-bucket›, a plugin is a prerequisite bucket.
+See D56, a plugin is a prerequisite bucket.
 
 **Evidence.** Declined 2026-08-24.
 The pre-decision write-up in `proposals/` was deleted rather than marked superseded.

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D10
 slug: one-marketplace-only
 kind: decision
 status: settled

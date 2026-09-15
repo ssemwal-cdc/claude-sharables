@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D21
 slug: blocked-marker-never-a-value
 kind: decision
 status: settled
@@ -21,7 +21,7 @@ Never read the marker as the field being empty. A redaction that reads as an emp
 
 **Evidence.**
 
-- Recorded 2026-08-14 from F‹output-filter-second-trigger›, the filter has a second trigger.
-- The first trigger is F‹pdf-rows-blocked-filter›, stub rows trip the filter.
+- Recorded 2026-08-14 from F23, the filter has a second trigger.
+- The first trigger is F15, stub rows trip the filter.
 
 **Checks.** none

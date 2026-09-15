@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F90
 slug: prohibition-list-let-a-stray-through
 kind: finding
 status: observed
@@ -29,6 +29,6 @@ State what may exist, not what may not.
 
 - Observed 2026-08-28. The stray was 6 KB.
 - The same shape produced the invented to-delete folder in 2026-08-27.
-- The property form is D‹no-stray-files-in-workspace›, no stray files in workspace.
+- The property form is D72, no stray files in workspace.
 
 **Checks.** `test_step0_write_states` in `scripts/test_skill_code.py`.

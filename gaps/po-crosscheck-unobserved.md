@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G7
 slug: po-crosscheck-unobserved
 kind: gap
 status: unobserved
@@ -23,7 +23,7 @@ A typed mismatch is demoted to a data-entry note.
 What is still unobserved: the corrected Step 5 has never run inside an actual review.
 The queries are live-verified, because every query in the fix was executed against production.
 The skill following those queries end to end has not been watched.
-Step 5 runs only in connector mode, so it inherits G‹no-end-to-end-run›, no watched run.
+Step 5 runs only in connector mode, so it inherits G4, no watched run.
 
 To clear it: run one connector-mode review over a queue with at least one disagreeing bill.
 Required outcome: the item is not flagged for PO coding.

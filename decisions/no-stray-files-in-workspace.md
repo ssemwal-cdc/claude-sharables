@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D72
 slug: no-stray-files-in-workspace
 kind: decision
 status: settled
@@ -21,7 +21,7 @@ The alternative is stated rather than implied. Write the destination file itself
 
 Where that genuinely cannot be done, the outcome is refused and it takes the one-line report.
 
-The reason the rule is a property and not a list is F‹prohibition-list-let-a-stray-through›, a list let a stray through.
+The reason the rule is a property and not a list is F90, a list let a stray through.
 
 A run once invented a to-delete folder and asked the user to empty it. That folder appears nowhere in this repo.
 
@@ -34,7 +34,7 @@ The mechanism behind the refused deletes was never established. The fix does not
 **Evidence.**
 
 - Stated as a property 2026-08-28. Stated as mechanisms 2026-08-27, which failed.
-- One workable write on a cloud mount is a rename over a placeholder. See F‹dehydrated-onedrive-rename-over›, a dehydrated file needs rename-over.
-- Python bytecode was one such stray. See F‹pycache-stray-file›, python bytecode left a stray.
+- One workable write on a cloud mount is a rename over a placeholder. See F92, a dehydrated file needs rename-over.
+- Python bytecode was one such stray. See F95, python bytecode left a stray.
 
 **Checks.** `test_step0_write_states` in `scripts/test_skill_code.py`, mutation-tested.

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D50
 slug: generated-bespoke-skill
 kind: decision
 status: abandoned
@@ -32,8 +32,8 @@ A skill that designed itself is judgment all the way down.
 It leaves no reviewable text a maintainer ever vetted.
 
 **Evidence.** Declined 2026-08-24.
-G‹po-crosscheck-unobserved›, the Step 5 fix, is the push that reached every installed copy.
-D‹no-version-field›, version resolves from the commit SHA, is why one push ships.
+G7, the Step 5 fix, is the push that reached every installed copy.
+D9, version resolves from the commit SHA, is why one push ships.
 The count of generated copies a fix would reach is zero, by construction.
 
 **Checks.** none.

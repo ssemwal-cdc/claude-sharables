@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D86
 slug: xlsx-pin-target
 kind: decision
 status: open

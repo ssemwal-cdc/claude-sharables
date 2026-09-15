@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F50
 slug: version-line-wording-set-by-run
 kind: finding
 status: observed
@@ -15,7 +15,7 @@ Asked which version it ran, the installed skill reported its line correctly.
 
 It then looked for the README table locally and found nothing, because a `git-subdir` install ships the plugin folder and never the repo root.
 
-It reported the staleness check as unrunnable and proposed adding a `version` field to `plugin.json`. That is the field D‹no-version-field›, no version field, bans.
+It reported the staleness check as unrunnable and proposed adding a `version` field to `plugin.json`. That is the field D9, no version field, bans.
 
 So the line now names GitHub as the only comparison point and rules the field out in place. Each plugin README carries the same note.
 

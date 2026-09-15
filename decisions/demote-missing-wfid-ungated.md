@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D30
 slug: demote-missing-wfid-ungated
 kind: decision
 status: settled
@@ -29,7 +29,7 @@ The workflow type is per item now, with the instance id beside it. The queue ite
 
 **Evidence.**
 
-- Recorded 2026-08-15 from F‹wrong-id-returns-200-empty›, a wrong id returns 200 empty.
-- Applied to commitments too. See F‹commitment-two-collections›, one kind covers two collections.
+- Recorded 2026-08-15 from F36, a wrong id returns 200 empty.
+- Applied to commitments too. See F88, one kind covers two collections.
 
 **Checks.** `scripts/test_skill_code.py` runs the ungated demotion, mutation-tested.

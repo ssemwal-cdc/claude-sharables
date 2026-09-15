@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D7
 slug: no-plugin-root
 kind: decision
 status: settled
@@ -13,9 +13,9 @@ date: 2026-08-11
 
 **Argument.**
 
-The key is documented and does not work. See F‹plugin-root-does-not-work›, pluginRoot does not work.
+The key is documented and does not work. See F6, pluginRoot does not work.
 
-Use a self-contained `git-subdir` source instead. See D‹git-subdir-sources›, use git-subdir sources.
+Use a self-contained `git-subdir` source instead. See D4, use git-subdir sources.
 
 **Evidence.**
 

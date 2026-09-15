@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D65
 slug: check-packs-next-phase
 kind: decision
 status: open
@@ -106,6 +106,6 @@ That row is never suppressed, never counted as noise, and never reaches the exec
 `pc.del-schedule-impact` reads `schedule_impact`, which Step 3 fetched and no check had ever read.
 A blank schedule-impact field means nobody filled it in.
 The 3x overcount this filter rule prevents once turned 136,369.02 into 409,107.06.
-D‹silent-connector-absence›, silence for a capability nobody can obtain, is the rule reused here.
+D69, silence for a capability nobody can obtain, is the rule reused here.
 
 **Checks.** `check_check_registry()` in `scripts/shared_blocks.py`, run by `scripts/validate.py`.

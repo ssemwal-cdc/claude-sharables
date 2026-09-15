@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G2
 slug: freeze-fallback-unfired
 kind: gap
 status: unobserved
@@ -33,6 +33,6 @@ Update 2026-08-15: the URL leg is live-confirmed on record 2534442.
 The freeze fallback as a whole has still never fired.
 One freeze was observed once, immediately after an Approve With Notes click.
 The renderer locked, the tab left the automation group, and the note was never typed.
-G‹netsuite-notes-page›, the notes page nobody has seen, is where that freeze happened.
+G3, the notes page nobody has seen, is where that freeze happened.
 
 **Checks.** none.

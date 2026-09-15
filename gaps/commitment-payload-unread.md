@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G14
 slug: commitment-payload-unread
 kind: gap
 status: unobserved

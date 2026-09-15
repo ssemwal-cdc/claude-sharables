@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D62
 slug: skill-spine-plus-references
 kind: decision
 status: open
@@ -23,7 +23,7 @@ The only defensible handling for Step 8 is an explicit mandatory read.
 Lazy loading Step 8 is not defensible.
 `scripts/test_skill_code.py` reads `SKILL.md` by path with no fallback.
 Re-point that script in the same commit as any split.
-See D‹skill-prose-pass›, which mandate rules bind the two prompts.
+See D85, which mandate rules bind the two prompts.
 
 **Options.**
 

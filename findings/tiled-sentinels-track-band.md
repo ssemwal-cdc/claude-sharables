@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F84
 slug: tiled-sentinels-track-band
 kind: finding
 status: observed
@@ -37,7 +37,7 @@ What floats is only what is worth having in the second before a click. That is t
 
 It is a visual duplicate, so it is hidden from assistive technology and removed from the tab order throughout. These are controls already in the page.
 
-The count on it follows the filter and the execute mirror does not. That is the same split as D‹bar-ignores-filter›, the execute bar ignores the filter.
+The count on it follows the filter and the execute mirror does not. That is the same split as D46, the execute bar ignores the filter.
 
 **Evidence.**
 

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F20
 slug: computer-only-visual-read
 kind: finding
 status: observed

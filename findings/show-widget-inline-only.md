@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F12
 slug: show-widget-inline-only
 kind: finding
 status: observed

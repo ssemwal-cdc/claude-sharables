@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F91
 slug: a-wrong-run-found-four-defects
 kind: finding
 status: observed
@@ -26,9 +26,9 @@ A run can be wrong about one thing and be the reason four others got fixed.
 **Evidence.**
 
 - Observed 2026-09-01. The four findings are the 55 KB template floor, the cloud-placeholder open error, the second custom tool, and the duration field read as a cost.
-- The rule it broke is D‹render-first-believe-guard›, render first, believe the guard.
-- The template floor is in F‹render-read-wall-serialise›, read-side wall, fixed by serialise.
-- The placeholder error is in F‹dehydrated-onedrive-rename-over›, a dehydrated file needs rename-over.
-- The tool and field findings are in F‹two-custom-tools-unchecked›, second custom tool unchecked.
+- The rule it broke is D77, render first, believe the guard.
+- The template floor is in F96, read-side wall, fixed by serialise.
+- The placeholder error is in F92, a dehydrated file needs rename-over.
+- The tool and field findings are in F97, second custom tool unchecked.
 
 **Checks.** none

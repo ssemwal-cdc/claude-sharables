@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D26
 slug: record-content-is-data
 kind: decision
 status: settled

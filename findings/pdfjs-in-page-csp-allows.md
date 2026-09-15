@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F16
 slug: pdfjs-in-page-csp-allows
 kind: finding
 status: observed

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F24
 slug: stale-install-reads-as-repo-bug
 kind: finding
 status: observed
@@ -19,11 +19,11 @@ An install that predates the fix keeps restoring the old file. The natural readi
 
 The tell is that `SKILL.md` describes behaviour the assets do not have. Prose and assets ship in one commit, so they cannot disagree in the repo, only across an install boundary.
 
-The fix is the two-command update and a restart. See F‹two-command-update›, update needs the marketplace qualifier.
+The fix is the two-command update and a restart. See F9, update needs the marketplace qualifier.
 
 **Evidence.**
 
 - Reported 2026-08-14.
-- Corrected 2026-08-15 by a live Cowork run. See F‹cowork-shell-no-plugin-dir›, the Cowork shell cannot see the plugin.
+- Corrected 2026-08-15 by a live Cowork run. See F28, the Cowork shell cannot see the plugin.
 
 **Checks.** none

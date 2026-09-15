@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F93
 slug: invented-threshold-in-comment
 kind: finding
 status: observed
@@ -24,6 +24,6 @@ The comment is gone. Grep for invented thresholds after writing prose that forbi
 **Evidence.**
 
 - Found 2026-09-01. The 90 KB figure was never measured and appears in no observation.
-- The refusal it fed is F‹render-read-wall-serialise›, the read side had a real wall.
+- The refusal it fed is F96, the read side had a real wall.
 
 **Checks.** none. No script greps assets for invented thresholds.

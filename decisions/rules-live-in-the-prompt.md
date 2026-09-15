@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D71
 slug: rules-live-in-the-prompt
 kind: decision
 status: settled
@@ -23,7 +23,7 @@ A check then fails the build if the rule stops being stated.
 
 **Evidence.**
 
-- Recorded 2026-08-27 from F‹write-states-kept-refused-not-attempted›, three write states.
-- The same shape recurred with the login rung. See F‹run-self-banned-login›, a run banned itself from login.
+- Recorded 2026-08-27 from F86, three write states.
+- The same shape recurred with the login rung. See F98, a run banned itself from login.
 
 **Checks.** `test_step0_write_states` and `test_login_states` in `scripts/test_skill_code.py`.

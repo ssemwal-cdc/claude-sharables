@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D70
 slug: measure-position-in-browser
 kind: decision
 status: settled
@@ -27,6 +27,6 @@ Invoke it with the global module path exported, then node and the script path.
 
 **Evidence.**
 
-- Added 2026-08-27. The two wrong pins are F‹sticky-needs-taller-parent›, sticky resolves against its parent, and F‹widget-iframe-does-not-scroll›, the widget frame does not scroll.
+- Added 2026-08-27. The two wrong pins are F47, sticky resolves against its parent, and F82, the widget frame does not scroll.
 
 **Checks.** `test_dashboard_view` pins the mechanism. The position itself is checked by hand only.

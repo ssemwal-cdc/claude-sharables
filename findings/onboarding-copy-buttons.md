@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F89
 slug: onboarding-copy-buttons
 kind: finding
 status: settled

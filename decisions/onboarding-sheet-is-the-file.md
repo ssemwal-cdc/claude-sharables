@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D33
 slug: onboarding-sheet-is-the-file
 kind: decision
 status: settled
@@ -25,15 +25,15 @@ So it can no longer be published as an artifact as is. Handing the file to a ren
 
 A redirect file makes the bare URL work, because Pages has no directory index and would otherwise return a 404 on the short link.
 
-The sheet carries one small script and that is the only one. See F‹onboarding-copy-buttons›, copy buttons built at run time.
+The sheet carries one small script and that is the only one. See F89, copy buttons built at run time.
 
 The sheet is written click by click for someone who has never touched any of this. Every step ends in a done-when check, which is the device that makes it followable. Keep that if you edit it.
 
 **Evidence.**
 
 - Moved to Pages in 2026-08. The theme blocks were removed 2026-08-17.
-- The live page cannot be fetched from the sandbox. See F‹github-io-egress-blocked›, the live page is unfetchable.
-- Four claimed tests over the sheet did not exist. See F‹onboarding-claims-unchecked›, four claimed tests were absent.
-- The time and posture wording is settled. See F‹sheet-time-and-posture›, say how long and where.
+- The live page cannot be fetched from the sandbox. See F37, the live page is unfetchable.
+- Four claimed tests over the sheet did not exist. See F63, four claimed tests were absent.
+- The time and posture wording is settled. See F67, say how long and where.
 
 **Checks.** `check_onboarding_page()` in `scripts/shared_blocks.py`.

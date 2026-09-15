@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F22
 slug: javascript-tool-denied-classifier
 kind: finding
 status: observed
@@ -30,6 +30,6 @@ Do not generalise from a diagnostic to the workflow. The probe that was denied f
 **Evidence.**
 
 - Hit 2026-08-14 while running the CDN probe. The call was blocked before it reached the page, with the tab already open and correct.
-- The cause was environmental. See D‹auto-mode-not-skip-all›, auto mode and never skip-all.
+- The cause was environmental. See D29, auto mode and never skip-all.
 
 **Checks.** none

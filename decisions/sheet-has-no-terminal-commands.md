@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D59
 slug: sheet-has-no-terminal-commands
 kind: decision
 status: settled
@@ -34,7 +34,7 @@ Do not restore consistency by putting the commands back in the sheet. If a teamm
 **Evidence.**
 
 - Deleted 2026-08-24. Three rows and two command blocks came out.
-- The commands live in F‹two-command-update›, update needs the marketplace qualifier.
-- The two commands are different things. See F‹plugin-command-two-surfaces›, two plugin commands exist.
+- The commands live in F9, update needs the marketplace qualifier.
+- The two commands are different things. See F64, two plugin commands exist.
 
 **Checks.** none

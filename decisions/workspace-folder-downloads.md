@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D64
 slug: workspace-folder-downloads
 kind: decision
 status: settled
@@ -24,6 +24,6 @@ The onboarding sheet used to say to point it at any folder. That was two defects
 **Evidence.**
 
 - Changed 2026-08-24 in `docs/onboarding.html`.
-- The write to that folder works and the folder appears in Downloads, confirmed 2026-08-27. See F‹workspace-write-works›, the workspace write works.
+- The write to that folder works and the folder appears in Downloads, confirmed 2026-08-27. See F85, the workspace write works.
 
 **Checks.** none

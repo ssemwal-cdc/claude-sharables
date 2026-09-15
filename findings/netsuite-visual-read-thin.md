@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F79
 slug: netsuite-visual-read-thin
 kind: finding
 status: settled
@@ -26,7 +26,7 @@ Do not fix it from symmetry.
 **Evidence.** Mention counts measured 2026-08-26 across the two `SKILL.md` files.
 Procore: `image` 11, `scanned` 10.
 NetSuite: `image` 2, `scanned` 3.
-G‹attachment-sniff-cleared›, two branches still unfired, carries the unfired branches.
-D‹check-packs-next-phase›, write a pack from a role document, carries the rule invoked here.
+G6, two branches still unfired, carries the unfired branches.
+D65, write a pack from a role document, carries the rule invoked here.
 
 **Checks.** `check_check_registry()` asserts both capability tables stay declared.

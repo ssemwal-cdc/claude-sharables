@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F6
 slug: plugin-root-does-not-work
 kind: finding
 status: observed
@@ -20,6 +20,6 @@ That combination fails the same way a bare name fails on its own.
 **Evidence.**
 
 - Reproduced against Claude Code v2.1.227.
-- The rule is D‹no-plugin-root›, never use pluginRoot.
+- The rule is D7, never use pluginRoot.
 
 **Checks.** `scripts/validate.py` rejects the file if `metadata.pluginRoot` reappears.

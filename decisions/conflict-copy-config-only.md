@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D74
 slug: conflict-copy-config-only
 kind: decision
 status: settled

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F19
 slug: cco-verbs-follow-step
 kind: finding
 status: observed

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D36
 slug: stale-connector-said-once
 kind: decision
 status: settled
@@ -26,7 +26,7 @@ Collapsing the two cases is the tempting simplification. Do not.
 **Evidence.**
 
 - Recorded 2026-08-19.
-- The silent case is D‹silent-connector-absence›, silence on an absent connector.
-- The cadence of lapsing is reported, not measured. See F‹connector-lapses-reported›, the lapse cadence is reported.
+- The silent case is D69, silence on an absent connector.
+- The cadence of lapsing is reported, not measured. See F38, the lapse cadence is reported.
 
 **Checks.** none

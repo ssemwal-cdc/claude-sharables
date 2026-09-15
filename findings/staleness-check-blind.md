@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F71
 slug: staleness-check-blind
 kind: finding
 status: settled

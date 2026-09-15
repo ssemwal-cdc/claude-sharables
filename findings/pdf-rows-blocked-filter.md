@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F15
 slug: pdf-rows-blocked-filter
 kind: finding
 status: observed
@@ -24,6 +24,6 @@ Procore already documented this filter for JavaScript source. This is the same f
 **Evidence.**
 
 - Observed 2026-08-13. The drop costs 15 of 60 rows, all stub noise, no figures.
-- The same filter has a second trigger. See D‹blocked-marker-never-a-value›, a blocked marker is never a value.
+- The same filter has a second trigger. See D21, a blocked marker is never a value.
 
 **Checks.** `scripts/test_skill_code.py` runs the size-budgeted page reads.

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F49
 slug: plugin-list-cli-only
 kind: finding
 status: observed
@@ -17,7 +17,7 @@ The CLI and the app keep separate inventories. The CLI inventory is `~/.claude/p
 
 So the terminal update commands touch the CLI copy only, and an empty list does not mean the app has no plugins.
 
-Update app installs through the app. See F‹app-store-separate-update-path›, the app has its own store.
+Update app installs through the app. See F48, the app has its own store.
 
 **Evidence.**
 

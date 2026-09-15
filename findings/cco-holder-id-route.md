@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F18
 slug: cco-holder-id-route
 kind: finding
 status: observed
@@ -31,7 +31,7 @@ Two independent sources agreeing is what makes the recipe trustworthy. The gate 
 
 - Found by a teammate running the plugin 2026-08-13. Confirmed 2026-08-14 against 5 packages. All 5 then gated as actionable at Financial Analyst Review.
 - Observed on CE #019. Respond shown, user named as Financial Analyst, gate returning `can_respond` true.
-- A package can span several commitment change orders, because `holder` is per line. See D‹cco-multiple-holders-ungated›, several holders stay ungated.
-- The read must precede the gate for CCOs. See D‹cco-read-before-gate›, read before gate for CCOs.
+- A package can span several commitment change orders, because `holder` is per line. See D22, several holders stay ungated.
+- The read must precede the gate for CCOs. See D23, read before gate for CCOs.
 
-**Checks.** `test_skill_code.py` pins the ungated demotion in D‹demote-missing-wfid-ungated›, demote a missing wfId.
+**Checks.** `test_skill_code.py` pins the ungated demotion in D30, demote a missing wfId.

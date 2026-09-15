@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G4
 slug: no-end-to-end-run
 kind: gap
 status: unobserved
@@ -48,6 +48,6 @@ It cannot cover this gap, because this gap is about a real system.
 Partial observations dated 2026-08-15, Procore and NetSuite.
 Record 2534442, NetSuite, one live approval by URL.
 Bill 2532506, one live pdf.js test.
-G‹netsuite-notes-page›, the notes page nobody has seen, blocks the primary NetSuite route.
+G3, the notes page nobody has seen, blocks the primary NetSuite route.
 
 **Checks.** `scripts/test_skill_code.py`, mocks only.

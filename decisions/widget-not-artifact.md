@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D16
 slug: widget-not-artifact
 kind: decision
 status: settled
@@ -13,7 +13,7 @@ date: 2026-08-12
 
 **Argument.**
 
-The widget host and the artifact host expose disjoint bridges. See F‹disjoint-host-bridges›, no bridge overlap.
+The widget host and the artifact host expose disjoint bridges. See F3, no bridge overlap.
 
 An artifact cannot send a message to chat. A button that hands an instruction back to the conversation is inert there and fails closed, with no throw and no console output.
 
@@ -29,6 +29,6 @@ Do not restore the artifact path for persistence. A shareable URL was considered
 
 - Probed live from inside each surface 2026-08-11. `sendPrompt` and `openLink` are bare globals on the widget host and absent on the artifact host.
 - `callMcpTool`, `askClaude` and `runScheduledTask` sit on `window.cowork` on the artifact host and are absent on the widget host.
-- Confirmed end to end on NetSuite 2026-08-12. See F‹widget-sendprompt-works›, sendPrompt posts to chat.
+- Confirmed end to end on NetSuite 2026-08-12. See F13, sendPrompt posts to chat.
 
 **Checks.** none

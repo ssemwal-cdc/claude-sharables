@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D45
 slug: bar-holds-only-commit-controls
 kind: decision
 status: settled

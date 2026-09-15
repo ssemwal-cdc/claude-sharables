@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D4
 slug: git-subdir-sources
 kind: decision
 status: settled
@@ -17,13 +17,13 @@ A `git-subdir` entry is self-contained. It carries its own `url` and `path`, so 
 
 Do not pin `sha` or `version`. Leaving the source unpinned is what makes every push ship.
 
-A relative-path source installs from the CLI and fails everywhere else. See F‹relative-path-source-app-fail›, relative path fails in the app.
+A relative-path source installs from the CLI and fails everywhere else. See F7, relative path fails in the app.
 
-A bare folder name is invalid outright. See F‹bare-folder-name-invalid›, bare folder name rejected.
+A bare folder name is invalid outright. See F1, bare folder name rejected.
 
-Leave `metadata.pluginRoot` unset. See D‹no-plugin-root›, pluginRoot does not work.
+Leave `metadata.pluginRoot` unset. See D7, pluginRoot does not work.
 
-A full git URL needs the `.git` suffix. See F‹git-url-needs-dot-git›, dot-git suffix required.
+A full git URL needs the `.git` suffix. See F4, dot-git suffix required.
 
 **Evidence.**
 

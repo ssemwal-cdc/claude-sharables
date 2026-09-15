@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G8
 slug: netsuite-browser-mode
 kind: gap
 status: unobserved
@@ -47,7 +47,7 @@ That silence is deliberate.
 A caveat would print on every item of every run for someone who cannot be provisioned.
 So confirm the verdicts read as complete statements of what was checked.
 They must not read as connector-mode verdicts with a hole in them.
-See D‹silent-connector-absence›, silence for a capability nobody can obtain.
+See D69, silence for a capability nobody can obtain.
 
 **Evidence.** This claim is guessed, not proven.
 It is tested against fixtures and shipped.

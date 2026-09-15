@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G12
 slug: dashboard-widget-host-unseen
 kind: gap
 status: unobserved

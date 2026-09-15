@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F87
 slug: commitment-payload-three-of-four
 kind: finding
 status: observed
@@ -32,6 +32,6 @@ A substantive checklist comes from asking the maintainer, never from inventing o
 **Evidence.**
 
 - Confirmed 2026-08-28 against a real purchase order contract.
-- The work order contract payload is still unread. See G‹commitment-payload-unread›, the commitment payload is unread.
+- The work order contract payload is still unread. See G14, the commitment payload is unread.
 
 **Checks.** none

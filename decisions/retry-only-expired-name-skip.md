@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D27
 slug: retry-only-expired-name-skip
 kind: decision
 status: settled
@@ -25,6 +25,6 @@ So entire formats went unread with nothing in the log to show it.
 
 **Evidence.**
 
-- Recorded 2026-08-14 from F‹attachment-sniff-six-outcomes›, six attachment outcomes.
+- Recorded 2026-08-14 from F17, six attachment outcomes.
 
 **Checks.** `scripts/test_skill_code.py` runs the attachment code.

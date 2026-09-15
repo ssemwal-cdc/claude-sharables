@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G9
 slug: procore-gate-fanout
 kind: gap
 status: unobserved
@@ -30,6 +30,6 @@ It cannot cover this gap, because this gap is about a real system.
 The old sequential gate issued one GET per item across a queue of about 73 items.
 About 41 of those requests only learned the item was noise.
 Concurrency is capped at 8 to 10, because a 429 is a `failed` and not an `empty`.
-G‹no-end-to-end-run›, no watched run, is the wider gap this sits inside.
+G4, no watched run, is the wider gap this sits inside.
 
 **Checks.** `scripts/test_skill_code.py`, the three-state fan-out test.

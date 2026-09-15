@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F40
 slug: netsuite-view-controls-port
 kind: finding
 status: observed
@@ -24,6 +24,6 @@ Sort, search and a reset control came with it.
 **Evidence.**
 
 - Asked 2026-08-19.
-- One rule in that port is load-bearing. See D‹bar-ignores-filter›, the execute bar ignores the filter.
+- One rule in that port is load-bearing. See D46, the execute bar ignores the filter.
 
 **Checks.** `test_dashboard_view` in `scripts/test_skill_code.py`.

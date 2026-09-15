@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F11
 slug: shared-state-filename-collision
 kind: finding
 status: observed
@@ -22,6 +22,6 @@ So the filenames are distinct now, and each publish script migrates the old name
 **Evidence.**
 
 - Observed 2026-08-12. One session, real cross-contamination.
-- The rule is D‹one-state-file-per-skill›, one state file per skill.
+- The rule is D15, one state file per skill.
 
 **Checks.** none

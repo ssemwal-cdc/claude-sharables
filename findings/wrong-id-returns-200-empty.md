@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F36
 slug: wrong-id-returns-200-empty
 kind: finding
 status: observed
@@ -26,6 +26,6 @@ An earlier note said the wrong id returns a 400. That note was wrong.
 **Evidence.**
 
 - Corrected from a live run 2026-08-15.
-- The guard is D‹demote-missing-wfid-ungated›, demote a missing wfId.
+- The guard is D30, demote a missing wfId.
 
 **Checks.** `scripts/test_skill_code.py` pins the ungated demotion.

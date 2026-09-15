@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D32
 slug: no-data-theme-on-pages
 kind: decision
 status: settled

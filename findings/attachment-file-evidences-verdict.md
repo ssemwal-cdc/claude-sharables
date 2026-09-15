@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F73
 slug: attachment-file-evidences-verdict
 kind: finding
 status: observed
@@ -22,6 +22,6 @@ An empty list beside a skipped verdict is the honest pairing. Beside a clear ver
 **Evidence.**
 
 - The NetSuite field landed 2026-08-24. The Procore list landed 2026-08-26 from the parity audit.
-- The audit is F‹parity-audit-two-false›, two audit findings were wrong.
+- The audit is F80, two audit findings were wrong.
 
 **Checks.** none

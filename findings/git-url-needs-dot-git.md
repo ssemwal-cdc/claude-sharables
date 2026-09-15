@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F4
 slug: git-url-needs-dot-git
 kind: finding
 status: observed

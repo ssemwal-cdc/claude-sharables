@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D63
 slug: verdict-vocabulary-gate
 kind: decision
 status: settled
@@ -21,10 +21,10 @@ Meanwhile the carry-forward rule in the skill retained items to feed that bin.
 
 Nothing else checks that a page branch is reachable.
 
-A capability table is a second surface with the same risk. See F‹capability-verdicts-gate›, capability rows name emittable verdicts.
+A capability table is a second surface with the same risk. See F74, capability rows name emittable verdicts.
 
 **Evidence.**
 
-- Added 2026-08-24. The unreachable bin is F‹actioned-bin-never-rendered›, the actioned bin never rendered.
+- Added 2026-08-24. The unreachable bin is F51, the actioned bin never rendered.
 
 **Checks.** `check_verdict_vocabulary()` in `scripts/shared_blocks.py`.

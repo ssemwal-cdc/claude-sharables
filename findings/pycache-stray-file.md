@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F95
 slug: pycache-stray-file
 kind: finding
 status: observed

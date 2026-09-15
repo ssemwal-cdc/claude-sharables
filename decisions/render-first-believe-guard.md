@@ -36,5 +36,6 @@ The slim build is not a size fallback. See F‹slim-build-saves-little›, the s
 - The caller cannot see what rendered. See F‹render-unverifiable-ask-user›, the render is unverifiable agent-side.
 - NetSuite cannot fold rows at all. See F‹netsuite-no-slim-build›, NetSuite cannot fold rows.
 - An asset shipped a threshold that fed a refusal. See F‹invented-threshold-in-comment›, an asset invented a threshold.
+- The same run produced four findings this repo could not have produced. See F‹a-wrong-run-found-four-defects›, a wrong run found four defects.
 
 **Checks.** `test_render_fits_one_read` in `scripts/test_skill_code.py`, mutation-tested.

@@ -2,7 +2,7 @@
 id: D81
 slug: device-usability-check
 kind: decision
-status: open
+status: settled
 date: 2026-09-15
 ---
 # Device usability check
@@ -11,35 +11,31 @@ date: 2026-09-15
 
 **Outcome protected.** The page works on the device the reader actually holds.
 
-**Argument.** This is a usability check across devices.
-It is not a documentation exception.
-Three screens exist: the two dashboards and the onboarding sheet.
-`scripts/measure_float.js` already reproduces the widget host and measures the floating bar.
-It runs by hand, because `validate.py` may not assume a browser.
-Extending it is cheap, because the harness already publishes both dashboards from fixtures.
-The onboarding sheet was measured once at three widths and in both schemes.
-That measurement was a one-off and no command repeats it.
-A metric is not appearance.
-A person still has to look at typography, spacing and hierarchy.
+**Argument.**
 
-**Options.**
+This is a usability check across devices. It is not a documentation exception.
 
-A. Leave the check as it is. Measure by hand when something looks wrong.
+Three screens exist. They are the two dashboards and the onboarding sheet.
 
-B. Extend `scripts/measure_float.js` to capture 390px, 1200px and 1600px in light and dark.
-   Cover both dashboards and the onboarding sheet. Run it by hand and do not commit the images.
+`scripts/measure_float.js --shots [dir]` is the mechanism. It captures all three screens at 390px, 1200px and 1600px, in light and in dark.
 
-C. Do B and commit the images as a baseline.
+That is 18 files. The harness already publishes both dashboards from fixtures, so the capture pass costs one extra page per file.
 
-**Recommendation.** B.
-Run it by hand, because the check needs a browser.
-Do not commit the images, because a binary baseline rots and nothing reads it.
+The onboarding sheet is one self-contained file, so the fixture server copies it and serves it beside the dashboards.
 
-**Evidence.** Deferred at the interview on 2026-09-15.
-`scripts/measure_float.js` covers one arrangement per dashboard today.
-Widths covered by a repeatable command today: zero.
-The onboarding sheet measured 5,926px tall on desktop and 9,191px on mobile, once, on 2026-08-28.
-F89, measured at three widths in both schemes, is that one-off.
-G12, fixtures never committed, is why a one-off measurement is not enough.
+Every capture also reports `scrollWidth` against the viewport width, into `summary.txt`. A horizontal overflow at 390px is then a number and not a judgement.
 
-**Checks.** `scripts/measure_float.js`, by hand, not in CI.
+The images are not committed. `.gitignore` excludes `.claude/shots/`, because a binary baseline rots and nothing reads it.
+
+The command runs by hand and not in CI, because `validate.py` may not assume a browser. It reuses the float measurement's browser, so one run does both.
+
+A metric is not appearance. A person still has to look at typography, spacing and hierarchy in the images.
+
+**Evidence.**
+
+- Widths covered by a repeatable command: three. Schemes: two. Screens: three.
+- The first run is `Fdevice-shots-first-run`, 18 captures and no overflow.
+- The onboarding sheet was measured once before, on 2026-08-28. F89, measured at three widths in both schemes, is that one-off.
+- G12, fixtures never committed, is why a one-off measurement was not enough.
+
+**Checks.** `NODE_PATH=$(npm root -g) node scripts/measure_float.js --shots .claude/shots`, by hand, not in CI. The default run without `--shots` prints the float measurements only.

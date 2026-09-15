@@ -84,9 +84,9 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D78 | `unmapped-subtype-keeps-buttons` | An unmapped subtype keeps buttons | settled | 2026-09-01 | A reviewer keeps live items they can action while a link is fixed. |
 | D79 | `org-protocol-override` | Repo workflow beats org protocol | settled | 2026-09-10 | A teammate holds one copy of a plugin, and a push to `main` updates it. |
 | D80 | `dashboard-publishing-pattern` | Publish through the widget | settled | 2026-09-15 | A reviewer gets a one-click dashboard from either plugin, built the same way. |
-| D81 | `device-usability-check` | Device usability check | open | 2026-09-15 | The page works on the device the reader actually holds. |
+| D81 | `device-usability-check` | Device usability check | settled | 2026-09-15 | The page works on the device the reader actually holds. |
 | D82 | `hooks-and-checks-pass` | Hooks and checks pass | settled | 2026-09-15 | A rule is enforced by a command, not by a maintainer remembering it. |
 | D83 | `plugin-validate-warning-expected` | Record the no-version warning | settled | 2026-09-15 | A maintainer reads every line a command printed, and knows which line is expected. |
 | D84 | `prose-compliance-plan` | Bring every markdown file into compliance with the global mandate | open | 2026-09-15 | A maintainer or a session reads one short rule, one record, or one index. |
 | D85 | `skill-prose-pass` | Skill prose pass | open | 2026-09-15 | A run reads a short, governed prompt and still meets every safety rule. |
-| D86 | `xlsx-pin-target` | SheetJS pin target | open | 2026-09-15 | A workbook parsed inside an authenticated tab cannot be used against the session. |
+| D86 | `xlsx-pin-target` | SheetJS pin target | settled | 2026-09-15 | A workbook parsed inside an authenticated tab cannot be used against the session. |

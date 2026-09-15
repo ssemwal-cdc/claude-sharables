@@ -102,4 +102,5 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F96 | `render-read-wall-serialise` | Read-side wall, fixed by serialise | observed | 2026-09-01 | A 62-item dashboard fits in one file read. |
 | F97 | `two-custom-tools-unchecked` | Second custom tool unchecked | observed | 2026-09-01 | Every custom tool in the queue is read against its own fields. |
 | F98 | `run-self-banned-login` | A run banned itself again | settled | 2026-09-10 | An expired session gets a hand-off the user can act on, in the same run. |
+| pending | `device-shots-first-run` | Device shots first run | observed | 2026-09-15 | The three widths and the two themes are measured, not assumed. |
 | pending | `record-checks-mutation-tested` | Record checks went red first | observed | 2026-09-15 | A check is trusted only after it fails on the defect it guards. |

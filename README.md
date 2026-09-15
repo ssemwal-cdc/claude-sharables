@@ -174,9 +174,11 @@ prerequisite bucket. Records live under `decisions/`, `findings/` and `gaps/`.
 python3 scripts/validate.py
 ```
 
-It checks five things:
+It checks seven things:
 
 - Every marketplace entry resolves to a plugin folder, and the names agree.
+- No `plugin.json` and no marketplace entry sets a `version` field.
+- Every skill asset path resolves through `${CLAUDE_PLUGIN_ROOT}` and exists.
 - The two repo-root documents name every registered plugin and no unregistered
   one.
 - Each Version cell in the table above matches that skill's version line.

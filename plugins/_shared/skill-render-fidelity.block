@@ -1,24 +1,20 @@
-**Fall back only after an observed failure.** The template carries its own integrity guard: a
-marker as its last element, checked from `<head>` as soon as the DOM parses, which raises a visible
-red banner if anything was lost in transit. Trust it. If that banner actually appears, hand over
-`index.html` directly and say why. A prediction that it *might* appear is not a reason to skip the
-render.
+**Fall back only after an observed failure.** The template carries its own integrity guard. A
+marker sits as its last element, checked from `<head>` as soon as the DOM parses. It raises a
+visible red banner when anything was lost in transit. The banner is designed, not yet observed
+firing. Believe it when it fires. Report the byte count beside it. Then hand over `index.html`
+directly and say why. A prediction that it might appear is not a reason to skip the render.
 
-**Pass the file verbatim.** Read it and hand it over byte for byte — never retype it, never
-summarise it, never "clean it up" on the way through. The old artifact path passed the file by
-path, so the HTML never travelled through a model response; a widget takes the content inline,
-which puts the layout through the tool call. If a rendered dashboard is missing a card, a control
-or a colour, suspect this before suspecting the template.
+**Pass the file verbatim.** Read it and hand it over byte for byte. Never retype it, never
+summarise it, never tidy it on the way through. A widget takes the content inline, so the layout
+travels through the tool call. When a rendered dashboard is missing a card, a control or a colour,
+suspect this before the template.
 
-**Reading the file is part of the render, and it is where this failed on 2026-09-01.** A run
-declined a 62-item dashboard saying the file could not be handed over intact — not a claim about
-`show_widget`, a claim about the read before it, and the rule above had nothing to say about that
-half. So: **read the whole file, and if the read comes back short, read the rest by offset and
-continue** — a file arriving in two reads is still passed byte for byte, and concatenating your own
-reads is not retyping. The publish script now emits the data one compact line per item for exactly
-this reason, which brought that same dashboard from 2,834 lines to 886.
+**Reading the file is part of the render.** Read the whole file. When the read comes back short,
+read the rest by offset and continue. A file arriving in two reads is still passed byte for byte,
+and concatenating your own reads is not retyping. The publish script emits the data one compact
+line per item for this reason. Measured 2026-09-01: that brought a 62-item dashboard from 2,834
+lines to 886.
 
-**A byte count is not an observed truncation.** *"The harness will not hand me a file that size
-intact"* predicted from the size, before reading, is the same move as predicting the render will not
-fit — the thing this step already forbids, arriving one stage earlier. What licenses a fallback is a
-read that actually came back short, or the red banner. Nothing else.
+**A byte count is not an observed truncation.** Predicting from the size that the harness will not
+hand the file over intact is the move this step forbids, arriving one stage earlier. What licenses
+a fallback is a read that came back short, or the red banner. Nothing else.

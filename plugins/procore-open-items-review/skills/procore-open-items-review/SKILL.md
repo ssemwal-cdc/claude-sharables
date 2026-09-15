@@ -66,85 +66,62 @@ Never echo a URL back in a result. Return parsed values only.
 ## Step 0 — Sync assets, then first-run setup
 
 **Do this on every run, before anything else.** The workspace copies of the template and the
-publish script are a *cache* of the plugin's assets. Refresh them, or a plugin update never
-reaches the dashboard — `SKILL.md` updates with the plugin while the HTML your runs actually
-render stays frozen at whatever version was copied the first time.
+publish script are a cache of the plugin's assets. Refresh them every run. Otherwise a plugin
+update never reaches the dashboard.
 
-**`<workspace>` is the workspace folder connected to this session** — the one chosen when the
-plugin was set up. Resolve it once, here, and use that same path for every step below.
+**`<workspace>` is the workspace folder connected to this session.** Resolve it once, here. Use
+that same path for every step below.
 
-**Attempt the write. Never put it to the user as a question.** Create the folder if it is not
-there, keep the state file in it, and then **read it back** — a write is proven by reading it, not
-by issuing it.
+**Attempt the write. Never put it to the user as a question.** Create the folder if it is absent.
+Keep the state file in it. Then **read it back**. A write is proven by reading it, not by issuing
+it.
 
-**Three outcomes, and the third is the one that goes wrong.** `kept` — written and read back.
-`refused` — attempted, and the surface returned an error. `not attempted` — nobody tried, which is
-never reportable as either of the others. The session-local fallback belongs to `refused` alone,
-and it is not a conclusion to reason your way into: **never infer the outcome from a property of
-the folder.** Cloud-synced, OneDrive-backed, on a network share, a shell that "looks sandboxed" —
-none of that predicts a refused write. Cloud sync refuses deletes and renames rather than creates
-and overwrites, as the overwrite-in-place rule below says, and the connected workspace folder is
-the one path a Cowork shell is known to reach: the note further down about the sandbox says the
-*plugin* assets may be invisible there, and that only the workspace folder, outputs and uploads
-are mounted. A run that declared state would not persist because the folder was OneDrive-synced,
-having never attempted the write, was wrong on both counts — and it sounded authoritative because
-every phrase in it came from this file.
+**Three write outcomes, and the third one goes wrong.** `kept` means written and read back.
+`refused` means attempted, and the surface returned an error. `not attempted` means nobody tried.
+Never report `not attempted` as either of the other two.
 
-**If the fallback is genuinely reached, name what refused it.** One short line near the headline,
-carrying the error the write actually returned. "State will not persist" on its own is the same
-defect as calling an attachment "unreadable": it reads identically whether the folder rejected the
-write, the path never resolved, or nobody tried. Do not describe the alternatives, do not offer to
-hand the file over, and never write somewhere the session will discard while describing it as kept.
+**The session-local fallback belongs to `refused` alone.** Never reason your way into it, and
+**never infer the outcome from a property of** the folder. A cloud-synced, OneDrive-backed or
+network-share folder does not predict a refused write. The connected workspace folder is the one
+path a sandboxed shell is known to reach.
 
-**Overwrite in place. Never create anything in this folder that would need deleting.** It is
-usually cloud-synced, where creating and overwriting work but deleting and renaming are typically
-refused — `publish_dashboard.py` already survives a refused move, and the `renders/` archive is
-seven weekday slots overwritten in place for exactly this reason. So write every file straight
-over its destination: no temp file, no write-then-move, no dated copies. If a stray file is left
-behind anyway, say so once in the same one line; **never invent a quarantine folder such as
-`_to_delete/`, and never hand the user a cleanup chore.**
+**If the fallback is genuinely reached, name what refused it.** Write one short line near the
+headline, carrying the error the write returned. "State will not persist" on its own names no
+cause. Do not describe the alternatives. Do not offer to hand the file over. Never write somewhere
+the session will discard and call it kept.
 
-**When overwriting in place is what fails, the property still decides, not the mechanism.** Observed
-2026-09-01: on a OneDrive folder holding *dehydrated* files — cloud-only placeholders, present in the
-listing with no local content — every pre-existing file in the folder was unreadable **and**
-unwritable through the bridge, `EINVAL` on open, while writing a new name and renaming it over the
-placeholder worked. That is the opposite way round from what the paragraph above expects, so take it
-as a fact about that surface rather than an error to fix. A write that lands on the destination and
-leaves nothing beside it satisfies this rule whatever call sequence got it there; if the intermediate
-file survives, that is a stray and takes the one-line report. What stays forbidden is a file staged
-**to move bytes** — encoded, chunked or copied so its content can be reassembled somewhere else. That
-one is left behind by design rather than by a failed rename, which is why it is named separately
-below.
+**Overwrite in place.** Cloud sync usually permits create and overwrite, and refuses delete and
+rename. So write every file straight over its destination. If a stray file is left behind anyway,
+say so once in that same line. Never invent a quarantine folder such as `_to_delete/`. Never hand
+the user a cleanup chore.
 
-**A dehydrated placeholder is not a refused write, and it is not an empty file either.** `EINVAL` on
-a file that is listed but has no local content is its own state: the folder is writable, this file is
-not readable yet. Name it if it comes up, and never report the state file as absent on the strength
-of a failed read — an absent log means first-run setup, and running that against a log that exists
-discards a review history that was only ever unavailable for a moment.
+**A write that lands on the destination and leaves nothing beside it obeys this rule, whatever
+call sequence got it there.** Observed 2026-09-01: on a OneDrive folder of dehydrated
+placeholders, overwrite returned `EINVAL` and rename-over worked. Read that as a property of the
+surface, not an error to fix.
 
-**The test is what the file is, not what it is called, and naming mechanisms is what let this
-through twice.** The rule is: **the only files that may exist in this folder are the ones this
-skill's own steps name** — the state file, the synced assets, whatever the publish script writes,
-and its `renders/` archive. Anything else is a stray, whatever its purpose and however briefly it
-was meant to live. In particular, **never stage a file to move bytes into or out of this folder** — no
-compressed, base64-encoded, chunked, split or otherwise re-encoded copy of a file that is going to
-be written properly a moment later. Observed 2026-08-28: a run left a 6 KB `log.gz.b64` beside the
-state file, having encoded the log to transfer it, and could not delete it afterwards. That is the
-`_to_delete/` improvisation again, from a run that read this rule and filed its own transfer file
-outside it because the rule had listed *mechanisms* rather than stated the property.
+**A dehydrated placeholder is not a refused write, and not an empty file.** `EINVAL` on a listed
+file with no local content is its own state. The folder is writable; this file is not readable
+yet. Name it if it comes up. Never report the state file as absent on a failed read.
+
+**The test is what the file is, not what it is called.** The rule is:
+**the only files that may exist in this folder are the ones this skill's own steps name.**
+Those are the state file, the synced assets, whatever the publish script writes, and its
+`renders/` archive. Anything else is a stray, whatever its purpose and however briefly it was
+meant to live.
+
+**In particular, never stage a file to move bytes into or out of this folder.** No compressed,
+base64-encoded, chunked, split or otherwise re-encoded copy of a file you are about to write
+properly. That copy is left behind by design, not by a failed rename.
 
 **Write the destination file itself, in one write, with the file tools.** That is rung 2 of the
-sync ladder below and it is the whole method — the same byte-for-byte contract, applied to state
-as well as to assets. A file too large or awkward for one write is still written whole to its
-final path; it is never staged beside itself. If a write genuinely cannot be made, that is
-`refused` and it takes the one-line report above, not a workaround that leaves something behind.
+sync ladder below, and it is the whole method. A file too large for one write is still written
+whole to its final path. Never stage it beside itself. A write that genuinely cannot be made is
+`refused`. It takes the one-line report above, not a workaround that leaves something behind.
 
-**A refused write costs wasted work, not a broken review.** The state does not outlive the
-session, so the next run repeats first-run setup and re-reads every attachment instead of
-carrying forward the items already logged `clear`. Say the one line and move on; this is not
-worth a paragraph, an apology, or a workaround. **That sentence is only true of `refused`** —
-offered after a write nobody attempted it is not a caveat, it is a false claim about what the
-user's next run will do.
+**A refused write costs wasted work, not a broken review.** The next run repeats first-run setup
+and re-reads every attachment. Say the one line and move on. **That sentence is true of `refused`
+only.** Offered after a write nobody attempted, it is a false claim about the next run.
 
 <!--__END_SHARED:skill-step0-preamble__-->
 ```bash
@@ -157,13 +134,12 @@ chmod u+w "<workspace>/Procore Open Items/dashboard_template.html" \
 
 <!--__SHARED:skill-step0-fidelity__-->
 The `chmod` is required, not tidiness. The plugin's installed assets are read-only and `cp`
-preserves that mode, so without it the publish step fails with
+preserves that mode. Without it the publish step fails with
 `PermissionError: [Errno 13] Permission denied`.
 
 This overwrites the workspace copies deliberately. **A design change belongs in the plugin repo,
-never in the workspace copy** — an edit made there is discarded by the next run and reaches
-nobody else. Ship one by editing the repo's `assets/` and pushing; teammates pick it up on their
-next plugin update.
+never in the workspace copy.** An edit there is discarded by the next run and reaches nobody else.
+Ship one by editing the repo's asset files and pushing. Teammates pick it up on their next update.
 
 <!--__END_SHARED:skill-step0-fidelity__-->
 **The sandbox shell may not be able to see the plugin's files at all.** Observed in a Cowork run
@@ -1055,39 +1031,35 @@ fallback only after the user reports the banner, and then report the byte count 
 open to action a folded row.
 
 <!--__SHARED:skill-artifact-host__-->
-**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
-widget host exposes `sendPrompt` as a bare global; the artifact host exposes `window.cowork`
-(`callMcpTool`, `askClaude`, `runScheduledTask`) and no `sendPrompt` anywhere. On an artifact the
-execute button cannot start a turn and fails silently — no error, no console output. As a widget it
-works in one click, confirmed on a live run. The template keeps a clipboard handoff for the
-artifact case; it is a fallback, not a plan.
+**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live. The
+widget host exposes `sendPrompt` as a bare global. The artifact host exposes `window.cowork` with
+`callMcpTool`, `askClaude` and `runScheduledTask`, and no `sendPrompt` anywhere. On an artifact the
+execute button cannot start a turn and fails silently. As a widget it works in one click, confirmed
+on a live run. The template keeps a clipboard handoff for the artifact case. It is a fallback, not
+a plan.
 <!--__END_SHARED:skill-artifact-host__-->
 
 <!--__SHARED:skill-render-fidelity__-->
-**Fall back only after an observed failure.** The template carries its own integrity guard: a
-marker as its last element, checked from `<head>` as soon as the DOM parses, which raises a visible
-red banner if anything was lost in transit. Trust it. If that banner actually appears, hand over
-`index.html` directly and say why. A prediction that it *might* appear is not a reason to skip the
-render.
+**Fall back only after an observed failure.** The template carries its own integrity guard. A
+marker sits as its last element, checked from `<head>` as soon as the DOM parses. It raises a
+visible red banner when anything was lost in transit. The banner is designed, not yet observed
+firing. Believe it when it fires. Report the byte count beside it. Then hand over `index.html`
+directly and say why. A prediction that it might appear is not a reason to skip the render.
 
-**Pass the file verbatim.** Read it and hand it over byte for byte — never retype it, never
-summarise it, never "clean it up" on the way through. The old artifact path passed the file by
-path, so the HTML never travelled through a model response; a widget takes the content inline,
-which puts the layout through the tool call. If a rendered dashboard is missing a card, a control
-or a colour, suspect this before suspecting the template.
+**Pass the file verbatim.** Read it and hand it over byte for byte. Never retype it, never
+summarise it, never tidy it on the way through. A widget takes the content inline, so the layout
+travels through the tool call. When a rendered dashboard is missing a card, a control or a colour,
+suspect this before the template.
 
-**Reading the file is part of the render, and it is where this failed on 2026-09-01.** A run
-declined a 62-item dashboard saying the file could not be handed over intact — not a claim about
-`show_widget`, a claim about the read before it, and the rule above had nothing to say about that
-half. So: **read the whole file, and if the read comes back short, read the rest by offset and
-continue** — a file arriving in two reads is still passed byte for byte, and concatenating your own
-reads is not retyping. The publish script now emits the data one compact line per item for exactly
-this reason, which brought that same dashboard from 2,834 lines to 886.
+**Reading the file is part of the render.** Read the whole file. When the read comes back short,
+read the rest by offset and continue. A file arriving in two reads is still passed byte for byte,
+and concatenating your own reads is not retyping. The publish script emits the data one compact
+line per item for this reason. Measured 2026-09-01: that brought a 62-item dashboard from 2,834
+lines to 886.
 
-**A byte count is not an observed truncation.** *"The harness will not hand me a file that size
-intact"* predicted from the size, before reading, is the same move as predicting the render will not
-fit — the thing this step already forbids, arriving one stage earlier. What licenses a fallback is a
-read that actually came back short, or the red banner. Nothing else.
+**A byte count is not an observed truncation.** Predicting from the size that the harness will not
+hand the file over intact is the move this step forbids, arriving one stage earlier. What licenses
+a fallback is a read that came back short, or the red banner. Nothing else.
 <!--__END_SHARED:skill-render-fidelity__-->
 The script writes `index.html` beside the state file and keeps the last seven renders in
 `renders/<weekday>.html`. Both matter when a render goes wrong: diff today against the last good

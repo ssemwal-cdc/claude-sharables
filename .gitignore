@@ -3,3 +3,6 @@
 # asset-reference note, and a stray .pyc there shows up as an unreferenced asset.
 __pycache__/
 *.pyc
+
+# Harness-created agent worktrees. Never repo content.
+.claude/worktrees/

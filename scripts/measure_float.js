@@ -5,6 +5,12 @@
 //   NODE_PATH=$(npm root -g) node scripts/measure_float.js
 //   CHROME_PATH=/path/to/chrome NODE_PATH=... node scripts/measure_float.js   # if the
 //                                                                            # default fails
+//   NODE_PATH=$(npm root -g) node scripts/measure_float.js --shots [dir]
+//
+// With --shots it also captures the three screens at 390px, 1200px and 1600px, in light and
+// in dark. The three screens are the two dashboards and docs/onboarding.html. The default dir
+// is .claude/shots, which .gitignore excludes, because a binary baseline rots and nothing
+// reads it. D81, device usability check, is the rule the capture pass serves.
 //
 // It exists because everything this feature claims is positional, and position is the one
 // thing the static checks in test_skill_code.py cannot see. The repo has twice shipped a
@@ -24,12 +30,24 @@ const { execFileSync } = require("child_process");
 
 const REPO = path.resolve(__dirname, "..");
 const VH = 760;
+const SHOT_WIDTHS = [390, 1200, 1600];
+const SHOT_SCHEMES = ["light", "dark"];
+const SHOT_DEFAULT = ".claude/shots";
 const PLUGINS = [
   { label: "procore", file: "pc.html", log: "_procore_review_log.json",
     dir: "plugins/procore-open-items-review/skills/procore-open-items-review/assets" },
   { label: "netsuite", file: "ns.html", log: "_netsuite_review_log.json",
     dir: "plugins/netsuite-approval-review/skills/netsuite-approval-double-check/assets" },
 ];
+
+// --shots takes an optional directory. A bare --shots uses SHOT_DEFAULT.
+function shotsDir(argv) {
+  const i = argv.indexOf("--shots");
+  if (i < 0) return null;
+  const next = argv[i + 1];
+  return path.resolve(REPO, next && !next.startsWith("--") ? next : SHOT_DEFAULT);
+}
+const SHOTS = shotsDir(process.argv.slice(2));
 
 let fails = 0;
 const ck = (n, ok, d) => { if (!ok) fails++; console.log((ok ? "  ok  " : "  FAIL") + "  " + n + (d ? "   [" + d + "]" : "")); };
@@ -74,6 +92,9 @@ function fixtures(tmp) {
     execFileSync("python3", [path.join(work, "publish_dashboard.py"),
                              path.join(serve, p.file)], { stdio: "pipe" });
   }
+  // The onboarding sheet is the third screen. It is one self-contained file, so a copy serves.
+  if (SHOTS) fs.copyFileSync(path.join(REPO, "docs", "onboarding.html"),
+                             path.join(serve, "onboarding.html"));
   return serve;
 }
 
@@ -185,6 +206,73 @@ async function suiteInternalScroll(page, p) {
   }
 }
 
+// ---- device usability captures ----------------------------------------------------------
+// D81, device usability check, asks for every screen at three widths and in both themes. A
+// screenshot is not a measurement, so every capture also reports scrollWidth against the
+// viewport width. A horizontal overflow at 390px is then a number in summary.txt and not a
+// judgement. The images stay for a person to read, because a metric is not appearance.
+// Every screen is captured on its own and not inside the host frame. The reader's device sizes
+// the screen. The host frame is a fixed 920px wide and would hide the narrow case.
+const SHOT_PAGES = [
+  { name: "procore", file: "pc.html" },
+  { name: "netsuite", file: "ns.html" },
+  { name: "onboarding", file: "onboarding.html" },
+];
+
+async function captures(browser, dir) {
+  console.log("\n=== device usability captures ===");
+  fs.mkdirSync(dir, { recursive: true });
+  const rows = [];
+  for (const p of SHOT_PAGES) {
+    for (const width of SHOT_WIDTHS) {
+      for (const scheme of SHOT_SCHEMES) {
+        const file = p.name + "-" + width + "-" + scheme + ".png";
+        const shot = await browser.newPage({ viewport: { width: width, height: VH } });
+        const errs = [];
+        shot.on("pageerror", e => errs.push(e.message));
+        try {
+          await shot.emulateMedia({ colorScheme: scheme });
+          await shot.goto("http://127.0.0.1:8092/" + p.file);
+          await shot.waitForTimeout(600);
+          const m = await shot.evaluate(() => ({
+            sw: document.documentElement.scrollWidth,
+            sh: document.documentElement.scrollHeight,
+          }));
+          await shot.screenshot({ path: path.join(dir, file), fullPage: true });
+          rows.push({ file: file, page: p.name, width: width, scheme: scheme,
+                      sw: m.sw, sh: m.sh, over: m.sw - width });
+          console.log("  shot  " + file + "   [scrollWidth " + m.sw + " vs viewport " + width +
+                      ", overflow " + (m.sw - width) + ", height " + m.sh + "]");
+          if (errs.length) ck(file + ": no page error", false, errs.join(" | "));
+        } finally { await shot.close(); }
+      }
+    }
+  }
+  const pad = (v, n) => String(v).padEnd(n);
+  const lines = [
+    "device usability captures",
+    "generated: " + new Date().toISOString(),
+    "widths: " + SHOT_WIDTHS.join("px, ") + "px. schemes: " + SHOT_SCHEMES.join(", ") + ".",
+    "scrollWidth is document.documentElement.scrollWidth after load.",
+    "overflow is scrollWidth minus the viewport width. Above 0 means a horizontal scrollbar.",
+    "the dashboard execute bar is position:sticky. A full-page capture paints it once, over",
+    "the rows near the bottom edge of the first viewport. That overlap is a capture artefact.",
+    "",
+    pad("file", 30) + pad("page", 12) + pad("viewport", 10) + pad("scheme", 8) +
+      pad("scrollWidth", 13) + pad("overflow", 10) + "scrollHeight",
+  ];
+  for (const r of rows)
+    lines.push(pad(r.file, 30) + pad(r.page, 12) + pad(r.width, 10) + pad(r.scheme, 8) +
+               pad(r.sw, 13) + pad(r.over, 10) + r.sh);
+  const over = rows.filter(r => r.over > 0);
+  lines.push("");
+  lines.push("captures: " + rows.length + ". captures with overflow: " + over.length + ".");
+  for (const r of over) lines.push("overflow: " + r.file + " by " + r.over + "px.");
+  fs.writeFileSync(path.join(dir, "summary.txt"), lines.join("\n") + "\n");
+  console.log("  " + rows.length + " captures and summary.txt in " + path.relative(REPO, dir));
+  console.log("  captures with a horizontal overflow: " + over.length);
+}
+
 (async () => {
   let chromium;
   try { ({ chromium } = require("playwright")); }
@@ -199,6 +287,7 @@ async function suiteInternalScroll(page, p) {
   try {
     for (const p of PLUGINS) await suite(page, p);
     await suiteInternalScroll(page, PLUGINS[0]);
+    if (SHOTS) await captures(browser, SHOTS);
   }
   finally {
     await browser.close(); stop();

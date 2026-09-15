@@ -2,7 +2,7 @@
 id: D82
 slug: hooks-and-checks-pass
 kind: decision
-status: open
+status: settled
 date: 2026-09-15
 ---
 # Hooks and checks pass
@@ -31,9 +31,23 @@ C. Install the hooks now and widen `validate.py` later.
 The prose pass changes every file the new checks would read.
 Landing the checks first fails the build on work in progress.
 
-**Evidence.** Deferred at the interview on 2026-09-15.
-`scripts/validate.py` checks 2 of about 28 published strings today.
-No hook exists in this repo. The count is zero.
-The mandate asks for a hook that refuses `git stash`, `git reset`, `git checkout <path>` and `git restore`.
+**Chosen.** B, taken on 2026-09-15 after the prose pass landed at `3a63144`.
+The hook and the five checks landed in the same pass.
 
-**Checks.** none yet. This decision creates them.
+**Evidence.** Deferred at the interview on 2026-09-15.
+`scripts/validate.py` checked 2 of about 28 published strings before this pass.
+No hook existed in this repo. The count was zero.
+The mandate asks for a hook that refuses `git stash`, `git reset`, `git checkout <path>` and `git restore`.
+Every check below went red on the defect it guards before it was trusted.
+See `F‹record-checks-mutation-tested›`, the mutation results.
+
+**Checks.**
+
+- `.claude/settings.json` denies the two NetSuite write tools. It also runs the hook below before every Bash call.
+- `scripts/refuse_shared_tree.sh` refuses `git stash`, `git reset`, `git restore`, a `git checkout` that names a path, `pkill -f` and `lsof -t`. A bare branch name passes.
+- `check_frontmatter` reads every record. It asserts the five keys, the slug, the kind, the status, the date, a unique id, an H1 and an outcome line.
+- `check_citations` asserts that every citation resolves and carries a gloss. It refuses a path citation.
+- `check_index_fresh` regenerates each `_index.md` from frontmatter and refuses a stale file.
+- `check_index_size` holds `CLAUDE.md` at 150 lines or fewer, naming both plugins.
+- `check_sentence_length` refuses a sentence over 30 words in the index, the three READMEs and every record.
+- `scripts/validate.py` calls the five checks, so they gate the build and CI.

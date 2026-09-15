@@ -148,6 +148,12 @@ def check_pins():
     reasons; only the version may not. A one-sided bump is the drift that matters here - the
     xlsx pin is 0.18.5 specifically, a version whose known CVEs were accepted on the reasoning
     that parsing happens in a session-less tab, and that reasoning is per-plugin.
+
+    That session-less-tab reasoning holds for Procore only. NetSuite loads its libraries in the
+    record tab, because the media.nl fetch needs the session cookie, so a workbook parsed on the
+    NetSuite side is parsed inside an authenticated tab. D86, SheetJS pin target, names 0.20.2 as
+    the first version fixing both accepted CVEs, and keeps the 0.18.5 pin because cdnjs mirrors
+    npm and npm stopped at 0.18.5. This function still only checks that the two plugins agree.
     """
     pins = {}
     for path in plugin_files():

@@ -6,3 +6,7 @@ __pycache__/
 
 # Harness-created agent worktrees. Never repo content.
 .claude/worktrees/
+
+# Device usability captures from scripts/measure_float.js --shots. D81, device usability
+# check, says to run it by hand and never to commit the images.
+.claude/shots/

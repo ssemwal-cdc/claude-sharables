@@ -50,7 +50,7 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand. Needs a brow
 - Remote `https://github.com/ssemwal-cdc/claude-sharables`, default branch `main`. Marketplace name `compass-claude-plugins`.
 - `netsuite-approval-review` holds skill `netsuite-approval-double-check`. It needs Claude in Chrome signed in to NetSuite. The MCP connector is optional.
 - `procore-open-items-review` holds skill `procore-open-items-review`. It needs Claude in Chrome signed in to Procore. It has no connector.
-- The repo is public. Challenge the argument in `D‹public-repo›`, keep this repo public, never the prose that states the setting.
+- The repo is public. To change that, challenge the argument in `D‹public-repo›`, keep this repo public, never the prose.
 - No token and no credential may land here. Stop and raise it if a ported skill carries any.
 - CI is `.github/workflows/validate.yml`, which runs `scripts/validate.py`.
 ## Rules
@@ -142,3 +142,4 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand. Needs a brow
 - `findings/_index.md` lists every observed defect and measurement, in the same six columns.
 - `gaps/_index.md` lists every unobserved claim and unfired branch, in the same six columns. Read it before citing anything recent as established.
 - A citation is an id plus a short gloss, never a bare id and never a path.
+- A record on a branch has `id: pending` and is cited by slug. The number is claimed at merge, on the maintainer's word.

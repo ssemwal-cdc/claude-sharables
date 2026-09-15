@@ -25,7 +25,7 @@ One of those handed over a 120 KB dashboard as a file. That cost one-click execu
 
 A fallback is licensed by a read that actually came back short. A byte count is not a licence.
 
-The slim build is not a size fallback. See F‹slim-build-saves-little›, the slim build saves little.
+The slim build is not a size fallback. See F‹slim-build-not-a-fallback›, the slim build saves little.
 
 **Evidence.**
 
@@ -34,7 +34,7 @@ The slim build is not a size fallback. See F‹slim-build-saves-little›, the s
 - The read-side ceiling is real and separate. It was measured 2026-09-01 at 174 KB over 2,834 lines.
 - The tool takes content inline only. See F‹show-widget-inline-only›, show_widget takes content inline.
 - The caller cannot see what rendered. See F‹render-unverifiable-ask-user›, the render is unverifiable agent-side.
-- NetSuite cannot fold rows at all. See F‹netsuite-no-slim-build›, NetSuite cannot fold rows.
+- NetSuite cannot fold rows at all. See F‹slim-build-not-a-fallback›, NetSuite cannot fold rows.
 - An asset shipped a threshold that fed a refusal. See F‹invented-threshold-in-comment›, an asset invented a threshold.
 - The same run produced four findings this repo could not have produced. See F‹a-wrong-run-found-four-defects›, a wrong run found four defects.
 

@@ -325,6 +325,33 @@ if shared_blocks is not None:
             % (len(_seen), sum(len(v) for v in _seen.values()))
         )
 
+# ------------------------------------------------------- records, index, prose
+# The global mandate says a file is the fallback, not the enforcement. So the prose
+# rules are checks too: every record carries its frontmatter, every citation resolves
+# and carries a gloss, each _index.md matches the frontmatter it is generated from,
+# CLAUDE.md stays an index, and no sentence runs past 30 words. See D82, hooks and
+# checks pass. Imported, never optional, for the same reason shared_blocks is: a
+# checker that silently skips its own check is the fail-open shape this repo keeps
+# finding bugs in.
+try:
+    import check_records
+except ImportError as exc:
+    fail("[records] cannot import scripts/check_records.py (%s) - the record, index "
+         "and prose checks did not run" % exc)
+    check_records = None
+if check_records is not None:
+    _record_problems = []
+    for _check_name, _check in check_records.CHECKS:
+        _record_problems += _check()
+    for _p in _record_problems:
+        fail("[records] " + _p.replace("\n", " "))
+    if not _record_problems:
+        notes.append(
+            "%d record(s) across %d folder(s) checked: %s"
+            % (check_records.record_count(), len(check_records.FOLDERS),
+               ", ".join(name for name, _fn in check_records.CHECKS))
+        )
+
 # -------------------------------------------------------------------- report
 for n in notes:
     print(f"note: {n}")

@@ -5,7 +5,7 @@ kind: finding
 status: settled
 date: 2026-08-24
 ---
-# Slim build is not smaller
+# Slim build is no fallback
 
 **Outcome protected.** A skipped item keeps the response button it most often needs.
 
@@ -31,6 +31,8 @@ So nothing would ever fold.
 The output would be a byte-for-byte duplicate of `index.html` on every run.
 NetSuite has no `skipped` concept by design, because a missing attachment flags an item.
 It could not be a shared block either, because the folded keep-list is per-domain.
+The Procore keep-list names project, due, project id, contract id, kind, workflow and key.
+NetSuite's equivalent field is the transaction date.
 It was asked for on grounds of symmetry and declined on grounds of vacuousness.
 "Make the two match" is usually the right instinct in this repo, and here it is not.
 

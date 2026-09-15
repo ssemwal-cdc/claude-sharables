@@ -2,10 +2,12 @@
 id: pending
 slug: slim-build-saves-little
 kind: finding
-status: observed
+status: superseded
 date: 2026-08-24
 ---
 # The slim build saves little
+
+**Superseded.** Read F‹slim-build-not-a-fallback›, slim build is no fallback. That record carries this measurement and the cost of a folded row.
 
 **Outcome protected.** A reviewer keeps the response buttons a folded row would cost.
 

@@ -2,10 +2,12 @@
 id: pending
 slug: netsuite-no-slim-build
 kind: finding
-status: observed
+status: superseded
 date: 2026-08-24
 ---
 # NetSuite cannot fold rows
+
+**Superseded.** Read F‹slim-build-not-a-fallback›, slim build is no fallback. That record carries this argument and the keep-list field names.
 
 **Outcome protected.** Nobody adds a feature to NetSuite that would copy a file byte for byte.
 

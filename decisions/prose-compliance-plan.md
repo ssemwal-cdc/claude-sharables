@@ -2,7 +2,7 @@
 id: pending
 slug: prose-compliance-plan
 kind: decision
-status: proposed
+status: open
 date: 2026-09-15
 title: Bring every markdown file into compliance with the global mandate
 ---

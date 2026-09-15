@@ -1,15 +1,18 @@
 ---
 name: procore-open-items-review
-description: v28 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user sends an execute instruction from the dashboard naming specific items to respond to. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. Only ever responds on an explicit per-item instruction, never on its own judgement.
+description: @@DESC@@
 ---
+
 # Procore Open Items Review
 **Skill version 28 — 2026-09-15.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
 
 Review every Procore item **waiting on the user's workflow response**. Verify each item's figures against its attached support. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget. Chat gets one headline line.
+
 ## Two modes
 - **Review mode**, Steps 1 to 7, is the default. It is read-only. It never clicks Respond.
 - **Execute mode**, Step 8, runs only on an explicit instruction naming specific items.
 - An instruction to review is never an instruction to execute. A verdict of `clear` authorises nothing.
+
 ## Absolute rules
 - Never click Respond, Approve, Reject, Revise and Resubmit, or Edit on your own judgement.
 - In review mode keep clicks away from the orange Respond button and the orange Edit button.
@@ -38,124 +41,24 @@ Review every Procore item **waiting on the user's workflow response**. Verify ea
 - Read `items` and `actions` from the canonical path only. Write the canonical path only.
 - Adopt from a conflict copy only the `config` keys the canonical file lacks, and say so in the run report, naming both files.
 - Never merge a conflict copy's `items`. Never merge its `actions`. Leave the copy where it is and say so once.
+
 ## What this review is, and what it is not
 - The user is one reviewer among several, and not the accountant of record.
 - A response advances a workflow step. It clears no accounting or legal obligation.
 - Do not stall an authorised batch over the amounts, the item count, or a later audit reading.
 - The `Approved by Claude` comment keeps the trail honest about what performed the click.
 - Step 8 still stops the batch: the item is still theirs, the figures match, the response is offered.
+
+
 ## The query-string output filter
 Tool output containing a URL query string is replaced with `[BLOCKED: Cookie/query string data]`. That includes the JavaScript source you send. Build every query string from character codes.
-```javascript
-const E=String.fromCharCode(61), Q=String.fromCharCode(63), A=String.fromCharCode(38);
-// '/rest/v1.0/generic_tool_items/'+id+Q+'project'+'_id'+E+pid
-```
+@@F01@@
 Never echo a URL back in a result. Return parsed values only.
 
-<!--__SHARED:skill-step0-preamble__-->
-## Step 0 — Sync assets, then first-run setup
+@@SH1@@
+@@F02@@
 
-**Do this on every run, before anything else.** The workspace copies of the template and the
-publish script are a *cache* of the plugin's assets. Refresh them, or a plugin update never
-reaches the dashboard — `SKILL.md` updates with the plugin while the HTML your runs actually
-render stays frozen at whatever version was copied the first time.
-
-**`<workspace>` is the workspace folder connected to this session** — the one chosen when the
-plugin was set up. Resolve it once, here, and use that same path for every step below.
-
-**Attempt the write. Never put it to the user as a question.** Create the folder if it is not
-there, keep the state file in it, and then **read it back** — a write is proven by reading it, not
-by issuing it.
-
-**Three outcomes, and the third is the one that goes wrong.** `kept` — written and read back.
-`refused` — attempted, and the surface returned an error. `not attempted` — nobody tried, which is
-never reportable as either of the others. The session-local fallback belongs to `refused` alone,
-and it is not a conclusion to reason your way into: **never infer the outcome from a property of
-the folder.** Cloud-synced, OneDrive-backed, on a network share, a shell that "looks sandboxed" —
-none of that predicts a refused write. Cloud sync refuses deletes and renames rather than creates
-and overwrites, as the overwrite-in-place rule below says, and the connected workspace folder is
-the one path a Cowork shell is known to reach: the note further down about the sandbox says the
-*plugin* assets may be invisible there, and that only the workspace folder, outputs and uploads
-are mounted. A run that declared state would not persist because the folder was OneDrive-synced,
-having never attempted the write, was wrong on both counts — and it sounded authoritative because
-every phrase in it came from this file.
-
-**If the fallback is genuinely reached, name what refused it.** One short line near the headline,
-carrying the error the write actually returned. "State will not persist" on its own is the same
-defect as calling an attachment "unreadable": it reads identically whether the folder rejected the
-write, the path never resolved, or nobody tried. Do not describe the alternatives, do not offer to
-hand the file over, and never write somewhere the session will discard while describing it as kept.
-
-**Overwrite in place. Never create anything in this folder that would need deleting.** It is
-usually cloud-synced, where creating and overwriting work but deleting and renaming are typically
-refused — `publish_dashboard.py` already survives a refused move, and the `renders/` archive is
-seven weekday slots overwritten in place for exactly this reason. So write every file straight
-over its destination: no temp file, no write-then-move, no dated copies. If a stray file is left
-behind anyway, say so once in the same one line; **never invent a quarantine folder such as
-`_to_delete/`, and never hand the user a cleanup chore.**
-
-**When overwriting in place is what fails, the property still decides, not the mechanism.** Observed
-2026-09-01: on a OneDrive folder holding *dehydrated* files — cloud-only placeholders, present in the
-listing with no local content — every pre-existing file in the folder was unreadable **and**
-unwritable through the bridge, `EINVAL` on open, while writing a new name and renaming it over the
-placeholder worked. That is the opposite way round from what the paragraph above expects, so take it
-as a fact about that surface rather than an error to fix. A write that lands on the destination and
-leaves nothing beside it satisfies this rule whatever call sequence got it there; if the intermediate
-file survives, that is a stray and takes the one-line report. What stays forbidden is a file staged
-**to move bytes** — encoded, chunked or copied so its content can be reassembled somewhere else. That
-one is left behind by design rather than by a failed rename, which is why it is named separately
-below.
-
-**A dehydrated placeholder is not a refused write, and it is not an empty file either.** `EINVAL` on
-a file that is listed but has no local content is its own state: the folder is writable, this file is
-not readable yet. Name it if it comes up, and never report the state file as absent on the strength
-of a failed read — an absent log means first-run setup, and running that against a log that exists
-discards a review history that was only ever unavailable for a moment.
-
-**The test is what the file is, not what it is called, and naming mechanisms is what let this
-through twice.** The rule is: **the only files that may exist in this folder are the ones this
-skill's own steps name** — the state file, the synced assets, whatever the publish script writes,
-and its `renders/` archive. Anything else is a stray, whatever its purpose and however briefly it
-was meant to live. In particular, **never stage a file to move bytes into or out of this folder** — no
-compressed, base64-encoded, chunked, split or otherwise re-encoded copy of a file that is going to
-be written properly a moment later. Observed 2026-08-28: a run left a 6 KB `log.gz.b64` beside the
-state file, having encoded the log to transfer it, and could not delete it afterwards. That is the
-`_to_delete/` improvisation again, from a run that read this rule and filed its own transfer file
-outside it because the rule had listed *mechanisms* rather than stated the property.
-
-**Write the destination file itself, in one write, with the file tools.** That is rung 2 of the
-sync ladder below and it is the whole method — the same byte-for-byte contract, applied to state
-as well as to assets. A file too large or awkward for one write is still written whole to its
-final path; it is never staged beside itself. If a write genuinely cannot be made, that is
-`refused` and it takes the one-line report above, not a workaround that leaves something behind.
-
-**A refused write costs wasted work, not a broken review.** The state does not outlive the
-session, so the next run repeats first-run setup and re-reads every attachment instead of
-carrying forward the items already logged `clear`. Say the one line and move on; this is not
-worth a paragraph, an apology, or a workaround. **That sentence is only true of `refused`** —
-offered after a write nobody attempted it is not a caveat, it is a false claim about what the
-user's next run will do.
-
-<!--__END_SHARED:skill-step0-preamble__-->
-```bash
-mkdir -p "<workspace>/Procore Open Items"
-cp "${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/dashboard_template.html" "<workspace>/Procore Open Items/"
-cp "${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/publish_dashboard.py" "<workspace>/Procore Open Items/"
-chmod u+w "<workspace>/Procore Open Items/dashboard_template.html" \
-          "<workspace>/Procore Open Items/publish_dashboard.py"
-```
-
-<!--__SHARED:skill-step0-fidelity__-->
-The `chmod` is required, not tidiness. The plugin's installed assets are read-only and `cp`
-preserves that mode, so without it the publish step fails with
-`PermissionError: [Errno 13] Permission denied`.
-
-This overwrites the workspace copies deliberately. **A design change belongs in the plugin repo,
-never in the workspace copy** — an edit made there is discarded by the next run and reaches
-nobody else. Ship one by editing the repo's `assets/` and pushing; teammates pick it up on their
-next plugin update.
-
-<!--__END_SHARED:skill-step0-fidelity__-->
+@@SH2@@
 **The sandbox shell may not see the plugin's files.** A Cowork shell mounts only the workspace folder, outputs and uploads. Sync down this ladder and take the first rung that works.
 1. **The `cp` above**, wherever the shell can see `${CLAUDE_PLUGIN_ROOT}`.
 2. **Read, then Write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/` and write it over the workspace copy byte for byte. Never retype, trim or tidy. Then prove the copy landed: the template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and `python3 -m py_compile publish_dashboard.py` passes. This rung is designed, not yet observed. Say so in the run report if it also fails.
@@ -164,9 +67,7 @@ next plugin update.
 **On a first run rung 3 is not available.** If rungs 1 and 2 both fail on a first run, say exactly that and stop before Step 7. Inventing a template is forbidden by the Absolute rules.
 
 **This plugin ships layout template `v14`. Confirm the sync landed by reading it back:**
-```bash
-head -n 8 "<workspace>/Procore Open Items/dashboard_template.html" | grep -o 'layout template v[0-9]*'
-```
+@@F03@@
 If that does not say `v14`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
 
 Then read `Procore Open Items/_procore_review_log.json`. A file already carrying a `config` block finishes this step, apart from the two back-fills below. Go to Step 1. Otherwise run setup once.
@@ -174,11 +75,9 @@ Then read `Procore Open Items/_procore_review_log.json`. A file already carrying
 **Back-fill, for a `config` written before focus existed.** A `config` with no `focus` key gets setup question 6, once. Write the answer and never ask again. Store a decline as `{"lenses": [], "emphasis": ""}`. **Absent and empty are different states.** Absent means never asked. Empty means asked and declined.
 
 **Back-fill, for a `config` written before `customTools` existed.** A `config` carrying `icrToolId`, `icrSubtype` or a top-level `costFields` and no `customTools` describes one custom tool. Restructure it in place, no question asked.
-```json
-"customTools": { "<the old icrSubtype, or 'unknown subtype' if it was never recorded>":
-                 { "toolId": "<the old icrToolId>", "costFields": { <the old costFields> } } }
-```
+@@F04@@
 **Name the placeholder key in the run report. Retire it when Step 1 resolves the real subtype.** Leave `icrToolId` where it is, because `publish_dashboard.py` reads it as the link floor for rows logged before subtypes. Drop `icrSubtype`, which is now the key. A declared field no step reads is worse than no field, because it reads as coverage.
+
 1. **Confirm Claude in Chrome is connected and Procore is authenticated.** Warn the user about the site-access prompt before navigating. Claude in Chrome asks whether to allow access to a site the first time it acts on one, offering a once-only option and an always option. **Tell them to pick the always option.** Once for Procore, and again for the S3 host when Step 4 first reads an attachment. On once-only they are re-prompted on effectively every action. Then navigate to the company Open Items tool.
 
    **Authentication has three outcomes. Say which one is on screen.** Decide on what is on screen, never on what a rule sounds like it implies.
@@ -188,6 +87,7 @@ Then read `Procore Open Items/_procore_review_log.json`. A file already carrying
    | `authenticated` | the Open Items tool loaded | touch no login form. Carry on to rung 2. |
    | `email-only` | an email field and a **Continue** button, and no password box | `find` the email field, set it with `form_input`, click **Continue**, stop, then re-read the page and re-enter this table |
    | `wall` | a password box, an MFA prompt, or a CAPTCHA | hand off, as below. Type into none of them and retry nothing. |
+
    - The `email-only` step types no secret. **This step is permitted, not an exception.**
    - A password box decides `wall`, **whether or not an email field sits beside it**.
    - **A hand-off is an action, not the end of the run.** Say in chat that Procore is showing a sign-in screen, and name the field that made it a `wall`.
@@ -217,6 +117,7 @@ Then read `Procore Open Items/_procore_review_log.json`. A file already carrying
 6. **Ask what they care about most, in their own words.** Free text, a sentence or two, stored verbatim as `config.focus.emphasis`. Asked once. Empty is the default and means exactly today's behaviour. Offer a couple of examples so the question is answerable, such as "mostly subcontractor invoices on one campus" or "change risks, rarely invoices". Store whatever they type. **The examples are illustrations, never a list to pick from.** Update the field and confirm when they later ask to change it. **Also ask whether a lens applies.** This skill ships `delivery` and `design`. Say plainly what each adds and let them pick any, both, or none. `core` is not offered, because it always runs.
 
 **The dashboard is rendered, not published.** There is no artifact to create, update or reconcile. Step 7 renders the HTML as an inline widget on every run, and `_procore_review_log.json` is the only persistent store. **The user's per-item marks are the one thing that survives between renders.** The template keeps them in `localStorage` under `pc_marks_v1`. Never clear that store. Never change that key for cosmetic reasons. **There is no user id to configure**, because the queue endpoint and the permission gate are both scoped to the authenticated session.
+
 ## Step 1 — Build the queue
 **Check `config.queueSource` first.** With both fields empty, the normal case, open one tab on the Open Items tool and use the endpoint below. If it names a `url`, open that instead and read the queue there. If it only `described` somewhere, resolve that description first, and ask once if you cannot. The Step 2 gate still decides which of what you found is yours to answer. With no override, fetch `GET /rest/v2.0/companies/<company>/open_items/mine` with `l=200 o=0 s=due_date:desc include_count=true` from inside that tab. It returns `data.count` and `data.tasks[]`. Per task: `item_type`, `item_id`, `project_id`, `project_name`, `title`, `status`, `url`, `due_date`. Four item types are reviewed.
 
@@ -226,6 +127,7 @@ Then read `Procore Open Items/_procore_review_log.json`. A file already carrying
 | `Billings::Requisition` | Subcontractor invoice, or AIA pay application | `inv` |
 | `ChangeOrderPackage` | Commitment Contract Change Order (CCO) | `cco` |
 | `PurchaseOrderContract`, `WorkOrderContract` | the commitment itself, out for approval | `com` |
+
 - Both halves are observed for `PurchaseOrderContract`. **`WorkOrderContract` is the half nobody has read.** Treat it as unconfirmed until one turns up.
 - Where a stated field name turns out wrong, say so in the run report and correct it here. Never let a check quietly not run.
 - **`GenericToolItem` is one row in that table and can be several tools in the queue.** Capture `item_subtype` on every such row, into the log as `subtype`.
@@ -240,15 +142,12 @@ Then read `Procore Open Items/_procore_review_log.json`. A file already carrying
 - `item_type` is the queue's word for the record, not always the type the workflow endpoint wants. For CCOs it is not. See Step 2.
 - **Do not scrape the grid.** It is virtualised. One read returned 46 of 75 rows; the rate is `unmeasured`. `get_page_text` returns nothing useful here either.
 - **`assignee_id` is always the user on this payload.** It does not mean they can act. That is Step 2.
+
 ## Step 2 — The actionability gate
 This is what makes the review worth reading. Most of the queue is distribution-only noise.
-```
-GET /rest/v1.0/projects/<project_id>/workflows/instances
-      filters[workflowable_object_id]=<item_id>
-      filters[workflowable_object_type]=<item_type>
-      page=1  per_page=100  view=action_card
-```
+@@F06@@
 **`per_page=100` is required, not tidiness.** On the default page size this endpoint hid live instances outright. An empty response is `empty`, and Step 8 reads `empty` as already actioned elsewhere, so a page-size default silently converts actionable items into ones logged as done. Always send it. The call returns an array with one instance, and `[0].user_permissions.can_respond` is the discriminator.
+
 - `true` means the user is a current-step responder, so **review it**. `false` means distribution only, so **suppress it** and count it.
 - Also capture `name`, `due_at` and `available_responses` from `[0].current_step_occurrence`.
 - **Response verbs vary by step** and drive the dashboard buttons. Never assume a fixed triplet.
@@ -256,33 +155,7 @@ GET /rest/v1.0/projects/<project_id>/workflows/instances
 - Change risks at a cost gate offer Yes and Reject. Never assume a change order takes the change risk's pair.
 
 **Run the whole gate as one in-page fan-out, not one tool call per item.** Serial gating spends most of the run learning what to ignore. `unmeasured`. The largest queue observed is 62 items. Run it from a tab on `app.procore.com`, where the session cookie already applies.
-```javascript
-// Query strings are built from char codes - see "The query-string output filter".
-const E=String.fromCharCode(61), Q=String.fromCharCode(63), A=String.fromCharCode(38);
-window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}]
-  const out=[], q=rows.slice();
-  await Promise.all(Array.from({length: Math.min(cap||8, q.length)}, async function(){
-    while(q.length){
-      const r=q.shift();
-      const u='/rest/v1.0/projects/'+r.pid+'/workflows/instances'+
-              Q+'filters[workflowable_object_id]'+E+r.id+
-              A+'filters[workflowable_object_type]'+E+r.type+
-              A+'page'+E+'1'+A+'per_page'+E+'100'+     // per_page is load-bearing - see above
-              A+'view'+E+'action_card';
-      try{
-        const res=await fetch(u,{headers:{Accept:'application/json'}});
-        if(!res.ok){ out.push({key:r.key, state:'failed', code:res.status}); continue; }
-        const j=await res.json();
-        if(!j||!j.length){ out.push({key:r.key, state:'empty'}); continue; }
-        const s=j[0].current_step_occurrence||{};
-        out.push({key:r.key, state:'ok', can:!!(j[0].user_permissions||{}).can_respond,
-                  step:s.name||'', due:s.due_at||'', resp:s.available_responses||[]});
-      }catch(e){ out.push({key:r.key, state:'failed', code:String(e).slice(0,60)}); }
-    }
-  }));
-  return out;
-};
-```
+@@F08@@
 - **Cap concurrency at 8 to 10.** A 429 from rate limiting is a `failed`, not an `empty`.
 - **The three states are the safety property. They are not interchangeable.**
 - `ok` gates on `can`, exactly as above. `empty` means the API genuinely returned no instance.
@@ -308,6 +181,7 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 - A wrong *type* returns a loud **400**. A right type with the wrong *id* returns **200 with zero rows**, which Step 8 reads as already actioned.
 - **Cross-check the first CCO of a run against the UI**, because the gate cannot detect its own miss. One record per run is enough.
 - Open the record and read its workflow panel. An actionable item shows a live **Respond** button naming the user against the current step's role. **Look, do not click.**
+
 ## Step 3 — Read the record
 **Fan these out per endpoint family, not per item.** Same worker-pool shape as Step 2, and the same `ok` / `empty` / `failed` rule. A record that failed to load is reported by name and excluded, never reviewed as though it came back thin.
 
@@ -320,22 +194,18 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 **CCO — `ChangeOrderPackage`**, from `GET /rest/v1.0/change_order_packages/<item_id>` with `project_id=<project_id>`. Read `number`, `title`, `status`, `executed`, `grand_total`, `line_items[]`, `attachments[]` and `contract_id`. **Run this one before the Step 2 gate, not after it.** `line_items[].holder.id` is the commitment change order id the gate needs. Capture `holder.id` per line here and dedupe it as Step 2 describes.
 
 **Commitment — `PurchaseOrderContract` and `WorkOrderContract`**, from `GET /rest/v1.0/purchase_order_contracts/<item_id>` or `GET /rest/v1.0/work_order_contracts/<item_id>`, each with `project_id=<project_id>`. Two endpoints, because Procore keeps purchase orders and subcontracts in separate collections. **Pick by the queue's `item_type`, never by trying both.** A 404 from the wrong collection is a `failed`, and `failed` is not `empty`. Read `number`, `title`, `status`, `executed`, `grand_total`, `line_items[]`, `retainage_percent`, `attachments[]` and the contract dates. `line_items[]` is the schedule of values. Return it **flat**, one row per line carrying description, quantity, unit cost and extended amount.
+
 - **The counterparty is on `vendor`, and its display string is `vendor.company`, not `vendor.name`.**
 - Where `vendor.company` is blank, say the counterparty was not on the payload. Never leave `counterparty` empty unexplained.
 - `grand_total`, `line_items` and `retainage_percent` are confirmed present on a real purchase order contract.
 - **`WorkOrderContract` is still unobserved.** On the first one of a run, return the payload's top-level key names with the values, say it once in the run report, and correct this paragraph.
 - **A field this step names that the payload does not carry makes every check needing it *not run*, by name.** That is never a silent pass and never a `clear`.
+
 ## Step 4 — Read the attached support without downloading it
 Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-second presigned S3 link**. Four routes are dead: `storage.procore.com` blocks cross-origin reads, Chrome's PDF viewer exposes no text layer, `javascript_tool` cannot attach to a PDF tab, and clicking the link produces nothing. This recipe routes around all of it and leaves **no files in the downloads folder**.
 
 **Setup, once per run.** Park a scratch tab on the S3 bucket root and load pdf.js there.
-```javascript
-// tab: https://s3.amazonaws.com/pro-core.com/   (returns XML — attachable, unlike a PDF)
-const m = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
-window.__pj = m;
-const wt = await (await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs')).text();
-m.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([wt], {type:'text/javascript'}));
-```
+@@F15@@
 The worker must be fetched as text and turned into a blob URL. Pointing `workerSrc` at the CDN directly fails. **The pdf.js pin is deliberate. Do not bump it in a skill edit.**
 
 **Per attachment, three moves:**
@@ -344,46 +214,9 @@ The worker must be fetched as text and turned into a blob URL. Pointing `workerS
 3. In the S3 scratch tab, same origin and no CORS wall, fetch that URL and extract text.
 
 **Sniff the bytes before choosing a reader.** Handing pdf.js a non-PDF throws `InvalidPDFException`, which is also what a corrupt download gives. The first four bytes settle it.
-```javascript
-// Sniff first, parse second. The type picks the reader; a parse that failed must never be
-// reported as "scanned", and ONLY an S3 error body means the link expired.
-window.__sniff = function(ab){
-  const u = new Uint8Array(ab), h = Array.from(u.slice(0, 12));
-  const is = (...s) => s.every((v, i) => h[i] === v);
-  if (is(0x25,0x50,0x44,0x46)) return 'pdf';                                  // %PDF
-  if (is(0x50,0x4B,0x03,0x04)) return 'zip';                                  // xlsx/docx - a ZIP
-  if (is(0xD0,0xCF,0x11,0xE0)) return 'ole2';                                 // legacy .xls/.doc
-  if (is(0x89,0x50,0x4E,0x47)) return 'image';                                // PNG
-  if (is(0xFF,0xD8,0xFF))      return 'image';                                // JPEG
-  if (is(0x47,0x49,0x46,0x38)) return 'image';                                // GIF
-  if (is(0x49,0x49,0x2A,0x00) || is(0x4D,0x4D,0x00,0x2A)) return 'image';     // TIFF
-  if (is(0x52,0x49,0x46,0x46)) return 'image';                                // RIFF (WEBP)
-  if (is(0x3C,0x3F,0x78,0x6D) || is(0x3C,0x45,0x72,0x72)) return 's3error';   // <?xml / <Err
-  // printable ASCII with separators reads as CSV/plain text; anything else is genuinely unknown
-  const s = u.slice(0, 512), pr = s.filter(c => c === 9 || c === 10 || c === 13 ||
-                                                (c >= 32 && c < 127)).length;
-  return (pr / s.length > 0.95) ? 'text' : 'unknown';
-};
-```
+@@F16@@
 Then dispatch on the result. Only the `pdf` branch is the recipe that was already here.
-```javascript
-const r = await fetch(u);                          // u rebuilt from char codes
-const b = await r.arrayBuffer();
-const kind = window.__sniff(b);
-if (kind === 'pdf') {
-  // new Uint8Array is REQUIRED - a raw ArrayBuffer throws InvalidPDFException on valid bytes
-  const d = await window.__pj.getDocument({data:new Uint8Array(b)}).promise;
-  // Flattening the page with join(' ') is deliberate HERE and must not be ported to NetSuite, which
-  // rebuilds rows from pdf.js geometry instead. The difference is what the text is for: every figure
-  // Procore checks comes from the API, and the PDF is only searched for those figures verbatim, so
-  // column alignment carries no information. NetSuite reads its figures OUT of the PDF, where losing
-  // the columns destroys the quantity x rate and line-tie checks.
-  let t=''; for(let i=1;i<=d.numPages;i++){const p=await d.getPage(i);const c=await p.getTextContent();t+=' '+c.items.map(z=>z.str).join(' ');}
-  // a PDF that parsed but yielded almost nothing is the ONLY thing that means "scanned"
-  return {state: t.trim().length > 40 ? 'text' : 'scanned', text: t};
-}
-return {state: kind};                              // never guess; the caller branches
-```
+@@F17@@
 Return the byte length and `kind` alongside, never the URL. Moves 2 and 3 must land inside the 60-second window, one tool call each, nothing batched between. **The window is per window, not per file, so batch inside it.** Navigate several `app.procore.com` tabs at once, take all their presigned URLs from a **single** `tabs_context_mcp`, then extract them all in one scratch-tab call with `Promise.all`. Keep batches to 4 to 6 files. The margin left in the 60 seconds is `unmeasured`.
 
 **Six outcomes per attachment, and they are not interchangeable.** **Never collapse these back into readable and not readable.**
@@ -400,28 +233,7 @@ Return the byte length and `kind` alongside, never the URL. Moves 2 and 3 must l
 **A retry is only ever legitimate for `expired`.** Bound it at two attempts. Re-fetch only when the bytes said `s3error` or the fetch threw. A file that parsed as the wrong type will parse as the wrong type again.
 
 **Reading a workbook.** A plain dynamic `import()` of the cdnjs UMD build loads SheetJS and populates `globalThis.XLSX` on the first attempt. Four fallback loaders were probed behind it and **none was reached**, so none of them is known to work. Do not restore one as a fallback.
-```javascript
-// once per run, beside the pdf.js setup
-await import('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
-
-// per workbook. Same Uint8Array wrap the PDF path needs, and the same whole-unit
-// size budget as the NetSuite page reader - never split a sheet across returns.
-window.__sheets = function(ab, from){
-  const wb = XLSX.read(new Uint8Array(ab), {type:'array'});
-  let out = '', n = from || 0;
-  for (; n < wb.SheetNames.length; n++){
-    const nm = wb.SheetNames[n];
-    const rows = XLSX.utils.sheet_to_csv(wb.Sheets[nm], {blankrows:false})
-      .split('\n')
-      .filter(r => r.replace(/,/g,'').trim() && !/\d{20,}/.test(r))
-      .join('\n');
-    const block = '--- sheet ' + (n+1) + ': ' + nm + ' ---\n' + rows;
-    if (out && out.length + block.length > 4000) break;
-    out += (out ? '\n\n' : '') + block;
-  }
-  return {text: out, next: n >= wb.SheetNames.length ? null : n, sheets: wb.SheetNames.length};
-};
-```
+@@F18@@
 - Call it again with `next` until it returns `null`, exactly like the NetSuite page reader.
 - **Read every sheet, including hidden ones.** `SheetNames` lists hidden sheets. Never take sheet 1 and stop.
 - **`sheet_to_csv` returns the cached computed value, not the formula.** A cell whose formula Excel never evaluated comes back **blank**. Report that as a blank, never as zero.
@@ -436,12 +248,7 @@ window.__sheets = function(ab, from){
 - `get_page_text` and `read_page` extract text, `find` locates text, the console and network tools read logs, and `upload_image` and `file_upload` are inputs.
 
 **The scratch tab is an XML document, and that breaks `document.createElement`.** `document.contentType` reports `application/xml`, and `createElement('canvas').getContext` is not a function there. The bucket listing is used because it returns XML, which is what makes it attachable, so this is permanent. It bites the moment a `scanned` PDF needs rasterising. Two ways round it, both namespace-independent:
-```javascript
-const c = new OffscreenCanvas(v.width, v.height);              // preferred - no DOM at all
-// or, if a real element is needed:
-// document.createElementNS('http://www.w3.org/1999/xhtml','canvas')
-await page.render({canvasContext: c.getContext('2d'), viewport: v}).promise;
-```
+@@F19@@
 **Do not "fix" this by moving the scratch tab to an HTML page.** The tab has to be same-origin with the presigned S3 link, or the fetch hits the CORS wall. NetSuite runs pdf.js in the record tab, which is ordinary HTML. Do not normalise the two. **If no visual read is available, fall back to OCR, and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. **An OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties. Report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. This cap is deliberate. If it feels too noisy, get the visual read working. Do not relax the cap.
 - Do not pass a presigned URL to a sandbox web fetcher. It exceeds the URL length limit.
 - **Check the extension too, but trust the bytes.** A `.pdf` that sniffs as `zip` is mislabelled, not a PDF.
@@ -454,6 +261,7 @@ await page.render({canvasContext: c.getContext('2d'), viewport: v}).promise;
 - Dotted identifiers are ordinary in construction, such as spec section `09.21.16`, phase codes and revisions.
 - Re-return a blocked field in a different shape and read it again. Spacing it out or splitting keys both work.
 - Never let the marker reach a verdict, a comment or the dashboard, and never read it as an empty field.
+
 ## Step 5 — Verify
 ### Check registry
 Every check below carries an **id**, the **lens** it serves, and the **capability** it needs. **`core` always runs and is never a choice.** `delivery` and `design` run only when `config.focus.lenses` names them. **A lens adds checks. It never removes, relaxes or overrides one.** It never touches a verdict's meaning. **Capabilities**, each already a condition this step honours in prose:
@@ -464,34 +272,10 @@ Every check below carries an **id**, the **lens** it serves, and the **capabilit
 | `attachment` | a Step 4 attachment outcome of `text` or `spreadsheet` | the item is `skipped`, **naming which outcome** caused it |
 | `queue` | the other items in this run, not this item alone | never absent. It marks the check as cross-item |
 
-| id | lens | capability | check |
-|---|---|---|---|
-| `pc.icr-cost-impact` | core | `record` | ICR 1 — Cost Impact against Compass Accepted |
-| `pc.icr-proposal-tie` | core | `attachment` | ICR 2 — Compass Accepted against the proposal total |
-| `pc.icr-phase-sum` | core | `attachment` | ICR 3 — the proposal's phase lines sum to its total |
-| `pc.icr-proposed-delta` | core | `record` | ICR 4 — report both figures; flag only if accepted exceeds proposed |
-| `pc.icr-placeholder` | core | `record` | ICR 5 — `yes_known` carrying a placeholder value |
-| `pc.inv-g702` | core | `record` | Invoice — the six G702 identities, re-derived |
-| `pc.inv-support-tie` | core | `attachment` | Invoice — each headline figure located in the pay application |
-| `pc.inv-sequence` | core | `record` | Invoice — sequence integrity against previous certificates |
-| `pc.inv-duplicates` | core | `queue` | Invoice — same vendor and period, or the same number twice |
-| `pc.inv-retainage` | core | `record` | Invoice — withheld percent consistent and matching the contract |
-| `pc.cco-line-sum` | core | `record` | CCO 1 — line items sum to the grand total |
-| `pc.cco-pci-tie` | core | `attachment` | CCO 2 — each PCI ties to a line, PCI totals sum to the grand total |
-| `pc.cco-icr-tie` | core | `queue` | CCO 3 — a PCI's total against the matching ICR's accepted cost |
-| `pc.com-line-sum` | core | `record` | Commitment 1 — schedule-of-values lines sum to the contract total |
-| `pc.com-support-tie` | core | `attachment` | Commitment 2 — the contract total against the attached agreement, bid tab or proposal |
-| `pc.com-line-integrity` | core | `record` | Commitment 3 — duplicated, zero-value and unpriced SOV lines |
-| `pc.com-retainage` | core | `record` | Commitment 4 — retainage percent, reported whether or not one is withheld |
-| `pc.com-queue-context` | core | `queue` | Commitment 5 — other items in this run drawing on the same contract |
-| `pc.del-schedule-impact` | delivery | `record` | Schedule impact reported beside cost impact |
-| `pc.del-scope-affected` | delivery | `record` | What the change touches — buildings, systems, trades |
-| `pc.del-ofci` | delivery | `record` | Owner-furnished equipment referenced in the change |
-| `pc.dsn-change-origin` | design | `record` | What caused the change — RFI, bulletin, revision, field |
-| `pc.dsn-drawing-ref` | design | `attachment` | Drawing, sheet, spec and bulletin references, as found |
-| `pc.dsn-unknown-workflow` | design | `queue` | Queue rows of a type this skill does not review, with links |
+@@T_REG@@
 
 **A check that cannot run is never a silent pass.** A missing attachment **skips the item and names the outcome that caused it**. "Unreadable" on its own is what once hid whole file formats going unread.
+
 ### ICR
 **These read the mapping for the item's own subtype.** *Accepted cost* means whichever field that tool records an accepted figure in. That is Cost: Compass Accepted on an Internal Change Risk and Approved Customer Cost on a Customer Change Request. *Proposed cost* likewise. The check is the same. The field it reads is per tool.
 1. **Cost Impact equals the accepted cost.** A mismatch is a FLAG.
@@ -509,6 +293,7 @@ Every check below carries an **id**, the **lens** it serves, and the **capabilit
 - Checks 1, 2 and 4 need an accepted cost, and 2 and 4 also need a proposed one.
 - **Checks 3 and 5 need neither**, so both run on a tool with no cost mapping and both can still FLAG.
 - **An ICR whose cost checks never ran is not `clear`.** Name which ones did not run, because "cost checks did not run" is the `unreadable` defect again.
+
 ### Invoice
 Re-derive all six G702 identities from the record rather than reading the summary back.
 - `original_contract_sum + net_change_by_change_orders = contract_sum_to_date`
@@ -525,10 +310,12 @@ Then:
 - A missing intermediate application is a FLAG. **Duplicates:** same vendor and period, or the same invoice number twice.
 - **Retainage.** Confirm the withheld percent is consistent and matches the contract. A commitment withholding none is worth naming, not flagging.
 - **An original contract sum of $0** with everything booked as change orders is a setup pattern, not an error. Name it in the warning line when the totals agree.
+
 ### CCO
 1. `line_items` sum to `grand_total`.
 2. Each attached PCI ties to a line item, and the PCI totals sum to `grand_total`. Name any line without support and any PCI without a line.
 3. Where a PCI corresponds to an ICR in the queue, its total should match that ICR's accepted cost.
+
 ### Commitment
 **These five are mechanical, and that is the whole of what this skill claims about a commitment.** A commitment out for approval **is** the baseline, so whether the scope, the rate and the counterparty are right is a judgement this skill has no basis for. **Do not add a check here that infers a commercial judgement from the numbers.**
 1. **The schedule-of-values lines sum to the contract total.** Check `line_items[]` extended amounts against `grand_total`. A mismatch is a FLAG, with both figures and the residual.
@@ -538,6 +325,7 @@ Then:
 5. **Queue context.** Where another item in this run draws on the same contract, name it with its amount. An invoice whose `commitment_id` matches, or a CCO whose `contract_id` matches, both count. **Context, never a flag.**
 
 **A commitment that could not be added up is not clear.** If `line_items[]` or the contract total is missing from the payload, checks 1 and 3 did not run. Say which, by name. The verdict is `skipped` with that as its stated cause.
+
 ### The `delivery` and `design` lenses, only when `config.focus.lenses` names them
 **Skip a lens's checks unless it is selected.** Absent both, Step 5 ends above. **Read this first, because it governs every check in both lenses.** Procore records carry scope, schedule and design origin unevenly. A narrative field may be thorough, terse, or blank, and none of those is misconduct. So both lenses are **lenient by design**.
 - **Missing or thin information is never a finding.** A blank schedule-impact field means nobody filled it in, **not** that the change has no schedule impact.
@@ -557,6 +345,7 @@ Then:
 - **Never review such an item, never guess its verbs, and never let it reach the execute list.**
 
 **On what these lenses cannot reach, stated plainly because it matters most to design.** This skill reviews the workflow-response queue from `open_items/mine`. **The daily substance of design management lives in other Procore tools and does not appear in this queue.** That covers RFI response, submittal review and drawing issuance. So the `design` lens covers *design-driven change* well and *design production* not at all. Say so if asked. Use `pc.dsn-unknown-workflow` to surface anything that does turn up.
+
 ## Step 6 — Verdicts
 Four outcomes.
 - **clear** means the figures tie and the support is adequate.
@@ -577,6 +366,7 @@ Four outcomes.
 - **An unmapped subtype loses its record link and a `clear` becomes `skipped`. It keeps its response buttons.**
 - The gate is per item, and `GenericToolItem` is the workflow type for every custom tool.
 - **A commitment with no `wfType` loses its buttons**, because the wrong collection returns 200 with zero rows, which Step 8 reads as already actioned.
+
 ## Step 7 — Publish to the dashboard
 Maintain `Procore Open Items/_procore_review_log.json`. These field names are the contract with `publish_dashboard.py`. Do not rename them.
 ```json
@@ -625,9 +415,7 @@ On each run:
 - There is no actioned bin. A lingering entry would show as an apparently-pending row.
 
 **Do not write HTML.** The layout lives in `dashboard_template.html`. Publish by injecting data.
-```bash
-cd "<workspace>/Procore Open Items" && python3 -B publish_dashboard.py
-```
+@@F21@@
 **`-B` is not optional.** Without it Python may leave a `__pycache__/` beside the script, in a folder that then refuses to delete it. It is the one file in this folder no step names, so never create it.
 
 **Render `index.html` as an inline widget with `show_widget`, passing its contents.** The publish script also writes a slim `widget.html` beside it, keeping full detail for every `clear` or `flagged` item and folding skipped and ungated ones to display-only rows. **That slim copy is a fallback, not the default.** Reach for it only if the integrity banner actually appears. Folding drops those rows' response verbs and their reasoning, so a skipped item cannot be sent back from the slim render at all.
@@ -640,42 +428,11 @@ cd "<workspace>/Procore Open Items" && python3 -B publish_dashboard.py
 
 **Render, then say that.** Do not weigh the file size instead. **Handing over a file without having attempted the render is a failure of this step.** If it happens, say so plainly rather than presenting the file as the deliverable. `index.html` becomes the fallback only after the user reports the banner, and it remains the complete dashboard, every item with its response buttons.
 
-<!--__SHARED:skill-artifact-host__-->
-**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live: the
-widget host exposes `sendPrompt` as a bare global; the artifact host exposes `window.cowork`
-(`callMcpTool`, `askClaude`, `runScheduledTask`) and no `sendPrompt` anywhere. On an artifact the
-execute button cannot start a turn and fails silently — no error, no console output. As a widget it
-works in one click, confirmed on a live run. The template keeps a clipboard handoff for the
-artifact case; it is a fallback, not a plan.
-<!--__END_SHARED:skill-artifact-host__-->
+@@SH3@@
 
-<!--__SHARED:skill-render-fidelity__-->
-**Fall back only after an observed failure.** The template carries its own integrity guard: a
-marker as its last element, checked from `<head>` as soon as the DOM parses, which raises a visible
-red banner if anything was lost in transit. Trust it. If that banner actually appears, hand over
-`index.html` directly and say why. A prediction that it *might* appear is not a reason to skip the
-render.
-
-**Pass the file verbatim.** Read it and hand it over byte for byte — never retype it, never
-summarise it, never "clean it up" on the way through. The old artifact path passed the file by
-path, so the HTML never travelled through a model response; a widget takes the content inline,
-which puts the layout through the tool call. If a rendered dashboard is missing a card, a control
-or a colour, suspect this before suspecting the template.
-
-**Reading the file is part of the render, and it is where this failed on 2026-09-01.** A run
-declined a 62-item dashboard saying the file could not be handed over intact — not a claim about
-`show_widget`, a claim about the read before it, and the rule above had nothing to say about that
-half. So: **read the whole file, and if the read comes back short, read the rest by offset and
-continue** — a file arriving in two reads is still passed byte for byte, and concatenating your own
-reads is not retyping. The publish script now emits the data one compact line per item for exactly
-this reason, which brought that same dashboard from 2,834 lines to 886.
-
-**A byte count is not an observed truncation.** *"The harness will not hand me a file that size
-intact"* predicted from the size, before reading, is the same move as predicting the render will not
-fit — the thing this step already forbids, arriving one stage earlier. What licenses a fallback is a
-read that actually came back short, or the red banner. Nothing else.
-<!--__END_SHARED:skill-render-fidelity__-->
+@@SH4@@
 **The banner is designed, not yet observed firing.** Believe it when it fires. Report the byte count beside it.
+
 - The script writes `index.html` beside the state file and keeps the last seven renders in `renders/<weekday>.html`.
 - Diff today against the last good render to see what changed. **Re-render from `index.html` rather than re-running the review.**
 - **Do not write a cleanup step for `renders/`.** The slots are overwritten in place for that reason.
@@ -686,10 +443,9 @@ read that actually came back short, or the red banner. Nothing else.
 - A design change goes in the plugin repo, not the workspace copy, which Step 0 overwrites on every run.
 
 **Report in chat with one line only:**
-```
-32 awaiting you · 0 flagged · 25 skipped · dashboard updated
-```
+@@F22@@
 Add a second line only if something blocked the run. Never put verdicts in chat.
+
 ## Step 8 — Execute responses, only on explicit instruction
 The user marks responses on the dashboard and presses execute. That copies an instruction naming each item and shows it for them to paste into chat. That pasted instruction, or an equivalent typed directly, is the only thing that authorises a click. **The dashboard is a snapshot.** The user may have actioned an item in Procore directly since the last run. So for **each** item, in this order:
 1. **Verify it is still theirs to action, before touching any UI.** Re-query the Step 2 endpoint. Skip the item if it returns no instance, or `can_respond` is false, or the named response is not in `available_responses`. Log it as "already actioned elsewhere — no click made" and continue. Do not open it, do not click, do not retry. **Never batch this check.** Its whole value is running in the moment before that item's click.

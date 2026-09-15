@@ -48,13 +48,14 @@ The pattern asked for a word boundary after the closing guillemet, which never c
 So a slug citation matched nothing and passed.
 The fix landed before the check was trusted.
 
-The hook was proved the same way, with 13 sample payloads on stdin.
+The hook was proved the same way, with 15 sample payloads on stdin.
 Each forbidden form exited 2 with one line on stderr.
 The forbidden forms are the stash, the reset, the restore, a checkout naming a path, a
 pattern kill and a pid list.
 A bare branch name, a new branch and a harmless command exited 0.
 A forbidden form after a separator still exited 2, so a separator hides nothing.
-A quoted mention inside an `echo` exited 0.
+A forbidden form inside a shell wrapper exited 2, after the quote strip was added.
+A quoted mention inside an `echo` exited 0, and so did a `grep` for the word.
 The `sed` fallback was proved with `jq` off the path.
 
 The id claim was proved twice.

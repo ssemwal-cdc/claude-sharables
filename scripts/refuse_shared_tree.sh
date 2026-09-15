@@ -31,6 +31,9 @@ fi
 
 [ -z "$cmd" ] && exit 0
 
+# Drop the quote characters, so `bash -c "git reset --hard"` still reads as git reset.
+cmd=$(printf '%s' "$cmd" | tr -d '"'"'")
+
 refuse() {
     printf 'Refused: %s. %s\n' "$1" "$2" >&2
     exit 2
@@ -48,11 +51,14 @@ for segment in $segments; do
     [ $# -eq 0 ] && { IFS='
 '; continue; }
 
-    # Drop leading env assignments and wrappers, so `sudo git reset` is still seen.
+    # Drop leading env assignments and wrappers, so `sudo git reset` and
+    # `bash -c git reset` are both still seen.
     while [ $# -gt 0 ]; do
         case "$1" in
             *=*) shift ;;
             sudo|command|time|nice|exec|env) shift ;;
+            sh|bash|zsh|dash|ksh|/bin/sh|/bin/bash) shift ;;
+            -c|-lc|-cl|-ec|-xc) shift ;;
             *) break ;;
         esac
     done

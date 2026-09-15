@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D31
 slug: docs-folder-is-public
 kind: decision
 status: settled
@@ -17,7 +17,7 @@ The docs folder is the website. Anything added there is publicly served.
 
 The same rule as the rest of this repo applies, with less margin for error.
 
-The whole-repo rule is D‹public-repo›, keep this repo public.
+The whole-repo rule is D13, keep this repo public.
 
 **Evidence.**
 

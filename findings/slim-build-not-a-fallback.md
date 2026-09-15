@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F69
 slug: slim-build-not-a-fallback
 kind: finding
 status: settled
@@ -41,6 +41,6 @@ It was asked for on grounds of symmetry and declined on grounds of vacuousness.
 2% to 6% on a realistic mix.
 113 KB became 101 KB at the large end, which crosses no observed threshold.
 A deliberately even 62-item fixture came down from 174 KB to 129 KB on 2026-09-01.
-G‹custom-tool-subtypes-unwatched›, nothing has rendered at 161 KB, carries the render ceiling.
+G15, nothing has rendered at 161 KB, carries the render ceiling.
 
 **Checks.** none for the size claim. `check_verdict_vocabulary()` covers the fold branch's verdicts.

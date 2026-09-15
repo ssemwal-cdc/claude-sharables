@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D57
 slug: provenance-ids-allowed
 kind: decision
 status: settled
@@ -21,11 +21,11 @@ Stripping those ids would leave the findings unfalsifiable, which is worse.
 
 They live in maintainer-facing records, not in patterns a teammate copies.
 
-The copied patterns are covered by D‹shipped-examples-use-placeholders›, shipped examples use placeholders.
+The copied patterns are covered by D60, shipped examples use placeholders.
 
 **Evidence.**
 
 - Separated from the placeholder rule 2026-08-24, when the two cases were conflated.
-- The worked example is F‹bill-po-from-ordbill-link›, bill PO comes from linkage.
+- The worked example is F42, bill PO comes from linkage.
 
 **Checks.** none

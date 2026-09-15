@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D3
 slug: frontmatter-name-description-only
 kind: decision
 status: settled
@@ -19,7 +19,7 @@ So it is long and specific on purpose.
 
 Do not trim it for tidiness.
 
-Its start also carries the version marker. See D‹skill-version-lines›, four synced version sites.
+Its start also carries the version marker. See D43, four synced version sites.
 
 **Evidence.**
 

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F27
 slug: approve-notes-same-tab-freeze
 kind: finding
 status: observed
@@ -30,7 +30,7 @@ Gating on a connector read would eventually click twice on a bill already approv
 **Evidence.**
 
 - Observed once in 2026-08. The frequency is `unmeasured`.
-- The lag is F‹connector-lag-verify-record›, verify the record not the queue.
-- The unread handler is G‹netsuite-notes-page›, the notes page is unseen.
+- The lag is F10, verify the record not the queue.
+- The unread handler is G3, the notes page is unseen.
 
 **Checks.** none

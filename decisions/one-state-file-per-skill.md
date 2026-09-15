@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D15
 slug: one-state-file-per-skill
 kind: decision
 status: settled
@@ -19,10 +19,10 @@ A foreign record is quarantined, never merged.
 
 Never give two skills the same state filename, however different their folders.
 
-A cloud-sync conflict copy is a different case. See D‹conflict-copy-config-only›, adopt config from conflict copy.
+A cloud-sync conflict copy is a different case. See D74, adopt config from conflict copy.
 
 **Evidence.**
 
-- Recorded 2026-08-12 after F‹shared-state-filename-collision›, a shared filename crossed records.
+- Recorded 2026-08-12 after F11, a shared filename crossed records.
 
 **Checks.** none

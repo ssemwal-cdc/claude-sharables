@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D14
 slug: never-prewrite-actions
 kind: decision
 status: settled
@@ -21,7 +21,7 @@ The log is the record of what was clicked. It must not gain an entry nobody obse
 
 **Evidence.**
 
-- Recorded 2026-08-12 with F‹connector-lag-verify-record›, verify the record not the queue.
-- The same rule governs a conflict copy. See D‹conflict-copy-config-only›, adopt config from conflict copy.
+- Recorded 2026-08-12 with F10, verify the record not the queue.
+- The same rule governs a conflict copy. See D74, adopt config from conflict copy.
 
 **Checks.** none

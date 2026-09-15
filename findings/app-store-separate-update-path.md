@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F48
 slug: app-store-separate-update-path
 kind: finding
 status: observed
@@ -26,6 +26,6 @@ Removing the marketplace from that menu uninstalls its plugins, and a re-add lan
 **Evidence.**
 
 - Verified with screenshots 2026-08-21. The Last updated column read 2026-08-12 for a long stretch.
-- The repo-name label is the split in D‹marketplace-name-vs-repo›, marketplace name differs from repo, surfacing in reverse.
+- The repo-name label is the split in D5, marketplace name differs from repo, surfacing in reverse.
 
 **Checks.** none

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G17
 slug: multi-skill-plugin-unbuilt
 kind: gap
 status: unobserved
@@ -11,7 +11,7 @@ date: 2026-09-15
 
 **Argument.**
 
-D‹prerequisite-bucket›, a plugin is a prerequisite bucket, tells a maintainer to put a second skill inside an existing plugin when the prerequisites match.
+D56, a plugin is a prerequisite bucket, tells a maintainer to put a second skill inside an existing plugin when the prerequisites match.
 
 `scripts/validate.py` blocks that today. Its per-skill check asserts that the `plugin.json` description ends with `Skill version N — DATE.`.
 

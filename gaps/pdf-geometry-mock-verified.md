@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G1
 slug: pdf-geometry-mock-verified
 kind: gap
 status: unobserved
@@ -31,6 +31,6 @@ It cannot cover this gap, because this gap is about a real system.
 Tested live 2026-08-13 against bill 2532506, before any file was changed.
 Checked against `pdftotext -layout` on a 3-page utility invoice.
 That check gave the same three columns and the same figures.
-G‹no-end-to-end-run›, no watched run, is the wider gap this sits inside.
+G4, no watched run, is the wider gap this sits inside.
 
 **Checks.** `scripts/test_skill_code.py`, which reads the extractor out of `SKILL.md`.

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D46
 slug: bar-ignores-filter
 kind: decision
 status: settled
@@ -31,10 +31,10 @@ One detail is worth keeping. The helper emits the of-total half in a small light
 
 - The tile contradiction was fixed 2026-08-24.
 - The bar test was missing until 2026-08-20. The note asserted one existed for a day and it did not, which is worth remembering the next time these records claim coverage.
-- The card rules came from a blind critique. See F‹blind-critique-card-rules›, four rules from a critique.
-- The per-row amber caveat is gone. See F‹amber-boilerplate-removed›, amber was the real finding.
-- Larger type measured worse. See F‹bigger-type-measured-worse›, bigger type measured worse.
-- The freshness fold needed a flex fix. See F‹freshness-fold-flex-regression›, a fold restored the height.
-- The more control needs real clipping. See F‹more-button-needs-clipping›, a clamp needs real clipping.
+- The card rules came from a blind critique. See F55, four rules from a critique.
+- The per-row amber caveat is gone. See F52, amber was the real finding.
+- Larger type measured worse. See F54, bigger type measured worse.
+- The freshness fold needed a flex fix. See F58, a fold restored the height.
+- The more control needs real clipping. See F59, a clamp needs real clipping.
 
 **Checks.** `test_dashboard_view` in `scripts/test_skill_code.py`.

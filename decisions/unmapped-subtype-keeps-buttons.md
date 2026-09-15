@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D78
 slug: unmapped-subtype-keeps-buttons
 kind: decision
 status: settled
@@ -23,7 +23,7 @@ Stripping buttons would have cost the user 37 live items to fix a link.
 
 **Evidence.**
 
-- Recorded 2026-09-01 from the run in F‹two-custom-tools-unchecked›, a second custom tool went unchecked.
-- The wider fail-closed is D‹demote-missing-wfid-ungated›, demote a missing wfId.
+- Recorded 2026-09-01 from the run in F97, a second custom tool went unchecked.
+- The wider fail-closed is D30, demote a missing wfId.
 
 **Checks.** `test_custom_tool_subtype` pins both halves.

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G6
 slug: attachment-sniff-cleared
 kind: gap
 status: observed

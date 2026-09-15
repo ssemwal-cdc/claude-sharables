@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D25
 slug: ocr-never-clear-verdict
 kind: decision
 status: settled
@@ -23,7 +23,7 @@ If that cap ever feels noisy, fix the visual read. Do not relax the cap.
 
 **Evidence.**
 
-- Recorded 2026-08-14. The visual read tool is confirmed. See F‹computer-only-visual-read›, one visual read exists.
+- Recorded 2026-08-14. The visual read tool is confirmed. See F20, one visual read exists.
 - The OCR branch has never fired, so the noise level is `unmeasured`.
 
 **Checks.** none

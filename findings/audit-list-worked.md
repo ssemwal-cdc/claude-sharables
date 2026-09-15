@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F53
 slug: audit-list-worked
 kind: finding
 status: settled
@@ -63,8 +63,8 @@ The sniff reads four bytes and cannot see inside the container.
 SheetJS yielding no sheets is the real signal, and that is what the rule says.
 
 **Evidence.** Pass dated 2026-08-24, immediately after the audit.
-F‹nine-agent-prose-audit›, 122 findings and 29 surviving, is the audit this worked through.
-G‹dashboard-widget-host-unseen›, the uncommitted 2026-08-20 fixtures, carries the withdrawn certification.
-D‹shared-blocks›, canonical copy plus a check, is the loop demonstrated here.
+F61, 122 findings and 29 surviving, is the audit this worked through.
+G12, the uncommitted 2026-08-20 fixtures, carries the withdrawn certification.
+D58, canonical copy plus a check, is the loop demonstrated here.
 
 **Checks.** `scripts/validate.py`, `scripts/test_skill_code.py` in CI, `scripts/shared_blocks.py`.

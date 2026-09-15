@@ -21,7 +21,7 @@ and for each one it:
   figures visible without clicking into anything
 
 Purchase orders are reviewed. Their execute route has never fired against a
-real purchase order. See G‹po-execute-route-unfired›, PO execute route
+real purchase order. See G16, PO execute route
 unfired.
 
 The dashboard is a snapshot and shows its own age. It warns once the snapshot
@@ -45,7 +45,7 @@ and the audit trail records you as the approver.
 
 NetSuite's own `download` link does nothing under automation. That is observed.
 `preview` opens a popup, and the tab froze once after it. The recovery for a
-frozen tab has never fired. See G‹freeze-fallback-unfired›, freeze fallback
+frozen tab has never fired. See G2, freeze fallback
 unfired.
 
 The plugin fetches the attachment from inside your authenticated NetSuite tab
@@ -55,7 +55,7 @@ files survive between runs.
 Invoice tables keep their column alignment. The text is rebuilt from the PDF's
 own geometry rather than flattened into a single line. That alignment is what
 the quantity x rate and line-tie checks read. Verified against fixtures and one
-live bill. See G‹pdf-geometry-mock-verified›, PDF geometry fixture-verified.
+live bill. See G1, PDF geometry fixture-verified.
 
 Support that is not a PDF is handled as what it is. It is not forced through
 the PDF reader. Spreadsheets are read sheet by sheet, hidden sheets included.
@@ -74,14 +74,14 @@ it verbatim. Rejection reasons are never defaulted, and the plugin stops and
 asks if one is missing.
 
 An approval recorded with no note reads as though you clicked it by hand. See
-D‹approved-by-claude-comment›, Approved by Claude comment.
+D20, Approved by Claude comment.
 
 ## Requirements
 
 - **Claude in Chrome, signed in to NetSuite.** That is the requirement.
 - **A connected workspace folder is recommended, not required.** The run
   records what it reviewed there, and reads it back to know a day is already
-  done. A run without the folder works. See F‹folderless-run-works›,
+  done. A run without the folder works. See F76,
   folderless runs work.
 - **A NetSuite MCP connector is optional.** It makes the review faster and
   broader. With it, the queue and every record's lines come back in two bulk
@@ -157,7 +157,7 @@ table does not ship with the plugin, so compare there, never against an
 installed file.
 
 `plugin.json` carries no `version` field. Do not add one, and do not suggest
-adding one. See D‹no-version-field›, no version field.
+adding one. See D9, no version field.
 
 ## Known limits
 

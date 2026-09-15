@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F62
 slug: no-run-without-browser
 kind: finding
 status: observed

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F39
 slug: connector-needs-second-account
 kind: finding
 status: observed

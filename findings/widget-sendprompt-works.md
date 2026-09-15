@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F13
 slug: widget-sendprompt-works
 kind: finding
 status: observed

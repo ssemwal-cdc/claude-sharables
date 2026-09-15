@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D49
 slug: extend-shared-blocks
 kind: decision
 status: open
@@ -19,7 +19,7 @@ Closing that gap means designing those names out of the prose.
 Some blocks differ by one token only.
 `ns_marks_v1` against `pc_marks_v1` is one such pair.
 The two log filenames are another.
-See D‹shared-blocks›, canonical copy plus a check.
+See D58, canonical copy plus a check.
 
 **Options.**
 
@@ -37,6 +37,6 @@ Option C is new machinery for a problem no defect has produced yet.
 This record is not a commitment.
 It records what was considered, deferred, and why.
 Coverage today is `unmeasured` as a share of near-identical lines.
-F‹dashboard-drift-six-defects›, six one-sided fixes, is the cost this mechanism exists to stop.
+F56, six one-sided fixes, is the cost this mechanism exists to stop.
 
 **Checks.** `python3 scripts/shared_blocks.py --check`, run by `scripts/validate.py`.

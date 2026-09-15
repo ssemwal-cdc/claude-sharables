@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F29
 slug: fewer-larger-tool-calls
 kind: finding
 status: settled

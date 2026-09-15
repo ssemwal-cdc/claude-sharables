@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F52
 slug: amber-boilerplate-removed
 kind: finding
 status: observed

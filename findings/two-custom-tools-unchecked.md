@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F97
 slug: two-custom-tools-unchecked
 kind: finding
 status: observed

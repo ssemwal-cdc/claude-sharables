@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F75
 slug: cowork-storage-leads
 kind: finding
 status: unobserved
@@ -69,7 +69,7 @@ Issues #57177 and #54859, the hardcoded `~/Documents/Claude/` path.
 Issue #47180, scheduled tasks re-prompting for permissions.
 Issue #86647, a connected folder reporting as not connected.
 No claim here is measured on a real machine. `unmeasured`.
-F‹folderless-run-works›, a folderless run completes, contradicts issue #47179 on usability.
-F‹folderless-scheduled-run-works›, nothing lands in `Documents/Claude`.
+F76, a folderless run completes, contradicts issue #47179 on usability.
+F77, nothing lands in `Documents/Claude`.
 
 **Checks.** none.

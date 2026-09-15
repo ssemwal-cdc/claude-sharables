@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F2
 slug: cowork-runs-plugins
 kind: finding
 status: observed
@@ -20,6 +20,6 @@ That claim was asserted from a docs passage about personal skills in a home dire
 **Evidence.**
 
 - Verified 2026-08-11.
-- The Cowork shell still cannot see the plugin directory. See F‹cowork-shell-no-plugin-dir›, the Cowork shell cannot see the plugin.
+- The Cowork shell still cannot see the plugin directory. See F28, the Cowork shell cannot see the plugin.
 
 **Checks.** none

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D44
 slug: widget-is-only-deliverable
 kind: decision
 status: settled
@@ -24,6 +24,6 @@ If cards still appear with that rule shipped, the surface is auto-listing writte
 **Evidence.**
 
 - Observed 2026-08-21.
-- One run later handed a 164 KB page over as the deliverable. See F‹render-read-wall-serialise›, the read side had a real wall.
+- One run later handed a 164 KB page over as the deliverable. See F96, the read side had a real wall.
 
 **Checks.** none

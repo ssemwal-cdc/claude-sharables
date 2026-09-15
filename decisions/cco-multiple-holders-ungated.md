@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D22
 slug: cco-multiple-holders-ungated
 kind: decision
 status: settled
@@ -19,10 +19,10 @@ One id after deduplication is the answer.
 
 Several ids mean there is no single workflow instance that the one queue row stands for.
 
-Choosing one would be a guess with a silent failure mode. See F‹wrong-id-returns-200-empty›, a wrong id returns 200 empty.
+Choosing one would be a guess with a silent failure mode. See F36, a wrong id returns 200 empty.
 
 **Evidence.**
 
-- Recorded 2026-08-14 against the 5 packages in F‹cco-holder-id-route›, a CCO workflow hangs off holder.id.
+- Recorded 2026-08-14 against the 5 packages in F18, a CCO workflow hangs off holder.id.
 
 **Checks.** none

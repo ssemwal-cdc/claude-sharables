@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F5
 slug: no-duplicate-copy-warning
 kind: finding
 status: observed

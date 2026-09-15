@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D42
 slug: typed-reference-is-data-note
 kind: decision
 status: settled
@@ -23,6 +23,6 @@ The signal was real. Only its category was wrong.
 
 **Evidence.**
 
-- Recorded 2026-08-20 from F‹bill-po-from-ordbill-link›, a bill PO comes from linkage.
+- Recorded 2026-08-20 from F42, a bill PO comes from linkage.
 
 **Checks.** none

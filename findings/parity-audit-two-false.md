@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F80
 slug: parity-audit-two-false
 kind: finding
 status: observed
@@ -25,11 +25,11 @@ The capability table answers what happens to a check when its input is missing. 
 
 Do not re-raise that by diffing the two capability tables. The asymmetry is the point.
 
-The real finding came from the maintainer correcting the question. See D‹queue-source-ask-once›, ask once for the queue.
+The real finding came from the maintainer correcting the question. See D67, ask once for the queue.
 
 **Evidence.**
 
 - Run 2026-08-26 before a commit.
-- The Procore support-read list is F‹attachment-file-evidences-verdict›, name the file behind a verdict.
+- The Procore support-read list is F73, name the file behind a verdict.
 
 **Checks.** none

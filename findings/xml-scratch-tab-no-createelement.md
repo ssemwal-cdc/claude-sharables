@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F26
 slug: xml-scratch-tab-no-createelement
 kind: finding
 status: observed

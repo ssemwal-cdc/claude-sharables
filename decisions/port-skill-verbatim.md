@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D12
 slug: port-skill-verbatim
 kind: decision
 status: settled

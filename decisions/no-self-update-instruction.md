@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D8
 slug: no-self-update-instruction
 kind: decision
 status: settled
@@ -19,7 +19,7 @@ date: 2026-08-11
 
 The file carrying the instruction is itself the stale copy, so the instruction can never be current.
 
-Auto sync keeps an installed plugin current already. See F‹two-command-update›, update needs the marketplace qualifier, for the terminal route.
+Auto sync keeps an installed plugin current already. See F9, update needs the marketplace qualifier, for the terminal route.
 
 **Evidence.**
 

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F45
 slug: retraction-not-applied-to-sheet
 kind: finding
 status: observed
@@ -28,6 +28,6 @@ The sheet gives the reason rather than only the prohibition, because a rule with
 **Evidence.**
 
 - The instruction was added 2026-08-20. The split was found in the 2026-09-15 prose pass.
-- The retraction is in D‹auto-mode-not-skip-all›, auto mode never skip-all.
+- The retraction is in D29, auto mode never skip-all.
 
 **Checks.** none

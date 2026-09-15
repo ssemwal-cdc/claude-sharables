@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D61
 slug: skill-md-marker-rules
 kind: decision
 status: settled
@@ -24,6 +24,6 @@ A marker must never land inside a fenced code block. The bash and javascript fen
 **Evidence.**
 
 - Both rules were learned by breaking them in 2026-08.
-- The eligibility cost is in F‹skill-md-block-eligibility›, only 34 eligible lines.
+- The eligibility cost is in F68, only 34 eligible lines.
 
 **Checks.** `shared_blocks.py --check` and `scripts/test_skill_code.py`.

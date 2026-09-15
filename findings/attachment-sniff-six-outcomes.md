@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F17
 slug: attachment-sniff-six-outcomes
 kind: finding
 status: observed
@@ -34,7 +34,7 @@ Anything that threw is named by what the bytes were.
 **Evidence.**
 
 - Reported from production 2026-08-14.
-- This is the same bug class as the change order id and the fan-out states. See D‹three-states-never-boolean›, three states never a boolean.
-- The table was later reported working. See F‹sniff-table-reported-working›, the sniff table is reported working.
+- This is the same bug class as the change order id and the fan-out states. See D41, three states never a boolean.
+- The table was later reported working. See F46, the sniff table is reported working.
 
 **Checks.** `scripts/test_skill_code.py` runs the code the attachment step carries.

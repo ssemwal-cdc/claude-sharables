@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D24
 slug: no-batch-across-presigned-window
 kind: decision
 status: settled
@@ -24,6 +24,6 @@ Only a successful fetch that parsed and yielded nothing is a scan.
 **Evidence.**
 
 - Recorded 2026-08-14 with the attachment sniff table.
-- The six outcomes are in F‹attachment-sniff-six-outcomes›, six attachment outcomes.
+- The six outcomes are in F17, six attachment outcomes.
 
 **Checks.** none

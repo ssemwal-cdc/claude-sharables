@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F61
 slug: nine-agent-prose-audit
 kind: finding
 status: settled
@@ -72,7 +72,7 @@ Treat any unchecked string near a click as suspect by default.
 122 raw findings, 29 surviving contest.
 `grep per_page plugins/` returned three hits, all in `SKILL.md`, none in the template.
 The GitHub API reported `"private": false`, `"visibility": "public"`, forkable, personal account.
-See D‹public-repo›, public is a decision.
-F‹staleness-check-blind›, two inputs failing together, is the same shape one turn earlier.
+See D13, public is a decision.
+F71, two inputs failing together, is the same shape one turn earlier.
 
 **Checks.** `check_execute_prompt_purity()` in `scripts/shared_blocks.py`.

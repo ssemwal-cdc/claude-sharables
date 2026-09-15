@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F37
 slug: github-io-egress-blocked
 kind: finding
 status: observed
@@ -28,6 +28,6 @@ Anything genuinely visual has to be eyeballed by the user. Ask rather than assum
 **Evidence.**
 
 - Observed 2026-08-17. The proxy also blocks the Anthropic marketing and support hosts and the Chrome web store.
-- The Procore developer host is blocked the same way. See F‹commitment-payload-three-of-four›, three borrowed names in four.
+- The Procore developer host is blocked the same way. See F87, three borrowed names in four.
 
 **Checks.** `check_onboarding_page()` in `scripts/shared_blocks.py`.

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D48
 slug: execute-message-authorises-only
 kind: decision
 status: settled

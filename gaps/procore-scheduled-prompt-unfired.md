@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G10
 slug: procore-scheduled-prompt-unfired
 kind: gap
 status: unobserved
@@ -23,6 +23,6 @@ Nobody has watched the Procore schedule fire.
 Do not cite it as established.
 `python3 scripts/test_skill_code.py` covers the logic against mocks.
 It cannot cover this gap, because this gap is about a real system.
-F‹folderless-scheduled-run-works›, a NetSuite schedule fired and onboarded itself, is the nearest observation.
+F77, a NetSuite schedule fired and onboarded itself, is the nearest observation.
 
 **Checks.** none.

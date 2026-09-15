@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D38
 slug: never-rename-mark-keys
 kind: decision
 status: settled
@@ -26,6 +26,6 @@ The rule is about whatever the current keys are, not about a particular name.
 **Evidence.**
 
 - Recorded 2026-08-20. The current keys are one marks key and one view key per plugin.
-- The view keys have been bumped on purpose. See D‹new-default-new-view-key›, a new default needs a new key.
+- The view keys have been bumped on purpose. See D39, a new default needs a new key.
 
 **Checks.** `test_dashboard_view` in `scripts/test_skill_code.py`.

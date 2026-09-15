@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F88
 slug: commitment-two-collections
 kind: finding
 status: observed
@@ -28,6 +28,6 @@ This is the seventh instance of the shape these records keep recording.
 **Evidence.**
 
 - Reported 2026-08-28.
-- The guard is D‹demote-missing-wfid-ungated›, demote a missing workflow id.
+- The guard is D30, demote a missing workflow id.
 
 **Checks.** `test_commitment_kind` in `scripts/test_skill_code.py`, mutation-tested.

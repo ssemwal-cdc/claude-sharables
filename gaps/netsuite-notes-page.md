@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G3
 slug: netsuite-notes-page
 kind: gap
 status: unobserved
@@ -27,6 +27,6 @@ Do not cite it as established.
 It cannot cover this gap, because this gap is about a real system.
 The step number moved: this gap said Step 5 under the old numbering.
 Step 5 is now the PO cross-check.
-G‹no-end-to-end-run›, no watched run, records that no approval has carried a note yet.
+G4, no watched run, records that no approval has carried a note yet.
 
 **Checks.** none.

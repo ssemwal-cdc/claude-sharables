@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F38
 slug: connector-lapses-reported
 kind: finding
 status: observed
@@ -22,6 +22,6 @@ It pairs with the third-state rule. The run says it once, then carries on throug
 **Evidence.**
 
 - Added 2026-08-19 from teammate feedback. The session lifetime is `unmeasured`.
-- The say-once rule is D‹stale-connector-said-once›, say a stale session once.
+- The say-once rule is D36, say a stale session once.
 
 **Checks.** none

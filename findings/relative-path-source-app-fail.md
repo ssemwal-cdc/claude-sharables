@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F7
 slug: relative-path-source-app-fail
 kind: finding
 status: observed
@@ -26,6 +26,6 @@ This is the subtle one, because the terminal gives no hint.
 **Evidence.**
 
 - Reproduced against Claude Code v2.1.227.
-- The fix is D‹git-subdir-sources›, use git-subdir sources.
+- The fix is D4, use git-subdir sources.
 
 **Checks.** `scripts/validate.py` rejects a relative-path source string.

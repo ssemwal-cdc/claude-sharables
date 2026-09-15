@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F33
 slug: plain-approve-noop-user-activation
 kind: finding
 status: observed

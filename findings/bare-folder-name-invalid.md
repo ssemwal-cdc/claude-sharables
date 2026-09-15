@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F1
 slug: bare-folder-name-invalid
 kind: finding
 status: observed

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F10
 slug: connector-lag-verify-record
 kind: finding
 status: observed
@@ -31,6 +31,6 @@ Unchanged means not yet, never failed. Report `still propagating` once and end t
 
 - Found in production 2026-08-12. Two bills were approved and routed onward, and both still read the pending approval status.
 - The lag is described in minutes. No timing was recorded, so the exact interval is `unmeasured`.
-- This is why the freeze recovery is gated on a page load. See F‹approve-notes-same-tab-freeze›, the notes click is a navigation.
+- This is why the freeze recovery is gated on a page load. See F27, the notes click is a navigation.
 
 **Checks.** none

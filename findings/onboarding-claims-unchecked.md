@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F63
 slug: onboarding-claims-unchecked
 kind: finding
 status: observed
@@ -22,6 +22,6 @@ Anything visual still needs a person to look. Do not add assertions about paragr
 **Evidence.**
 
 - Found 2026-08-24. Four claims, zero readers.
-- This is the second time these records claimed coverage that did not exist. The first is in D‹bar-ignores-filter›, the bar ignores filters.
+- This is the second time these records claimed coverage that did not exist. The first is in D46, the bar ignores filters.
 
 **Checks.** `check_onboarding_page()` in `scripts/shared_blocks.py`.

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F86
 slug: write-states-kept-refused-not-attempted
 kind: finding
 status: observed
@@ -34,7 +34,7 @@ A claim that state will not persist, with no error in it, is the unreadable defe
 **Evidence.**
 
 - Observed 2026-08-27, the third such run that day.
-- This is the sixth instance of the shape. See D‹three-states-never-boolean›, three states never a boolean.
-- The write has still never been observed failing. See G‹write-never-attempted›, the refused write is unobserved.
+- This is the sixth instance of the shape. See D41, three states never a boolean.
+- The write has still never been observed failing. See G13, the refused write is unobserved.
 
 **Checks.** `test_step0_write_states` in `scripts/test_skill_code.py`, mutation-tested four ways.

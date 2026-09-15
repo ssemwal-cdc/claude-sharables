@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F92
 slug: dehydrated-onedrive-rename-over
 kind: finding
 status: observed
@@ -26,6 +26,6 @@ Had the rule still been the mechanism list, the only working write on that mount
 **Evidence.**
 
 - Observed 2026-09-01.
-- The property form is D‹no-stray-files-in-workspace›, no stray files in the workspace.
+- The property form is D72, no stray files in the workspace.
 
 **Checks.** `test_step0_write_states` in `scripts/test_skill_code.py`.

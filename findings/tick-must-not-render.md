@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F72
 slug: tick-must-not-render
 kind: finding
 status: observed

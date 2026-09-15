@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D82
 slug: hooks-and-checks-pass
 kind: decision
 status: open

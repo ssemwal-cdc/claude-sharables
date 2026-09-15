@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D54
 slug: one-parameterised-dashboard
 kind: decision
 status: open
@@ -15,7 +15,7 @@ date: 2026-08-24
 It has the least user-visible benefit.
 It removes the independent verification that two copies give.
 The drift check already solves the problem that made merging tempting.
-See D‹shared-blocks›, canonical copy plus a check.
+See D58, canonical copy plus a check.
 
 **Options.**
 

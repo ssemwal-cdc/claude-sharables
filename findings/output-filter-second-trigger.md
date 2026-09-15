@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F23
 slug: output-filter-second-trigger
 kind: finding
 status: observed
@@ -22,6 +22,6 @@ This matters because both skills return figures, and dotted identifiers are ever
 **Evidence.**
 
 - Observed 2026-08-14. The literal string `0.18.5` was replaced by a blocked-JWT marker.
-- The rule it produced is D‹blocked-marker-never-a-value›, a blocked marker is never a value.
+- The rule it produced is D21, a blocked marker is never a value.
 
 **Checks.** none

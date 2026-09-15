@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F25
 slug: xlsx-cdnjs-import-works
 kind: finding
 status: observed
@@ -33,6 +33,6 @@ The SheetJS CDN serves a current build and fetches fine. Executing from it is un
 
 - Probed live 2026-08-14. The pin is xlsx 0.18.5.
 - The four unreached fallbacks were a blob import, a namespaced script element, a function constructor, and an ES module from the vendor CDN.
-- A target version for the pin is an open decision. See D‹xlsx-pin-target›, name the fixed xlsx version.
+- A target version for the pin is an open decision. See D86, name the fixed xlsx version.
 
 **Checks.** `check_pins()` in `scripts/shared_blocks.py`.

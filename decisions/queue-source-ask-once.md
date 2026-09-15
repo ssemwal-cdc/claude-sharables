@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D67
 slug: queue-source-ask-once
 kind: decision
 status: settled
@@ -29,7 +29,7 @@ A review of the wrong queue looks exactly like a review of the right one.
 
 **Evidence.**
 
-- Landed 2026-08-26 from F‹parity-audit-two-false›, two audit findings were wrong.
-- The found-none case was missing. See F‹portlet-empty-case-ladder›, no portlet found lacked rule.
+- Landed 2026-08-26 from F80, two audit findings were wrong.
+- The found-none case was missing. See F83, no portlet found lacked rule.
 
 **Checks.** none

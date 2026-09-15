@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F28
 slug: cowork-shell-no-plugin-dir
 kind: finding
 status: observed
@@ -24,6 +24,6 @@ Step 0 in both skills now carries a sync ladder. Rung 1 copies. Rung 2 reads and
 **Evidence.**
 
 - Observed in a live Cowork run 2026-08-15.
-- The earlier reading is F‹stale-install-reads-as-repo-bug›, a stale install reads as a bug.
+- The earlier reading is F24, a stale install reads as a bug.
 
 **Checks.** none

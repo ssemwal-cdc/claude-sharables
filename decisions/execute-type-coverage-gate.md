@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D75
 slug: execute-type-coverage-gate
 kind: decision
 status: settled
@@ -21,7 +21,7 @@ Same shape and same friction as the check registry manifest, for the same reason
 
 **Evidence.**
 
-- Added 2026-09-01 after F‹netsuite-po-execute-gap›, NetSuite could not click purchase orders.
+- Added 2026-09-01 after F94, NetSuite could not click purchase orders.
 - Mutation-tested five ways. Dropping the row, shrinking the schema, inventing a fourth type, renaming the heading and blanking a gate cell all fail.
 
 **Checks.** `check_execute_type_coverage()` in `scripts/shared_blocks.py`.

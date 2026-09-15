@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F85
 slug: workspace-write-works
 kind: finding
 status: observed
@@ -22,6 +22,6 @@ Do not re-diagnose this as a platform constraint without a fresh observation.
 **Evidence.**
 
 - Confirmed 2026-08-27, after the workspace placeholder was defined.
-- It was re-diagnosed wrongly a third time the same day. See F‹write-states-kept-refused-not-attempted›, three write states.
+- It was re-diagnosed wrongly a third time the same day. See F86, three write states.
 
 **Checks.** `test_step0_write_states` in `scripts/test_skill_code.py`.

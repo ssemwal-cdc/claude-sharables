@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D69
 slug: silent-connector-absence
 kind: decision
 status: settled
@@ -23,7 +23,7 @@ Naming is right for an attachment because the word unreadable once hid whole fil
 
 The general form: a capability the user chose not to have is informative. A capability they cannot obtain is an apology.
 
-The exception covers the never-provisioned case only. An expired session is a third state and is named once. See D‹stale-connector-said-once›, say a stale session once.
+The exception covers the never-provisioned case only. An expired session is a third state and is named once. See D36, say a stale session once.
 
 Any future lens that reports a check as not run inherits this split.
 

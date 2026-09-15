@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D80
 slug: dashboard-publishing-pattern
 kind: decision
 status: settled
@@ -17,7 +17,7 @@ Both plugins carry a template and a publish script under the skill assets folder
 
 The first run copies them into a workspace state folder.
 
-The output renders through the widget host and never to chat. See D‹widget-not-artifact›, render dashboards with show_widget.
+The output renders through the widget host and never to chat. See D16, render dashboards with show_widget.
 
 Match this shape when porting. If a new skill deviates, say so rather than normalising it quietly.
 

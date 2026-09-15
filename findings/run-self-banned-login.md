@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F98
 slug: run-self-banned-login
 kind: finding
 status: settled
@@ -68,6 +68,6 @@ Where two files describe one behaviour to two audiences, a contradiction is a de
 **Evidence.** Reported 2026-09-10, one run.
 The prose changed in `6df1570`, the commit that rewrote the login rung as an absolute.
 `test_login_states()` pins every clause and is mutation-tested three ways.
-G‹write-never-attempted›, three runs blaming the platform, is the same shape.
+G13, three runs blaming the platform, is the same shape.
 
 **Checks.** `test_login_states()` in `scripts/test_skill_code.py`.

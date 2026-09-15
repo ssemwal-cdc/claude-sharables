@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D68
 slug: registry-added-additively
 kind: decision
 status: settled
@@ -25,7 +25,7 @@ The check prose that stays put is what makes the registry free. A rewrite puts t
 
 **Evidence.**
 
-- Recorded 2026-08-26 alongside D‹check-registry-with-manifest›, declare every check in a registry.
+- Recorded 2026-08-26 alongside D66, declare every check in a registry.
 - The behaviour neutrality rests on the diff, not on a run. It is `unmeasured` against live data.
 
 **Checks.** none

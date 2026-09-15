@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F77
 slug: folderless-scheduled-run-works
 kind: finding
 status: observed
@@ -30,7 +30,7 @@ The sheet recommends Downloads rather than requiring it.
 Do not point the state file at a stable path instead.
 The motivating problem was folderless scheduling failing, and it does not fail.
 The remaining cost is a repeated review, which a connected folder already fixes.
-See G‹scheduled-identity-unconfirmed›, unattended Step 0 identity branch.
+See G11, unattended Step 0 identity branch.
 
 **Evidence.** 2026-08-26, third maintainer correction of that day.
 One reported run, no transcript.

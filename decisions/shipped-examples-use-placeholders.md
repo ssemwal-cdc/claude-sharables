@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D60
 slug: shipped-examples-use-placeholders
 kind: decision
 status: settled
@@ -19,7 +19,7 @@ The shipped worked examples are the config blocks and log schemas a teammate cop
 
 That means no tenant or company id, no custom-field id, no counterparty name, no project label and no real amount.
 
-Defect provenance is the other case and the rule differs. See D‹provenance-ids-allowed›, provenance may cite ids.
+Defect provenance is the other case and the rule differs. See D57, provenance may cite ids.
 
 Anything genuinely confidential belongs in neither category and does not go here at all. That covers a rate, a contract term and a person details.
 
@@ -27,6 +27,6 @@ Anything genuinely confidential belongs in neither category and does not go here
 
 - Sanitised 2026-08-24. Before that both skills shipped a real company id, a real tool id, 3 custom-field ids, a named subcontractor and a real commitment balance.
 - `README.md` claimed at the same time that the plugins carried no customer data.
-- The repo is public by decision. See D‹public-repo›, keep this repo public.
+- The repo is public by decision. See D13, keep this repo public.
 
 **Checks.** none. No script greps shipped examples for live values.

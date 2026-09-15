@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D35
 slug: connector-is-optional
 kind: decision
 status: settled
@@ -22,7 +22,7 @@ That framing matches the skill rule of stating what was checked and never what w
 **Evidence.**
 
 - Changed 2026-08-19 at step 2 of `docs/onboarding.html`.
-- The connector needs a second account. See F‹connector-needs-second-account›, the connector needs another account.
-- Nothing runs with Chrome closed. See F‹no-run-without-browser›, nothing runs without Chrome.
+- The connector needs a second account. See F39, the connector needs another account.
+- Nothing runs with Chrome closed. See F62, nothing runs without Chrome.
 
 **Checks.** none

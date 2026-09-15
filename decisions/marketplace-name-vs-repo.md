@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D5
 slug: marketplace-name-vs-repo
 kind: decision
 status: settled
@@ -17,9 +17,9 @@ The repo is `ssemwal-cdc/claude-sharables`. The marketplace is `compass-claude-p
 
 So `add` takes the repo and `install` takes the marketplace. This looks like a typo and is not.
 
-The same split surfaces in the update commands. See F‹two-command-update›, update needs the marketplace qualifier.
+The same split surfaces in the update commands. See F9, update needs the marketplace qualifier.
 
-It surfaces in reverse in the desktop app, which labels the marketplace by repo name. See F‹app-store-separate-update-path›, the app has its own store.
+It surfaces in reverse in the desktop app, which labels the marketplace by repo name. See F48, the app has its own store.
 
 **Evidence.**
 

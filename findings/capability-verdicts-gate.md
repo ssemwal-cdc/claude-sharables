@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F74
 slug: capability-verdicts-gate
 kind: finding
 status: observed
@@ -24,6 +24,6 @@ The row says so in plain words for that reason. Do not re-add the backticks.
 **Evidence.**
 
 - Added 2026-08-26 and mutation-tested. Putting the wrong verdict back fails the build.
-- The template-branch gate is D‹verdict-vocabulary-gate›, gate template verdicts against publish.
+- The template-branch gate is D63, gate template verdicts against publish.
 
 **Checks.** `check_capability_verdicts()` in `scripts/shared_blocks.py`.

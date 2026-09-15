@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D20
 slug: approved-by-claude-comment
 kind: decision
 status: settled
@@ -30,6 +30,6 @@ The mechanical checks are unchanged and still stop the batch.
 **Evidence.**
 
 - The 15-item batch and its 61.2 million dollar total are from a live run. Both skills carry the default now.
-- NetSuite routes every approval through Approve With Notes so it can attach the note. See D‹approve-with-notes-primary›, notes route is primary.
+- NetSuite routes every approval through Approve With Notes so it can attach the note. See D28, notes route is primary.
 
 **Checks.** none

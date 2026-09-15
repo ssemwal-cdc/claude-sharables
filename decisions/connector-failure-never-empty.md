@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D34
 slug: connector-failure-never-empty
 kind: decision
 status: settled
@@ -26,6 +26,6 @@ It is the highest-consequence instance of that rule in either skill.
 **Evidence.**
 
 - Recorded 2026-08-19.
-- The general rule is D‹three-states-never-boolean›, three states never a boolean.
+- The general rule is D41, three states never a boolean.
 
 **Checks.** none

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F46
 slug: sniff-table-reported-working
 kind: finding
 status: observed
@@ -28,7 +28,7 @@ Do not cite either as established.
 **Evidence.**
 
 - Confirmed 2026-08-20 by the person running the plugins.
-- The design is F‹attachment-sniff-six-outcomes›, six attachment outcomes.
+- The design is F17, six attachment outcomes.
 - The unfired branches are `unmeasured`.
 
 **Checks.** none

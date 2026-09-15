@@ -103,11 +103,11 @@ session start.
 | `procore-open-items-review` | v27 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Lets you respond from a dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
 
 Purchase orders are reviewed. Their execute route has never fired against a
-real purchase order. See G‹po-execute-route-unfired›, PO execute route
+real purchase order. See G16, PO execute route
 unfired.
 
 The workspace folder is recommended, not required. A run without one works.
-See F‹folderless-run-works›, folderless runs work.
+See F76, folderless runs work.
 
 **Checking what you have installed.** Open profile at the bottom left. Go to
 **Settings → Plugins** and click the plugin. The last sentence of its
@@ -153,7 +153,7 @@ it.
 If **Check for updates** does not move the synced commit, restart the computer.
 Restarting the computer is the observed workaround. An app restart is not
 reliably enough on Windows for a plugin change to show up. See
-F‹restart-computer-not-app›, restart the computer.
+F66, restart the computer.
 
 ## Adding another plugin or skill
 
@@ -162,8 +162,8 @@ Drop the plugin in `plugins/<name>/` with its own
 with a `git-subdir` source pointing at `plugins/<name>`. Then run
 `python3 scripts/validate.py`.
 
-The layout rules are D‹git-subdir-sources›, git-subdir sources;
-D‹no-version-field›, no version field; and D‹prerequisite-bucket›,
+The layout rules are D4, git-subdir sources;
+D9, no version field; and D56,
 prerequisite bucket. Records live under `decisions/`, `findings/` and `gaps/`.
 
 ## Checks
@@ -219,7 +219,7 @@ credential helpers for its `git pull`. So it cannot authenticate to a private
 HTTPS remote. It falls back to re-cloning the whole marketplace. Whether that
 re-clone times out is unmeasured. The result is a teammate who silently stops
 receiving updates. That is the failure the no-version rule exists to prevent.
-See D‹no-version-field›, no version field. SSH remotes avoid the problem, but
+See D9, no version field. SSH remotes avoid the problem, but
 only while every teammate keeps a key loaded in `ssh-agent`.
 
 One tradeoff is accepted in exchange. Both plugins are world-readable. They are
@@ -227,7 +227,7 @@ not enterprise-private, and anyone can fork them. They describe approval gates
 and cost-field mappings. Never commit a token or a credential. Shipped examples
 use placeholders, never live tenant ids, counterparty names or amounts.
 Maintainer records may name a business record id, where that id is the evidence
-for a documented defect. See D‹public-repo›, public repo.
+for a documented defect. See D13, public repo.
 
 <details>
 <summary>The one route that would beat public, and why it is not used</summary>

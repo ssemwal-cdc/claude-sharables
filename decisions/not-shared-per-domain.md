@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D53
 slug: not-shared-per-domain
 kind: decision
 status: settled
@@ -25,6 +25,6 @@ The record URL shapes differ per system.
 
 **Evidence.**
 
-- Recorded 2026-08-24 with D‹shared-blocks›, sync shared blocks from canonical.
+- Recorded 2026-08-24 with D58, sync shared blocks from canonical.
 
 **Checks.** none

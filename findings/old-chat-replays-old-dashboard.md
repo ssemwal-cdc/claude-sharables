@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F30
 slug: old-chat-replays-old-dashboard
 kind: finding
 status: observed

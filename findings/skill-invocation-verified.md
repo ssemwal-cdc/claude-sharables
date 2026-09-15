@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F8
 slug: skill-invocation-verified
 kind: finding
 status: observed
@@ -20,6 +20,6 @@ Assets travel with the plugin and are visible in the skill panel. The plugin roo
 **Evidence.**
 
 - Verified 2026-08-11 with `/netsuite-approval-double-check`, which ran the plugin copy.
-- An earlier note claimed the short name meant a stale personal skill was shadowing the plugin. See F‹no-duplicate-copy-warning›, no duplicate-copy warning.
+- An earlier note claimed the short name meant a stale personal skill was shadowing the plugin. See F5, no duplicate-copy warning.
 
 **Checks.** none

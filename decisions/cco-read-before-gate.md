@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D23
 slug: cco-read-before-gate
 kind: decision
 status: settled
@@ -23,8 +23,8 @@ The wasted reads are bounded by the change order count, which is small. The alte
 
 **Evidence.**
 
-- Recorded 2026-08-14 with F‹cco-holder-id-route›, a CCO workflow hangs off holder.id.
+- Recorded 2026-08-14 with F18, a CCO workflow hangs off holder.id.
 - The change order share of a queue is `unmeasured` beyond being described as small.
-- The verbs follow the workflow step. See F‹cco-verbs-follow-step›, CCO verbs follow the step.
+- The verbs follow the workflow step. See F19, CCO verbs follow the step.
 
 **Checks.** none

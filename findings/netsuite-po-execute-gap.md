@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F94
 slug: netsuite-po-execute-gap
 kind: finding
 status: observed
@@ -24,8 +24,8 @@ This is the Procore fourth-type problem one skill along, with the split inside a
 **Evidence.**
 
 - Reported 2026-09-01. Two batches stopped at the same gate before it was called a defect.
-- The route is D‹po-takes-bill-route›, purchase orders take the bill route.
-- The gate is D‹execute-type-coverage-gate›, gate the two type lists.
-- The route has never fired. See G‹po-execute-route-unfired›, the purchase order route is unfired.
+- The route is D76, purchase orders take the bill route.
+- The gate is D75, gate the two type lists.
+- The route has never fired. See G16, the purchase order route is unfired.
 
 **Checks.** `check_execute_type_coverage()` in `scripts/shared_blocks.py`.

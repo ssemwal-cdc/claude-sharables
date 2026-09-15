@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D1
 slug: asset-paths-plugin-root
 kind: decision
 status: settled

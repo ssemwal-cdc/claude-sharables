@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F21
 slug: fanout-three-states-cap
 kind: finding
 status: observed
@@ -31,6 +31,6 @@ A rate-limit response is a failure, not an empty result. That is why concurrency
 
 - Recorded 2026-08-14. The Procore queue was about 73 items, about 41 of them noise.
 - Concurrency is capped at 8 to 10. The cap was chosen against the rate limit, which is `unmeasured`.
-- The rule is D‹three-states-never-boolean›, three states never a boolean.
+- The rule is D41, three states never a boolean.
 
 **Checks.** `scripts/test_skill_code.py` runs the three-state fan-out, mutation-tested.

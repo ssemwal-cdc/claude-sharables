@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F76
 slug: folderless-run-works
 kind: finding
 status: observed
@@ -29,6 +29,6 @@ Cite this finding before calling the folder a hard requirement.
 **Evidence.** 2026-08-26, reported by the maintainer, one run.
 Which rung carried the run is `unmeasured`.
 The plugin READMEs called the folder a hard requirement before this finding.
-See G‹no-end-to-end-run›, no watched end-to-end run, for the standing of run reports.
+See G4, no watched end-to-end run, for the standing of run reports.
 
 **Checks.** none.

@@ -138,7 +138,7 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand. Needs a brow
 - Do not edit a ported skill to match house style unless asked. `D‹port-skill-verbatim›`, port a skill verbatim.
 - Do not restore verdict as the default sort. `D‹newest-first-default-sort›`, sort newest first by default.
 ## Records
-- `decisions/_index.md` lists every decision, with its id, slug, title and status.
-- `findings/_index.md` lists every observed defect and measurement.
-- `gaps/_index.md` lists every unobserved claim and unfired branch. Read it before citing anything recent as established.
+- `decisions/_index.md` lists every decision. Each row carries the id, slug, title, status, date and protected outcome.
+- `findings/_index.md` lists every observed defect and measurement, in the same six columns.
+- `gaps/_index.md` lists every unobserved claim and unfired branch, in the same six columns. Read it before citing anything recent as established.
 - A citation is an id plus a short gloss, never a bare id and never a path.

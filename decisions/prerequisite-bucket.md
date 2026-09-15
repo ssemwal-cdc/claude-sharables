@@ -25,7 +25,7 @@ Always a new plugin when the skill ships `.mcp.json`, `hooks/`, `bin/`, `monitor
 
 Also a new plugin when a different subset of the team should have it. Audience counts on its own.
 
-Rejected reasons to split: a different topic, a different department, a different data domain, a different dashboard, a feeling of being unrelated, more than one skill in a plugin, and folder tidiness.
+Four reasons to split are rejected. A different topic, a different department, a different data domain and a different dashboard. So is a feeling of being unrelated. So is a plugin then holding more than one skill. So is folder tidiness.
 
 Do not rename an existing plugin to match its bucket. The name must match the folder and the marketplace entry, and teammates installed by name.
 
@@ -39,5 +39,7 @@ Adding a skill to an existing plugin does not touch `marketplace.json`. The `ski
 - The documented standard layout allows several skills in one plugin. `scripts/validate.py` blocks it today. See G‹multi-skill-plugin-unbuilt›, multi-skill plugin unbuilt.
 - Past 4 plugins, publish a dependency-only bundle plugin with bare string dependencies. Do not build it at 2 plugins.
 - Auto sync does not install a new plugin. It keeps installed plugins current. So each new plugin costs one announcement and one install per teammate.
+- Both slash forms resolve to the plugin skill. See F‹skill-invocation-verified›, both slash forms resolve.
+- Both plugins run in Cowork. See F‹cowork-runs-plugins›, Cowork runs installed plugins.
 
 **Checks.** `scripts/validate.py` requires a non-empty `skills/` folder in every plugin.

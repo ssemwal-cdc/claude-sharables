@@ -25,5 +25,6 @@ The wasted reads are bounded by the change order count, which is small. The alte
 
 - Recorded 2026-08-14 with F‹cco-holder-id-route›, a CCO workflow hangs off holder.id.
 - The change order share of a queue is `unmeasured` beyond being described as small.
+- The verbs follow the workflow step. See F‹cco-verbs-follow-step›, CCO verbs follow the step.
 
 **Checks.** none

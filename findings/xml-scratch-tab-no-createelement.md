@@ -25,7 +25,7 @@ NetSuite is unaffected, because it runs pdf.js in the record tab, which is ordin
 
 Worth noting how this surfaced. It was an incidental error in a probe written to ask about something else, and it was disclosed rather than smoothed over.
 
-A run that had quietly caught the exception and reported four clean results would have left a broken render call in the skill, to be found later by a scanned invoice in production.
+A run could have caught the exception quietly and reported four clean results. That would have left a broken render call in the skill, to be found later by a scanned invoice in production.
 
 **Evidence.**
 

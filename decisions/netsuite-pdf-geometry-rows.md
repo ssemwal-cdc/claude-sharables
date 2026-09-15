@@ -24,5 +24,8 @@ Both tools merge a left and a right column on a two-column page when rows share 
 **Evidence.**
 
 - Checked 2026-08-13 against a layout-preserving command-line extraction of a 3-page utility invoice. Same three columns and same figures.
+- pdf.js runs in the record tab. See F‹pdfjs-in-page-csp-allows›, pdf.js runs in-page.
+- The loader needs a typed array. See F‹getdocument-needs-uint8array›, getDocument needs a typed array.
+- The scratch tab is an XML document. See F‹xml-scratch-tab-no-createelement›, the scratch tab is XML.
 
 **Checks.** `scripts/test_skill_code.py` runs the layout extractor out of `SKILL.md`.

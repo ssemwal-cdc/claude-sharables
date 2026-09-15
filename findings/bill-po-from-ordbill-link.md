@@ -25,7 +25,7 @@ So the headline was phantom. Acting on it meant chasing reversals on correctly p
 
 Three compounding defects sat behind it, all now fixed in the cross-check step.
 
-First, a typed reference was read as the coding. The linkage fields and the Related Records panel appeared zero times in the whole repo, while the query step already read the right table and never asked it for the link.
+First, a typed reference was read as the coding. The linkage fields and the Related Records panel appeared zero times in the whole repo. The query step already read the right table and never asked it for the link.
 
 Second, contract and billed-to-date were computed off two unjoined keys. The contract came from a document-number string match, and the billed total came from a vendor and memo sum with no purchase order predicate at all.
 

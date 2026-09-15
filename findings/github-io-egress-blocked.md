@@ -19,7 +19,7 @@ Do not conclude from a green Pages deploy that the page renders. The deploy prov
 
 Editing the sheet works normally. Only fetching the published page does not.
 
-What is checkable locally is worth checking after any edit. The file decodes as UTF-8, the markup has no unclosed tags, the character-set meta tag is present, the body sets its own background from a token, and every custom property used is defined on a bare root selector.
+What is checkable locally is worth checking after any edit. The file decodes as UTF-8 and the markup has no unclosed tags. The character-set meta tag is present and the body sets its own background from a token. Every custom property used is defined on a bare root selector.
 
 That last one is what stops the page rendering one theme text on the other theme ground for anyone on the system setting.
 

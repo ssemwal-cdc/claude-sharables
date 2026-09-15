@@ -21,7 +21,7 @@ The agent was right to stop rather than route around it, and right to reject the
 
 Refusing to launder a denial through a different execution context is the correct instinct. Keep it.
 
-It is worse on a schedule than in a chat, because it fires on the first such call of every run and a stalled prompt nobody watches reads as a hang.
+It is worse on a schedule than in a chat. It fires on the first such call of every run, and a stalled prompt nobody watches reads as a hang.
 
 Do not mine the denial text. The reason string has been a fixed classifier message since v2.1.208, and the classifier scores severity internally rather than explaining.
 

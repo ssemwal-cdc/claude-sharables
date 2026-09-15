@@ -29,5 +29,6 @@ A new skill starts at version 1. An installed copy with no version line predates
 
 - Settled by screenshot 2026-08-21. The plugin detail page renders the `plugin.json` description in full and the skill description truncated to one line.
 - A first live run reported its line correctly, then looked for the README table locally and found nothing. It proposed a `plugin.json` version field, the field D‹no-version-field›, no version field bans.
+- An app restart is not enough to see an update. See F‹restart-computer-not-app›, restart the computer.
 
 **Checks.** `scripts/validate.py` asserts every site exists and all four agree. It cannot enforce the bump.

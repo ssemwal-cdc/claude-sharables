@@ -29,5 +29,7 @@ The header mirror renders a blocked chip instead of vanishing. Gating it on read
 
 - Changed 2026-08-20.
 - Neither control is reachable mid-queue in the real host. See F‹widget-iframe-does-not-scroll›, the widget frame does not scroll.
+- The disabled style served two meanings. See F‹disabled-button-three-states›, one disabled style, two meanings.
+- The tick must not re-render. See F‹tick-must-not-render›, the tick must not render.
 
 **Checks.** `test_dashboard_view` in `scripts/test_skill_code.py`.

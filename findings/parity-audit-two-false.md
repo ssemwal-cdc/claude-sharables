@@ -15,7 +15,7 @@ An audit across the two skills asked whether the stated best practices are follo
 
 Three of five findings were real. Two were wrong, and both false positives came from the same move, grepping one plugin for the vocabulary of the other.
 
-Caught and fixed: Procore recorded nothing about which file backed a verdict, and the NetSuite record capability row still assumed pre-opened tabs an hour after the queue step stopped opening them.
+Two were caught and fixed. Procore recorded nothing about which file backed a verdict. The NetSuite record capability row still assumed pre-opened tabs, an hour after the queue step stopped opening them.
 
 Withdrawn on inspection: the claim that NetSuite never names the successful fan-out state. It has no such fan-out at all, and every leg of each three-state instance it does have is named.
 

@@ -27,5 +27,8 @@ The template version marker catches a torn sync only, not a stale one. See F‹s
 
 - Recorded 2026-08-24 after two wrong diagnoses in 2026-08.
 - `scripts/test_skill_code.py` fails if script and template disagree. `scripts/validate.py` fails if either disagrees with the version `SKILL.md` states.
+- An old chat replays an old dashboard. See F‹old-chat-replays-old-dashboard›, old chats replay old dashboards.
+- The terminal list sees CLI installs only. See F‹plugin-list-cli-only›, plugin list sees CLI installs.
+- A run set the version line wording. See F‹version-line-wording-set-by-run›, a run set version wording.
 
 **Checks.** `scripts/validate.py` and `scripts/test_skill_code.py` pin the template version marker.

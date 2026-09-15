@@ -35,5 +35,6 @@ The mechanism behind the refused deletes was never established. The fix does not
 
 - Stated as a property 2026-08-28. Stated as mechanisms 2026-08-27, which failed.
 - One workable write on a cloud mount is a rename over a placeholder. See F‹dehydrated-onedrive-rename-over›, a dehydrated file needs rename-over.
+- Python bytecode was one such stray. See F‹pycache-stray-file›, python bytecode left a stray.
 
 **Checks.** `test_step0_write_states` in `scripts/test_skill_code.py`, mutation-tested.

@@ -29,5 +29,6 @@ The tell that this branch was missing: a run offered the user a choice between a
 
 - The Procore case was reported 2026-08-28. A purchase order contract with a live responder at Financial Analyst Review, due that day, was handed over as a link with no response buttons.
 - The NetSuite case was reported 2026-09-01. See F‹netsuite-po-execute-gap›, NetSuite reviewed a type it could not click.
+- The valid type strings are listable. See F‹workflows-tools-v2-works›, the tools endpoint needs v2.
 
 **Checks.** `check_execute_type_coverage()` in `scripts/shared_blocks.py`.

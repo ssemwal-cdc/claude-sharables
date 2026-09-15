@@ -33,5 +33,7 @@ The sheet is written click by click for someone who has never touched any of thi
 
 - Moved to Pages in 2026-08. The theme blocks were removed 2026-08-17.
 - The live page cannot be fetched from the sandbox. See F‹github-io-egress-blocked›, the live page is unfetchable.
+- Four claimed tests over the sheet did not exist. See F‹onboarding-claims-unchecked›, four claimed tests were absent.
+- The time and posture wording is settled. See F‹sheet-time-and-posture›, say how long and where.
 
 **Checks.** `check_onboarding_page()` in `scripts/shared_blocks.py`.

@@ -13,7 +13,7 @@ date: 2026-08-28
 
 The Procore developer documentation is blocked by the sandbox egress proxy.
 
-So the record field names were borrowed from the change order package read that shares the collection, and shipped as an explicit guess with an instruction to report the payload keys back.
+So the record field names were borrowed from the change order package read that shares the collection. They shipped as an explicit guess, with an instruction to report the payload keys back.
 
 Three of four names held. The grand total, the line items and the retainage percentage are all present as named.
 

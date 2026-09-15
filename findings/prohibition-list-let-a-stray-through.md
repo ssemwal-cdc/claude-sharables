@@ -11,7 +11,7 @@ date: 2026-08-28
 
 **Argument.**
 
-A run left a compressed and encoded copy of the review log beside the state file, could not delete it, and handed the maintainer the cleanup chore the rule exists to prevent.
+A run left a compressed and encoded copy of the review log beside the state file. It could not delete the copy. It handed the maintainer the cleanup chore the rule exists to prevent.
 
 The rule was present and the run had read it.
 

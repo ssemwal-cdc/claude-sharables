@@ -30,5 +30,6 @@ A review of the wrong queue looks exactly like a review of the right one.
 **Evidence.**
 
 - Landed 2026-08-26 from F‹parity-audit-two-false›, two audit findings were wrong.
+- The found-none case was missing. See F‹portlet-empty-case-ladder›, no portlet found lacked rule.
 
 **Checks.** none

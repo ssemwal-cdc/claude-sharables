@@ -148,12 +148,62 @@ Each is a repo sentence that breaks a mandate sentence. Line numbers are as of `
 
 | Lane | Work | Files | Depends on |
 |---|---|---|---|
-| 1 | Record split. Write every record. Write the three indexes. Rewrite `CLAUDE.md` as the index. Remove `prose.md` | `CLAUDE.md`, `prose.md`, `decisions/`, `findings/`, `gaps/` | none |
-| 2 | README STE rewrite and the content fixes above. Cite records by `D‹slug›` | three `README.md`, `marketplace.json` description | slugs from lane 1, agreed up front |
-| 3 | Id claim at merge. Rewrite `D‹slug›` to numbers | all | lanes 1 and 2 merged to the integration branch |
+| 1a | Records from `CLAUDE.md`. Rewrite `CLAUDE.md` as the index | `CLAUDE.md`, `decisions/`, `findings/` | none |
+| 1b | Records from `prose.md`. Remove `prose.md`. Write the four deferred decisions | `prose.md`, `decisions/`, `findings/`, `gaps/` | none |
+| 2 | README STE rewrite and the content fixes above. Cite records by `D‹slug›` | three `README.md`, `marketplace.json` description | reserved slugs below |
+| 3 | Integration. Generate the three `_index.md` files from frontmatter. Claim ids at merge. Rewrite `‹slug›` citations to numbers | all | lanes 1a, 1b, 2 merged |
 
-Lanes 1 and 2 run in parallel on one integration branch, `claude/eloquent-mccarthy-ji1fp1`.
-Slugs are fixed in this file before either lane starts, so lane 2 can cite them.
+Lanes 1a, 1b and 2 run in parallel, each in its own worktree, and merge to the integration
+branch `claude/eloquent-mccarthy-ji1fp1`. No lane writes an `_index.md`. Lane 3 generates them.
+
+### Reserved slugs
+
+A lane cites a reserved slug without checking that the file exists. The owning lane must create
+it under exactly this name. A topic both source files cover has one owner.
+
+| Slug | Kind | Owner | Source |
+|---|---|---|---|
+| `public-repo` | decision | 1a | `CLAUDE.md` Repo facts, `README.md` Distribution |
+| `no-version-field` | decision | 1a | `CLAUDE.md` Versioning |
+| `skill-version-lines` | decision | 1a | `CLAUDE.md` Skill version lines |
+| `prerequisite-bucket` | decision | 1a | `CLAUDE.md` The prerequisite test |
+| `git-subdir-sources` | decision | 1a | `CLAUDE.md` step 4 and Traps |
+| `marketplace-name-vs-repo` | decision | 1a | `CLAUDE.md` Traps |
+| `org-protocol-override` | decision | 1a | `CLAUDE.md` lines 12-53 |
+| `shared-blocks` | decision | 1a | `CLAUDE.md` lines 305-434 |
+| `workspace-folder-downloads` | decision | 1a | `CLAUDE.md` onboarding bullets |
+| `approved-by-claude-comment` | decision | 1a | `CLAUDE.md` Traps |
+| `silent-connector-absence` | decision | 1a | `CLAUDE.md` lines 415-430. Named exception, argument attached |
+| `widget-not-artifact` | decision | 1a | `CLAUDE.md` Traps |
+| `two-command-update` | finding | 1a | `CLAUDE.md` Traps |
+| `restart-computer-not-app` | finding | 1a | `CLAUDE.md` onboarding bullets |
+| `cco-holder-id-route` | finding | 1a | `CLAUDE.md` Traps, confirmed 2026-08-14 |
+| `dashboard-drift-six-defects` | finding | 1b | `prose.md` 830-920 |
+| `staleness-check-blind` | finding | 1b | `prose.md` 922-959 |
+| `actioned-bin-never-rendered` | finding | 1b | `prose.md` 961-1005 |
+| `folderless-run-works` | finding | 1b | `prose.md` 26-170. Falsifies the hard-requirement claim |
+| `run-self-banned-login` | finding | 1b | `prose.md` 1273-1330 |
+| `onboarding-copy-buttons` | finding | 1b | `prose.md` 1245-1271 |
+| `no-end-to-end-run` | gap | 1b | `prose.md` gap 1 |
+| `netsuite-notes-page` | gap | 1b | `prose.md` gap 2 |
+| `freeze-fallback-unfired` | gap | 1b | `prose.md` gap 3 |
+| `procore-gate-fanout` | gap | 1b | `prose.md` gap 5 |
+| `netsuite-browser-mode` | gap | 1b | `prose.md` gap 7 |
+| `write-never-attempted` | gap | 1b | `prose.md` gap 8a |
+| `dashboard-widget-host-unseen` | gap | 1b | `prose.md` gap 9 |
+| `commitment-payload-unread` | gap | 1b | `prose.md` gap 10 |
+| `po-execute-route-unfired` | gap | 1b | `prose.md` gap 11 |
+| `custom-tool-subtypes-unwatched` | gap | 1b | `prose.md` gap 12 |
+| `pdf-geometry-mock-verified` | gap | 1b | `prose.md` 428-440 |
+| `multi-skill-plugin-unbuilt` | gap | 1a | `CLAUDE.md` lines 256-268 |
+| `skill-prose-pass` | decision, open | 1b | Deferred table above |
+| `hooks-and-checks-pass` | decision, open | 1b | Deferred table above |
+| `device-usability-check` | decision, open | 1b | Deferred table above |
+| `xlsx-pin-target` | decision, open | 1b | Deferred table above |
+
+Every other record takes a slug its owner chooses. Lane 1a owns every `CLAUDE.md` Trap not
+listed here. Lane 1b owns every `prose.md` section not listed here. Where `CLAUDE.md` repeats a
+1b topic, 1a cites the 1b slug and writes no record.
 
 ## Done when
 

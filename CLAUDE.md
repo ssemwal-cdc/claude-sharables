@@ -42,6 +42,7 @@ Compare the external prerequisites of the new skill to each plugin, exactly. The
 ```bash
 python3 scripts/validate.py                  # the build gate. Runs the shared-block checks too.
 python3 scripts/test_skill_code.py           # runs the code the skills carry. Needs node.
+python3 scripts/check_records.py --write-index   # by hand. Also --claim-ids [--apply], at merge
 python3 scripts/shared_blocks.py --sync      # push plugins/_shared into every marked site
 python3 scripts/shared_blocks.py --check     # what validate.py runs
 NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand. Needs a browser.
@@ -143,3 +144,4 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand. Needs a brow
 - `gaps/_index.md` lists every unobserved claim and unfired branch, in the same six columns. Read it before citing anything recent as established.
 - A citation is an id plus a short gloss, never a bare id and never a path.
 - A record on a branch has `id: pending` and is cited by slug. The number is claimed at merge, on the maintainer's word.
+- The record and prose checks run inside `python3 scripts/validate.py`. The Bash hook in `.claude/settings.json` refuses the shared-tree commands. `D82`, hooks and checks pass.

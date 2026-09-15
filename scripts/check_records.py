@@ -49,7 +49,9 @@ INDEX_COLUMNS = "| id | slug | title | status | date | outcome |"
 INDEX_RULE = "|---|---|---|---|---|---|"
 
 # A citation is an id plus a gloss. On a branch the id is the slug in guillemets.
-CITATION = re.compile(r"`?\b(?P<letter>[DFG])(?P<ref>[0-9]+|‹[a-z0-9-]+›)\b`?")
+CITATION = re.compile(
+    r"`?\b(?P<letter>[DFG])"
+    r"(?:(?P<num>[0-9]+)\b|‹(?P<slug>[a-z0-9-]+)›)`?")
 SLUG_CITATION = re.compile(r"`?\b([DFG])‹([a-z0-9-]+)›`?")
 PATH_CITATIONS = ("prose.md", "CLAUDE.md#", "see Step", "See Step")
 
@@ -266,13 +268,13 @@ def check_citations():
                 token = m.group(0).strip("`")
                 if token in NOT_CITATIONS.form_names:
                     continue
-                letter, ref = m.group("letter"), m.group("ref")
-                if ref.startswith("‹"):
-                    slug = ref.strip("‹›")
+                letter = m.group("letter")
+                if m.group("slug"):
+                    slug = m.group("slug")
                     if slug not in pending[letter]:
                         problems.append(
-                            "%s:%d cites %s, and no %s in %s/ has that slug with "
-                            "id: pending" % (rel, n, token, letter + ref, _folder_of(letter)))
+                            "%s:%d cites %s, and no record in %s/ has slug %r with "
+                            "id: pending" % (rel, n, token, _folder_of(letter), slug))
                 elif token not in ids[letter]:
                     problems.append(
                         "%s:%d cites %s, and no record carries that id" % (rel, n, token))

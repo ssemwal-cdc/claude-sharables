@@ -1,9 +1,9 @@
 # Procore open items review
 
-Reviews the Procore items that are genuinely waiting on your workflow response
-and publishes the results to a dashboard you can act from.
+Reviews the Procore items genuinely waiting on your workflow response.
+Publishes the results to a dashboard you can act from.
 
-The hard part is not the review — it is working out which of your open items
+The hard part is not the review. It is working out which of your open items
 actually need you. Procore's My Open Items list mixes things awaiting your
 response with things you are merely on the distribution list for. This plugin
 separates them.
@@ -12,111 +12,122 @@ separates them.
 
 For every item in your queue it checks `user_permissions.can_respond` on the
 live workflow. Items you cannot action are counted and suppressed, not shown.
-On a real Compass queue that took 75 items down to 32.
+On one real Compass queue that took 75 items down to 32. The date of that run
+was not recorded.
 
 For the ones that remain:
 
-**Subcontractor invoices** — re-derives all six AIA G702 identities from the
-record rather than reading the summary back, foots every G703 line, checks
-retainage consistency and application sequence against the previous
-requisition, then locates each headline figure in the attached pay application.
+**Subcontractor invoices.** It re-derives all six AIA G702 identities from the
+record rather than reading the summary back. It foots every G703 line. It
+checks retainage consistency and application sequence against the previous
+requisition. It then locates each headline figure in the attached pay
+application.
 
-**Internal change risks** — ties Cost Impact to the accepted cost and the
-accepted cost to the total on the attached proposal, and foots the proposal's
-own phase lines. Catches placeholder values that pass a naive has-a-value check.
+**Internal change risks.** It ties Cost Impact to the accepted cost, and the
+accepted cost to the total on the attached proposal. It foots the proposal's
+own phase lines. This catches placeholder values that pass a naive
+has-a-value check.
 
-**Commitment change orders** — foots line items to the package grand total and
-ties each attached PCI to a line.
+**Commitment change orders.** It foots line items to the package grand total
+and ties each attached PCI to a line.
 
-**Commitments** — the purchase order and work order contracts themselves, when
-one comes to you for approval before it is executed. Foots the schedule of
-values to the contract total, finds that total in the attached agreement or bid
-tab, names duplicated and unpriced lines, reports the retainage, and points out
-anything else in the same queue drawing on the same contract. **Only the
-mechanical checks.** A change order or an invoice arrives with the contract
-already agreed, so the review is arithmetic against a fixed baseline; a
-commitment out for approval *is* the baseline, and whether the scope, the rate
-and the counterparty are the right ones is left to you.
+**Commitments.** These are the purchase order and work order contracts
+themselves, when one comes to you for approval before it is executed. The
+plugin foots the schedule of values to the contract total. It finds that total
+in the attached agreement or bid tab. It names duplicated and unpriced lines,
+reports the retainage, and points out anything else in the same queue drawing
+on the same contract.
 
-Each item lands as clear, flagged, skipped or gate-unknown. **Skipped is a real
-verdict**: an item with no support attached is not ready for review, so it is
-not approved, not rejected, and not given a verdict it hasn't earned.
+Commitments get the mechanical checks only. A change order or an invoice
+arrives with the contract already agreed, so the review is arithmetic against a
+fixed baseline. A commitment out for approval is the baseline itself. Whether
+the scope, the rate and the counterparty are the right ones is left to you.
+
+Each item lands as clear, flagged, skipped or gate-unknown. Skipped is a real
+verdict. An item with no support attached is not ready for review, so it is not
+approved, not rejected, and not given a verdict it has not earned.
 
 ## Support is read without downloading anything
 
 Procore attachments sit behind a 60-second presigned S3 link. The browser's PDF
-viewer exposes no text and cannot be scripted, and the storage host blocks
+viewer exposes no text and cannot be scripted. The storage host blocks
 cross-origin reads. The plugin routes around all three and reads the file
 in-browser, so nothing lands in your downloads folder.
 
 It checks what the file actually is before reading it, rather than assuming:
 
 - **PDFs** are parsed for text.
-- **Spreadsheets** (`.xlsx`, `.xls`, `.csv`) are read sheet by sheet, hidden
-  sheets included — a superseded figure is exactly the thing that gets hidden
-  rather than deleted.
-- **Images**, and PDFs that turn out to be scans, are *looked at* rather than
-  run through text extraction, which returns nothing useful for them.
+- **Spreadsheets** are read sheet by sheet, hidden sheets included. The formats
+  are `.xlsx`, `.xls` and `.csv`. A superseded figure is exactly the thing that
+  gets hidden rather than deleted.
+- **Images**, and PDFs that turn out to be scans, are looked at rather than run
+  through text extraction. Extraction returns nothing useful for them.
 
-**A file it can't read is named, not silently skipped.** That distinction is the
-point. Previously anything that wasn't a PDF was reported as "support present but
-unreadable" — which reads identically whether the file was a scan, a spreadsheet
-or a link that timed out, so entire formats went unreviewed with nothing in the
-log to show it. Now the reason is specific enough to act on.
+A file it cannot read is named, not silently skipped. That distinction is the
+point. Anything that was not a PDF used to be reported as "support present but
+unreadable". That phrase reads identically whether the file was a scan, a
+spreadsheet or a link that timed out. Entire formats went unreviewed with
+nothing in the log to show it. The reason is now specific enough to act on.
 
 ## Every response it makes says so
 
-A response executed by the plugin carries the comment **"Approved by Claude"**,
-recorded in Procore's audit trail against that item. If you type your own comment
-for an item, yours is used instead, verbatim.
+A response the plugin executes carries the comment **"Approved by Claude"**,
+recorded in Procore's audit trail against that item. Your own comment for an
+item replaces it verbatim. Rejection reasons are never defaulted, and the
+plugin stops and asks if one is missing.
 
-This is deliberate. A response recorded with no comment reads as though you
-clicked it by hand; the attribution keeps the trail honest about what actually
-performed the click. Rejection reasons are never defaulted — those always come
-from you, and the plugin stops and asks if one is missing.
+A response recorded with no comment reads as though you clicked it by hand. See
+D‹approved-by-claude-comment›, Approved by Claude comment.
 
 ## The dashboard
 
-Verdicts render as an inline dashboard widget in the conversation: summary cards, a
-fact strip per item you can judge without expanding anything, and sort and
-filter controls — campus, then building, then type, plus search.
+Verdicts render as an inline dashboard widget in the conversation. It carries
+summary cards, a fact strip per item you can judge without expanding anything,
+and sort and filter controls. The filter axes are campus, then building, then
+type, plus search.
 
 Response buttons come from each item's own workflow step rather than a fixed
-set, so invoices offer Approve / Revise and Resubmit while change risks at a
+set. So invoices offer Approve / Revise and Resubmit, while change risks at a
 cost gate offer Yes / Reject. Marking an affirmative response on an item with
 no support raises a warning.
 
 You mark responses per item, then execute them together. Execute sends the
 instruction straight into the conversation in one click. Nothing reaches Procore
-from the dashboard itself — the responses run from that message, and each item is
+from the dashboard itself. The responses run from that message, and each item is
 re-verified as still yours to action immediately before it is clicked.
+
+The controls and the floating header were measured in a browser. Nobody has
+seen them in the widget host. See G‹dashboard-widget-host-unseen›, widget host
+unseen.
 
 ## Requirements
 
-- Claude in Chrome, signed in to Procore
-- A connected workspace folder for state
-- No connector. Procore has no MCP connector, so the dashboard is a snapshot
-  with a prominent re-check control rather than a live view. It says so plainly
-  and ages its own timestamp.
+- **Claude in Chrome, signed in to Procore.** That is the requirement.
+- **A connected workspace folder is recommended, not required.** It holds the
+  review state between runs. A run without the folder works. See
+  F‹folderless-run-works›, folderless runs work.
+- **No connector.** Procore has no MCP connector, so the dashboard is a
+  snapshot with a prominent re-check control rather than a live view. It says
+  so plainly and ages its own timestamp.
 - **The machine on and Chrome open whenever it runs.** Everything here goes
-  through your real browser session, so a scheduled run needs the computer awake,
+  through your real browser session. A scheduled run needs the computer awake,
   Chrome running, and you still signed in to Procore. A missed window does not
-  queue up and run later — which is why the schedule is worth giving more than
-  one fire time.
+  queue up and run later. That is why the schedule is worth more than one fire
+  time.
 
 ## First run
 
-Say "run my Procore review". Setup happens once and asks you to confirm your
-company id, then — for each custom tool your queue draws change items from —
-that tool's id and its cost custom field mapping. All of those differ per
-company, and the field mapping differs per tool as well.
+Say "run my Procore review". Setup happens once. It asks you to confirm your
+company id. Then, for each custom tool your queue draws change items from, it
+asks for that tool's id and its cost custom field mapping. All of those differ
+per company, and the field mapping differs per tool as well.
 
-**More than one custom tool is normal**, and every run reconciles the tools it
-finds in the queue against the ones it has been told about. A tool it has not
-seen before is set up then and there and named in the run report; one it cannot
-resolve is still reviewed and still respondable, but it carries no record link
-and cannot come back `clear`, because the cost fields those checks read are
-mapped per tool.
+More than one custom tool is normal. Every run reconciles the tools it finds in
+the queue against the ones it has been told about. A tool it has not seen
+before is set up then and there, and named in the run report. A tool it cannot
+resolve is still reviewed and still respondable. That tool's items carry no
+record link and cannot come back `clear`, because the cost fields those checks
+read are mapped per tool.
 
 There is no user id to configure. Procore's queue endpoint and permission gate
 are both scoped to the signed-in session, so the review is automatically yours.
@@ -125,36 +136,43 @@ are both scoped to the signed-in session, so the review is automatically yours.
 
 The plugin never responds on its own judgement. A verdict is a recommendation.
 
-Because the dashboard is a snapshot, executing re-verifies every item against
-the live workflow **before any click**. If you already actioned something in
-Procore directly, it is skipped and logged rather than clicked or retried — so
-a stale page cannot cause a double response. A changed amount stops the whole
+The dashboard is a snapshot, so executing re-verifies every item against the
+live workflow before any click. An item you already actioned in Procore
+directly is skipped and logged, never clicked or retried. A stale page
+therefore cannot cause a double response. A changed amount stops the whole
 batch instead. Success is confirmed by re-querying the API, never by the click
 appearing to work.
+
+This execute path has never been observed on real data. See
+G‹no-end-to-end-run›, no end-to-end run.
 
 ## Versioning
 
 The skill's version is the `**Skill version N — date.**` line at the top of its
-`SKILL.md` — the first thing shown when you open the skill. The authoritative
-current number is the Version column of the repo README on GitHub
-(https://github.com/ssemwal-cdc/claude-sharables); it does not ship with the
-plugin, so the comparison happens there, not against any installed file.
+`SKILL.md`. That line is the first thing shown when you open the skill. The
+authoritative current number is the Version column of the
+[repo README on GitHub](https://github.com/ssemwal-cdc/claude-sharables). That
+table does not ship with the plugin, so compare there, never against an
+installed file.
 
-`plugin.json` deliberately carries no `version` field. Install resolution
-tracks the git commit, and a hand-maintained version field that someone
-forgets to bump would silently freeze everyone's cached copy. Do not add one,
-and do not suggest adding one.
+`plugin.json` carries no `version` field. Do not add one, and do not suggest
+adding one. See D‹no-version-field›, no version field.
 
 ## Known limits
 
 - **Change order packages are read before they are gated.** The workflows
-  endpoint returns a 400 for `ChangeOrderPackage`, because the workflow belongs
-  to the underlying commitment change order rather than to the package. That
-  record has its own id, carried on the package payload at
-  `line_items[].holder.id`, so change orders gate and respond like anything else
-  — it just means the package has to be fetched before the gate runs rather than
-  after it. If the id cannot be resolved, or the package spans several change
-  orders so there is no single id to use, the item is shown with its arithmetic
-  verified but no response buttons, and a button to go resolve the gate.
-- The open items grid is virtualised and cannot be scraped; everything comes
+  endpoint returns a 400 for `ChangeOrderPackage`. The workflow belongs to the
+  underlying commitment change order rather than to the package. That record
+  has its own id, carried on the package payload at `line_items[].holder.id`.
+  Change orders therefore gate and respond like anything else. It only means
+  the package is fetched before the gate runs rather than after it. Observed
+  2026-08-14 against 5 packages. See F‹cco-holder-id-route›, CCO holder id
+  route.
+- **The gate fan-out has not been observed against real Procore.** See
+  G‹procore-gate-fanout›, gate fan-out unobserved.
+- If the change order id cannot be resolved, the item is shown with its
+  arithmetic verified, no response buttons, and a button to go resolve the
+  gate. The same applies when the package spans several change orders, because
+  then no single id can stand for it.
+- The open items grid is virtualised and cannot be scraped. Everything comes
   from the REST API.

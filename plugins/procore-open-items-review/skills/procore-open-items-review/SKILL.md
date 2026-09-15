@@ -65,63 +65,31 @@ Never echo a URL back in a result. Return parsed values only.
 <!--__SHARED:skill-step0-preamble__-->
 ## Step 0 — Sync assets, then first-run setup
 
-**Do this on every run, before anything else.** The workspace copies of the template and the
-publish script are a cache of the plugin's assets. Refresh them every run. Otherwise a plugin
-update never reaches the dashboard.
+**Do this on every run, before anything else.** The workspace copies of the template and the publish script are a cache of the plugin's assets. Refresh them every run, or a plugin update never reaches the dashboard.
 
-**`<workspace>` is the workspace folder connected to this session.** Resolve it once, here. Use
-that same path for every step below.
+**`<workspace>` is the workspace folder connected to this session.** Resolve it once, here, and use that same path below.
 
-**Attempt the write. Never put it to the user as a question.** Create the folder if it is absent.
-Keep the state file in it. Then **read it back**. A write is proven by reading it, not by issuing
-it.
+**Attempt the write. Never put it to the user as a question.** Create the folder if it is absent, keep the state file in it, then **read it back**. A write is proven by reading it.
 
-**Three write outcomes, and the third one goes wrong.** `kept` means written and read back.
-`refused` means attempted, and the surface returned an error. `not attempted` means nobody tried.
-Never report `not attempted` as either of the other two.
+**Three write outcomes.** `kept` is written and read back. `refused` is attempted, and the surface returned an error. `not attempted` is nobody tried. Never report `not attempted` as either of the other two.
 
-**The session-local fallback belongs to `refused` alone.** Never reason your way into it, and
-**never infer the outcome from a property of** the folder. A cloud-synced, OneDrive-backed or
-network-share folder does not predict a refused write. The connected workspace folder is the one
-path a sandboxed shell is known to reach.
+**The session-local fallback belongs to `refused` alone**, and **never infer the outcome from a property of** the folder. A cloud-synced, OneDrive-backed or network-share folder does not predict a refused write.
 
-**If the fallback is genuinely reached, name what refused it.** Write one short line near the
-headline, carrying the error the write returned. "State will not persist" on its own names no
-cause. Do not describe the alternatives. Do not offer to hand the file over. Never write somewhere
-the session will discard and call it kept.
+**If the fallback is genuinely reached, name what refused it.** Write one short line near the headline, carrying the error the write returned. Do not describe the alternatives. Do not offer to hand the file over. Never write somewhere the session will discard and call it kept.
 
-**Overwrite in place.** Cloud sync usually permits create and overwrite, and refuses delete and
-rename. So write every file straight over its destination. If a stray file is left behind anyway,
-say so once in that same line. Never invent a quarantine folder such as `_to_delete/`. Never hand
-the user a cleanup chore.
+**Overwrite in place.** Cloud sync usually permits create and overwrite, and refuses delete and rename. Write every file straight over its destination. Say so once, in that same line, if a stray is left behind anyway. Never invent a quarantine folder such as `_to_delete/`.
 
-**A write that lands on the destination and leaves nothing beside it obeys this rule, whatever
-call sequence got it there.** Observed 2026-09-01: on a OneDrive folder of dehydrated
-placeholders, overwrite returned `EINVAL` and rename-over worked. Read that as a property of the
-surface, not an error to fix.
+**A write that lands on the destination and leaves nothing beside it obeys this rule, whatever call sequence got it there.** Observed 2026-09-01: on a OneDrive folder of dehydrated placeholders, overwrite returned `EINVAL` and rename-over worked.
 
-**A dehydrated placeholder is not a refused write, and not an empty file.** `EINVAL` on a listed
-file with no local content is its own state. The folder is writable; this file is not readable
-yet. Name it if it comes up. Never report the state file as absent on a failed read.
+**A dehydrated placeholder is not a refused write, and not an empty file.** The folder is writable; that file is not readable yet. Never report the state file as absent on a failed read.
 
-**The test is what the file is, not what it is called.** The rule is:
-**the only files that may exist in this folder are the ones this skill's own steps name.**
-Those are the state file, the synced assets, whatever the publish script writes, and its
-`renders/` archive. Anything else is a stray, whatever its purpose and however briefly it was
-meant to live.
+**The test is what the file is, not what it is called.** The rule is: **the only files that may exist in this folder are the ones this skill's own steps name.** Those are the state file, the synced assets, whatever the publish script writes, and its `renders/` archive. Anything else is a stray.
 
-**In particular, never stage a file to move bytes into or out of this folder.** No compressed,
-base64-encoded, chunked, split or otherwise re-encoded copy of a file you are about to write
-properly. That copy is left behind by design, not by a failed rename.
+**In particular, never stage a file to move bytes into or out of this folder.** No compressed, base64-encoded, chunked, split or re-encoded copy of a file you are about to write properly.
 
-**Write the destination file itself, in one write, with the file tools.** That is rung 2 of the
-sync ladder below, and it is the whole method. A file too large for one write is still written
-whole to its final path. Never stage it beside itself. A write that genuinely cannot be made is
-`refused`. It takes the one-line report above, not a workaround that leaves something behind.
+**Write the destination file itself, in one write, with the file tools.** That is rung 2 of the sync ladder below. A file too large for one write is still written whole to its final path. A write that genuinely cannot be made is `refused`, and it takes the one-line report above, not a workaround that leaves something behind.
 
-**A refused write costs wasted work, not a broken review.** The next run repeats first-run setup
-and re-reads every attachment. Say the one line and move on. **That sentence is true of `refused`
-only.** Offered after a write nobody attempted, it is a false claim about the next run.
+**A refused write costs wasted work, not a broken review.** The next run repeats first-run setup and re-reads every attachment. Say the one line and move on. **That sentence is true of `refused` only.**
 
 <!--__END_SHARED:skill-step0-preamble__-->
 ```bash
@@ -133,13 +101,9 @@ chmod u+w "<workspace>/Procore Open Items/dashboard_template.html" \
 ```
 
 <!--__SHARED:skill-step0-fidelity__-->
-The `chmod` is required, not tidiness. The plugin's installed assets are read-only and `cp`
-preserves that mode. Without it the publish step fails with
-`PermissionError: [Errno 13] Permission denied`.
+The `chmod` is required, not tidiness. The plugin's installed assets are read-only and `cp` preserves that mode. Without it the publish step fails with `PermissionError: [Errno 13] Permission denied`.
 
-This overwrites the workspace copies deliberately. **A design change belongs in the plugin repo,
-never in the workspace copy.** An edit there is discarded by the next run and reaches nobody else.
-Ship one by editing the repo's asset files and pushing. Teammates pick it up on their next update.
+This overwrites the workspace copies deliberately. **A design change belongs in the plugin repo, never in the workspace copy.** An edit there is discarded by the next run and reaches nobody else. Ship one by editing the repo's asset files and pushing. Teammates pick it up on their next update.
 
 <!--__END_SHARED:skill-step0-fidelity__-->
 **The sandbox shell may not be able to see the plugin's files at all.** Observed in a Cowork run
@@ -1031,35 +995,17 @@ fallback only after the user reports the banner, and then report the byte count 
 open to action a folded row.
 
 <!--__SHARED:skill-artifact-host__-->
-**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live. The
-widget host exposes `sendPrompt` as a bare global. The artifact host exposes `window.cowork` with
-`callMcpTool`, `askClaude` and `runScheduledTask`, and no `sendPrompt` anywhere. On an artifact the
-execute button cannot start a turn and fails silently. As a widget it works in one click, confirmed
-on a live run. The template keeps a clipboard handoff for the artifact case. It is a fallback, not
-a plan.
+**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live. The widget host exposes `sendPrompt` as a bare global. The artifact host exposes `window.cowork` with `callMcpTool`, `askClaude` and `runScheduledTask`, and no `sendPrompt` anywhere. On an artifact the execute button cannot start a turn and fails silently. As a widget it works in one click, confirmed on a live run. The template keeps a clipboard handoff for the artifact case. It is a fallback, not a plan.
 <!--__END_SHARED:skill-artifact-host__-->
 
 <!--__SHARED:skill-render-fidelity__-->
-**Fall back only after an observed failure.** The template carries its own integrity guard. A
-marker sits as its last element, checked from `<head>` as soon as the DOM parses. It raises a
-visible red banner when anything was lost in transit. The banner is designed, not yet observed
-firing. Believe it when it fires. Report the byte count beside it. Then hand over `index.html`
-directly and say why. A prediction that it might appear is not a reason to skip the render.
+**Fall back only after an observed failure.** The template carries its own integrity guard: a marker as its last element, checked from `<head>` as soon as the DOM parses, raising a visible red banner when anything was lost in transit. The banner is designed, not yet observed firing. Believe it when it fires. Report the byte count beside it. Then hand over `index.html` directly and say why. A prediction that it might appear is not a reason to skip the render.
 
-**Pass the file verbatim.** Read it and hand it over byte for byte. Never retype it, never
-summarise it, never tidy it on the way through. A widget takes the content inline, so the layout
-travels through the tool call. When a rendered dashboard is missing a card, a control or a colour,
-suspect this before the template.
+**Pass the file verbatim.** Read it and hand it over byte for byte. Never retype, summarise or tidy it on the way through. A widget takes the content inline, so the layout travels through the tool call. A rendered dashboard missing a card, a control or a colour is this, not the template.
 
-**Reading the file is part of the render.** Read the whole file. When the read comes back short,
-read the rest by offset and continue. A file arriving in two reads is still passed byte for byte,
-and concatenating your own reads is not retyping. The publish script emits the data one compact
-line per item for this reason. Measured 2026-09-01: that brought a 62-item dashboard from 2,834
-lines to 886.
+**Reading the file is part of the render.** Read the whole file. When the read comes back short, read the rest by offset and continue. A file arriving in two reads is still passed byte for byte, and concatenating your own reads is not retyping. Measured 2026-09-01: the publish script's one-compact-line-per-item output brought a 62-item dashboard from 2,834 lines to 886.
 
-**A byte count is not an observed truncation.** Predicting from the size that the harness will not
-hand the file over intact is the move this step forbids, arriving one stage earlier. What licenses
-a fallback is a read that came back short, or the red banner. Nothing else.
+**A byte count is not an observed truncation.** Predicting from the size that the harness will not hand the file over intact is the move this step forbids, one stage earlier. What licenses a fallback is a read that came back short, or the red banner. Nothing else.
 <!--__END_SHARED:skill-render-fidelity__-->
 The script writes `index.html` beside the state file and keeps the last seven renders in
 `renders/<weekday>.html`. Both matter when a render goes wrong: diff today against the last good

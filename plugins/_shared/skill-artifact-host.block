@@ -1,6 +1,1 @@
-**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live. The
-widget host exposes `sendPrompt` as a bare global. The artifact host exposes `window.cowork` with
-`callMcpTool`, `askClaude` and `runScheduledTask`, and no `sendPrompt` anywhere. On an artifact the
-execute button cannot start a turn and fails silently. As a widget it works in one click, confirmed
-on a live run. The template keeps a clipboard handoff for the artifact case. It is a fallback, not
-a plan.
+**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live. The widget host exposes `sendPrompt` as a bare global. The artifact host exposes `window.cowork` with `callMcpTool`, `askClaude` and `runScheduledTask`, and no `sendPrompt` anywhere. On an artifact the execute button cannot start a turn and fails silently. As a widget it works in one click, confirmed on a live run. The template keeps a clipboard handoff for the artifact case. It is a fallback, not a plan.

@@ -25,7 +25,7 @@ Step 0 copies those two files together.
 So they disagree only when a sync tears halfway.
 A workspace that is uniformly three versions old has both files agreeing, and publishes in silence.
 So the marker caught a torn sync and never a stale one.
-`CLAUDE.md` claimed outright that a stale copy names itself.
+The maintainer index claimed outright that a stale copy names itself.
 It does not.
 That line is corrected rather than left as a claim nobody had tested.
 

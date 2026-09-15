@@ -31,7 +31,7 @@ Every phrase of the run's message came from `SKILL.md`.
 It then supplied the degradation script verbatim.
 That is why the message read as a finding rather than a guess.
 
-**The rule against it already existed, in `CLAUDE.md`, which no run reads.** Step 0 carries it now.
+**The rule against it existed in the maintainer index, which no run reads.** Step 0 carries it now.
 Step 0 names three outcomes.
 It ties the session-local fallback to `refused` alone.
 It requires the write to be proven by reading it back.

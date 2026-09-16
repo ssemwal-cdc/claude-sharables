@@ -351,6 +351,12 @@ if check_records is not None:
             % (check_records.record_count(), len(check_records.FOLDERS),
                ", ".join(name for name, _fn in check_records.CHECKS))
         )
+    # Two checks are silent instead of failing when their condition does not
+    # apply here (no shots captured yet, or not building on main) — surface
+    # that as a note instead, the same shape as every other note above.
+    for _note in (check_records.device_shots_note(), check_records.pending_records_note()):
+        if _note:
+            notes.append("[records] " + _note)
 
 # -------------------------------------------------------------------- report
 for n in notes:

@@ -2,7 +2,7 @@
 id: D84
 slug: prose-compliance-plan
 kind: decision
-status: settled
+status: open
 date: 2026-09-15
 title: Bring every markdown file into compliance with the global mandate
 ---
@@ -223,8 +223,7 @@ listed here. Lane 1b owns every `prose.md` section not listed here. Where `CLAUD
   unregistered one. The index satisfies this. Records may name retired plugins. They live
   outside the checked files.
 - Provenance ids in findings stay. Shipped examples keep placeholders. The rule is unchanged.
-- Number claim at merge is one command, `check_records.py --claim-ids --apply`. CI on `main`
-  fails while any record is pending, so a missed claim goes red at once. A duplicate number is
+- Number claim at merge is a manual step until the checks pass exists. A duplicate number is
   possible with two concurrent merges. One maintainer merges, so the risk is accepted.
 - The README STE rewrite changes teammate-facing text. Verify each install command against
   the live Add dialog before landing lane 2.

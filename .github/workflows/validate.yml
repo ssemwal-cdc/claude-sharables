@@ -26,3 +26,44 @@ jobs:
       # three-state fan-out, sniff-table, CCO-demotion and renderBar assertions were habit.
       - name: Run the skills' own code tests
         run: python3 scripts/test_skill_code.py
+
+  # D81, device usability check, asks for every screen at three widths, in both
+  # themes. That ran by hand only until now. This job runs the same capture command
+  # in a real Chromium and gates on it, so a horizontal overflow fails CI instead of
+  # waiting for someone to run scripts/measure_float.js --shots by hand.
+  shots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      # Pinned to the Playwright version already proved against this repo (F99,
+      # device shots first run), not "latest" — D51, check pins, never share, for
+      # the same reason this repo pins cdnjs libraries.
+      - name: Install Playwright 1.56.1 and its Chromium
+        run: |
+          npm install -g playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Capture every screen at 390px, 1200px and 1600px, light and dark
+        run: NODE_PATH=$(npm root -g) node scripts/measure_float.js --shots .claude/shots
+
+      # check_device_shots() in scripts/check_records.py fails the build on any
+      # capture with a horizontal overflow, or on fewer than 18 captures.
+      - name: Validate, including the captured shots
+        run: python3 scripts/validate.py
+
+      - name: Upload the captures for a maintainer to look at
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-shots
+          path: .claude/shots/
+          retention-days: 7

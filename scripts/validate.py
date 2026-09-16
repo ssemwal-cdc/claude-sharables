@@ -358,6 +358,24 @@ if check_records is not None:
         if _note:
             notes.append("[records] " + _note)
 
+# ------------------------------------------------------------- skill version bump
+# D43 asserts the four version sites agree; it says outright it "cannot enforce the
+# bump." PR #19 proved the gap real: a skill's files changed and its version line
+# never moved. Imported, never optional, for the same fail-open reason as the two
+# checks above.
+try:
+    import check_version_bump
+except ImportError as exc:
+    fail("[version] cannot import scripts/check_version_bump.py (%s) - the version-bump "
+         "check did not run" % exc)
+    check_version_bump = None
+if check_version_bump is not None:
+    _bump_problems, _bump_note = check_version_bump.run()
+    for _p in _bump_problems:
+        fail("[version] " + _p)
+    if _bump_note:
+        notes.append("[version] " + _bump_note)
+
 # -------------------------------------------------------------------- report
 for n in notes:
     print(f"note: {n}")

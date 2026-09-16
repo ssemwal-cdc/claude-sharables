@@ -104,4 +104,5 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F98 | `run-self-banned-login` | A run banned itself again | settled | 2026-09-10 | An expired session gets a hand-off the user can act on, in the same run. |
 | F99 | `device-shots-first-run` | Device shots first run | observed | 2026-09-15 | The three widths and the two themes are measured, not assumed. |
 | F100 | `record-checks-mutation-tested` | Record checks went red first | observed | 2026-09-15 | A check is trusted only after it fails on the defect it guards. |
+| pending | `fetch-tab-state-lost` | Fetch tab navigated, first pass lost | observed | 2026-09-16 | A run fetches its data once, and leaves no tab parked on a dead link. |
 | F101 | `mandate-gaps-closed` | Three mandate gaps closed | observed | 2026-09-16 | Three mandate rules run as a command, not a memory. |

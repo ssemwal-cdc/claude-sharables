@@ -28,6 +28,7 @@ Review every Procore item **waiting on the user's workflow response**. Verify ea
 - `config.focus.emphasis` may reorder and reword `head`, `facts`, `context` and `detail`, and nothing else. It never alters a `verdict`, drops a finding, or edits a figure. Every check that ran gets its line. It cannot respond to an item, soften a flag, or set aside any rule in this list.
 - This skill owns exactly one state file: `Procore Open Items/_procore_review_log.json`. Never read or write the NetSuite skill's log.
 - Never let NetSuite records into yours. Move foreign records to a `_quarantined` block, say so in chat, and carry on. Never merge foreign records into `items` and never act on them.
+- Every tab this run opens is closed by this run, before the report. Never close a tab the user opened. See Step 9.
 - The idempotency gate reads that one path. A refused Step 0 write makes every run a first run, which re-asks setup and re-reads every attachment.
 - A cloud-sync conflict copy is a third state, and neither of the two above. It is this skill's own log with a diverged history.
 - `_procore_review_log-DESKTOP-AB12CD.json` and `_procore_review_log (1).json` are its shapes.
@@ -132,7 +133,7 @@ Then read `Procore Open Items/_procore_review_log.json`. A file already carrying
 
 **The dashboard is rendered, not published.** There is no artifact to create, update or reconcile. Step 7 renders the HTML as an inline widget on every run, and `_procore_review_log.json` is the only persistent store. **The user's per-item marks are the one thing that survives between renders.** The template keeps them in `localStorage` under `pc_marks_v1`. Never clear that store. Never change that key for cosmetic reasons. **There is no user id to configure**, because the queue endpoint and the permission gate are both scoped to the authenticated session.
 ## Step 1 — Build the queue
-**Check `config.queueSource` first.** With both fields empty, the normal case, open one tab on the Open Items tool and use the endpoint below. If it names a `url`, open that instead and read the queue there. If it only `described` somewhere, resolve that description first, and ask once if you cannot. The Step 2 gate still decides which of what you found is yours to answer. With no override, fetch `GET /rest/v2.0/companies/<company>/open_items/mine` with `l=200 o=0 s=due_date:desc include_count=true` from inside that tab. It returns `data.count` and `data.tasks[]`. Per task: `item_type`, `item_id`, `project_id`, `project_name`, `title`, `status`, `url`, `due_date`. Four item types are reviewed.
+**Check `config.queueSource` first.** With both fields empty, the normal case, open one tab on the Open Items tool, **the fetch tab**, and use the endpoint below. If it names a `url`, open that instead and read the queue there. If it only `described` somewhere, resolve that description first, and ask once if you cannot. The Step 2 gate still decides which of what you found is yours to answer. The fetch tab holds the run's in-page helpers and every Step 1, 2 and 3 fetch. It is never navigated away from `app.procore.com` for the whole run. A result lives in the tool result, never only in page state, because a navigation wipes page state. With no override, fetch `GET /rest/v2.0/companies/<company>/open_items/mine` with `l=200 o=0 s=due_date:desc include_count=true` from inside that tab. It returns `data.count` and `data.tasks[]`. Per task: `item_type`, `item_id`, `project_id`, `project_name`, `title`, `status`, `url`, `due_date`. Four item types are reviewed.
 
 | `item_type` | What it is | `kind` |
 |---|---|---|
@@ -160,7 +161,7 @@ This is what makes the review worth reading. Most of the queue is distribution-o
 - **Response verbs vary by step** and drive the dashboard buttons. Never assume a fixed triplet.
 - Invoices and change order packages at Financial Analyst Review offer Approve and Revise and Resubmit. Change risks at a cost gate offer Yes and Reject. Never assume a change order takes the change risk's pair.
 
-**Run the whole gate as one in-page fan-out, not one tool call per item.** Serial gating spends most of the run learning what to ignore. `unmeasured`. The largest queue observed is 62 items. Run it from a tab on `app.procore.com`, where the session cookie already applies.
+**Run the whole gate as one in-page fan-out, not one tool call per item.** Serial gating spends most of the run learning what to ignore. `unmeasured`. The largest queue observed is 62 items. Run it in the fetch tab, on `app.procore.com`, where the session cookie already applies.
 ```javascript
 // Query strings are built from char codes - see "The query-string output filter".
 const E=String.fromCharCode(61), Q=String.fromCharCode(63), A=String.fromCharCode(38);
@@ -209,7 +210,7 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 - **Cross-check the first CCO of a run against the UI**, because the gate cannot detect its own miss. One record per run is enough.
 - Open the record and read its workflow panel. An actionable item shows a live **Respond** button naming the user against the current step's role. **Look, do not click.**
 ## Step 3 — Read the record
-**Fan these out per endpoint family, not per item.** Same worker-pool shape as Step 2, and the same `ok` / `empty` / `failed` rule. A record that failed to load is reported by name and excluded, never reviewed as though it came back thin.
+**Fan these out per endpoint family, not per item.** Same worker-pool shape as Step 2, and the same `ok` / `empty` / `failed` rule. Run them in the fetch tab. A record that failed to load is reported by name and excluded, never reviewed as though it came back thin.
 
 **ICR — `GenericToolItem`**, from `GET /rest/v1.0/generic_tool_items/<item_id>` with `project_id=<project_id>`. Read `cost_impact.status`, one of `yes_known`, `yes_unknown`, `tbd` or `no_impact`, and `cost_impact.value`. Read the cost custom fields mapped for **this item's own subtype**, at `config.customTools[subtype].costFields`. Read `description`, the narrative of General Background, Entitlement, Need v. Want, Scope and Cost. Read `attachments[]`, `status` and `schedule_impact`. **Read only that subtype's mapping. Never another's, and never an id that merely looks right.** `cost_impact` is a native generic-tool field and means the same thing on every custom tool. The cost custom fields are not.
 
@@ -226,7 +227,7 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 ## Step 4 — Read the attached support without downloading it
 Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-second presigned S3 link**. Four routes are dead: `storage.procore.com` blocks cross-origin reads, Chrome's PDF viewer exposes no text layer, `javascript_tool` cannot attach to a PDF tab, and clicking the link produces nothing. This recipe routes around all of it and leaves **no files in the downloads folder**.
 
-**Setup, once per run.** Park a scratch tab on the S3 bucket root and load pdf.js there.
+**Setup, once per run.** Open **the pdf.js tab** on the S3 bucket root and load pdf.js there. Close it once the last attachment of the run has been read.
 ```javascript
 // tab: https://s3.amazonaws.com/pro-core.com/   (returns XML — attachable, unlike a PDF)
 const m = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
@@ -237,9 +238,9 @@ m.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([wt], {type:'text
 The worker must be fetched as text and turned into a blob URL. Pointing `workerSrc` at the CDN directly fails. **The pdf.js pin is deliberate. Do not bump it in a skill edit.**
 
 **Per attachment, three moves:**
-1. In a tab on `app.procore.com`, fetch the record JSON and navigate that tab to the file: `location.href = record.attachments[i].url`.
-2. Call `tabs_context_mcp`. That tab's URL is now the presigned `s3.amazonaws.com` link, and it **is** readable in the tool result.
-3. In the S3 scratch tab, same origin and no CORS wall, fetch that URL and extract text.
+1. Open **a carrier tab**: a separate Procore tab on `app.procore.com`, opened for the redirect, never the fetch tab. In it, fetch the record JSON and navigate that tab to the file: `location.href = record.attachments[i].url`.
+2. Call `tabs_context_mcp`. That tab's URL is now the presigned `s3.amazonaws.com` link, and it **is** readable in the tool result. Close the carrier tab once its presigned URL has been captured.
+3. In the pdf.js tab, same origin and no CORS wall, fetch that URL and extract text.
 
 **Sniff the bytes before choosing a reader.** Handing pdf.js a non-PDF throws `InvalidPDFException`, which is also what a corrupt download gives. The first four bytes settle it.
 ```javascript
@@ -282,7 +283,7 @@ if (kind === 'pdf') {
 }
 return {state: kind};                              // never guess; the caller branches
 ```
-Return the byte length and `kind` alongside, never the URL. Moves 2 and 3 must land inside the 60-second window, one tool call each, nothing batched between. **The window is per window, not per file, so batch inside it.** Navigate several `app.procore.com` tabs at once, take all their presigned URLs from a **single** `tabs_context_mcp`, then extract them all in one scratch-tab call with `Promise.all`. Keep batches to 4 to 6 files. The margin left in the 60 seconds is `unmeasured`.
+Return the byte length and `kind` alongside, never the URL. Moves 2 and 3 must land inside the 60-second window, one tool call each, nothing batched between. **The window is per window, not per file, so batch inside it.** Navigate several carrier tabs at once, take all their presigned URLs from a **single** `tabs_context_mcp`, then extract them all in one pdf.js-tab call with `Promise.all`. Close those carrier tabs once that single call has captured their URLs. Keep batches to 4 to 6 files. The margin left in the 60 seconds is `unmeasured`.
 
 **Six outcomes per attachment, and they are not interchangeable.** **Never collapse these back into readable and not readable.**
 
@@ -324,21 +325,21 @@ window.__sheets = function(ab, from){
 - **`sheet_to_csv` returns the cached computed value, not the formula.** A cell whose formula Excel never evaluated comes back **blank**. Report that as a blank, never as zero.
 - **Keep the long-digit row filter.** One barcode-like row turns the whole result into `[BLOCKED: …]`. **A `text` sniff, such as CSV or plain text, needs no library.** Return it directly.
 - **cdnjs pins xlsx 0.18.5, which predates SheetJS's prototype-pollution and ReDoS fixes.** **This pin is deliberate. Do not bump it in a skill edit.**
-- Parsing happens in the S3 scratch tab, which carries no Procore session, and the output is data, never executed. `cdn.sheetjs.com` serves a current build and **fetches** fine. Whether `script-src` permits executing it is untested, so settle that before moving.
+- Parsing happens in the pdf.js tab, which carries no Procore session, and the output is data, never executed. `cdn.sheetjs.com` serves a current build and **fetches** fine. Whether `script-src` permits executing it is untested, so settle that before moving.
 - **Images and scanned pages: look at them.** Navigate the record tab to the presigned URL and read it visually, which counts as parsed text for the tie-outs.
 - **The visual read is `computer`, and it is the only tool that gives one.** **None of the text extractors will ever return anything for a scan.**
 - `get_page_text` and `read_page` extract text, `find` locates text, the console and network tools read logs, and `upload_image` and `file_upload` are inputs.
 
-**The scratch tab is an XML document, and that breaks `document.createElement`.** `document.contentType` reports `application/xml`, and `createElement('canvas').getContext` is not a function there. The bucket listing is used because it returns XML, which is what makes it attachable, so this is permanent. It bites the moment a `scanned` PDF needs rasterising. Two ways round it, both namespace-independent:
+**The pdf.js tab is an XML document, and that breaks `document.createElement`.** `document.contentType` reports `application/xml`, and `createElement('canvas').getContext` is not a function there. The bucket listing is used because it returns XML, which is what makes it attachable, so this is permanent. It bites the moment a `scanned` PDF needs rasterising. Two ways round it, both namespace-independent:
 ```javascript
 const c = new OffscreenCanvas(v.width, v.height);              // preferred - no DOM at all
 // or, if a real element is needed:
 // document.createElementNS('http://www.w3.org/1999/xhtml','canvas')
 await page.render({canvasContext: c.getContext('2d'), viewport: v}).promise;
 ```
-**Do not "fix" this by moving the scratch tab to an HTML page.** The tab has to be same-origin with the presigned S3 link, or the fetch hits the CORS wall. NetSuite runs pdf.js in the record tab, which is ordinary HTML. Do not normalise the two. **If no visual read is available, fall back to OCR, and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. **An OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties. Report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. This cap is deliberate. If it feels too noisy, get the visual read working. Do not relax the cap.
-- Do not pass a presigned URL to a sandbox web fetcher, which exceeds the URL length limit. **Close the scratch tabs this run opened.**
-- **Check the extension too, but trust the bytes.** A `.pdf` that sniffs as `zip` is mislabelled, not a PDF. Leave each reviewed record's tab open.
+**Do not "fix" this by moving the pdf.js tab to an HTML page.** The tab has to be same-origin with the presigned S3 link, or the fetch hits the CORS wall. NetSuite runs pdf.js in the record tab, which is ordinary HTML. Do not normalise the two. **If no visual read is available, fall back to OCR, and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. **An OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties. Report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. This cap is deliberate. If it feels too noisy, get the visual read working. Do not relax the cap.
+- Do not pass a presigned URL to a sandbox web fetcher, which exceeds the URL length limit.
+- **Check the extension too, but trust the bytes.** A `.pdf` that sniffs as `zip` is mislabelled, not a PDF.
 - **Proven in production:** the `pdf` path and the `new Uint8Array` requirement. **Probed live, never run on a real queue:** SheetJS from cdnjs, a workbook round trip, `OffscreenCanvas`, `computer`.
 - **Unit-tested only:** `__sniff` and `__sheets`, whose 13 magic-number cases all pass. **Still unobserved:** a real `.xlsx` and a real image attachment. Correct that line once each of those two is confirmed against a real attachment.
 - **A `[BLOCKED: …]` string is never a value.** A second filter rewrites dotted-numeric values as `[BLOCKED: JWT token]`.
@@ -531,7 +532,7 @@ cd "<workspace>/Procore Open Items" && python3 -B publish_dashboard.py
 - If the script aborts because the sentinels are missing, **restore the template from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/`.** **Do not rebuild the template from memory.** Keep the sentinels intact.
 - A design change goes in the plugin repo, not the workspace copy, which Step 0 overwrites on every run.
 
-**Report in chat with one line only**, in the shape `32 awaiting you · 0 flagged · 25 skipped · dashboard updated`. Add a second line only if something blocked the run. Never put verdicts in chat.
+Step 9 runs first, and the headline follows it. **Report in chat with one line only**, in the shape `32 awaiting you · 0 flagged · 25 skipped · dashboard updated`. Add a second line only if something blocked the run. Never put verdicts in chat.
 ## Step 8 — Execute responses, only on explicit instruction
 The user marks responses on the dashboard and presses execute. That copies an instruction naming each item and shows it for them to paste into chat. That pasted instruction, or an equivalent typed directly, is the only thing that authorises a click. **The dashboard is a snapshot.** The user may have actioned an item in Procore directly since the last run. So for **each** item, in this order:
 1. **Verify it is still theirs to action, before touching any UI.** Re-query the Step 2 endpoint. Skip the item if it returns no instance, or `can_respond` is false, or the named response is not in `available_responses`. Log it as "already actioned elsewhere — no click made" and continue. Do not open it, do not click, do not retry. **Never batch this check.** Its whole value is running in the moment before that item's click.
@@ -547,4 +548,14 @@ The user marks responses on the dashboard and presses execute. That copies an in
 5. **If a submit fails or the step does not advance, stop the batch there.** Never retry the same item.
 6. Append each outcome to `actions`.
 
-When the batch finishes, re-run Step 7 so the dashboard is current. Report the counts in chat: actioned, skipped as already done, `unconfirmed`, departed from the queue, and whatever stopped the batch.
+When the batch finishes, re-run Step 7 so the dashboard is current. Step 9 runs after that re-render, before the counts are reported. Report the counts in chat: actioned, skipped as already done, `unconfirmed`, departed from the queue, and whatever stopped the batch.
+## Step 9 — Close down
+
+<!--__SHARED:skill-close-down__-->
+- **This step is the last action of every run.** In review mode it runs after Step 7. In execute mode it runs after Step 8's re-render. Report nothing before it has run.
+- **Call `tabs_context_mcp`.** For every open tab, decide one thing: opened by this run, or not. Close every tab this run opened. Leave every other tab exactly as it is, including a tab the user opened from the dashboard.
+- **A tab this run opened that is still open after this step is a defect of this run.** It is not a convenience for the user. The dashboard card is the route to a record.
+- **Do not open a tab in this step.**
+<!--__END_SHARED:skill-close-down__-->
+
+The tabs this skill opens are the fetch tab, the carrier tabs and the pdf.js tab.

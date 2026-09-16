@@ -32,6 +32,7 @@ This skill does two different jobs. Know which one you are in:
 - **This skill owns exactly one state file:** `NetSuite Approval Checks/_netsuite_review_log.json`. Never read or write the Procore skill's log. Never let Procore records into yours. Move a foreign record to a `_quarantined` block, say so in chat, and carry on. Never merge one into `items`, and never act on one.
 - **The idempotency gate reads that one path on the next run.** Where the Step 0 write did not land, every run is a first run. That is the accepted cost of a folder that cannot be written to.
 - **A cloud-sync conflict copy is a third state.** A file such as `_netsuite_review_log-DESKTOP-AB12CD.json` or `_netsuite_review_log (1).json` is this skill's own log with a diverged history. It is neither a foreign record nor the canonical file. The canonical path stays the only file read for `items` and `actions`, and the only one ever written. From a conflict copy, adopt `config` keys the canonical file lacks and nothing else, and say in the run report that you did, naming both files. Never merge its `items` or its `actions`. Leave the copy where it is and say so once.
+- **Every tab this run opens is closed by this run, before the report.** Never close a tab the user opened. See Step 9.
 
 ## What this review is, and what it is not
 
@@ -219,7 +220,7 @@ Two data quirks that will bite:
 - **`url`** is a link the user gave you. Navigate there instead of the default location. Verify it loaded and holds a queue before reading it. If it does not, say so and fall back to the default.
 - **`described`** is the user's own words, stored verbatim. Resolve it on each run rather than caching a guess. **If you cannot resolve what they described, ask once and store the answer.** Never substitute the nearest thing you found. A review of the wrong queue looks exactly like a review of the right one. Ask for both at first-run setup, alongside the other identifiers, and make clear that skipping them is normal. Re-editable at any time, like `config.focus`.
 
-Use `get_page_text` on the dashboard tab rather than screenshots. The portlet tables extract cleanly as text. **Do not open a tab per row here.** Every card on the dashboard links straight to its own record, so the reader opens the ones they want. Open a record tab only where a later step needs one: Step 2's field reads in browser mode, and Step 4's attachment fetch. When you do, ctrl+click the row's date link. Ctrl+click may silently fail on the first attempt, so verify with `tabs_context_mcp` and retry once if no new tab appeared. Review **every** item regardless of dollar amount. There is no threshold.
+Use `get_page_text` on the dashboard tab rather than screenshots. The portlet tables extract cleanly as text. **Do not open a tab per row here.** Every card on the dashboard links straight to its own record, so the reader opens the ones they want. Open a record tab only where a later step needs one: Step 2's field reads in browser mode, and Step 4's attachment fetch. When you do, ctrl+click the row's date link. That tab is **a record tab**, one of the tabs this skill opens. Ctrl+click may silently fail on the first attempt, so verify with `tabs_context_mcp` and retry once if no new tab appeared. Review **every** item regardless of dollar amount. There is no threshold.
 
 - **In browser mode, bills come from the bill portlet the same way change orders already do.** They carry the same "as of last review" caveat the dashboard already shows for change orders.
 - **Change orders are not queryable for pending status.** They live in `transaction` under a recordtype like `custompurchase_r_pci_change_order_po`. The records carry `approvalstatus = null` and no next-approver value, so no SuiteQL filter can identify the ones awaiting the user. The dashboard portlet is the only source. That is why the dashboard labels change orders "as of last review" rather than live. Do not remove that label.
@@ -256,7 +257,7 @@ WHERE l.nextdoc IN (<all ids from step 1>) AND l.linktype = 'OrdBill'
 Two things about this query are load-bearing:
 - **`linktype = 'OrdBill'` is the filter, and it is not optional.** That is the order-to-bill application. The same PO also produces `ShipRcpt` rows for the same bill, and including them double-counts.
 - **The link table carries one row per line pair, not one per document.** A three-line bill returns three `OrdBill` rows for one PO. So reduce to distinct bill ids before summing anything. Measured 2026-08-20: a naive `SUM` across this join returned exactly three times the truth, `136,369.02` coming back as `409,107.06`.
-- **In browser mode, `get_page_text` on each record tab is the route.** Open the record's tab for this read and reuse it for Step 4's attachment fetch on the same item. The warning above is a cost optimisation, not a prohibition. Read the field set off the page, including the Items sublist lines. Expect the run to be slower per item. That needs no comment.
+- **In browser mode, `get_page_text` on each record tab is the route.** Open **a record tab** for this read, or reuse the one Step 1 opened, and reuse it for Step 3 and Step 4 on the same item. Record tabs are the tabs this skill opens. A record tab closes once that item's checks are written to the state file in Step 6. The warning above is a cost optimisation, not a prohibition. Read the field set off the page, including the Items sublist lines. Expect the run to be slower per item. That needs no comment.
 - **Confirm field parity once, on a real bill, before relying on this.** Compare what the two queries return against what `get_page_text` gives for the same record. Every field above must be present. If one cannot be resolved this way, read that one from the page and say so. The line-level quantity times rate is the first math check and it is free. Do it before touching the PDF.
 
 ## Step 3 — Retrieve the attachment
@@ -285,7 +286,7 @@ JSON.stringify(a)
 
 Rebuild the path from those parts inside the page when fetching, exactly as the connector route does. **Everything after this point is identical in both modes.** Same pdf.js load, same `new Uint8Array` wrap, same sniff, same six outcomes. This DOM read is **designed, not yet observed.** If it returns nothing, the field may render as something other than an anchor on that record type. Report what it is rather than guessing a selector.
 
-**Setup, once per run.** Run this in any authenticated NetSuite tab. The fetch has to be same-origin so the session cookie rides along, which is why pdf.js is loaded here rather than in a scratch tab. NetSuite's CSP permits the import. Verified live 2026-08-13. The pin below is deliberate. Do not bump it in a skill edit.
+**Setup, once per record tab.** Run this in the item's record tab. The fetch has to be same-origin so the session cookie rides along, which is why pdf.js is loaded in a record tab and nowhere else. pdf.js loaded in a record tab goes with it when that tab closes, and is re-run in the next record tab. NetSuite's CSP permits the import. Verified live 2026-08-13. The pin below is deliberate. Do not bump it in a skill edit.
 
 ```javascript
 const m = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
@@ -589,9 +590,9 @@ The template already handles, on every open:
 - per-item decision marking with local-storage persistence, and the batched execute bar
 - a one-click re-run button, which is the refresh path now that the page never queries NetSuite
 
-A design change goes in the plugin repo, not the workspace copy. Step 0 overwrites the workspace copy on every run, so an edit made there lasts exactly one run. Keep the sentinels intact, then push. Teammates get it on their next plugin update. Then close scratch tabs. Leave open any record tab a step needed. Do not open tabs the run did not use, and do not close a tab the user opened themselves from the dashboard.
+A design change goes in the plugin repo, not the workspace copy. Step 0 overwrites the workspace copy on every run, so an edit made there lasts exactly one run. Keep the sentinels intact, then push. Teammates get it on their next plugin update.
 
-**Report in chat with one line only**, no per-item blocks.
+Step 9 runs first, and the headline follows it. **Report in chat with one line only**, no per-item blocks.
 
 ```
 6 pending · 1 flagged · dashboard updated
@@ -715,4 +716,15 @@ Then, **one record at a time**:
 - **The post-click verification stays per item too.** Do not click all N and reconcile once at the end. The check catches more than lag: a record in an unexpected state, a response that routed somewhere it should not have, and the frozen-tab case in step 6.
 - **A failure stops the batch.** If an item cannot be confirmed or does not match, stop there. A record that has not propagated yet is **not** a failure. Do not report it as one, and do not retry it. Report what was actioned, what is still propagating, what genuinely failed and why, and what remains untouched. Never continue past a real failure, and never retry blind.
 
-When the batch finishes, re-run Step 7 so actioned items move to the bin. Report in chat how many were actioned, how many were confirmed advanced, how many are still propagating, and anything that failed.
+When the batch finishes, re-run Step 7 so actioned items move to the bin. Step 9 runs after that re-render, before the counts are reported. Report in chat how many were actioned, how many were confirmed advanced, how many are still propagating, and anything that failed.
+
+## Step 9 — Close down
+
+<!--__SHARED:skill-close-down__-->
+- **This step is the last action of every run.** In review mode it runs after Step 7. In execute mode it runs after Step 8's re-render. Report nothing before it has run.
+- **Call `tabs_context_mcp`.** For every open tab, decide one thing: opened by this run, or not. Close every tab this run opened. Leave every other tab exactly as it is, including a tab the user opened from the dashboard.
+- **A tab this run opened that is still open after this step is a defect of this run.** It is not a convenience for the user. The dashboard card is the route to a record.
+- **Do not open a tab in this step.**
+<!--__END_SHARED:skill-close-down__-->
+
+The tabs this skill opens are the record tabs, and in Step 8's frozen-tab case the fresh tab opened to read the approval state.

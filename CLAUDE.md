@@ -143,5 +143,6 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand. Needs a brow
 - `findings/_index.md` lists every observed defect and measurement, in the same six columns.
 - `gaps/_index.md` lists every unobserved claim and unfired branch, in the same six columns. Read it before citing anything recent as established.
 - A citation is an id plus a short gloss, never a bare id and never a path.
-- A record on a branch has `id: pending` and is cited by slug. The number is claimed at merge, on the maintainer's word.
+- A record on a branch has `id: pending` and is cited by slug. Nobody allocates a number on a branch.
+- The maintainer runs `python3 scripts/check_records.py --claim-ids --apply` in the last commit before merge. CI on `main` fails while any record still carries `id: pending`.
 - The record and prose checks run inside `python3 scripts/validate.py`. The Bash hook in `.claude/settings.json` refuses the shared-tree commands. `D82`, hooks and checks pass.

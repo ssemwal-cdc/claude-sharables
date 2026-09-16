@@ -239,7 +239,7 @@ The worker must be fetched as text and turned into a blob URL. Pointing `workerS
 
 **Per attachment, three moves:**
 1. Open **a carrier tab**: a separate Procore tab on `app.procore.com`, opened for the redirect, never the fetch tab. In it, fetch the record JSON and navigate that tab to the file: `location.href = record.attachments[i].url`.
-2. Call `tabs_context_mcp`. That tab's URL is now the presigned `s3.amazonaws.com` link, and it **is** readable in the tool result. Close the carrier tab once its presigned URL has been captured, or, for an image or scan, once the visual read is done.
+2. Call `tabs_context_mcp`. That tab's URL is now the presigned `s3.amazonaws.com` link, and it **is** readable in the tool result. Close the carrier tab after move 3's sniff: on capture for a text kind, or after the visual read for an image or scan.
 3. In the pdf.js tab, same origin and no CORS wall, fetch that URL and extract text.
 
 **Sniff the bytes before choosing a reader.** Handing pdf.js a non-PDF throws `InvalidPDFException`, which is also what a corrupt download gives. The first four bytes settle it.
@@ -283,7 +283,7 @@ if (kind === 'pdf') {
 }
 return {state: kind};                              // never guess; the caller branches
 ```
-Return the byte length and `kind` alongside, never the URL. Moves 2 and 3 must land inside the 60-second window, one tool call each, nothing batched between. **The window is per window, not per file, so batch inside it.** Navigate several carrier tabs at once, take all their presigned URLs from a **single** `tabs_context_mcp`, then extract them all in one pdf.js-tab call with `Promise.all`. Close those carrier tabs once that single call has captured their URLs, or, for an image or scan, once its visual read is done. Keep batches to 4 to 6 files. The margin left in the 60 seconds is `unmeasured`.
+Return the byte length and `kind` alongside, never the URL. Moves 2 and 3 must land inside the 60-second window, one tool call each, nothing batched between. **The window is per window, not per file, so batch inside it.** Navigate several carrier tabs at once, take all their presigned URLs from a **single** `tabs_context_mcp`, then extract and sniff them all in one pdf.js-tab call with `Promise.all`. Then close each carrier tab: at once for a text kind, or after the visual read for an image or scan. Keep batches to 4 to 6 files. The margin left in the 60 seconds is `unmeasured`.
 
 **Six outcomes per attachment, and they are not interchangeable.** **Never collapse these back into readable and not readable.**
 

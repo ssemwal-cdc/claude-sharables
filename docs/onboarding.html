@@ -254,7 +254,7 @@ details.warn summary{color:var(--warn)}
     <li>Add it. Both plugins appear in the list.</li>
     <li><strong>Install</strong> the ones you need — <code>netsuite-approval-review</code>, <code>procore-open-items-review</code>, or both.</li>
   </ol>
-  <div class="done"><b>Done when</b><span>Your plugins appear in the installed list. Not showing up in a new chat? <strong>Restart your computer.</strong> Still nothing after that means the marketplace didn't add — remove it and add it again, checking auto sync is ticked.</span></div>
+  <div class="done"><b>Done when</b><span>Your plugins appear in the installed list. Not showing up in a new chat? Type <code>/reload-plugins</code> into the prompt box. Still nothing after that means the marketplace didn't add — remove it and add it again, checking auto sync is ticked.</span></div>
   <div class="note"><strong>Good place to stop.</strong> Setup is done and saved — your plugins stay installed. Pick step 4 up whenever you have 15–20 minutes; it's the one stretch that doesn't resume partway.</div>
 </section>
 
@@ -269,6 +269,7 @@ details.warn summary{color:var(--warn)}
     <li><strong>Pick a folder when it asks</strong> — choose your <strong>Downloads</strong> folder. It makes its own subfolder in there; nothing already in Downloads is touched.</li>
     <li>Type the command below and hit <strong>Enter</strong> — don't describe it in your own words.</li>
   </ol>
+  <div class="note warn"><strong>Downloads syncs to OneDrive — stop it stubbing the new folder.</strong> Once the subfolder appears (<code>NetSuite Approval Checks</code> or <code>Procore Open Items</code>), right-click it in File Explorer and choose <strong>Always keep on this device</strong>. Skip this and OneDrive can turn the files inside into online-only stubs; Claude can't read or write a stub, so the daily idempotency check and the dashboard both break without saying why.</div>
   <div class="tbl">
     <table>
       <tr><th>Run this</th><th>It asks you to confirm</th></tr>
@@ -498,7 +499,7 @@ fallback window retries. Report what blocked it.</pre>
       <li>Click <strong>Browse</strong>, then the <strong>Personal</strong> tab.</li>
       <li>Next to <strong>Local uploads</strong> there's a <code>claude-sharables</code> chip — click the <strong>⋯</strong> (three dots) on it.</li>
       <li>Click <strong>Check for updates</strong>. While you're in that menu: <strong>Sync automatically</strong> should be on, and <strong>Synced commit</strong> is the release you're on.</li>
-      <li>Restart — the computer, not just the app — then run the review again for a fresh dashboard.</li>
+      <li>Back in a chat, type <code>/reload-plugins</code>, then run the review again for a fresh dashboard.</li>
     </ol>
     <p class="muted">Still on an old version after that? In that same ⋯ menu, <strong>Remove</strong> the marketplace — this uninstalls its plugins — then add it back (<a href="#step3">step 3</a>) and reinstall. That always lands you on current.</p>
   </details>

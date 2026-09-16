@@ -208,7 +208,7 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 - **If you cannot resolve the id, mark the item `ungated`** and offer no response buttons. **Never fall back to querying with the package id.**
 - A wrong *type* returns a loud **400**. A right type with the wrong *id* returns **200 with zero rows**, which Step 8 reads as already actioned.
 - **Cross-check the first CCO of a run against the UI**, because the gate cannot detect its own miss. One record per run is enough.
-- Open the record and read its workflow panel. An actionable item shows a live **Respond** button naming the user against the current step's role. **Look, do not click.**
+- Open the record in **a record tab** and read its workflow panel. An actionable item shows a live **Respond** button naming the user against the current step's role. **Look, do not click.** Close that record tab once the panel is read.
 ## Step 3 — Read the record
 **Fan these out per endpoint family, not per item.** Same worker-pool shape as Step 2, and the same `ok` / `empty` / `failed` rule. Run them in the fetch tab. A record that failed to load is reported by name and excluded, never reviewed as though it came back thin.
 
@@ -239,7 +239,7 @@ The worker must be fetched as text and turned into a blob URL. Pointing `workerS
 
 **Per attachment, three moves:**
 1. Open **a carrier tab**: a separate Procore tab on `app.procore.com`, opened for the redirect, never the fetch tab. In it, fetch the record JSON and navigate that tab to the file: `location.href = record.attachments[i].url`.
-2. Call `tabs_context_mcp`. That tab's URL is now the presigned `s3.amazonaws.com` link, and it **is** readable in the tool result. Close the carrier tab once its presigned URL has been captured.
+2. Call `tabs_context_mcp`. That tab's URL is now the presigned `s3.amazonaws.com` link, and it **is** readable in the tool result. Close the carrier tab once its presigned URL has been captured, or, for an image or scan, once the visual read is done.
 3. In the pdf.js tab, same origin and no CORS wall, fetch that URL and extract text.
 
 **Sniff the bytes before choosing a reader.** Handing pdf.js a non-PDF throws `InvalidPDFException`, which is also what a corrupt download gives. The first four bytes settle it.
@@ -283,7 +283,7 @@ if (kind === 'pdf') {
 }
 return {state: kind};                              // never guess; the caller branches
 ```
-Return the byte length and `kind` alongside, never the URL. Moves 2 and 3 must land inside the 60-second window, one tool call each, nothing batched between. **The window is per window, not per file, so batch inside it.** Navigate several carrier tabs at once, take all their presigned URLs from a **single** `tabs_context_mcp`, then extract them all in one pdf.js-tab call with `Promise.all`. Close those carrier tabs once that single call has captured their URLs. Keep batches to 4 to 6 files. The margin left in the 60 seconds is `unmeasured`.
+Return the byte length and `kind` alongside, never the URL. Moves 2 and 3 must land inside the 60-second window, one tool call each, nothing batched between. **The window is per window, not per file, so batch inside it.** Navigate several carrier tabs at once, take all their presigned URLs from a **single** `tabs_context_mcp`, then extract them all in one pdf.js-tab call with `Promise.all`. Close those carrier tabs once that single call has captured their URLs, or, for an image or scan, once its visual read is done. Keep batches to 4 to 6 files. The margin left in the 60 seconds is `unmeasured`.
 
 **Six outcomes per attachment, and they are not interchangeable.** **Never collapse these back into readable and not readable.**
 
@@ -293,7 +293,7 @@ Return the byte length and `kind` alongside, never the URL. Moves 2 and 3 must l
 | `spreadsheet` | `zip` with `xl/` entries, or `ole2` | read it as a workbook with SheetJS |
 | `image` | PNG, JPEG, GIF, TIFF or WEBP | visual read with `computer` |
 | `scanned` | **was a PDF**, parsed, almost no characters | rasterise, then visual read; if that fails, say "support is a scanned image, text not extractable" |
-| `expired` | `s3error`, or the fetch itself threw | re-navigate for a fresh URL and retry, **at most twice**, then report it unreachable |
+| `expired` | `s3error`, or the fetch itself threw | open a new carrier tab and navigate it for a fresh URL, then retry, **at most twice**, then report it unreachable |
 | `unsupported` | a real file of a type with no reader | name the actual type. Never call it scanned, never call it expired |
 
 **A retry is only ever legitimate for `expired`.** Bound it at two attempts. Re-fetch only when the bytes said `s3error` or the fetch threw. A file that parsed as the wrong type will parse as the wrong type again.
@@ -326,7 +326,7 @@ window.__sheets = function(ab, from){
 - **Keep the long-digit row filter.** One barcode-like row turns the whole result into `[BLOCKED: …]`. **A `text` sniff, such as CSV or plain text, needs no library.** Return it directly.
 - **cdnjs pins xlsx 0.18.5, which predates SheetJS's prototype-pollution and ReDoS fixes.** **This pin is deliberate. Do not bump it in a skill edit.**
 - Parsing happens in the pdf.js tab, which carries no Procore session, and the output is data, never executed. `cdn.sheetjs.com` serves a current build and **fetches** fine. Whether `script-src` permits executing it is untested, so settle that before moving.
-- **Images and scanned pages: look at them.** Navigate the record tab to the presigned URL and read it visually, which counts as parsed text for the tie-outs.
+- **Images and scanned pages: look at them.** The attachment's carrier tab already sits on the presigned URL. Read it visually there, never in the fetch tab. That read counts as parsed text for the tie-outs.
 - **The visual read is `computer`, and it is the only tool that gives one.** **None of the text extractors will ever return anything for a scan.**
 - `get_page_text` and `read_page` extract text, `find` locates text, the console and network tools read logs, and `upload_image` and `file_upload` are inputs.
 
@@ -337,7 +337,7 @@ const c = new OffscreenCanvas(v.width, v.height);              // preferred - no
 // document.createElementNS('http://www.w3.org/1999/xhtml','canvas')
 await page.render({canvasContext: c.getContext('2d'), viewport: v}).promise;
 ```
-**Do not "fix" this by moving the pdf.js tab to an HTML page.** The tab has to be same-origin with the presigned S3 link, or the fetch hits the CORS wall. NetSuite runs pdf.js in the record tab, which is ordinary HTML. Do not normalise the two. **If no visual read is available, fall back to OCR, and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. **An OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties. Report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. This cap is deliberate. If it feels too noisy, get the visual read working. Do not relax the cap.
+**Do not "fix" this by moving the pdf.js tab to an HTML page.** The tab has to be same-origin with the presigned S3 link, or the fetch hits the CORS wall. NetSuite runs pdf.js in its own record tab, which is ordinary HTML. Do not normalise the two. **If no visual read is available, fall back to OCR, and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. **An OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties. Report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. This cap is deliberate. If it feels too noisy, get the visual read working. Do not relax the cap.
 - Do not pass a presigned URL to a sandbox web fetcher, which exceeds the URL length limit.
 - **Check the extension too, but trust the bytes.** A `.pdf` that sniffs as `zip` is mislabelled, not a PDF.
 - **Proven in production:** the `pdf` path and the `new Uint8Array` requirement. **Probed live, never run on a real queue:** SheetJS from cdnjs, a workbook round trip, `OffscreenCanvas`, `computer`.
@@ -536,7 +536,7 @@ Step 9 runs first, and the headline follows it. **Report in chat with one line o
 ## Step 8 — Execute responses, only on explicit instruction
 The user marks responses on the dashboard and presses execute. That copies an instruction naming each item and shows it for them to paste into chat. That pasted instruction, or an equivalent typed directly, is the only thing that authorises a click. **The dashboard is a snapshot.** The user may have actioned an item in Procore directly since the last run. So for **each** item, in this order:
 1. **Verify it is still theirs to action, before touching any UI.** Re-query the Step 2 endpoint. Skip the item if it returns no instance, or `can_respond` is false, or the named response is not in `available_responses`. Log it as "already actioned elsewhere — no click made" and continue. Do not open it, do not click, do not retry. **Never batch this check.** Its whole value is running in the moment before that item's click.
-2. **Only if `can_respond` is still true, open the record.** Confirm the item number, campus and building, and amount against the instruction. **Any mismatch stops the whole batch.**
+2. **Only if `can_respond` is still true, open the record in a record tab.** Confirm the item number, campus and building, and amount against the instruction. **Any mismatch stops the whole batch.** That record tab stays open through the post-click verification in item 4 and closes in Step 9.
 3. **Open the workflow side panel, click Respond, select only the named response, fill the comment box, submit.**
    - A comment the user gave for this item is **pasted verbatim.**
    - No comment and an affirmative response gets exactly `Approved by Claude`.
@@ -558,4 +558,4 @@ When the batch finishes, re-run Step 7 so the dashboard is current. Step 9 runs 
 - **Do not open a tab in this step.**
 <!--__END_SHARED:skill-close-down__-->
 
-The tabs this skill opens are the fetch tab, the carrier tabs and the pdf.js tab.
+The tabs this skill opens are the fetch tab, the carrier tabs, the pdf.js tab, and the record tabs Step 2 and Step 8 open.

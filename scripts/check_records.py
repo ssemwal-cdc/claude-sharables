@@ -471,6 +471,103 @@ def check_sentence_length():
     return problems
 
 
+# ------------------------------------------------------ check 6, waiter loops
+# The mandate: "Never write a waiter loop." A waiter loop is an unbounded
+# wait-and-retry: text that tells a run to sit and recheck with no stated limit.
+WAITER_PATTERNS = (
+    re.compile(r"wait and re-", re.I),
+    re.compile(r"wait,\s*then re-", re.I),
+    re.compile(r"re-check until", re.I),
+    re.compile(r"retry until", re.I),
+    re.compile(r"poll until", re.I),
+    re.compile(r"keep checking", re.I),
+    re.compile(r"\bsleep\b[^.!?]{0,40}\bretry\b", re.I),
+    re.compile(r"\bretry\b[^.!?]{0,40}\bsleep\b", re.I),
+    re.compile(r"every\s+\d+\s+(second|seconds|minute|minutes|hour|hours)\b", re.I),
+)
+
+# A retry that names its own bound in the same sentence is not a waiter loop.
+BOUND_PATTERNS = (
+    re.compile(r"\bat most\b", re.I),
+    re.compile(r"\bonce\b", re.I),
+    re.compile(r"\btwice\b", re.I),
+    re.compile(r"\bone more time\b", re.I),
+)
+
+# A line that quotes a forbidden phrase as a negative example, not an instruction.
+# Keep this list short: every entry names the one line and carries its own comment.
+WaiterExclusion = collections.namedtuple("WaiterExclusion", "rel needle comment")
+WAITER_EXCLUSIONS = (
+    WaiterExclusion(
+        os.path.join("decisions", "prose-compliance-plan.md"),
+        '"wait and re-check"',
+        "the plan's own worked example quotes the forbidden phrase to name it, "
+        "inside a table cell; it does not instruct a wait.",
+    ),
+)
+
+
+def _is_waiter_exclusion(rel, line):
+    return any(rel == ex.rel and ex.needle in line for ex in WAITER_EXCLUSIONS)
+
+
+def _waiter_scanned_files():
+    """CLAUDE.md, the three READMEs, every record, both SKILL.md and every shared block."""
+    files = [os.path.join(REPO, "CLAUDE.md"), os.path.join(REPO, "README.md")]
+    plugins = os.path.join(REPO, "plugins")
+    if os.path.isdir(plugins):
+        for entry in sorted(os.listdir(plugins)):
+            if entry.startswith("_"):
+                continue
+            root = os.path.join(plugins, entry)
+            p = os.path.join(root, "README.md")
+            if os.path.isfile(p):
+                files.append(p)
+            skills_dir = os.path.join(root, "skills")
+            if os.path.isdir(skills_dir):
+                for skill in sorted(os.listdir(skills_dir)):
+                    sp = os.path.join(skills_dir, skill, "SKILL.md")
+                    if os.path.isfile(sp):
+                        files.append(sp)
+        shared = os.path.join(plugins, "_shared")
+        if os.path.isdir(shared):
+            for fn in sorted(os.listdir(shared)):
+                if fn.endswith(".block"):
+                    files.append(os.path.join(shared, fn))
+    for folder, fn in record_files():
+        files.append(os.path.join(REPO, folder, fn))
+    return [f for f in files if os.path.isfile(f)]
+
+
+def check_waiter_loops():
+    """No sentence instructs an unbounded wait-and-retry. Code fences are skipped."""
+    problems = []
+    for path in _waiter_scanned_files():
+        rel = _rel(path)
+        lines = _read(path).splitlines()
+        fm_end = _frontmatter_span(lines)
+        in_fence = False
+        for n, raw in enumerate(lines, start=1):
+            if n <= fm_end:
+                continue
+            s = raw.strip()
+            if s.startswith("```"):
+                in_fence = not in_fence
+                continue
+            if in_fence or not s:
+                continue
+            if _is_waiter_exclusion(rel, raw):
+                continue
+            text = re.sub(r"`[^`]*`", "X", s)
+            for sentence in split_sentences(text) or [text]:
+                if not any(p.search(sentence) for p in WAITER_PATTERNS):
+                    continue
+                if any(b.search(sentence) for b in BOUND_PATTERNS):
+                    continue
+                problems.append("%s:%d %s" % (rel, n, sentence[:160]))
+    return problems
+
+
 # ------------------------------------------------------------------- claim ids
 def claim_ids(dry_run=True):
     """Number every pending record, rewrite its slug citations, refresh the indexes.
@@ -547,6 +644,115 @@ def claim_ids(dry_run=True):
     return log
 
 
+# -------------------------------------------------------- check 7, device shots
+# D81, device usability check, asks for every screen at three widths and in both
+# themes. `scripts/measure_float.js --shots` writes the captures and this file.
+SHOTS_DIR = os.path.join(REPO, ".claude", "shots")
+SHOTS_SUMMARY = os.path.join(SHOTS_DIR, "summary.txt")
+MIN_SHOT_ROWS = 18  # 3 screens x 3 widths x 2 themes
+SHOTS_COUNTS = re.compile(r"captures:\s*(\d+)\.\s*captures with overflow:\s*(\d+)\.")
+
+
+def check_device_shots():
+    """Fail on any capture overflow, or fewer than 18 rows. Silent when the file
+    is absent — that case is a note, from device_shots_note(), not a failure."""
+    problems = []
+    if not os.path.isfile(SHOTS_SUMMARY):
+        return problems
+    text = _read(SHOTS_SUMMARY)
+    m = SHOTS_COUNTS.search(text)
+    if not m:
+        problems.append(
+            ".claude/shots/summary.txt has no 'captures: N. captures with overflow: "
+            "M.' line. Re-run scripts/measure_float.js --shots.")
+        return problems
+    total, over = int(m.group(1)), int(m.group(2))
+    if total < MIN_SHOT_ROWS:
+        problems.append(
+            ".claude/shots/summary.txt has %d capture(s); the device usability "
+            "check (D81) wants at least %d" % (total, MIN_SHOT_ROWS))
+    if over > 0:
+        rows = [l for l in text.splitlines() if l.startswith("overflow: ")]
+        problems.append(
+            ".claude/shots/summary.txt reports %d capture(s) with horizontal "
+            "overflow: %s" % (over, "; ".join(rows) or "see the file"))
+    return problems
+
+
+def device_shots_note():
+    """A note, not a failure, when the shots have not been captured here."""
+    if os.path.isfile(SHOTS_SUMMARY):
+        return None
+    return (
+        "the device usability shots have not been captured in this environment. "
+        "Run NODE_PATH=$(npm root -g) node scripts/measure_float.js --shots "
+        ".claude/shots by hand, or in the 'shots' CI job.")
+
+
+# -------------------------------------------------- check 8, id claim gated
+# The mandate: "Never allocate a numbered record on a branch. Write a slug. Claim
+# the number at merge." A record keeps id: pending until the maintainer claims it.
+def check_no_pending_on_main():
+    """On `main`, no record may still carry id: pending. Off main, this is silent —
+    see pending_records_note() for the listing."""
+    problems = []
+    if os.environ.get("GITHUB_REF") != "refs/heads/main":
+        return problems
+    for rec in load_records():
+        if rec.keys and rec.keys.get("id") == "pending":
+            problems.append(
+                "%s has id: pending on main. Claim ids before merge: "
+                "python3 scripts/check_records.py --claim-ids --apply" % rec.rel)
+    return problems
+
+
+def pending_records_note():
+    """A note, not a failure, listing records still pending off main."""
+    if os.environ.get("GITHUB_REF") == "refs/heads/main":
+        return None
+    pending = [r for r in load_records() if r.keys and r.keys.get("id") == "pending"]
+    if not pending:
+        return None
+    return "%d record(s) still carry id: pending: %s" % (
+        len(pending), ", ".join(sorted(r.keys.get("slug", "?") for r in pending)))
+
+
+def check_claim_dry_run():
+    """A dry run of claim_ids(): fail if a slug citation would stay unresolved
+    after every pending record is numbered. Runs on every ref, so a branch whose
+    citations cannot resolve fails before merge, not after."""
+    problems = []
+    records = load_records()
+    taken = collections.defaultdict(set)
+    for rec in records:
+        if rec.keys and re.match(r"^[DFG][0-9]+$", rec.keys.get("id", "")):
+            taken[rec.letter].add(int(rec.keys["id"][1:]))
+
+    pending = [r for r in records if r.keys and r.keys.get("id") == "pending"]
+    pending.sort(key=lambda r: (r.keys.get("date", ""), r.keys.get("slug", "")))
+    assigned = {}
+    for rec in pending:
+        n = 1
+        while n in taken[rec.letter]:
+            n += 1
+        taken[rec.letter].add(n)
+        assigned[(rec.letter, rec.keys["slug"])] = "%s%d" % (rec.letter, n)
+
+    for path in scanned_prose():
+        rel = _rel(path)
+        for n, line in enumerate(_read(path).splitlines(), start=1):
+            if _is_notation(rel, line):
+                continue
+            for m in SLUG_CITATION.finditer(line):
+                letter, slug = m.group(1), m.group(2)
+                if (letter, slug) not in assigned:
+                    problems.append(
+                        "%s:%d cites %s‹%s›, which would stay unresolved after "
+                        "claim_ids runs — no pending record holds that slug"
+                        % (rel, n, letter, slug))
+    return problems
+
+
 # ----------------------------------------------------------------------- main
 CHECKS = (
     ("frontmatter", check_frontmatter),
@@ -554,6 +760,10 @@ CHECKS = (
     ("index freshness", check_index_fresh),
     ("index size", check_index_size),
     ("sentence length", check_sentence_length),
+    ("waiter loops", check_waiter_loops),
+    ("device shots", check_device_shots),
+    ("no pending on main", check_no_pending_on_main),
+    ("claim dry run", check_claim_dry_run),
 )
 
 
@@ -573,6 +783,18 @@ def main(argv):
         for line in claim_ids(dry_run="--apply" not in argv):
             print(line)
         return 0
+    if "--check-claim" in argv:
+        problems = check_claim_dry_run()
+        for p in problems:
+            print("  - %s" % p)
+        if problems:
+            print("FAILED (%d)" % len(problems))
+            return 1
+        print("OK: every slug citation would resolve after claim_ids runs")
+        return 0
+    for note in (device_shots_note(), pending_records_note()):
+        if note:
+            print("note: %s" % note)
     problems = run()
     for p in problems:
         print("  - %s" % p)

@@ -106,4 +106,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F100 | `record-checks-mutation-tested` | Record checks went red first | observed | 2026-09-15 | A check is trusted only after it fails on the defect it guards. |
 | F102 | `fetch-tab-state-lost` | Fetch tab navigated, first pass lost | observed | 2026-09-16 | A run fetches its data once, and leaves no tab parked on a dead link. |
 | F101 | `mandate-gaps-closed` | Three mandate gaps closed | observed | 2026-09-16 | Three mandate rules run as a command, not a memory. |
-| pending | `version-line-silently-stale` | A version line can silently miss its bump | observed | 2026-09-16 | A teammate compares their installed version against the README table. |
+| F103 | `version-line-silently-stale` | A version line can silently miss its bump | observed | 2026-09-16 | A teammate compares their installed version against the README table. |

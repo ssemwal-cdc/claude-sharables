@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D88
 slug: skill-version-bump-enforced
 kind: decision
 status: settled

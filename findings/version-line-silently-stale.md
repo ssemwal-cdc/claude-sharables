@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F103
 slug: version-line-silently-stale
 kind: finding
 status: observed

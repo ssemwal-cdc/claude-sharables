@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F100
 slug: record-checks-mutation-tested
 kind: finding
 status: observed

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F99
 slug: device-shots-first-run
 kind: finding
 status: observed

@@ -107,6 +107,7 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand. Needs a brow
 - Look at an image, and never let an OCR figure clear an item. `D25`, an OCR figure never clears.
 - Re-return a redacted field in another shape. `D21`, never trust a blocked marker.
 - Run both plugins in auto permission mode. `D29`, auto mode, never skip-all.
+- Close every tab a run opened before the report, and never a tab the user opened. `D87`, a run closes its tabs.
 ### Approving and recording
 - Attach the default approval comment, replaced verbatim by a user comment. `D20`, default the approval comment.
 - Route every NetSuite approval through Approve With Notes. `D28`, Approve With Notes stays primary.

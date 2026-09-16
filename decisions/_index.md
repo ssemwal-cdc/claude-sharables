@@ -90,5 +90,6 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D84 | `prose-compliance-plan` | Bring every markdown file into compliance with the global mandate | settled | 2026-09-15 | A maintainer or a session reads one short rule, one record, or one index. |
 | D85 | `skill-prose-pass` | Skill prose pass | open | 2026-09-15 | A run reads a short, governed prompt and still meets every safety rule. |
 | D86 | `xlsx-pin-target` | SheetJS pin target | settled | 2026-09-15 | A workbook parsed inside an authenticated tab cannot be used against the session. |
+| pending | `markdown-compliance-fix-plan` | Markdown compliance fix plan | settled | 2026-09-16 | Every markdown file states what somebody observed, and a check holds it. |
 | D87 | `run-closes-its-tabs` | A run closes every tab it opened | settled | 2026-09-16 | A finished run leaves the browser as it found it. |
 | D88 | `skill-version-bump-enforced` | The version bump is a check, not a habit | settled | 2026-09-16 | A teammate compares their installed version against the README table. |

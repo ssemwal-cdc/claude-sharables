@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F102
 slug: fetch-tab-state-lost
 kind: finding
 status: observed
@@ -15,7 +15,7 @@ On a Procore run, one tab held the Step 2 gate and the fetched record data as pa
 
 The same run ended with a tab parked on a presigned S3 link. The link had expired within its 60-second window, so the tab showed an error page and served nothing.
 
-Both cases come from the same gap. No tab had a name, and no step said which tab does what, or when a tab closes. `D‹run-closes-its-tabs›`, a run closes its tabs, names the tabs and the close triggers.
+Both cases come from the same gap. No tab had a name, and no step said which tab does what, or when a tab closes. `D87`, a run closes its tabs, names the tabs and the close triggers.
 
 **Evidence.**
 

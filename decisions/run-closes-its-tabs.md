@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D87
 slug: run-closes-its-tabs
 kind: decision
 status: settled
@@ -27,7 +27,7 @@ Two alternatives were rejected. "Keep flagged records open" and "keep every revi
 
 **Evidence.**
 
-- `F‹fetch-tab-state-lost›`, fetch tab navigated, is the run that showed the cost.
+- `F102`, fetch tab navigated, is the run that showed the cost.
 - The three defects were found by reading both `SKILL.md` files on 2026-09-16.
 
 **Checks.** `python3 scripts/shared_blocks.py --check` proves the Step 9 block matches canonical in both skills.

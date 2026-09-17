@@ -21,11 +21,12 @@ The two skills wrap the loaders in genuinely different prose for real reasons. N
 
 So the surrounding text differs on purpose. Only the version may not.
 
-A one-sided bump is the drift worth catching. Any new cdnjs library is covered the moment it appears, with no registration.
+A one-sided bump is the drift worth catching. `check_pins()` catches it the moment the two plugins' versions disagree. A library both plugins load needs no registration to join this check. A library added to only one plugin is not caught by it.
 
 **Evidence.**
 
 - Today the pins are pdf.js 4.0.379 and xlsx 0.18.5.
 - The xlsx pin predates the SheetJS prototype-pollution and ReDoS fixes. See F25, the cdnjs import works.
+- Verified 2026-09-17 in a scratch copy, never the real repo tree. Adding a new library to only one plugin's `SKILL.md` left `check_pins()` green. Adding it back with a different version on each side turned it red.
 
 **Checks.** `check_pins()` in `scripts/shared_blocks.py`.

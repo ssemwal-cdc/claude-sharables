@@ -123,10 +123,12 @@ Push to the default branch. That is the whole release. The version resolves
 from the commit SHA, so every push is a new version. Observed 2026-08-11: an
 install reports a commit SHA prefix as its version.
 
-If the push changes anything under a skill, bump two places in the same commit.
-Bump that skill's `**Skill version N — date.**` line. Bump the Version cell in
-the table above. `validate.py` checks that the two agree. It cannot check the
-bump itself, so that part is habit.
+If the push changes anything under a skill, bump four sites in the same
+commit. Bump that skill's `**Skill version N — date.**` line. Bump the
+frontmatter description's version prefix and the `plugin.json` description's
+version suffix. Bump the Version cell in the table above. `validate.py`
+checks that all four agree. It cannot check the bump itself, so that part is
+habit.
 
 Teammates get an update automatically only while auto sync is on for this
 marketplace. Turn it on from `/plugin` → **Marketplaces** →
@@ -162,9 +164,9 @@ Drop the plugin in `plugins/<name>/` with its own
 with a `git-subdir` source pointing at `plugins/<name>`. Then run
 `python3 scripts/validate.py`.
 
-The layout rules are D4, git-subdir sources;
-D9, no version field; and D56,
-prerequisite bucket. Records live under `decisions/`, `findings/` and `gaps/`.
+The layout rules are three decisions. D4, git-subdir sources. D9, no version
+field. D56, prerequisite bucket. Records live under `decisions/`, `findings/`
+and `gaps/`.
 
 ## Checks
 
@@ -174,7 +176,7 @@ prerequisite bucket. Records live under `decisions/`, `findings/` and `gaps/`.
 python3 scripts/validate.py
 ```
 
-It checks seven things:
+It checks nine things:
 
 - Every marketplace entry resolves to a plugin folder, and the names agree.
 - No `plugin.json` and no marketplace entry sets a `version` field.
@@ -184,6 +186,11 @@ It checks seven things:
 - Each Version cell in the table above matches that skill's version line.
 - Neither of those documents tells anyone to write a relative-path source.
 - The shared-block checks in `scripts/shared_blocks.py` pass.
+- The record and prose checks in `scripts/check_records.py` pass. They check
+  frontmatter, citations, index freshness, index size, sentence length, waiter
+  loops, device shots, no pending record on `main`, and a claim dry run.
+- A skill whose files changed since the branch's merge base has raised its
+  version. `scripts/check_version_bump.py` checks this.
 
 Every other command, URL and path in this README is unchecked.
 

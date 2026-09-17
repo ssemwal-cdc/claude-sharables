@@ -1,11 +1,11 @@
 ---
-id: G7
-slug: po-crosscheck-unobserved
-kind: gap
-status: unobserved
-date: 2026-08-20
+id: pending
+slug: po-crosscheck-run-confirmed
+kind: finding
+status: observed
+date: 2026-09-16
 ---
-# PO cross-check fixed, unobserved
+# PO cross-check run confirmed
 
 **Outcome protected.** A correctly coded bill is never flagged as coded to the wrong purchase order.
 
@@ -20,14 +20,10 @@ Billed-to-date is derived through the link and split from pending.
 A zero is no longer readable as a finding.
 A typed mismatch is demoted to a data-entry note.
 
-What is still unobserved: the corrected Step 5 has never run inside an actual review.
-The queries are live-verified, because every query in the fix was executed against production.
-The skill following those queries end to end has not been watched.
-Step 5 runs only in connector mode, so it inherits G4, no watched run.
-
-To clear it: run one connector-mode review over a queue with at least one disagreeing bill.
-Required outcome: the item is not flagged for PO coding.
-Required outcome: a `poWarning` names the disagreement.
+What is now reported: a full connector-mode run happened.
+Both the duplicate check and the over-commitment check ran.
+Step 5 runs only in connector mode.
+The broader end-to-end gap, G4, no end-to-end run, stays open.
 
 **Evidence.** Corrected from guessed to proven, 2026-08-20.
 Confirmed against production on five of five bills.
@@ -36,9 +32,11 @@ Guarded by `scripts/test_skill_code.py`, mutation-tested 10 of 10 caught.
 Step 5 arrived in the root commit and its logic was never revised.
 `git log -S` on `poContext`, `poWarning` and `custbody3` each return only that commit.
 No commit message ever explained the design.
-Step 5's own text claimed its three checks "have found real issues".
-That claim named no run, record or date, and is now marked as designed in `SKILL.md`.
+Step 5's own text once claimed its three checks "have found real issues".
+That claim named no run, record or date, and is marked as designed in `SKILL.md`.
 `python3 scripts/test_skill_code.py` covers the logic against mocks only.
-It cannot cover this gap, because this gap is about a real system.
+Reported by the maintainer, date unrecorded.
+A full connector-mode run happened, and both the duplicate check and the over-commitment check ran.
+The run is unmeasured.
 
 **Checks.** `scripts/test_skill_code.py`.

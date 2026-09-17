@@ -48,6 +48,10 @@ It cannot cover this gap, because this gap is about a real system.
 Partial observations dated 2026-08-15, Procore and NetSuite.
 Record 2534442, NetSuite, one live approval by URL.
 Bill 2532506, one live pdf.js test.
-G3, the notes page nobody has seen, blocks the primary NetSuite route.
+F‹netsuite-approval-note-confirmed›, the once-unseen notes page, is now read on the record.
+Reported by the maintainer, date unrecorded.
+An approved record showed the maintainer as approver, and the item moved on to the next approver.
+This confirms the audit-trail half of the URL-recovery approval already recorded on 2534442.
+The ordinary Approve With Notes route, and the Procore execute walk, remain unwalked.
 
 **Checks.** `scripts/test_skill_code.py`, mocks only.

@@ -17,9 +17,14 @@ The namespaced form, plugin name then colon then skill name, always works. Both 
 
 Assets travel with the plugin and are visible in the skill panel. The plugin root variable resolves them at run time.
 
+**Retraction.** An earlier note claimed the short slash name meant a stale personal skill was shadowing the plugin.
+
+Checked against this live run, that was false. The short name loads the plugin skill, with its own description and assets.
+
+Do not warn a teammate about a duplicate standalone copy.
+
 **Evidence.**
 
 - Verified 2026-08-11 with `/netsuite-approval-double-check`, which ran the plugin copy.
-- An earlier note claimed the short name meant a stale personal skill was shadowing the plugin. See F5, no duplicate-copy warning.
 
 **Checks.** none

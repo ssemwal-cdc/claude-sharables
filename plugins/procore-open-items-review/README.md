@@ -12,8 +12,8 @@ separates them.
 
 For every item in your queue it checks `user_permissions.can_respond` on the
 live workflow. Items you cannot action are counted and suppressed, not shown.
-On one real Compass queue that took 75 items down to 32. The date of that run
-was not recorded.
+It narrows the queue to the items that need a person to decide.
+It drops the rest with a clear paper trail for why.
 
 For the ones that remain:
 
@@ -112,8 +112,9 @@ unseen.
 - **The machine on and Chrome open whenever it runs.** Everything here goes
   through your real browser session. A scheduled run needs the computer awake,
   Chrome running, and you still signed in to Procore. A missed window does not
-  queue up and run later. That is why the schedule is worth more than one fire
-  time.
+  queue up and run later. A maintainer report confirmed this
+  (F‹procore-missed-window-confirmed›, missed window confirmed). That is why
+  the schedule is worth more than one fire time.
 
 ## First run
 

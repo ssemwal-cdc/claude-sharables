@@ -16,7 +16,9 @@ and for each one it:
   what rate
 - pulls the real funding purchase order and the engagement's billing history,
   where a NetSuite connector is available, to catch duplicates, missing
-  intermediate applications and over-commitment
+  intermediate applications and over-commitment. A live connector-mode run
+  confirmed this check (F‹po-crosscheck-run-confirmed›, po cross-check run
+  confirmed)
 - publishes a clear or flagged verdict per item to a dashboard, with the
   figures visible without clicking into anything
 
@@ -39,7 +41,9 @@ together. Execute sends the instruction straight into the conversation in one
 click. Nothing reaches NetSuite from the dashboard itself. The approvals run
 from that message. Execution drives the real NetSuite buttons through your own
 authenticated browser session. The approval workflow therefore routes normally,
-and the audit trail records you as the approver.
+and the audit trail records you as the approver. Reported for one
+URL-recovery approval. The ordinary click-through path is still unobserved.
+See G4, no end-to-end run.
 
 ## Support is read without downloading anything
 
@@ -69,9 +73,10 @@ went unreviewed and nobody noticed.
 ## Every approval it makes says so
 
 An approval the plugin executes carries the note **"Approved by Claude"**,
-recorded in NetSuite against that document. Your own note for an item replaces
-it verbatim. Rejection reasons are never defaulted, and the plugin stops and
-asks if one is missing.
+recorded in NetSuite against that document. A live approval confirmed this
+note lands on the record (F‹netsuite-approval-note-confirmed›, approval note
+confirmed). Your own note for an item replaces it verbatim. Rejection reasons
+are never defaulted, and the plugin stops and asks if one is missing.
 
 An approval recorded with no note reads as though you clicked it by hand. See
 D20, Approved by Claude comment.

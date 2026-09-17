@@ -31,6 +31,6 @@ Gating on a connector read would eventually click twice on a bill already approv
 
 - Observed once in 2026-08. The frequency is `unmeasured`.
 - The lag is F10, verify the record not the queue.
-- The unread handler is G3, the notes page is unseen.
+- The once-unseen page is F‹netsuite-approval-note-confirmed›, the note read on the record.
 
 **Checks.** none

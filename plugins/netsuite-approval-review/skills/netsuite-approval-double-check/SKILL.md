@@ -514,7 +514,7 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
       "poLink": "linked|unlinked|failed",
       "poTyped": "what custbody3 said, recorded whether or not it agrees",
       "detail": "the full paragraph of reasoning",
-      "attachmentFile": "the attachment's NetSuite file name and id, e.g. 'ComEd Aug 2026.pdf (3741744)'",
+      "attachmentFile": "the attachment's NetSuite file name and id, e.g. '<vendor> <month> <year>.pdf (<file id>)'",
       "poRef": "PO<id>"
     }
   },

@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v29 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
+description: v30 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user sends an execute instruction from the dashboard naming specific documents to approve, approve with notes, or reject. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. Only ever approves or rejects on an explicit per-document instruction, never on its own judgement.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 29 — 2026-09-16.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
+**Skill version 30 — 2026-09-17.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
 
 Review every bill, purchase order and change order in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document. Cross-check against the real purchase order and billing history. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
@@ -31,7 +31,7 @@ This skill does two different jobs. Know which one you are in:
 - **A rejection reason always comes from the user.** Never default one.
 - **This skill owns exactly one state file:** `NetSuite Approval Checks/_netsuite_review_log.json`. Never read or write the Procore skill's log. Never let Procore records into yours. Move a foreign record to a `_quarantined` block, say so in chat, and carry on. Never merge one into `items`, and never act on one.
 - **The idempotency gate reads that one path on the next run.** Where the Step 0 write did not land, every run is a first run. That is the accepted cost of a folder that cannot be written to.
-- **A cloud-sync conflict copy is a third state.** A file such as `_netsuite_review_log-DESKTOP-AB12CD.json` or `_netsuite_review_log (1).json` is this skill's own log with a diverged history. It is neither a foreign record nor the canonical file. The canonical path stays the only file read for `items` and `actions`, and the only one ever written. From a conflict copy, adopt `config` keys the canonical file lacks and nothing else, and say in the run report that you did, naming both files. Never merge its `items` or its `actions`. Leave the copy where it is and say so once.
+- **A cloud-sync conflict copy is a third state.** A file such as `_netsuite_review_log-DESKTOP-AB12CD.json` or `_netsuite_review_log (1).json` is this skill's own log with a diverged history. It is neither a foreign record nor the canonical file. The canonical path stays the only file read for `items` and `actions`, and the only one ever written. From a conflict copy, adopt `config` keys the canonical file lacks and nothing else. Say in the run report that you did, naming both files. Never merge its `items` or its `actions`. Leave the copy where it is and say so once.
 - **Every tab this run opens is closed by this run, before the report.** Never close a tab the user opened. See Step 9.
 
 ## What this review is, and what it is not
@@ -68,11 +68,11 @@ chmod u+w "<workspace>/NetSuite Approval Checks/dashboard_template.html" \
 The `chmod` is required, not tidiness. The plugin's installed assets are read-only and `cp` preserves that mode. Without it the publish step fails with `PermissionError: [Errno 13] Permission denied`. This overwrites the workspace copies deliberately. **A design change belongs in the plugin repo, never in the workspace copy.** An edit there is discarded by the next run and reaches nobody else. Ship one by editing the repo's asset files and pushing. Teammates pick it up on their next update.
 
 <!--__END_SHARED:skill-step0-fidelity__-->
-**The sandbox shell may not see the plugin's files at all.** Observed 2026-08-15 in a Cowork run: only the connected workspace folder, outputs and uploads are mounted into the shell, so the `cp` source path does not exist there. Sync down this ladder and take the first rung that works.
+**The sandbox shell may not see the plugin's files at all.** Observed 2026-08-15 in a Cowork run: the shell mounts only the connected workspace folder, outputs and uploads. The `cp` source path does not exist there. Sync down this ladder and take the first rung that works.
 
 1. **The `cp` above**, wherever the shell can see `${CLAUDE_PLUGIN_ROOT}`.
 2. **Read, then write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/` with the file tools and write it over the workspace copy byte for byte. Never retype, trim or tidy in passing. Then prove the copy landed whole: the template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and `python3 -m py_compile publish_dashboard.py` passes in the workspace folder. This rung is designed, not yet observed. Say so in the run report if it also fails.
-3. **Use the existing workspace copies and say so, once**, in one line near the headline naming the files' modification date from `ls -l`. Then carry on. Do not stop the run over it. Only the template and publish script can lag, so the verdicts are current either way.
+3. **Use the existing workspace copies and say so, once**, naming the files' modification date from `ls -l` near the headline. Then carry on. Do not stop the run over it. Only the template and publish script can lag, so the verdicts are current either way.
 
 - **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, say exactly that and stop before Step 7. There is no template to inject into, and inventing one is forbidden above. Expect this case on Cowork.
 - **This plugin ships layout template `v12`. Confirm the sync landed by reading it back:**
@@ -85,12 +85,12 @@ If that does not say `v12`, the sync did not land and the dashboard is stale. Sa
 
 Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already carries a `config` block, the rest of this step is done. Go to Step 1, except for the one back-fill below.
 
-**Back-fill, for a `config` written before focus existed.** If `config` exists and has no `focus` key at all, ask the two questions in setup step 6 once, write the answer, and carry on. Then never ask again. A decline is stored as `{"lenses": [], "emphasis": ""}`, not left absent. **Absent and empty are different states here.** Absent means never asked. Empty means asked and declined. Otherwise, run the setup once.
+**Back-fill, for a `config` written before focus existed.** If `config` exists and has no `focus` key at all, ask the two questions in setup step 6 once. Write the answer, and carry on. Then never ask again. A decline is stored as `{"lenses": [], "emphasis": ""}`, not left absent. **Absent and empty are different states here.** Absent means never asked. Empty means asked and declined. Otherwise, run the setup once.
 
 0. **Two browser-side things to say first, because both fail silently later.**
 
-   - **Warn them about the site-access prompt before it appears.** The first time this skill acts on NetSuite, Claude in Chrome asks whether to allow access to that site, offering a once-only option and an always option. **Tell them to pick the always option.** On once-only they are re-prompted on effectively every action, and a run that stops for a prompt nobody is watching looks like a hang.
-   - **Ask the user to confirm which NetSuite role their browser is in.** The MCP connector signs in under its own account and role, and connecting it can leave the browser session on that role. The queue and the approve buttons are both role-scoped, so the wrong role shows a queue that is not theirs, or a record with no buttons. If they are not in their normal role, have them switch back before continuing.
+   - **Warn them about the site-access prompt before it appears.** The first time this skill acts on NetSuite, Claude in Chrome asks whether to allow access to that site. It offers a once-only option and an always option. **Tell them to pick the always option.** On once-only they are re-prompted on effectively every action. A run that stops for a prompt nobody is watching looks like a hang.
+   - **Ask the user to confirm which NetSuite role their browser is in.** The MCP connector signs in under its own account and role. Connecting it can leave the browser session on that role. The queue and the approve buttons are both role-scoped. So the wrong role shows a queue that is not theirs, or a record with no buttons. If they are not in their normal role, have them switch back before continuing.
 
 1. **Find the employee internal id.** Query by the user's own email address.
 
@@ -99,7 +99,7 @@ Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already ca
    WHERE email = '<the user's email>' AND isinactive = 'F'
    ```
 
-   **Employee records can share an email address.** Always report the name found and ask the user to confirm it is them before writing it. If the query returns zero or more than one active row, list the candidates with their titles and ask which is theirs. Never pick one silently.
+   **Employee records can share an email address.** Always report the name found and ask the user to confirm it is them before writing it. If the query returns zero or more than one active row, list the candidates with their titles. Ask which is theirs. Never pick one silently.
 
 2. **Record the connector tool name, or establish that there is none.** Use the fully-qualified name of the NetSuite SuiteQL tool you are calling in this session. It looks like `mcp__<server id>__ns_runCustomSuiteQL`. The server id differs per connection, so read it from the tool you just used. Never copy it from documentation or another install.
 
@@ -112,8 +112,8 @@ Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already ca
    | Tool present but unauthenticated, or its calls error | `browser` **for this run** | **One line, once** — see below. |
    | Tool present and answering | `connector` | Nothing needed. |
 
-   - **A "not provisioned" silence is right. An "expired session" silence is not.** Someone never provisioned can do nothing about it, so a caveat on every item forever is an apology on a loop. An expired connector is a short fix that restores the faster route. Say it once, plainly, near the headline: *"the NetSuite connector needs reconnecting; reviewed without it"*. Never say it again in that run. Not per item, not in a verdict, not in the dashboard.
-   - **Never let a failed connector call read as an empty result.** An auth failure reinterpreted as "no rows" reports an empty approval queue, and the user closes the tab. An errored call is `failed`, never `empty`. If a SuiteQL call returns an error, an auth challenge, or anything that is not a result set, treat it as no connector and switch this run to `browser` mode.
+   - **A "not provisioned" silence is right. An "expired session" silence is not.** Someone never provisioned can do nothing about it. So a caveat on every item forever is an apology on a loop. An expired connector is a short fix that restores the faster route. Say it once, plainly, near the headline: *"the NetSuite connector needs reconnecting, reviewed without it"*. Never say it again in that run. Not per item, not in a verdict, not in the dashboard.
+   - **Never let a failed connector call read as an empty result.** An auth failure reinterpreted as "no rows" reports an empty approval queue, and the user closes the tab. An errored call is `failed`, never `empty`. A SuiteQL call can return an error, an auth challenge, or anything that is not a result set. Treat any of those as no connector, and switch this run to `browser` mode.
    - **If it dies mid-run**, after Step 1a already succeeded: finish the remaining steps on the browser route, say the one line, and do not re-issue the failed query. Keep the work already done. The queue and figures you have are valid. Only the cross-check is lost.
    - **Re-detect on every run** rather than trusting `config.mode`. Someone provisioned later is lifted automatically, and someone who reconnects is back on the fast route.
 
@@ -149,7 +149,7 @@ Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already ca
 
 6. **Ask what they focus on.** Two questions, asked once, stored in `config.focus`. Both are optional and both default to nothing, which is exactly today's behaviour.
 
-   - **First, whether any lens applies.** Offer the lenses this skill ships. Today that is `supply-chain`. Say plainly what each adds. `core` is not offered; it always runs. Someone who does none of these picks nothing, and that is the common case.
+   - **First, whether any lens applies.** Offer the lenses this skill ships. Today that is `supply-chain`. Say plainly what each adds. `core` is not offered. It always runs. Someone who does none of these picks nothing, and that is the common case.
    - **Second, what they care about most, in their own words.** Free text, a sentence or two, stored verbatim as `focus.emphasis`. Offer a couple of examples so the question is answerable, such as "mostly utility bills and recurring vendor invoices" or "change orders on one campus". Store whatever they type. **The examples are illustrations, never a list to pick from.**
    - **Re-editable at any time.** If they later ask to change the emphasis or the lenses, update `config.focus` and confirm. It is one field, not a flow.
 
@@ -163,7 +163,7 @@ Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already ca
 | 5 — PO and history cross-check | **yes** | **not performed** |
 | 8 — gate and verify a click | query on bills and purchase orders, the record page on change orders | the record page, all three |
 
-Attachment reading, every arithmetic check and every approval click are identical either way. pdf.js runs same-origin in the record tab, and approvals always go through the real UI. **The dashboard is rendered, not published.** Step 7 renders the HTML as an inline widget on every run, so each render replaces the last and there is no id to keep in sync. `_netsuite_review_log.json` is the only persistent store.
+Attachment reading, every arithmetic check and every approval click are identical either way. pdf.js runs same-origin in the record tab, and approvals always go through the real UI. **The dashboard is rendered, not published.** Step 7 renders the HTML as an inline widget on every run, so each render replaces the last. There is no id to keep in sync. `_netsuite_review_log.json` is the only persistent store.
 
 The one thing that survives between renders is the user's per-item marks, which the template keeps in `localStorage` under `ns_marks_v1`. Never clear it. Never change that key. Doing so silently discards decisions the user has marked but not yet executed.
 
@@ -193,7 +193,7 @@ ORDER BY t.trandate
 
 - **`custbody3` is a typed reference. It is not the PO this bill is applied to.** It is aliased `po_typed` for that reason. A person enters it by hand. Checked live 2026-08-20: it was wrong on five of five bills examined.
 - **The PO the money is actually on comes from the transaction linkage in Step 2.** That is the only thing that may be called the bill's PO. Never let `po_typed` reach a verdict, a `poContext` figure, a comment or the dashboard as though it were the coding. See Step 5.
-- **Zero rows here is a claim, so make sure it is a true one.** This query is the only thing that finds pending bills, so "no rows" and "the call failed" look the same to the reader. **An error, an auth challenge, or any response that is not a result set is a failure, not an empty queue.** Switch to the browser route per Step 0 and read the bills off the portlet.
+- **Zero rows here is a claim, so make sure it is a true one.** This query is the only thing that finds pending bills, so "no rows" and "the call failed" look the same to the reader. **An error, an auth challenge, or any response that is not a result set is a failure.** It is not an empty queue. Switch to the browser route per Step 0 and read the bills off the portlet.
 
 Two data quirks that will bite:
 
@@ -220,7 +220,7 @@ Two data quirks that will bite:
 - **`url`** is a link the user gave you. Navigate there instead of the default location. Verify it loaded and holds a queue before reading it. If it does not, say so and fall back to the default.
 - **`described`** is the user's own words, stored verbatim. Resolve it on each run rather than caching a guess. **If you cannot resolve what they described, ask once and store the answer.** Never substitute the nearest thing you found. A review of the wrong queue looks exactly like a review of the right one. Ask for both at first-run setup, alongside the other identifiers, and make clear that skipping them is normal. Re-editable at any time, like `config.focus`.
 
-Use `get_page_text` on the dashboard tab rather than screenshots. The portlet tables extract cleanly as text. **Do not open a tab per row here.** Every card on the dashboard links straight to its own record, so the reader opens the ones they want. Open a record tab only where a later step needs one: Step 2's field reads in browser mode, and Step 4's attachment fetch. When you do, ctrl+click the row's date link. That tab is **a record tab**, one of the tabs this skill opens. Ctrl+click may silently fail on the first attempt, so verify with `tabs_context_mcp` and retry once if no new tab appeared. Review **every** item regardless of dollar amount. There is no threshold.
+Use `get_page_text` on the dashboard tab rather than screenshots. The portlet tables extract cleanly as text. **Do not open a tab per row here.** Every card on the dashboard links straight to its own record, so the reader opens the ones they want. Open a record tab only where a later step needs one. Those are Step 2's field reads in browser mode, and Step 4's attachment fetch. When you do, ctrl+click the row's date link. That tab is **a record tab**, one of the tabs this skill opens. Ctrl+click may silently fail on the first attempt, so verify with `tabs_context_mcp` and retry once if no new tab appeared. Review **every** item regardless of dollar amount. There is no threshold.
 
 - **In browser mode, bills come from the bill portlet the same way change orders already do.** They carry the same "as of last review" caveat the dashboard already shows for change orders.
 - **Change orders are not queryable for pending status.** They live in `transaction` under a recordtype like `custompurchase_r_pci_change_order_po`. The records carry `approvalstatus = null` and no next-approver value, so no SuiteQL filter can identify the ones awaiting the user. The dashboard portlet is the only source. That is why the dashboard labels change orders "as of last review" rather than live. Do not remove that label.
@@ -257,7 +257,7 @@ WHERE l.nextdoc IN (<all ids from step 1>) AND l.linktype = 'OrdBill'
 Two things about this query are load-bearing:
 - **`linktype = 'OrdBill'` is the filter, and it is not optional.** That is the order-to-bill application. The same PO also produces `ShipRcpt` rows for the same bill, and including them double-counts.
 - **The link table carries one row per line pair, not one per document.** A three-line bill returns three `OrdBill` rows for one PO. So reduce to distinct bill ids before summing anything. Measured 2026-08-20: a naive `SUM` across this join returned exactly three times the truth, `136,369.02` coming back as `409,107.06`.
-- **In browser mode, `get_page_text` on each record tab is the route.** Open **a record tab** for this read, or reuse the one Step 1 opened, and reuse it for Step 3 and Step 4 on the same item. Record tabs are the tabs this skill opens. A record tab closes once Step 4 has verified that item. The warning above is a cost optimisation, not a prohibition. Read the field set off the page, including the Items sublist lines. Expect the run to be slower per item. That needs no comment.
+- **In browser mode, `get_page_text` on each record tab is the route.** Open **a record tab** for this read, or reuse the one Step 1 opened. Reuse it for Step 3 and Step 4 on the same item. Record tabs are the tabs this skill opens. A record tab closes once Step 4 has verified that item. The warning above is a cost optimisation, not a prohibition. Read the field set off the page, including the Items sublist lines. Expect the run to be slower per item. That needs no comment.
 - **Confirm field parity once, on a real bill, before relying on this.** Compare what the two queries return against what `get_page_text` gives for the same record. Every field above must be present. If one cannot be resolved this way, read that one from the page and say so. The line-level quantity times rate is the first math check and it is free. Do it before touching the PDF.
 
 ## Step 3 — Retrieve the attachment
@@ -346,7 +346,7 @@ Three things are not optional:
 - **Never split a page across returns.** Splitting mid-page loses figures, because a row cut in half stops tying to anything.
 - **Keep the row filter.** Barcode rows and long digit strings read as query-string data to the output filter, and one of them turns the whole result into `[BLOCKED: Cookie/query string data]`. Measured on the test invoice: the filter dropped 15 of 60 rows, all payment-stub noise.
 
-- **Nothing is written to disk.** The bytes stay in the page as an ArrayBuffer, so there is no downloads folder to poll and no stale file from an earlier run to re-read.
+- **Nothing is written to disk.** The bytes stay in the page as an ArrayBuffer. So there is no downloads folder to poll, and no stale file from an earlier run to re-read.
 - **No attachment at all flags the item.**
 - **Sniff the bytes before parsing. Never hand a non-PDF to pdf.js.** Handing a workbook to `getDocument` throws `InvalidPDFException`, the same error a corrupt download gives, so a good spreadsheet gets logged as unreadable support. Non-PDF support is not unusual here.
 - **Sniff the first four bytes before choosing a reader.** `%PDF` is a PDF. `PK\x03\x04` is a ZIP container, and a workbook only if it holds `xl/` entries. `\xFF\xD8\xFF` is JPEG. `\x89PNG` is PNG. Anything that decodes cleanly as text is text. Six outcomes, kept distinct: `text`, `spreadsheet`, `image`, `scanned`, `expired`, `unsupported`.
@@ -371,7 +371,7 @@ Every check in Steps 4 and 5 carries an **id**, the **lens** it serves, and the 
 | `record` | fields from the Step 1a/2 queries, or read off the record page — Step 2 opens that item's tab when it needs one | never absent — the queue is built from them |
 | `attachment` | a Step 4 attachment outcome of `text` or `spreadsheet` | the item is `flagged`, **naming which outcome** — Step 4. There is no skipped verdict on this side: `VERDICTS` is `clear` and `flagged` only, and the publish script aborts on anything else |
 | `connector` | a working NetSuite SuiteQL tool | Step 5 does not run and **nothing is said about it** — Step 5 |
-| `queue` | the other items in this run, not this item alone | never absent; marks the check as cross-item |
+| `queue` | the other items in this run, not this item alone | never absent — it marks the check as cross-item |
 
 | id | lens | capability | check |
 |---|---|---|---|
@@ -442,9 +442,9 @@ Keying on `po_id` matters. A document-number match resolves whatever string you 
 When `po_typed`, or the PO printed on the invoice, does not match the `linked` PO, the finding is not "coded to the wrong PO". The money is where the linkage says it is. Write it as what it is, and put it in `poWarning`:
 
 > The PO reference typed on this record (`PO16033`) does not match the PO it is actually
-> applied to (`PO16034`). The bill is correctly applied; the reference field is stale.
+> applied to (`PO16034`). The bill is correctly applied. The reference field is stale.
 
-- **Report it, do not discard it.** A wrong reference field is a real data-quality problem worth telling AP about. But **a typed-reference mismatch never makes an item `flagged` on its own**. It never produces a sentence about money on the wrong PO, a percentage of the wrong contract, or a cumulative total drifting onto the wrong commitment.
+- **Report it, do not discard it.** A wrong reference field is a real data-quality problem worth telling AP about. But **a typed-reference mismatch never makes an item `flagged` on its own**. It never produces a sentence about money on the wrong PO, or a percentage of the wrong contract. Nor does it produce a cumulative total drifting onto the wrong commitment.
 - **When two sources disagree about a PO, the linkage wins.** Observed 2026-08-20: two such flags were both false, and both records carried a second field that agreed with the linkage.
 
 Then reconcile. A professional-services invoice's "billed previously" plus its remaining contract phases should tie to the PO's contract value. A change order's PREVIOUSLY APPROVED AMOUNT should tie to the PO total. Residual differences usually correspond to a specific already-approved change order. Identify it rather than reporting a bare variance. Caution: `custbody_r_it_total_amount_invoiced` and `..._remaining` are frequently stale, often 0. Do not rely on them. Derive from actual bills instead.
@@ -486,22 +486,9 @@ The memo field is the reliable engagement key. Staffing POs are often pooled, ca
 - **Application sequence.** If a pay application says "less previous certificates $X", confirm that bills totalling $X exist in NetSuite for that engagement. A missing intermediate application means the audit trail is broken. Flag it before approval.
 - **Duplicates.** Same vendor, same reference number, or same period billed twice. Also watch for two POs with identical memo and amount, which double-commits the spend.
 
-### 5e-5g. The `supply-chain` lens — only when `config.focus.lenses` includes it
+### 5e-5g. The `supply-chain` lens
 
-- **Skip this whole section unless the lens is selected.** Absent it, Step 5 ends above.
-- **Read this first, because it governs all three checks.** Not all of what supply chain deals with lives in NetSuite. A PO with no receipt rows is overwhelmingly a PO whose receipts NetSuite never saw, not a delivery that never arrived. So these checks are lenient by design.
-
-- **Missing data is never a finding.** No receipt rows, no PO lines, an unpopulated date: report nothing, or report it as context. It never flags an item and never skips one.
-- **Only a real discrepancy, where both sides are present, can flag.** Billed 50 against receipts totalling 40 is a finding. Billed 50 against no receipt data at all is silence.
-- **Three states, never a boolean.** `matched` means both sides present and compared. `absent` means the query succeeded and NetSuite holds no such rows. `failed` means the query errored. **`failed` is never `absent`**, and `absent` is never "nothing was received".
-- **Match leniently.** Descriptions, units and line splits differ between a PO, a receipt and an invoice for ordinary reasons. Tie on item and quantity where you can, tolerate a reworded description, and prefer an approximate tie to a mismatch manufactured out of formatting. The lens adds evidence when NetSuite happens to hold it. It must never stop someone working the queue.
-
-- **5e. Receipt against billed quantity.** Step 2's link query discards `ShipRcpt` rows, which is correct for summing billings. With this lens on, run the same query a second time for `linktype = 'ShipRcpt'` rather than widening the first. The billing sum must keep its own filter untouched.
-- **Deduplicate to distinct receipt ids before summing anything.** The link table carries one row per line pair, so a three-line receipt returns three rows. Same trap as the billing side. Compare receipt quantities to the bill's `tl.quantity` from Step 2. Report the position, such as *"PO receipts total 40 of the 50 units billed"*. Flag only a genuine over-bill against receipts that exist. Under-receipt on a partial delivery is context, not a finding.
-
-- **5f. PO line price against billed rate.** Pull that PO's lines with the same `transactionline` shape used in Step 2 and compare `rate` against the bill's. Report a material difference with both figures. Immaterial rounding, a unit-of-measure difference, or a line that cannot be matched confidently is not a finding. Say what tied and leave the rest alone.
-- **5g. Lead time, as an observation only.** Where the PO carries `dueDate` and a receipt carries `tranDate`, the gap between them is worth stating. **Never a flag on its own.** A late delivery is not a reason to withhold payment for goods received.
-- **These fields are confirmed to exist and are not confirmed to be populated.** Probed 2026-08-26: `purchaseorder` carries `dueDate` and `shipDate`. Whether Compass fills them in is `unmeasured`. An empty date is the `absent` state. Say nothing and move on.
+If `config.focus.lenses` names `supply-chain`, read `${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/references/lens-supply-chain.md` now, in full, before Step 5 continues. Absent that lens, Step 5 ends at 5d.
 
 ## Step 6 — State file
 
@@ -527,7 +514,7 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
       "poLink": "linked|unlinked|failed",
       "poTyped": "what custbody3 said, recorded whether or not it agrees",
       "detail": "the full paragraph of reasoning",
-      "attachmentFile": "the attachment's NetSuite file name and id, e.g. 'ComEd Aug 2026.pdf (3741744)'",
+      "attachmentFile": "the attachment's NetSuite file name and id, e.g. '<vendor> <month> <year>.pdf (<file id>)'",
       "poRef": "PO<id>"
     }
   },
@@ -579,7 +566,8 @@ cd "<workspace>/NetSuite Approval Checks" && python3 -B publish_dashboard.py
 - **Reading the file is part of the render.** Read the whole file. When the read comes back short, read the rest by offset and continue. A file arriving in two reads is still passed byte for byte, and concatenating your own reads is not retyping. Measured 2026-09-01: the publish script's one-compact-line-per-item output brought a 62-item dashboard from 2,834 lines to 886.
 - **A byte count is not an observed truncation.** Predicting from the size that the harness will not hand the file over intact is the move this step forbids, one stage earlier. What licenses a fallback is a read that came back short, or the red banner. Nothing else.
 <!--__END_SHARED:skill-render-fidelity__-->
-The script writes `index.html` beside the state file and keeps the last seven renders in `renders/<weekday>.html`. Diff today against the last good one to see what changed, and **re-render from `index.html` rather than re-running the review.** The review costs connector queries and attachment extraction; the render costs nothing. Do not write a cleanup step for `renders/`. The folder is usually cloud-synced, where deleting is typically blocked, which is why the slots are overwritten in place. The script prints the headline line to use in chat.
+
+The script writes `index.html` beside the state file and keeps the last seven renders in `renders/<weekday>.html`. Diff today against the last good one to see what changed, and **re-render from `index.html` rather than re-running the review.** The review costs connector queries and attachment extraction. The render costs nothing. Do not write a cleanup step for `renders/`. The folder is usually cloud-synced, where deleting is typically blocked, which is why the slots are overwritten in place. The script prints the headline line to use in chat.
 
 Injecting into a fixed template makes the chrome invariant by construction. A page rewritten from prose instructions drifts: a card lost, a colour changed, a behaviour forgotten. If the script aborts because the sentinels are missing, **restore the template from `${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/`. Do not rebuild it from memory.** The script also aborts if the identity config is incomplete. Do not work around that by supplying a default. Run Step 0.
 
@@ -598,125 +586,16 @@ Step 9 runs first, and the headline follows it. **Report in chat with one line o
 6 pending · 1 flagged · dashboard updated
 ```
 
-Add a second line only if something blocked the run, such as a login redirect, a missing attachment that prevented review, or a renamed portlet. Never put the verdicts in chat. **One more line, and only in one case: a lens the user picked could not run.** If `config.focus.lenses` names a lens whose capability is missing, such as `supply-chain` with no working connector, open the chat reply with a single plain line saying so. Name the lens and what is missing, then never mention it again in that run.
+Add a second line only if something blocked the run, such as a login redirect, a missing attachment that prevented review, or a renamed portlet. Never put the verdicts in chat. **One more line, and only in one case: a lens the user picked could not run.** Suppose `config.focus.lenses` names a lens whose capability is missing, such as `supply-chain` with no working connector. Then open the chat reply with a single plain line saying so. Name the lens and what is missing, then never mention it again in that run.
 
 > supply-chain checks did not run — no NetSuite connector this session. The rest of the review is unchanged.
 
 - **Never present a lens's checks as though they ran.**
-- **This applies to lenses only. It never applies to `core`.** A browser-mode run says nothing at all about Step 5 being skipped, exactly as Step 5 requires. **A capability the user chose is informative; one they were never given is an apology.** Say it once per run, at the start. Never on an item, in a verdict, in a warning line or in a detail paragraph.
+- **This applies to lenses only. It never applies to `core`.** A browser-mode run says nothing at all about Step 5 being skipped, exactly as Step 5 requires. **A capability the user chose is informative. One they were never given is an apology.** Say it once per run, at the start. Never on an item, in a verdict, in a warning line or in a detail paragraph.
 
 ## Step 8 — Execute decisions (only on explicit instruction)
 
-The user marks decisions in the dashboard and presses execute. That posts an instruction naming each document straight into the conversation as a new message. One click, no clipboard. The clipboard handoff in the template is the artifact-host fallback, so a run that lands in it was rendered on the wrong host. That instruction, or an equivalent one typed directly, is the only thing that authorises a click. It carries the authority and the item list. **This step is the procedure**, and nothing in that message overrides it. Before clicking anything, check the instruction names specific documents. If it says "approve everything" or "approve the clear ones", stop and ask which.
-
-### Record types and their routes
-
-**Every type Step 1 puts in the queue has a row here.** The queue's vocabulary is the `type` field in Step 6's schema, and the two lists are kept in step by a build gate in the plugin repo. Observed 2026-09-01: they drifted apart, and two batches of reviewed purchase orders stopped at the same gate before anyone called it a defect.
-
-| record type | pre-click gate | post-click verification |
-|---|---|---|
-| `Bill` | the query in step 1 | the query in step 7 |
-| `Purchase Order` | the query in step 1 — the same four fields | the query in step 7 |
-| `Change Order` | the record page's approval buttons — it carries none of those fields | a fresh page load |
-
-- **Purchase orders take the bill route on the strength of the fields, not the resemblance.** Confirmed on live records 2026-09-01: a purchase order pending approval carries `approvalstatus`, `custbody_sna_cdc_next_approver`, `custbody_sna_cdc_previous_approver` and `custbody_sna_cdc_app_count`. Those are what step 1's gate and step 7's verification read, so the route transfers unchanged.
-- **The button set is a separate question and it is not settled.** Nobody has read a purchase order's approval buttons. Step 4 reads the labels off the page and says what to do when Approve With Notes is not among them. Do not assume a purchase order offers the three buttons a bill does, and do not report that it does.
-- **With no connector, no type can be gated by query.** The change-order rule is then the rule for all three. The approval buttons are the gate, a fresh page load is the verification, and a gate that cannot be read is unknown rather than a pass.
-- **Compare amounts by magnitude.** `foreigntotal` is negative on vendor bills, per Step 1a, and no observation says every type signs it the same way. So the gate and step 3's confirmation both compare absolute values. A sign convention that differs by record type is not a changed amount.
-
-Then, **one record at a time**:
-
-1. **Re-verify it is still yours to action, before opening anything.**
-
-   **Pick the route from the item's `type`.** It is the only thing available before the record is open. It is also a field with a legacy default, per Step 6, so it can be wrong in the one direction that matters: a change order routed as a bill gets a query that cannot gate it. That is why the skip below is confirmed on the page rather than on an empty result.
-
-   ```sql
-   SELECT t.id, t.tranid, t.foreigntotal FROM transaction t
-   WHERE t.id = <id> AND t.approvalstatus = 1 AND t.custbody_sna_cdc_next_approver = <me>
-   ```
-
-   A row back, amount matching, means it is still yours. Carry on into step 2. If a row comes back but the amount differs from the instruction, **stop the batch.** The record changed underneath the review.
-
-   - **No row is two different things, and only one of them is a skip.** It means the record was approved, rejected or rerouted since the snapshot. Or it means this type carries no `approvalstatus` and no next-approver for the query to gate on, which returns the same nothing. Never log a skip off the empty result alone. Open the record and read the buttons.
-     - **Buttons absent** means actioned elsewhere. Log `skipped: already actioned elsewhere — no click made` and move on. Do not click, do not retry.
-     - **Buttons present** means the query could not gate this type. Use the buttons as the gate, exactly as the change-order bracket below does, and carry on into step 3.
-     - **The page will not load, or the buttons cannot be read** means **stop the batch.**
-
-   - **If every item comes back with no row, suspect the identity before the queue.** A wrong or stale `config.me` empties this query for a batch that is entirely live, and a batch-wide skip reads as a queue somebody else already cleared. Say so and stop rather than logging nine skips.
-   - **Never batch this check.** It runs per item, immediately before that item's click, always. Hoisting it into one up-front sweep reintroduces the staleness bug this step exists to close.
-   - **Change orders skip the query entirely.** They carry no `approvalstatus` and no next-approver, so it cannot gate them. The record page can. This bracket is the primary gate for that type, and it is also what the no-row branch above lands in when the route was picked on a wrong type. Do not collapse the two. Their approval buttons render only while the record is still pending and still assigned to the signed-in approver, so on that record type the buttons **are** the gate. Open it, per step 2, and read the page before touching anything.
-
-     - **Approval buttons present, naming an approval action** means still yours. Carry on into step 3.
-     - **Approval buttons absent** means already actioned elsewhere. Skip it, log it as `skipped: already actioned elsewhere — no click made`, and move on. Do not click anything.
-     - **The page will not load, or the buttons cannot be read either way** means **stop the batch.** An unreadable gate is unknown, never a pass.
-
-2. Open the record by internal id at `https://<account>.app.netsuite.com/app/accounting/transactions/transaction.nl?id=<id>`.
-
-   - **Confirm the type against the record while you are here.** The label on the dashboard card and in the instruction comes from a field with a legacy default, so it can say `Bill` about something that is not one. The record page cannot. If the record is a different type from the one step 1 routed on, re-pick the row from the table before going any further, and say so in the log. The gate that already ran was the wrong one for it.
-   - **A record type with no row in the table above is never clicked.** Report it and stop there. Say which of these two it is, because the answer decides whose problem it is.
-
-     - **Step 1 does not admit that type either** means the queue has changed shape. Name the type and the record, invent no procedure for it, and leave it.
-     - **Step 1 reviewed it and this step cannot action it** is a **defect in this skill**, not a property of the record. Say so in those words, name the type, and say the fix is a row in the table above. Do not offer it to the user as a decision. They cannot authorise their way out of a missing procedure. Neither case is a licence to improvise, and neither is a reason to click.
-
-3. **Confirm before clicking.** Read the document number, vendor and amount off the page and check all three against the instruction. Any mismatch means **stop the whole batch**, do not click, report it. This is a stop, not a skip.
-
-   - **If the record opens but the approval buttons are absent, the first hypothesis is that the item has already been actioned.** That is the likeliest cause in an execute batch. `unmeasured`. On a change order it is step 1's gate firing. Skip it, log it as `skipped: already actioned elsewhere — no click made`, and move on.
-   - **Suspect the browser's NetSuite role only when every item in the batch shows no buttons.** A browser left on the connector's role sees every record without its buttons, which would otherwise log an entire batch as actioned. Ask the user to check their role. Never click anything while the role is in doubt.
-
-4. **Choose the button.** Approve, Approve With Notes and Reject sit adjacent. Read the label before clicking, never the position.
-
-   - An **affirmative** instruction, whether it says "approve" or "approve with notes", goes through **Approve With Notes**. That is the only way the note in step 5 can be attached. Plain **Approve** is reached only via the fallback in step 6.
-   - A **rejection** goes through **Reject**, exactly as named.
-   - **Never substitute across the two.** An approve instruction must never reach Reject, and a reject instruction must never reach either approve button.
-   - **A record that offers no Approve With Notes button** takes the affirmative button it does offer, and the note is then **lost, not relocated**. Read the buttons off the page, never assume them. Log it as `approved without a note — this record type offers no notes button`, and put the note nowhere else. Not in a memo field, not in a comment, and not in chat as though it had been recorded. A missing notes button never holds back an authorised affirmative click. A **rejection** with no Reject button is a **stop**, not a substitution.
-
-5. **Enter the note.** Approve With Notes loads a **normal page in the same tab**. It is not a popup and not a dialog. Read that page rather than assuming its layout, fill the note field, and submit. Where step 4 clicked a plain affirmative button, there is no note page and nothing to type. Go straight to step 7 and log the loss.
-
-   - The user gave a note for this item: enter it **verbatim**.
-   - They did not, and the response is affirmative: enter exactly `Approved by Claude`.
-   - A rejection is missing its required reason: **stop and ask.** A rejection needs a reason a person wrote. Those two are the only strings this skill ever types into a note field. Compose nothing else. No summary of the review, no figures, no reasoning.
-
-6. **If the notes page never arrives or the tab stops responding, the outcome is unknown, not failed.** Observed 2026-08-15: the tab froze straight after the click and dropped out of the automation group. Do not click anything in that tab, and **never re-click the button.**
-
-   - **The gate: read the page, never the connector.** Abandon the frozen tab, open the record fresh in a new tab, and read its approval state off the page.
-     - **Still pending and still yours** means the click did not land. Click plain **Approve**, and log that the note did not make it.
-     - **Advanced** means the click landed and only the note was lost. **Click nothing.** Log it as approved without a note.
-     - **Cannot be read** means **stop the batch.**
-
-   - **Do not gate this on SuiteQL.** The connector lags the UI by minutes. `unmeasured`. An unchanged reading means *not yet*, never *failed*. A page load reads the UI and has no lag.
-   - **Plain Approve can itself do nothing, silently, and the mechanism is known.** Observed 2026-08-15: five identical clicks with zero effect. The button's handler loads a client script asynchronously and only then calls `win.open`. By then the click's transient user-activation has expired, so Chrome drops the navigation. No error, no dialog, no network request, nothing in the console. Only the same page-load read detects it. So plain Approve gets **one** click, then a fresh page load.
-
-     - **Advanced** means done. Log it as approved without a note.
-     - **Still pending** means do not click again. **Navigate the approval request the button itself would have made.** Read the URL verbatim out of the button's own handler on the live record page. Never compose it from memory or a template. Assert its parameters against the instruction before firing: `recid` is this record's internal id, `acttype` is the named affirmative response, and the approver id names the user. Then navigate to it **once**, in the same authenticated tab. This is the button's own server-side path and its own audit trail, not a REST shortcut. The never-`ns_updateRecord` rule is untouched. Confirmed live 2026-08-15: record 2534442 approved this way after five dead clicks.
-     - Then step 7's verification, unchanged. Still pending after the URL navigation too means **stop the batch.** Two hard edges. This route exists **only for the affirmative path.** A rejection always goes through the Reject form, because it needs the reason a person wrote. And it can carry no note, so log it as `approved without a note via the button's own URL, after the button no-opped`.
-
-7. **Verify it landed, against the record, not the queue.**
-
-   - **Change orders verify by a fresh page load, not by query.** They carry none of the three fields below. Re-open the record after the click.
-     - **Approval buttons now gone** means it advanced. Log it.
-     - **Approval buttons still present** means not yet. Report `still propagating` for that item and end the round. Never re-click.
-     - **Cannot be read** means **stop the batch.**
-
-   For bills and purchase orders, query that one record.
-
-   ```sql
-   SELECT id, approvalstatus,
-          custbody_sna_cdc_next_approver     AS next_appr,
-          custbody_sna_cdc_previous_approver AS prev_appr,
-          custbody_sna_cdc_app_count         AS app_count
-   FROM transaction WHERE id = <id>
-   ```
-
-   It advanced if `prev_appr` is now the user and `next_appr` is somebody else, with `app_count` incremented by one. On a final-step approval `approvalstatus` moves to 2 instead. **`approvalstatus` on its own proves nothing.** It stays at 1 while the record sits at the next person's step, which reads identically to never having moved. Observed live 2026-08-12: two bills were approved, advanced to the next approver, and both still returned `approvalstatus = 1`.
-
-8. **The connector lags the UI by minutes, so unchanged means "not yet", not "failed".** `unmeasured`. Report `still propagating` for that item and end the round. Never re-click. The UI has already taken the first click, so a second one is a double approval. This is the single most likely way for this skill to cause real damage.
-
-9. **Append the outcome to `actions` only after observing it.** Record what the verification query actually returned, never what the click was meant to achieve. An entry written ahead of its verification is a fabrication, and afterwards it is indistinguishable from a real one.
-
-- **The post-click verification stays per item too.** Do not click all N and reconcile once at the end. The check catches more than lag: a record in an unexpected state, a response that routed somewhere it should not have, and the frozen-tab case in step 6.
-- **A failure stops the batch.** If an item cannot be confirmed or does not match, stop there. A record that has not propagated yet is **not** a failure. Do not report it as one, and do not retry it. Report what was actioned, what is still propagating, what genuinely failed and why, and what remains untouched. Never continue past a real failure, and never retry blind.
-
-When the batch finishes, re-run Step 7 so actioned items move to the bin. Step 9 runs after that re-render, before the counts are reported. Report in chat how many were actioned, how many were confirmed advanced, how many are still propagating, and anything that failed.
+**Mandatory, before executing anything.** Read `${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/references/step-8-execute.md` in full. Do not summarise it from memory or from this spine. Do not execute a single item until you have read that file this run.
 
 ## Step 9 — Close down
 

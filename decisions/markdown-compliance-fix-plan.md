@@ -28,16 +28,16 @@ These rulings are that interview.
 | 2 | Fix scope | Text and checks land together. Each fix ships with the check that holds it |
 | 3 | Published numbers and paths | All 37 get a reader. A missing `docs/onboarding.html` fails the build |
 | 4 | Skill size | Move Step 8 and the lens sections to `references/`. Step 8 gets a mandatory read |
-| 5 | `G7`, PO cross-check unobserved | Closed. Moved to `findings/po-crosscheck-run-confirmed.md`. A full connector-mode run pulled the order and the history, and both checks ran. Still names ruling 7 as a dependency |
-| 6 | `G3`, notes page unseen | Closed. Moved to `findings/netsuite-approval-note-confirmed.md`. The note was read on the record |
+| 5 | PO cross-check unobserved, formerly a gap | Closed. Moved to F‹po-crosscheck-run-confirmed›, PO cross-check run confirmed. A full connector-mode run pulled the order and the history, and both checks ran. Still depends on ruling 7 |
+| 6 | Notes page unseen, formerly a gap | Closed. Moved to F‹netsuite-approval-note-confirmed›, the note read on the record |
 | 7 | `G4`, no end-to-end run | Stays open, unobserved. One slice reports: the maintainer's name showed as approver on the URL-recovery record, and the item moved on. The ordinary approval path and the Procore execute walk stay unwalked |
 | 8 | `G12`, widget host unseen | Stays open, unobserved. One slice reports: the dashboard drew inside Cowork, seen directly. Its position and behaviour at real queue scale stay unobserved |
-| 9 | `G10`, Procore scheduled prompt unfired | Closed. Moved to `findings/procore-missed-window-confirmed.md`. A missed window ran nothing later |
+| 9 | Procore scheduled prompt unfired, formerly a gap | Closed. Moved to F‹procore-missed-window-confirmed›, missed window ran nothing later |
 | 10 | procore `README.md:15` | Drop the two figures. Describe the narrowing without numbers |
 | 11 | `F40`, the NetSuite toolbar port, with `F52`, amber was the real finding, `F62`, nothing runs without Chrome, and `F64`, two plugin commands exist | Keep the observed status. Write the reported observation into each Evidence line |
 | 12 | `F57`, one disabled style two meanings | Two states reported. A new gap, `gaps/execute-button-blocked-state-unseen.md`, records the amber blocked state as unseen |
-| 13 | `F75`, Cowork storage leads | Moved to `gaps/cowork-storage-location-unverified.md`. Every citation rewritten |
-| 14 | `F5`, no duplicate-copy warning, and `F8`, both slash forms resolve | Merged into `findings/skill-invocation-verified.md` (`F8`). It holds the run, both conclusions and the retraction. `F5`'s file is deleted |
+| 13 | Cowork storage leads, formerly a finding | Moved to G‹cowork-storage-location-unverified›, a gap for the unverified leads. Every citation rewritten |
+| 14 | No duplicate-copy warning, and both slash forms resolve | Merged into `F8`, both slash forms resolve. It holds the run, both conclusions and the retraction. The old no-duplicate-copy-warning record is deleted |
 | 15 | 15 findings over 45 lines | Split each into one observation per record |
 | 16 | `docs/onboarding.html:192` | Keep the 45-minute figure. A finding marks it `unmeasured` |
 

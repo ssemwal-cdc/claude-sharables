@@ -34,6 +34,7 @@ The sheet is written click by click for someone who has never touched any of thi
 - Moved to Pages in 2026-08. The theme blocks were removed 2026-08-17.
 - The live page cannot be fetched from the sandbox. See F37, the live page is unfetchable.
 - Four claimed tests over the sheet did not exist. See F63, four claimed tests were absent.
-- The time and posture wording is settled. See F67, say how long and where.
+- The time and posture wording is settled. See
+  `F‹chips-removed-two-facts-one-sentence›`, say how long and where.
 
 **Checks.** `check_onboarding_page()` in `scripts/shared_blocks.py`.

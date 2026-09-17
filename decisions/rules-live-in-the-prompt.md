@@ -13,7 +13,8 @@ date: 2026-08-27
 
 **Argument.**
 
-The rule that would have caught the never-attempted write existed, in the maintainer notes, where the running skill cannot see it.
+The rule that would have caught the never-attempted write existed in the
+maintainer notes. The running skill cannot see that file.
 
 Maintainer prose is not a prompt. The skill file is the prompt.
 
@@ -24,6 +25,7 @@ A check then fails the build if the rule stops being stated.
 **Evidence.**
 
 - Recorded 2026-08-27 from F86, three write states.
-- The same shape recurred with the login rung. See F98, a run banned itself from login.
+- The same shape recurred with the login rung. See
+  `F‹login-rewrite-caused-refusal›`, a run banned itself from login.
 
 **Checks.** `test_step0_write_states` and `test_login_states` in `scripts/test_skill_code.py`.

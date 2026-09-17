@@ -33,7 +33,8 @@ An onboarding section was written for a scheduled-run hang that turned out not t
 - Coverage of auto mode across every operation is `unmeasured`.
 - The onboarding sheet carries the skip-all reason and never the withdrawn claim. See F45, a retraction reached one surface.
 - The denial that started it is F22, the classifier can deny everything.
-- The mode cannot be read back. See F32, permission mode is unreadable.
+- The mode cannot be read back. See
+  `F‹permission-mode-unreadable-by-agent›`, permission mode is unreadable.
 - A returned promise can serialise empty. See F34, a returned promise serialises empty.
 
 **Checks.** none

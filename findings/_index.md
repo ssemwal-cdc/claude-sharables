@@ -8,7 +8,6 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F2 | `cowork-runs-plugins` | Cowork runs installed plugins | observed | 2026-08-11 | A teammate can run both plugins in the session they were told to use. |
 | F3 | `disjoint-host-bridges` | Host bridges do not overlap | observed | 2026-08-11 | A dashboard button starts a real turn instead of failing closed. |
 | F4 | `git-url-needs-dot-git` | A git URL needs .git | observed | 2026-08-11 | A marketplace URL clones the repo instead of reading one file. |
-| F5 | `no-duplicate-copy-warning` | No duplicate-copy warning | observed | 2026-08-11 | A teammate is not sent hunting for a shadow copy that does not exist. |
 | F6 | `plugin-root-does-not-work` | pluginRoot does not work | observed | 2026-08-11 | Nobody spends a round on a documented shortcut that fails at install. |
 | F7 | `relative-path-source-app-fail` | Relative source fails in app | observed | 2026-08-11 | A teammate installing from the desktop app gets the plugin. |
 | F8 | `skill-invocation-verified` | Both slash forms resolve | observed | 2026-08-11 | A teammate can invoke a plugin skill by the short name. |
@@ -78,7 +77,6 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F72 | `tick-must-not-render` | The tick must not render | observed | 2026-08-24 | An open detail stays open while the reader reads it. |
 | F73 | `attachment-file-evidences-verdict` | Name the file read | observed | 2026-08-26 | A clear item can be asked what was read to clear it. |
 | F74 | `capability-verdicts-gate` | Capability rows name real verdicts | observed | 2026-08-26 | A capability table cannot promise a verdict the publish script rejects. |
-| F75 | `cowork-storage-leads` | Cowork storage leads only | unobserved | 2026-08-26 | A session reads a research note as leads, never as settled behaviour. |
 | F76 | `folderless-run-works` | Folderless run works | observed | 2026-08-26 | A teammate with no workspace folder can still review their queue. |
 | F77 | `folderless-scheduled-run-works` | Folderless scheduled run works | observed | 2026-08-26 | A teammate schedules a run without first choosing a folder. |
 | F78 | `marketplace-add-tests-published-tree` | marketplace add tests the release | observed | 2026-08-26 | A pre-push check answers the question a maintainer asked it. |
@@ -106,4 +104,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F100 | `record-checks-mutation-tested` | Record checks went red first | observed | 2026-09-15 | A check is trusted only after it fails on the defect it guards. |
 | F102 | `fetch-tab-state-lost` | Fetch tab navigated, first pass lost | observed | 2026-09-16 | A run fetches its data once, and leaves no tab parked on a dead link. |
 | F101 | `mandate-gaps-closed` | Three mandate gaps closed | observed | 2026-09-16 | Three mandate rules run as a command, not a memory. |
+| pending | `netsuite-approval-note-confirmed` | NetSuite approval note confirmed | observed | 2026-09-16 | An approval note lands where the auditor will look for it. |
+| pending | `po-crosscheck-run-confirmed` | PO cross-check run confirmed | observed | 2026-09-16 | A correctly coded bill is never flagged as coded to the wrong purchase order. |
+| pending | `procore-missed-window-confirmed` | Procore missed window confirmed | observed | 2026-09-16 | A scheduled Procore window reviews the queue once, not repeatedly. |
 | F103 | `version-line-silently-stale` | A version line can silently miss its bump | observed | 2026-09-16 | A teammate compares their installed version against the README table. |

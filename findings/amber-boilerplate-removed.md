@@ -23,6 +23,8 @@ Procore never had one. Its staleness note lives below the execute bar.
 
 **Evidence.**
 
-- Landed 2026-08-24 in the card re-pitch.
+Reported by the maintainer, date unrecorded.
+The maintainer has seen a rendered NetSuite dashboard with clean rows and no per-row snapshot caveat.
+The run is unmeasured.
 
 **Checks.** none

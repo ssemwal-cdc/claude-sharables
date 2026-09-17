@@ -21,6 +21,8 @@ Hence more than one fire time, with the idempotency gate stopping the later ones
 
 **Evidence.**
 
-- Stated in `docs/onboarding.html`. The rate of missed windows is `unmeasured`.
+Reported by the maintainer, date unrecorded.
+The maintainer has hit a run failing with Chrome closed or the machine off.
+The run is unmeasured.
 
 **Checks.** none

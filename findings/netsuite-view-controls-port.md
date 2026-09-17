@@ -23,7 +23,8 @@ Sort, search and a reset control came with it.
 
 **Evidence.**
 
-- Asked 2026-08-19.
-- One rule in that port is load-bearing. See D46, the execute bar ignores the filter.
+Reported by the maintainer, date unrecorded.
+The maintainer used the ported NetSuite toolbar directly, to sort, filter and search by type and vendor.
+The run is unmeasured.
 
 **Checks.** `test_dashboard_view` in `scripts/test_skill_code.py`.

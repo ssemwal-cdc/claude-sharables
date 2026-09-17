@@ -1,7 +1,7 @@
 ---
-id: F75
-slug: cowork-storage-leads
-kind: finding
+id: pending
+slug: cowork-storage-location-unverified
+kind: gap
 status: unobserved
 date: 2026-08-26
 ---

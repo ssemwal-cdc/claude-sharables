@@ -65,5 +65,8 @@ One full-height sentinel gave 4 callbacks for a whole page and a stale band at 3
 The bar measures 153px on both dashboards.
 The full header is about 380px against a 700px viewport.
 Reported 2026-08-26: the maintainer has never seen the sticky bar work.
+Reported by the maintainer, date unrecorded.
+The dashboard widget drew inside Cowork, seen directly rather than inferred from show_widget's own success message.
+The sticky-bar position at real host scale, and the real-queue-size claims below, remain unobserved.
 
 **Checks.** `test_dashboard_view` pins the mechanism. `scripts/measure_float.js` measures position by hand.

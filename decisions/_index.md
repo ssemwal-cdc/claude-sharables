@@ -65,7 +65,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D59 | `sheet-has-no-terminal-commands` | No terminal commands in sheet | settled | 2026-08-24 | A teammate reading the sheet sees instructions for the app they are using. |
 | D60 | `shipped-examples-use-placeholders` | Shipped examples use placeholders | settled | 2026-08-24 | Nothing a teammate copies carries customer data into a public repo. |
 | D61 | `skill-md-marker-rules` | Place SKILL.md markers on boundaries | settled | 2026-08-24 | A synced block leaves both skills readable and both code fences runnable. |
-| D62 | `skill-spine-plus-references` | Thin spine plus reference modules | open | 2026-08-24 | Every run reads every rule that governs it. |
+| D62 | `skill-spine-plus-references` | Thin spine plus reference modules | settled | 2026-08-24 | Every run reads every rule that governs it. |
 | D63 | `verdict-vocabulary-gate` | Gate template verdicts against publish | settled | 2026-08-24 | Every branch on a dashboard can actually render. |
 | D64 | `workspace-folder-downloads` | Declare the workspace folder Downloads | settled | 2026-08-24 | A second run finds the state file and skips first-run setup. |
 | D65 | `check-packs-next-phase` | Check packs, next phase | open | 2026-08-26 | A reviewer who is not a financial analyst gets checks that serve their job. |
@@ -88,7 +88,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D82 | `hooks-and-checks-pass` | Hooks and checks pass | settled | 2026-09-15 | A rule is enforced by a command, not by a maintainer remembering it. |
 | D83 | `plugin-validate-warning-expected` | Record the no-version warning | settled | 2026-09-15 | A maintainer reads every line a command printed, and knows which line is expected. |
 | D84 | `prose-compliance-plan` | Bring every markdown file into compliance with the global mandate | settled | 2026-09-15 | A maintainer or a session reads one short rule, one record, or one index. |
-| D85 | `skill-prose-pass` | Skill prose pass | open | 2026-09-15 | A run reads a short, governed prompt and still meets every safety rule. |
+| D85 | `skill-prose-pass` | Skill prose pass | settled | 2026-09-15 | A run reads a short, governed prompt and still meets every safety rule. |
 | D86 | `xlsx-pin-target` | SheetJS pin target | settled | 2026-09-15 | A workbook parsed inside an authenticated tab cannot be used against the session. |
 | pending | `markdown-compliance-fix-plan` | Markdown compliance fix plan | settled | 2026-09-16 | Every markdown file states what somebody observed, and a check holds it. |
 | D87 | `run-closes-its-tabs` | A run closes every tab it opened | settled | 2026-09-16 | A finished run leaves the browser as it found it. |

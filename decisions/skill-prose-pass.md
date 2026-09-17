@@ -2,7 +2,7 @@
 id: D85
 slug: skill-prose-pass
 kind: decision
-status: open
+status: settled
 date: 2026-09-15
 ---
 # Skill prose pass
@@ -40,4 +40,11 @@ The two prompts are about 800 and 660 lines.
 About a third of each is dead weight on any given run. `unmeasured`.
 `scripts/test_skill_code.py` reads `SKILL.md` by path with no fallback.
 
-**Checks.** none yet. Any split must re-point `scripts/test_skill_code.py` in the same commit.
+- Settled 2026-09-17 by commit `4a81d8c`, ruling 4 of the markdown-compliance-fix-plan.
+  Both prompts split into a spine plus `references/`, option B. The engineering rules
+  bind. `python3 /root/.claude/lint/ste_lint.py --fail-on error` found 55 errors across
+  the two spines. Every one outside a shared block is fixed. `scripts/test_skill_code.py`
+  needed no re-pointing, confirmed by running it.
+
+**Checks.** `python3 /root/.claude/lint/ste_lint.py --fail-on error` on both `SKILL.md` files
+and their `references/`. `scripts/test_skill_code.py`.

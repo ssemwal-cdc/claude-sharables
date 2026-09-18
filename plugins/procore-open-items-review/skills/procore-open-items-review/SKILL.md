@@ -138,7 +138,7 @@ Then read `Procore Open Items/_procore_review_log.json`. A file already carrying
 - **`GenericToolItem` is one row in that table and can be several tools in the queue.** Capture `item_subtype` on every such row, into the log as `subtype`. `subtype` decides the record link and which cost fields the checks can read.
 - **Reconcile every run.** Take the distinct subtypes present and subtract the keys of `config.customTools`. Nothing left over is the normal case.
 - **A subtype the config has never seen** gets setup steps 3 and 4 for that subtype alone. **Name it in the run report**, the second line Step 7 allows.
-- **A subtype whose tool or fields cannot be resolved** is reviewed anyway, and keeps its response buttons.
+- **A subtype whose tool or fields cannot be resolved** is reviewed anyway, and still appears on the dashboard.
 - It carries **no record link**, rather than one built from another tool's id, and it cannot be `clear`. Step 5 names the checks that did not run.
 - **A fifth type means this queue carries something these four procedures do not cover. Never invent a review procedure for it.**
 - Report a fifth type by `item_type` and `title` **with its `url`**. **Do not suppress it and do not count it as noise.** An unrecognised type is `ungated` at worst, never `skipped` silently.
@@ -197,7 +197,7 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 - **Exactly one distinct `holder.id`** is the `wfId`. Record it in the log.
 - **More than one** means a package spanning several commitment change orders. Mark that item `ungated`, name the ids, and leave it to the user. **Do not pick one.**
 - **None, or no `holder` on the payload**, falls back to opening the package record. That record redirects to the change order. That id is never the package id.
-- **If you cannot resolve the id, mark the item `ungated`** and offer no response buttons. **Never fall back to querying with the package id.**
+- **If you cannot resolve the id, mark the item `ungated`**, and say so on the item. **Never fall back to querying with the package id.**
 - A wrong *type* returns a loud **400** response. A right type with the wrong *id* returns **200 with zero rows**, which reads as no instance at all.
 - **Cross-check the first CCO of a run against the UI**, because the gate cannot detect its own miss. One record per run is enough.
 - Open the record in **a record tab** and read its workflow panel. An actionable item shows a live **Respond** button naming the user against the current step's role. **Look, do not click.** Close that record tab once the panel is read.
@@ -430,7 +430,8 @@ Four outcomes.
 - "Unreadable" on its own reads identically for a scan, a spreadsheet and a timed-out link. A skip that cannot name its cause is a defect in Step 4.
 - **ungated** means the arithmetic was checked but Procore would not confirm the user is a responder. Its frequency is `unmeasured`.
 - Three cases reach it: no resolvable `holder.id`, several commitment change orders, or no resolvable `wfType`.
-- No response buttons are offered on an `ungated` item. **Say which of the three it was.**
+- An `ungated` item is reviewed and shown like any other. **Say which of the three it was.**
+- Items where `can_respond` is `false` are **suppressed**, not skipped. They collapse to a single count.
 - For a CCO where only some PCIs are missing, review what is there and name the unsupported lines.
 - **An unmapped subtype loses its record link and a `clear` becomes `skipped`.**
 - The gate is per item, and `GenericToolItem` is the workflow type for every custom tool.
@@ -490,7 +491,7 @@ cd "<workspace>/Procore Open Items" && python3 -B publish_dashboard.py
 
 > If a red banner appears at the top of the dashboard, tell me and I'll re-render a smaller version.
 
-**Render, then say that.** Do not weigh the file size instead. **Handing over a file without having attempted the render is a failure of this step.** If it happens, say so plainly rather than presenting the file as the deliverable. `index.html` becomes the fallback only after the user reports the banner. It remains the complete dashboard, every item with its response buttons.
+**Render, then say that.** Do not weigh the file size instead. **Handing over a file without having attempted the render is a failure of this step.** If it happens, say so plainly rather than presenting the file as the deliverable. `index.html` becomes the fallback only after the user reports the banner. It remains the complete dashboard, every item with its full reasoning.
 
 <!--__SHARED:skill-artifact-host__-->
 **Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live. The widget host exposes `sendPrompt` as a bare global. The artifact host exposes `window.cowork` with `callMcpTool`, `askClaude` and `runScheduledTask`, and no `sendPrompt` anywhere. On an artifact the re-run button cannot start a turn and fails silently. As a widget it works in one click, confirmed on a live run. The template keeps a clipboard handoff for the artifact case. It is a fallback, not a plan.

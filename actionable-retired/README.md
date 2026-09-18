@@ -47,7 +47,7 @@ superseded decisions return to `settled` in that same pull request.
 | `netsuite-approval-review/references/step-8-execute.md` | `plugins/netsuite-approval-review/skills/netsuite-approval-double-check/references/step-8-execute.md` | whole file, 116 lines |
 | `netsuite-approval-review/dashboard_template.cut.html` | `plugins/netsuite-approval-review/skills/netsuite-approval-double-check/assets/dashboard_template.html` | 58-71, 76-88, 127, 132, 164-165, 167-170, 176-178, 460-466, 502-596, 31-32, plus 13 sentence trims |
 | `netsuite-approval-review/publish_dashboard.cut.py` | `plugins/netsuite-approval-review/skills/netsuite-approval-double-check/assets/publish_dashboard.py` | 1 sentence trim at line 7 |
-| `procore-open-items-review/SKILL.md.cut.md` | `plugins/procore-open-items-review/skills/procore-open-items-review/SKILL.md` | 9-12, 18, 23, 25-27, 42, 442, 523-525, plus 11 sentence trims |
+| `procore-open-items-review/SKILL.md.cut.md` | `plugins/procore-open-items-review/skills/procore-open-items-review/SKILL.md` | 9-12, 18, 23, 25-27, 42, 523-525, plus 11 sentence trims |
 | `procore-open-items-review/references/step-8-execute.md` | `plugins/procore-open-items-review/skills/procore-open-items-review/references/step-8-execute.md` | whole file, 22 lines |
 | `procore-open-items-review/references/lenses-delivery-design.cut.md` | `plugins/procore-open-items-review/skills/procore-open-items-review/references/lenses-delivery-design.md` | 22 |
 | `procore-open-items-review/dashboard_template.cut.html` | `plugins/procore-open-items-review/skills/procore-open-items-review/assets/dashboard_template.html` | 34-35, 58-73, 80-92, 132, 163, 196-197, 199-203, 230-232, 576-582, 622-722, 363-371, plus 11 sentence trims |

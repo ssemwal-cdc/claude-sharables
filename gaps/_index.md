@@ -8,7 +8,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | G2 | `freeze-fallback-unfired` | Freeze fallback never fired | unobserved | 2026-08-15 | A frozen tab never causes a second click on an approved record. |
 | G4 | `no-end-to-end-run` | No end-to-end run | unobserved | 2026-08-15 | A reviewer's verdicts come from a path somebody has watched work. |
 | G5 | `small-unknowns` | Four small unknowns | unobserved | 2026-08-15 | A small unknown stays named instead of becoming an assumption. |
-| G6 | `attachment-sniff-cleared` | Attachment sniff, cleared partly | observed | 2026-08-20 | A workbook or an image is read, not filed as unreadable. |
+| G6 | `attachment-sniff-cleared` | Two branches in the attachment sniff stay unfired | unobserved | 2026-08-20 | A workbook or an image is read, not filed as unreadable. |
 | G8 | `netsuite-browser-mode` | NetSuite browser mode unrun | unobserved | 2026-08-24 | A teammate with no connector still gets a complete review. |
 | G9 | `procore-gate-fanout` | Procore gate fan-out untried live | unobserved | 2026-08-24 | A live item is never logged as done because one request failed. |
 | pending | `cowork-storage-location-unverified` | Cowork storage leads only | unobserved | 2026-08-26 | A session reads a research note as leads, never as settled behaviour. |

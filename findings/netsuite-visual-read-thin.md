@@ -32,5 +32,5 @@ G6, two branches still unfired, carries the unfired branches.
 D65, write a pack from a role document, carries the rule invoked here.
 
 **Checks.** `check_check_registry()` asserts both capability tables stay declared.
-No script counts these mentions. Re-verify by hand with this command, run from the repo root:
-`for f in plugins/*/skills/*/SKILL.md; do grep -o "\bimage\b" "$f" | wc -l; grep -o "\bscanned\b" "$f" | wc -l; done`
+`check_visual_read_mentions()` in `scripts/check_records.py` counts image and
+scanned mentions in every `SKILL.md` and fails on drift from the Evidence figures.

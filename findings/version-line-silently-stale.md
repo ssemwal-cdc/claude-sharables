@@ -20,4 +20,4 @@ The result: a teammate ran `Check for updates`, then compared the version line t
 - Reported 2026-09-16, cross-checking `origin/main` at `50c281a` against the previous release.
 - `plugins/netsuite-approval-review/skills/netsuite-approval-double-check/SKILL.md` and `plugins/procore-open-items-review/skills/procore-open-items-review/SKILL.md` both carried unchanged version lines across that commit's diff.
 
-**Checks.** `python3 scripts/check_version_bump.py` now fails this case. See decision, pending, `skill-version-bump-enforced`.
+**Checks.** `python3 scripts/check_version_bump.py` now fails this case. See `D88`, the version bump is a check, not a habit.

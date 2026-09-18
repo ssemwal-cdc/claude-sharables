@@ -49,7 +49,8 @@ approved, not rejected, and not given a verdict it has not earned.
 
 ## Support is read without downloading anything
 
-Procore attachments sit behind a 60-second presigned S3 link. The browser's PDF
+Procore attachments sit behind a presigned S3 link, timed by Procore, not by
+this plugin. `unmeasured`. See D24, do not overrun the window. The browser's PDF
 viewer exposes no text and cannot be scripted. The storage host blocks
 cross-origin reads. The plugin routes around all three and reads the file
 in-browser, so nothing lands in your downloads folder.

@@ -25,7 +25,7 @@ Then, **one record at a time**:
 
 1. **Re-verify it is still yours to action, before opening anything.**
 
-   **Pick the route from the item's `type`.** It is the only thing available before the record is open. It is also a field with a legacy default, per Step 6. So it can be wrong in the one direction that matters: a change order routed as a bill gets a query that cannot gate it. That is why the skip below is confirmed on the page, never on an empty result.
+   **Pick the route from the item's `type`.** It is the only thing available before the record is open. It is also a field with a legacy default, per Step 6. It can be wrong in one direction. A change order routed as a bill gets a query that cannot gate it. That is why the skip below is confirmed on the page, never on an empty result.
 
    ```sql
    SELECT t.id, t.tranid, t.foreigntotal FROM transaction t

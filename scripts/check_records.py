@@ -36,10 +36,19 @@ FOLDERS = {
 }
 REQUIRED_KEYS = ("id", "slug", "kind", "status", "date")
 STATUSES = ("open", "settled", "superseded", "abandoned", "observed", "unobserved")
+
+# D84 house rule: a status also has to fit its folder. A decision can be open,
+# settled, superseded or abandoned. A finding is observed, settled or
+# superseded. A gap is unobserved only.
+FOLDER_STATUSES = {
+    "decisions": ("open", "settled", "superseded", "abandoned"),
+    "findings": ("observed", "settled", "superseded"),
+    "gaps": ("unobserved",),
+}
 OUTCOME_MARKER = "**Outcome protected.**"
 
 CLAUDE_MD_MAX_LINES = 150
-MAX_SENTENCE_WORDS = 30
+MAX_SENTENCE_WORDS = 20
 
 INDEX_BLURB = (
     "Generated from the frontmatter and the first outcome sentence of every record in "
@@ -134,6 +143,41 @@ def record_count():
     return sum(1 for _ in record_files())
 
 
+def _is_skill_or_reference(path):
+    """True for a SKILL.md or a plugins/*/skills/*/references/*.md file."""
+    if os.path.basename(path) == "SKILL.md":
+        return True
+    return os.path.basename(os.path.dirname(path)) == "references"
+
+
+def _skill_and_reference_files():
+    """Every plugins/*/skills/*/SKILL.md and plugins/*/skills/*/references/*.md.
+
+    These prompts run in teammate sessions the same as CLAUDE.md and the READMEs
+    do, so D84's sentence-length and citation checks must see them too."""
+    files = []
+    plugins = os.path.join(REPO, "plugins")
+    if not os.path.isdir(plugins):
+        return files
+    for entry in sorted(os.listdir(plugins)):
+        if entry.startswith("_"):
+            continue
+        skills_dir = os.path.join(plugins, entry, "skills")
+        if not os.path.isdir(skills_dir):
+            continue
+        for skill in sorted(os.listdir(skills_dir)):
+            skill_dir = os.path.join(skills_dir, skill)
+            sp = os.path.join(skill_dir, "SKILL.md")
+            if os.path.isfile(sp):
+                files.append(sp)
+            refs_dir = os.path.join(skill_dir, "references")
+            if os.path.isdir(refs_dir):
+                for fn in sorted(os.listdir(refs_dir)):
+                    if fn.endswith(".md"):
+                        files.append(os.path.join(refs_dir, fn))
+    return files
+
+
 def scanned_prose():
     """Every file the citation and path-citation checks read."""
     files = [os.path.join(REPO, "CLAUDE.md"), os.path.join(REPO, "README.md")]
@@ -145,6 +189,7 @@ def scanned_prose():
             p = os.path.join(plugins, entry, "README.md")
             if os.path.isfile(p):
                 files.append(p)
+    files += _skill_and_reference_files()
     for folder in sorted(FOLDERS):
         d = os.path.join(REPO, folder)
         if not os.path.isdir(d):
@@ -194,6 +239,11 @@ def check_frontmatter():
         if status not in STATUSES:
             problems.append(
                 "%s status is %r; use one of %s" % (rec.rel, status, ", ".join(STATUSES)))
+        elif status not in FOLDER_STATUSES.get(rec.folder, STATUSES):
+            problems.append(
+                "%s status is %r; a record in %s/ takes one of %s"
+                % (rec.rel, status, rec.folder,
+                   ", ".join(FOLDER_STATUSES.get(rec.folder, STATUSES))))
         date = rec.keys.get("date", "")
         if not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
             problems.append("%s date is %r; write it as YYYY-MM-DD" % (rec.rel, date))
@@ -258,6 +308,10 @@ def check_citations():
             if _is_notation(rel, line):
                 continue
             for text in PATH_CITATIONS:
+                if text in ("see Step", "See Step") and _is_skill_or_reference(path):
+                    continue  # a step ordinal inside its own SKILL.md is a
+                    # position, not a cross-file citation. D84: "Step
+                    # ordinals inside a document are positions, not ids."
                 if text in line and rel != NOT_CITATIONS.notation_file:
                     problems.append(
                         "%s:%d cites a path (%r). Cite the record id and a gloss."
@@ -287,6 +341,48 @@ def check_citations():
                 problems.append(
                     "%s:%d cites %s with no gloss. Write 'id, short gloss'."
                     % (rel, n, token))
+    return problems
+
+
+# A record slug in backticks with no D/F/G letter right before it. The regexes
+# above only see `D‹slug›` or `D12`. A bare `some-slug` matches neither, so a
+# lazy or wrong citation form ships silently unless something else looks for it.
+BARE_SLUG = re.compile(r"`([a-z0-9-]+)`")
+
+
+def _known_slugs():
+    return {rec.keys.get("slug") for rec in load_records() if rec.keys}
+
+
+def check_bare_slug_citations():
+    """Flag a record slug quoted in backticks with no id-letter immediately
+    before it. `D84`, the prose compliance plan, defines this notation and uses
+    slugs as forward-references in its own reserved-slug and migration tables,
+    not as citations, so that one file is exempt."""
+    problems = []
+    slugs = _known_slugs()
+    for path in scanned_prose():
+        rel = _rel(path)
+        if rel == NOT_CITATIONS.notation_file:
+            continue
+        lines = _read(path).splitlines()
+        fm_end = _frontmatter_span(lines)
+        in_index = os.path.basename(path) == "_index.md"
+        for n, line in enumerate(lines, start=1):
+            if n <= fm_end:
+                continue
+            if in_index and line.lstrip().startswith("|"):
+                continue  # an index row is a table cell, its own slug column
+            for m in BARE_SLUG.finditer(line):
+                slug = m.group(1)
+                if slug not in slugs:
+                    continue
+                prev = line[m.start() - 1] if m.start() > 0 else ""
+                if prev in "DFG":
+                    continue  # an id-letter sits right against the backtick
+                problems.append(
+                    "%s:%d cites `%s` by slug alone; write `<letter><id-or-slug>`, "
+                    "a short gloss" % (rel, n, slug))
     return problems
 
 
@@ -416,6 +512,7 @@ def _measured_prose():
             p = os.path.join(plugins, entry, "README.md")
             if os.path.isfile(p):
                 files.append(p)
+    files += _skill_and_reference_files()
     for folder, fn in record_files():
         files.append(os.path.join(REPO, folder, fn))
     return [f for f in files if os.path.isfile(f)]
@@ -486,13 +583,31 @@ WAITER_PATTERNS = (
     re.compile(r"every\s+\d+\s+(second|seconds|minute|minutes|hour|hours)\b", re.I),
 )
 
-# A retry that names its own bound in the same sentence is not a waiter loop.
+# A retry that names its own bound near the matched phrase, in the same
+# sentence, is not a waiter loop. A bound word anywhere else in a long
+# sentence does not prove the retry it is nowhere near names a limit.
 BOUND_PATTERNS = (
     re.compile(r"\bat most\b", re.I),
     re.compile(r"\bonce\b", re.I),
     re.compile(r"\btwice\b", re.I),
     re.compile(r"\bone more time\b", re.I),
 )
+BOUND_PROXIMITY_CHARS = 20
+
+
+def _has_nearby_bound(sentence, wait_match):
+    """True if a bound word sits within BOUND_PROXIMITY_CHARS of wait_match."""
+    for b in BOUND_PATTERNS:
+        for bm in b.finditer(sentence):
+            if bm.start() >= wait_match.end():
+                gap = bm.start() - wait_match.end()
+            elif bm.end() <= wait_match.start():
+                gap = wait_match.start() - bm.end()
+            else:
+                gap = 0  # overlapping
+            if gap <= BOUND_PROXIMITY_CHARS:
+                return True
+    return False
 
 # A line that quotes a forbidden phrase as a negative example, not an instruction.
 # Keep this list short: every entry names the one line and carries its own comment.
@@ -560,9 +675,14 @@ def check_waiter_loops():
                 continue
             text = re.sub(r"`[^`]*`", "X", s)
             for sentence in split_sentences(text) or [text]:
-                if not any(p.search(sentence) for p in WAITER_PATTERNS):
+                wait_match = None
+                for p in WAITER_PATTERNS:
+                    wait_match = p.search(sentence)
+                    if wait_match:
+                        break
+                if not wait_match:
                     continue
-                if any(b.search(sentence) for b in BOUND_PATTERNS):
+                if _has_nearby_bound(sentence, wait_match):
                     continue
                 problems.append("%s:%d %s" % (rel, n, sentence[:160]))
     return problems
@@ -753,10 +873,68 @@ def check_claim_dry_run():
     return problems
 
 
+# ---------------------------------------------- check, visual read mentions
+# D84's own record format: "Checks. The script or test that enforces it, or
+# none." An inline shell command in prose is neither. This counts "image" and
+# "scanned" mentions across every SKILL.md and fails on drift from what
+# findings/netsuite-visual-read-thin.md states, so the count stays mechanical.
+VISUAL_READ_FINDING = os.path.join("findings", "netsuite-visual-read-thin.md")
+VISUAL_READ_COUNTS = re.compile(
+    r"Re-measured [0-9-]+: Procore `image` (\d+) times, `scanned` (\d+) times, "
+    r"NetSuite `image` (\d+) times, `scanned` (\d+) times\.")
+
+
+def _count_mentions(word, path):
+    return len(re.findall(r"\b%s\b" % re.escape(word), _read(path)))
+
+
+def check_visual_read_mentions():
+    """The finding's stated image/scanned counts must match the real files."""
+    problems = []
+    path = os.path.join(REPO, VISUAL_READ_FINDING)
+    if not os.path.isfile(path):
+        return problems
+    m = VISUAL_READ_COUNTS.search(_read(path))
+    if not m:
+        problems.append(
+            "%s has no 'Re-measured <date>: Procore `image` N times, ...' line "
+            "for check_visual_read_mentions() to check" % VISUAL_READ_FINDING)
+        return problems
+    p_image, p_scanned, n_image, n_scanned = (int(g) for g in m.groups())
+    stated = {"procore": (p_image, p_scanned), "netsuite": (n_image, n_scanned)}
+    plugins_dir = os.path.join(REPO, "plugins")
+    for keyword, (want_image, want_scanned) in stated.items():
+        plugin = next(
+            (e for e in sorted(os.listdir(plugins_dir)) if keyword in e.lower()),
+            None) if os.path.isdir(plugins_dir) else None
+        if not plugin:
+            problems.append(
+                "no plugin folder name contains %r, for check_visual_read_mentions()"
+                % keyword)
+            continue
+        skills_dir = os.path.join(plugins_dir, plugin, "skills")
+        have_image = have_scanned = 0
+        if os.path.isdir(skills_dir):
+            for skill in sorted(os.listdir(skills_dir)):
+                sp = os.path.join(skills_dir, skill, "SKILL.md")
+                if os.path.isfile(sp):
+                    have_image += _count_mentions("image", sp)
+                    have_scanned += _count_mentions("scanned", sp)
+        if (have_image, have_scanned) != (want_image, want_scanned):
+            problems.append(
+                "%s/skills/*/SKILL.md mentions image %d time(s) and scanned %d "
+                "time(s); %s states image %d, scanned %d. Re-run the count and "
+                "update the Evidence line."
+                % (plugin, have_image, have_scanned, VISUAL_READ_FINDING,
+                   want_image, want_scanned))
+    return problems
+
+
 # ----------------------------------------------------------------------- main
 CHECKS = (
     ("frontmatter", check_frontmatter),
     ("citations", check_citations),
+    ("bare slug citations", check_bare_slug_citations),
     ("index freshness", check_index_fresh),
     ("index size", check_index_size),
     ("sentence length", check_sentence_length),
@@ -764,6 +942,7 @@ CHECKS = (
     ("device shots", check_device_shots),
     ("no pending on main", check_no_pending_on_main),
     ("claim dry run", check_claim_dry_run),
+    ("visual read mentions", check_visual_read_mentions),
 )
 
 

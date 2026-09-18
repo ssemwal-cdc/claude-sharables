@@ -2,7 +2,7 @@
 id: pending
 slug: withdrawn-uncommitted-fixtures
 kind: finding
-status: abandoned
+status: observed
 date: 2026-08-24
 ---
 # Uncommitted fixtures were withdrawn, not faked

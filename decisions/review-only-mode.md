@@ -8,7 +8,7 @@ date: 2026-09-18
 # Review-only mode
 
 **Rule.** Ship review-only as a stored config key inside each existing plugin, never as a second plugin or a cloned repo. In `review-only` the skill has no Step 8.
-The dashboard renders no mark button, no execute bar and no header mirror.
+The dashboard renders no mark button and no execute bar. It renders no header mirror.
 
 **Outcome protected.** A reviewer with no approval authority gets a shorter dashboard, and one push to `main` still fixes every copy.
 

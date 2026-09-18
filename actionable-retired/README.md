@@ -62,6 +62,7 @@ superseded decisions return to `settled` in that same pull request.
 | `scripts/shared_blocks.cut.py` | `scripts/shared_blocks.py` | 288-302, 346-391, 552-663, 513-514 |
 | `scripts/validate.cut.py` | `scripts/validate.py` | 394, 396 |
 | `scripts/test_skill_code.cut.py` | `scripts/test_skill_code.py` | 579-607 |
+| `scripts/measure_float.cut.js` | `scripts/measure_float.js` | 174-183 |
 
 A range is the range in the file as that one cut found it. Several cuts on one file shift the
 numbering, so read the ranges in the order the retired file lists them.

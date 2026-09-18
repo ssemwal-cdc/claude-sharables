@@ -15,10 +15,10 @@ and for each one it:
 - judges whether the support identifies what was done, for what period, at
   what rate
 - pulls the real funding purchase order and the engagement's billing history,
-  where a NetSuite connector is available, to catch duplicates, missing
-  intermediate applications and over-commitment. A live connector-mode run
-  confirmed this check (F‹po-crosscheck-run-confirmed›, po cross-check run
-  confirmed)
+  to catch duplicates, missing intermediate applications and
+  over-commitment. This runs only where a NetSuite connector is available. A
+  live connector-mode run confirmed this check
+  (F‹po-crosscheck-run-confirmed›, po cross-check run confirmed)
 - publishes a clear or flagged verdict per item to a dashboard, with the
   figures visible without clicking into anything
 
@@ -90,9 +90,9 @@ D20, Approved by Claude comment.
   folderless runs work.
 - **A NetSuite MCP connector is optional.** It makes the review faster and
   broader. With it, the queue and every record's lines come back in two bulk
-  queries instead of a tab per record. Each item is also cross-checked against
-  its funding purchase order and the engagement's billing history, to catch
-  duplicates, sequence gaps and over-commitment. Without it the review runs
+  queries instead of a tab per record. Each item is also cross-checked
+  against its funding purchase order and the engagement's billing history.
+  This catches duplicates, sequence gaps and over-commitment. Without it the review runs
   from the dashboard portlets and the record pages. Every arithmetic check,
   every attachment read and every approval is identical, because none of those
   ever used the connector.
@@ -103,8 +103,8 @@ D20, Approved by Claude comment.
   connector. Contact IT if there is no invitation. It is worth doing, but do
   not wait on it to start using the plugin.
 - The plugin only ever reads through the connector. Approvals go through the
-  real NetSuite buttons in your browser, so the workflow routes normally and
-  the audit trail records you.
+  real NetSuite buttons in your browser. The workflow therefore routes
+  normally, and the audit trail records you.
 - **Keep the browser on your normal account when approving.** The
   Claude-enabled account is for reading. The queue and the approve buttons are
   both role-scoped. In the wrong account you see a queue that is not yours, or
@@ -155,11 +155,11 @@ It never writes to NetSuite through the connector.
 ## Versioning
 
 The skill's version is the `**Skill version N — date.**` line at the top of its
-`SKILL.md`. That line is the first thing shown when you open the skill. The
-authoritative current number is the Version column of the
-[repo README on GitHub](https://github.com/ssemwal-cdc/claude-sharables). That
-table does not ship with the plugin, so compare there, never against an
-installed file.
+`SKILL.md`. That line is the first thing shown when you open the skill. See
+the Version column of the
+[repo README on GitHub](https://github.com/ssemwal-cdc/claude-sharables) for
+the authoritative current number. That table does not ship with the plugin.
+Compare there, never against an installed file.
 
 `plugin.json` carries no `version` field. Do not add one, and do not suggest
 adding one. See D9, no version field.

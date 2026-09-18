@@ -36,7 +36,7 @@ This skill does two different jobs. Know which one you are in:
 
 ## What this review is, and what it is not
 
-The user is one approver among several, and not the accountant of record. An approval here advances a workflow step. It does not clear an accounting or legal obligation, and it is not the last check the figures will get. So do not stall an authorised batch over the size of the amounts, the number of documents, or how an auditor might read it later. The `Approved by Claude` note keeps the trail honest about what performed the click. The checks that do matter are mechanical, and Step 8 has them. The document is still theirs to action. The figures match the instruction. The record has not moved underneath the review.
+The user is one approver among several, and not the accountant of record. An approval here advances a workflow step. It does not clear an accounting or legal obligation, and it is not the last check the figures will get. So do not stall an authorised batch over the size of the amounts or the number of documents. Do not stall it over how an auditor might read it later. The `Approved by Claude` note keeps the trail honest about what performed the click. The checks that do matter are mechanical, and Step 8 has them. The document is still theirs to action. The figures match the instruction. The record has not moved underneath the review.
 
 <!--__SHARED:skill-step0-preamble__-->
 ## Step 0 — Sync assets, then first-run setup
@@ -71,7 +71,7 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 **The sandbox shell may not see the plugin's files at all.** Observed 2026-08-15 in a Cowork run: the shell mounts only the connected workspace folder, outputs and uploads. The `cp` source path does not exist there. Sync down this ladder and take the first rung that works.
 
 1. **The `cp` above**, wherever the shell can see `${CLAUDE_PLUGIN_ROOT}`.
-2. **Read, then write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/` with the file tools and write it over the workspace copy byte for byte. Never retype, trim or tidy in passing. Then prove the copy landed whole: the template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and `python3 -m py_compile publish_dashboard.py` passes in the workspace folder. This rung is designed, not yet observed. Say so in the run report if it also fails.
+2. **Read, then write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/` with the file tools and write it over the workspace copy byte for byte. Never retype, trim or tidy in passing. Then prove the copy landed whole. The template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and `python3 -m py_compile publish_dashboard.py` passes in the workspace folder. This rung is designed, not yet observed. Say so in the run report if it also fails.
 3. **Use the existing workspace copies and say so, once**, naming the files' modification date from `ls -l` near the headline. Then carry on. Do not stop the run over it. Only the template and publish script can lag, so the verdicts are current either way.
 
 - **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, say exactly that. Stop before Step 7. There is no template to inject into. Inventing one is forbidden. Expect this case on Cowork.
@@ -114,7 +114,7 @@ Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already ca
 
    - **A "not provisioned" silence is right. An "expired session" silence is not.** Someone never provisioned can do nothing about it. So a caveat on every item forever is an apology on a loop. An expired connector is a short fix that restores the faster route. Say it once, plainly, near the headline: *"the NetSuite connector needs reconnecting, reviewed without it"*. Never say it again in that run. Not per item, not in a verdict, not in the dashboard.
    - **Never let a failed connector call read as an empty result.** An auth failure reinterpreted as "no rows" reports an empty approval queue, and the user closes the tab. An errored call is `failed`, never `empty`. A SuiteQL call can return an error, an auth challenge, or anything that is not a result set. Treat any of those as no connector, and switch this run to `browser` mode.
-   - **If it dies mid-run**, after Step 1a already succeeded: finish the remaining steps on the browser route, say the one line, and do not re-issue the failed query. Keep the work already done. The queue and figures you have are valid. Only the cross-check is lost.
+   - **If it dies mid-run**, after Step 1a already succeeded, finish the remaining steps on the browser route. Say the one line, and do not re-issue the failed query. Keep the work already done. The queue and figures you have are valid. Only the cross-check is lost.
    - **Re-detect on every run** rather than trusting `config.mode`. Someone provisioned later is lifted automatically, and someone who reconnects is back on the fast route.
 
    Beyond that one line for the expired case, never describe the browser route as reduced, degraded, limited or a fallback. Do not offer to fix a connector that was never there.
@@ -150,7 +150,7 @@ Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already ca
 6. **Ask what they focus on.** Two questions, asked once, stored in `config.focus`. Both are optional and both default to nothing, which is exactly today's behaviour.
 
    - **First, whether any lens applies.** Offer the lenses this skill ships. Today that is `supply-chain`. Say plainly what each adds. `core` is not offered. It always runs. Someone who does none of these picks nothing, and that is the common case.
-   - **Second, what they care about most, in their own words.** Free text, a sentence or two, stored verbatim as `focus.emphasis`. Offer a couple of examples so the question is answerable, such as "mostly utility bills and recurring vendor invoices" or "change orders on one campus". Store whatever they type. **The examples are illustrations, never a list to pick from.**
+   - **Second, what they care about most, in their own words.** Free text, a sentence or two, stored verbatim as `focus.emphasis`. Offer a couple of examples so the question is answerable. For instance, try "mostly utility bills and recurring vendor invoices" or "change orders on one campus". Store whatever they type. **The examples are illustrations, never a list to pick from.**
    - **Re-editable at any time.** If they later ask to change the emphasis or the lenses, update `config.focus` and confirm. It is one field, not a flow.
 
 ### Which route each step takes
@@ -192,8 +192,8 @@ ORDER BY t.trandate
 `approvalstatus = 1` means Pending Approval. `custbodyap_invoice` is the internal file id of the vendor's invoice PDF. That is the key that makes attachment retrieval reliable.
 
 - **`custbody3` is a typed reference. It is not the PO this bill is applied to.** It is aliased `po_typed` for that reason. A person enters it by hand. Checked live 2026-08-20: it was wrong on five of five bills examined.
-- **The PO the money is actually on comes from the transaction linkage in Step 2.** That is the only thing that may be called the bill's PO. Never let `po_typed` reach a verdict, a `poContext` figure, a comment or the dashboard as though it were the coding. See Step 5.
-- **Zero rows here is a claim, so make sure it is a true one.** This query is the only thing that finds pending bills, so "no rows" and "the call failed" look the same to the reader. **An error, an auth challenge, or any response that is not a result set is a failure.** It is not an empty queue. Switch to the browser route per Step 0 and read the bills off the portlet.
+- **The PO the money is actually on comes from the transaction linkage that Step 2 builds.** That is the only thing that may be called the bill's PO. Never let `po_typed` reach a verdict, a `poContext` figure, a comment or the dashboard as though it were the coding. See Step 5.
+- **Zero rows here is a claim, so make sure it is a true one.** This query is the only thing that finds pending bills. So "no rows" and "the call failed" look the same to the reader. **An error, an auth challenge, or any response that is not a result set is a failure.** It is not an empty queue. Switch to the browser route per Step 0 and read the bills off the portlet.
 
 Two data quirks that will bite:
 
@@ -201,7 +201,7 @@ Two data quirks that will bite:
 - **`trandate` comes back as `"7/19/2026"`**, not ISO. Parse month, day and year explicitly.
 
 - **1b. Dashboard, authoritative, and the only place change orders appear:**
-- **Check `config.queueSource` first.** If it names a `url`, go there instead of the default dashboard. If it only `described` somewhere, resolve that description before navigating, and ask once if you cannot. With both empty, the normal case, navigate to the NetSuite dashboard and scroll to the bottom. Three kinds of portlet matter: one holding change orders, one holding purchase orders, frequently empty, and one holding vendor bills, named in `config.billPortlet`. Portlet names are user-specific saved searches and can be arbitrary. Never assume a name is a placeholder. If a portlet has been renamed since setup, report it rather than guessing.
+- **Check `config.queueSource` first.** If it names a `url`, go there instead of the default dashboard. If it only `described` somewhere, resolve that description before navigating, and ask once if you cannot. With both empty, the normal case, navigate to the NetSuite dashboard and scroll to the bottom. Three kinds of portlet matter. One holds change orders, one holds purchase orders, frequently empty, and one holds vendor bills, named in `config.billPortlet`. Portlet names are user-specific saved searches and can be arbitrary. Never assume a name is a placeholder. If a portlet has been renamed since setup, report it rather than guessing.
 
 **If no approval portlet is on the dashboard, do not conclude there is none.** That conclusion produces a queue permanently missing change orders, and it reads as a complete queue. Work down this ladder and stop at the first rung that resolves it.
 
@@ -245,7 +245,7 @@ ORDER BY tl.transaction, tl.linesequencenumber
 
 Add subsidiary, approval group and requestor as columns to the Step 1a query rather than reading them off the page.
 
-**Also pull the PO linkage, in the same bulk shape.** This is the authoritative answer to which PO a bill is applied to. It is what the record's Related Records, Purchase Orders subtab shows, and it is the only source Step 5 may treat as the coding.
+**Also pull the PO linkage, in the same bulk shape.** This is the authoritative answer to which PO a bill is applied to. It is what the record's Related Records, Purchase Orders subtab shows. It is the only source Step 5 may treat as the coding.
 
 ```sql
 SELECT l.nextdoc AS bill_id, po.id AS po_id, po.tranid AS po_ref, po.memo AS po_memo
@@ -271,7 +271,7 @@ SELECT id, name, filetype, filesize, url FROM file WHERE id IN (<ap_file ids>)
 
 The `url` column returns a path like `/core/media/media.nl?id=<id>&c=<account>&h=<hash>&_xt=.pdf`.
 
-**In browser mode, take that same path off the record page instead.** The attachment field renders as a link, and its `href` is the `media.nl` path with the `id`, `c` and `h` parameters already on it. Read it from the DOM in the record tab.
+**In browser mode, take that same path off the record page instead.** The attachment field renders as a link. Its `href` is the `media.nl` path, with the `id`, `c` and `h` parameters already on it. Read it from the DOM in the record tab.
 
 ```javascript
 // The href already carries the account and hash, so it needs no reassembly.
@@ -286,7 +286,7 @@ JSON.stringify(a)
 
 Rebuild the path from those parts inside the page when fetching, exactly as the connector route does. **Everything after this point is identical in both modes.** Same pdf.js load, same `new Uint8Array` wrap, same sniff, same six outcomes. This DOM read is **designed, not yet observed.** If it returns nothing, the field may render as something other than an anchor on that record type. Report what it is rather than guessing a selector.
 
-**Setup, once per record tab.** Run this in the item's record tab. The fetch has to be same-origin so the session cookie rides along, which is why pdf.js is loaded in a record tab and nowhere else. pdf.js loaded in a record tab goes with it when that tab closes, and is re-run in the next record tab. NetSuite's CSP permits the import. Verified live 2026-08-13. The pin below is deliberate. Do not bump it in a skill edit.
+**Setup, once per record tab.** Run this in the item's record tab. The fetch has to be same-origin so the session cookie rides along. That is why pdf.js is loaded in a record tab and nowhere else. pdf.js loaded in a record tab goes with it when that tab closes. It is re-run in the next record tab. NetSuite's CSP permits the import. Verified live 2026-08-13. The pin below is deliberate. Do not bump it in a skill edit.
 
 ```javascript
 const m = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
@@ -339,22 +339,22 @@ window.__pages = async function(from){
 };
 ```
 
-Call it again with `next` until it returns `null`. Most two-page and three-page invoices come back in one call. A single oversized page still returns alone and uncut. This rebuilds the column layout from pdf.js geometry, and that is the point of it. Verified against `pdftotext -layout` on a 3-page utility invoice: description, basis and amount landed in the same three columns. A naive `items.map(z => z.str).join(' ')` flattens the table and would silently break the quantity times rate checks in Step 4. **Do not simplify it to that.**
+Call it again with `next` until it returns `null`. Most two-page and three-page invoices come back in one call. A single oversized page still returns alone and uncut. This rebuilds the column layout from pdf.js geometry, and that is the point of it. Verified against `pdftotext -layout` on a 3-page utility invoice: description, basis and amount landed in the same three columns. In Step 4, a naive `items.map(z => z.str).join(' ')` flattens the table and would silently break the quantity times rate checks. **Do not simplify it to that.**
 
 Three things are not optional:
 - **`new Uint8Array(b)` is mandatory.** Handing `getDocument` the ArrayBuffer directly throws `InvalidPDFException` on bytes that are fine, which reads like a corrupt download.
 - **Never split a page across returns.** Splitting mid-page loses figures, because a row cut in half stops tying to anything.
-- **Keep the row filter.** Barcode rows and long digit strings read as query-string data to the output filter, and one of them turns the whole result into `[BLOCKED: Cookie/query string data]`. Measured on the test invoice: the filter dropped 15 of 60 rows, all payment-stub noise.
+- **Keep the row filter.** Barcode rows and long digit strings read as query-string data to the output filter. One of them turns the whole result into `[BLOCKED: Cookie/query string data]`. Measured on the test invoice: the filter dropped 15 of 60 rows, all payment-stub noise.
 
 - **Nothing is written to disk.** The bytes stay in the page as an ArrayBuffer. So there is no downloads folder to poll, and no stale file from an earlier run to re-read.
 - **No attachment at all flags the item.**
-- **Sniff the bytes before parsing. Never hand a non-PDF to pdf.js.** Handing a workbook to `getDocument` throws `InvalidPDFException`, the same error a corrupt download gives, so a good spreadsheet gets logged as unreadable support. Non-PDF support is not unusual here.
+- **Sniff the bytes before parsing. Never hand a non-PDF to pdf.js.** Handing a workbook to `getDocument` throws `InvalidPDFException`, the same error a corrupt download gives. So a good spreadsheet gets logged as unreadable support. Non-PDF support is not unusual here.
 - **Sniff the first four bytes before choosing a reader.** `%PDF` is a PDF. `PK\x03\x04` is a ZIP container, and a workbook only if it holds `xl/` entries. `\xFF\xD8\xFF` is JPEG. `\x89PNG` is PNG. Anything that decodes cleanly as text is text. Six outcomes, kept distinct: `text`, `spreadsheet`, `image`, `scanned`, `expired`, `unsupported`.
 - **`scanned` means the bytes were a PDF, it parsed, and it yielded almost nothing.** A parse that threw is never `scanned`. It is `spreadsheet`, `image` or `unsupported`, named by what the bytes actually were.
 - **Multiple attachments:** check the one the AP INVOICE or CHANGE ORDER ATTACHMENT field names, and mention the others.
 - **Workbooks parse with SheetJS, loaded the way pdf.js is.** Probed live 2026-08-14: `await import('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')` populates `globalThis.XLSX` on the first attempt. Then `XLSX.read(new Uint8Array(ab), {type:'array'})` and `XLSX.utils.sheet_to_csv` round-trip cleanly. **This pin is deliberate. Do not bump it in a skill edit.** Same wrap, same whole-unit size budget: sheet by sheet, never split one. Read every sheet including hidden ones. Treat a blank cell from an unevaluated formula as missing, never as zero.
 - **Images and scanned pages: look at them, with `computer`.** That is the only tool in the set that returns a visual read. NetSuite renders the file in the record tab, which is ordinary HTML, so `document.createElement('canvas')` works here. A visual read counts as parsed text for the tie-outs. If no visual read is available, fall back to OCR and **cap the verdict.** An OCR-derived figure never produces a clean approval recommendation. Label it `read by OCR, not independently verified` and put it in front of the user.
-- **A `[BLOCKED: …]` string is never a value.** The output filter redacts on more than query strings. A plain version number came back as `[BLOCKED: JWT token]` because its dotted shape matched a credential pattern, and dotted identifiers are ordinary in this data. If one appears where a figure should be, re-return the field in a different shape and read it again. Never let the marker reach a verdict or a note, and never read it as the field being empty.
+- **A `[BLOCKED: …]` string is never a value.** The output filter redacts on more than query strings. A plain version number came back as `[BLOCKED: JWT token]` because its dotted shape matched a credential pattern. Dotted identifiers are ordinary in this data. If one appears where a figure should be, re-return the field in a different shape and read it again. Never let the marker reach a verdict or a note, and never read it as the field being empty.
 - **Say which outcome caused a skip**, in that outcome's own words. "Unreadable" alone is what let entire formats go unread.
 - **On a two-column page, left and right rows sharing a y-coordinate merge into one line.** `pdftotext -layout` does the same, so this is not a regression. Do not split such a line on whitespace. Split on an x-threshold, or take the figures off the record.
 
@@ -392,10 +392,10 @@ Every check in Steps 4 and 5 carries an **id**, the **lens** it serves, and the 
 
 ### Math
 
-1. **Header tie.** The PDF total must equal the NetSuite AMOUNT. Flag any delta. Where the PDF itself explains it, through tax, freight, retainage or a partial draw, state the reconciliation rather than the bare difference.
+1. **Header tie.** The PDF total must equal the NetSuite AMOUNT. Flag any delta. The PDF may explain it, through tax, freight, retainage or a partial draw. Where it does, state the reconciliation rather than the bare difference.
 2. **Line tie.** Every NetSuite line must reproduce on the PDF. Sum the lines to the header in both places.
 3. **Internal consistency.** For AIA-style pay applications and phased professional-services invoices, re-derive the arithmetic. The schedule of values sums to the contract sum. Earned-less-previously equals current billing on each phase. Completed-to-date less previous certificates equals current payment due. Balance to finish equals contract less completed.
-4. **Prorations.** Assume no fixed house convention unless the user has stated one. When a partial period is billed, show the vendor's factor next to each plausible basis: calendar days over actual days in month, calendar days over 30, and business days. Let the user decide. **Then check the cumulative position**, below. A factor that looks generous in isolation is often correct across the engagement.
+4. **Prorations.** Assume no fixed house convention unless the user has stated one. When a partial period is billed, show the vendor's factor next to each plausible basis. The bases are calendar days over actual days in month, calendar days over 30, and business days. Let the user decide. **Then check the cumulative position**, below. A factor that looks generous in isolation is often correct across the engagement.
 
 ### Support adequacy
 
@@ -409,7 +409,7 @@ Adequate support identifies **what** was done, **for which period or scope**, an
 
 - This is where the review earns its keep. **In connector mode, always do it.**
 - **In browser mode this step does not run, and nothing is said about that.** Do not substitute a browser route. Opening the funding PO and every prior bill would cost more than the whole rest of the review. Skip the step.
-- **Say nothing about the absence.** No "cross-checks were not performed", no "reduced coverage", no caveat in the verdict, the warning line, the detail paragraph, the dashboard or the chat headline. **State what you checked, never what you did not.** A connector run's detail names the PO it tied to and the billing history it walked, and that is the whole differentiator. A caveat here would print on every item of every run, forever, for someone who cannot get a connector.
+- **Say nothing about the absence.** No "cross-checks were not performed", no "reduced coverage", no caveat in the verdict or the warning line. None in the detail paragraph, the dashboard or the chat headline either. **State what you checked, never what you did not.** A connector run's detail names the PO it tied to and the billing history it walked. That is the whole differentiator. A caveat here would print on every item of every run, forever, for someone who cannot get a connector.
 - **Pull every PO in the run in one query**, not one per item. The `IN` below is the point of the query, not a template. Collect the referenced PO numbers across all items first, then issue it once. The billing-history pull that follows is the same shape.
 
 ### 5a. Resolve which PO the bill is on — three states, never a boolean
@@ -423,8 +423,8 @@ Adequate support identifies **what** was done, **for which period or scope**, an
 | `failed` | the query **errored** | **Unknown. Never `unlinked`.** Say the linkage could not be read and check nothing that depends on it. |
 
 - **Never collapse these three into a boolean.** Never let a `failed` become "this bill has no PO". A timeout is not an absence of linkage.
-- **A queue row that is a purchase order has no linkage question, so do not ask it one.** The record is the PO. Nothing links it in `nextdoc`, so 5a would return `unlinked` and print *no PO is applied* on the purchase order itself. Leave `poLink` and `poRef` unset on that item and say nothing about linkage. 5b, 5c and 5d follow it, because all three are about a bill's position against a commitment.
-- **Then pull the PO records you resolved**, by internal id from the linkage rather than by matching a document-number string.
+- **A queue row that is a purchase order has no linkage question, so do not ask it one.** The record is the PO. Nothing links it in `nextdoc`. So 5a would return `unlinked` and print *no PO is applied* on the purchase order itself. Leave `poLink` and `poRef` unset on that item and say nothing about linkage. 5b, 5c and 5d follow it, because all three are about a bill's position against a commitment.
+- **Then pull the PO records you resolved**, by internal id from the linkage. Do not match by a document-number string.
 
 ```sql
 SELECT t.id, t.tranid, t.trandate, t.foreigntotal, e.entityid AS vendor, t.memo, t.status,
@@ -435,11 +435,11 @@ FROM transaction t LEFT JOIN vendor e ON e.id = t.entity
 WHERE t.id IN (<po_id values from the Step 2 linkage>)
 ```
 
-Keying on `po_id` matters. A document-number match resolves whatever string you hand it, so feeding it the typed reference silently pulls the contract figures for the wrong PO.
+Keying on `po_id` matters. A document-number match resolves whatever string you hand it. So feeding it the typed reference silently pulls the contract figures for the wrong PO.
 
 ### 5b. A typed reference that disagrees is a data-entry note, not a misallocation
 
-When `po_typed`, or the PO printed on the invoice, does not match the `linked` PO, the finding is not "coded to the wrong PO". The money is where the linkage says it is. Write it as what it is, and put it in `poWarning`:
+`po_typed`, or the PO printed on the invoice, may not match the `linked` PO. When that happens, the finding is not "coded to the wrong PO". The money is where the linkage says it is. Write it as what it is, and put it in `poWarning`:
 
 > The PO reference typed on this record (`PO16033`) does not match the PO it is actually
 > applied to (`PO16034`). The bill is correctly applied. The reference field is stale.
@@ -451,7 +451,7 @@ Then reconcile. A professional-services invoice's "billed previously" plus its r
 
 ### 5c. Billed-to-date comes from the linkage, split by approval state
 
-**Derive it through the link table, not from a memo search.** Sum the bills NetSuite has actually applied to that PO, deduplicated to distinct bill ids per 5a, and keep approved and pending apart.
+**Derive it through the link table, not from a memo search.** Sum the bills NetSuite has actually applied to that PO, deduplicated to distinct bill ids per 5a. Keep approved and pending apart.
 
 ```sql
 SELECT d.po_id, d.approvalstatus, SUM(d.amt) AS billed, COUNT(*) AS bills
@@ -464,11 +464,11 @@ GROUP BY d.po_id, d.approvalstatus
 ```
 
 - **One written convention.** `approvalstatus = 2` is **billed to date**. `approvalstatus = 1` is **pending, stated separately and naming this bill**. So "what this item takes it to" is arithmetic you show, not an inference. Do not fold pending into billed-to-date. Never report a billed-to-date without saying which of the two it is.
-- **Never derive a `poContext` figure from a vendor-plus-memo search.** The old route summed on vendor and a memo `LIKE` with no PO predicate at all, so it swept in bills applied to other POs. Observed 2026-08-20: it reported `PO11120` at `$478,012.50` against a `$372,500` contract, while the two bills actually applied to it total exactly `$372,500`.
+- **Never derive a `poContext` figure from a vendor-plus-memo search.** The old route summed on vendor and a memo `LIKE` with no PO predicate at all. So it swept in bills applied to other POs. Observed 2026-08-20: it reported `PO11120` at `$478,012.50` against a `$372,500` contract. The two bills actually applied to it total exactly `$372,500`.
 
 ### 5d. A zero is not a finding
 
-**A billed-to-date of zero on the PO a bill is applied to is the expected reading.** That is the first draw against a fresh commitment, and any PO whose only bill is still pending. On its own it is never evidence of miscoding, and it must never be offered as corroboration that a bill sits somewhere else. Before treating a zero as meaningful at all, confirm the linkage query returned rows. A zero from a query that matched nothing is not a fact about the PO.
+**A billed-to-date of zero on the PO a bill is applied to is the expected reading.** That is the first draw against a fresh commitment, and any PO whose only bill is still pending. On its own it is never evidence of miscoding. It must never be offered as corroboration that a bill sits somewhere else. Before treating a zero as meaningful at all, confirm the linkage query returned rows. A zero from a query that matched nothing is not a fact about the PO.
 
 **Pull the billing history** for the same engagement, for duplicates, sequence gaps and proration precedent only. This query is no longer a source of any `poContext` figure.
 
@@ -480,7 +480,7 @@ WHERE t.type = 'VendBill' AND e.entityid = '<vendor>'
 ORDER BY t.trandate
 ```
 
-The memo field is the reliable engagement key. Staffing POs are often pooled, carrying many people at once, so a PO memo naming a different person is not a mismatch. Query by memo, not by PO alone. Three further checks. All three are **designed, not yet observed.** Step 5 runs only in connector mode, and no connector run has been walked through end to end.
+The memo field is the reliable engagement key. Staffing POs are often pooled, carrying many people at once. So a PO memo naming a different person is not a mismatch. Query by memo, not by PO alone. Three further checks. All three are **designed, not yet observed.** Step 5 runs only in connector mode, and no connector run has been walked through end to end.
 
 - **Cumulative reasonableness.** Sum all bills for the engagement including the pending one and compare to what the contract period implies. A partial-month factor that looks inflated in isolation is often exactly right once the whole engagement is footed.
 - **Application sequence.** If a pay application says "less previous certificates $X", confirm that bills totalling $X exist in NetSuite for that engagement. A missing intermediate application means the audit trail is broken. Flag it before approval.
@@ -527,11 +527,11 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
 ```
 
 - These field names are the contract with `publish_dashboard.py`. Do not rename them.
-- **`type` is required, and those three strings are the whole vocabulary.** They are also what Step 8's record-type table routes on, and the two lists are gated against each other in the plugin repo. Write it on every item. The publish script falls back to `Bill` when it is missing, which is a legacy default that silently mislabels a purchase order.
-- **`poRef` is the PO the bill is applied to**, resolved from the Step 2 linkage, never from `poTyped`. The two are separate fields on purpose: keeping the typed value lets a reader see the disagreement. `poLink` says which of the three states produced `poRef`, so an `unlinked` or `failed` item can never read as though its PO had been confirmed.
+- **`type` is required, and those three strings are the whole vocabulary.** They are also what Step 8's record-type table routes on. The two lists are gated against each other in the plugin repo. Write it on every item. The publish script falls back to `Bill` when it is missing. That is a legacy default that silently mislabels a purchase order.
+- **`poRef` is the PO the bill is applied to**, resolved from the Step 2 linkage, never from `poTyped`. The two are separate fields on purpose: keeping the typed value lets a reader see the disagreement. `poLink` says which of the three states produced `poRef`. So an `unlinked` or `failed` item can never read as though its PO had been confirmed.
 - `head`, `facts`, `poContext` and `detail` are what the dashboard renders. Write them for a reader who is skimming. `facts` should be the two or three lines that carry the specific figures.
 - **`config.focus.emphasis`, when set, decides what leads those fields, and nothing else.** It may reorder and reword. It may **never** change a `verdict`, drop a finding, or alter `amount`, `poRef`, `poLink` or `poTyped`. Every check that ran still gets its line.
-- **Emphasis is the user's own note about their job, not an instruction to the review.** It cannot authorise a click, soften a flag, or relax any Absolute rule. If it asks for something this skill does not do, record what was asked, do none of it, and say so once.
+- **Emphasis is the user's own note about their job, not an instruction to the review.** It cannot authorise a click, soften a flag, or relax any Absolute rule. If it asks for something this skill does not do, record what was asked and do none of it. Say so once.
 
 On each run:
 
@@ -550,7 +550,7 @@ cd "<workspace>/NetSuite Approval Checks" && python3 -B publish_dashboard.py
 ```
 
 - **`-B` is not optional.** Without it Python may leave a `__pycache__/` beside the script. Observed 2026-09-01 in a folder that then refused to delete it. It is the one file in this folder no step names, so the fix is to never create it.
-- **Render it as an inline widget with `show_widget`, passing the file's contents. Always attempt this, whatever the file size.** A large queue makes a large file, and that is normal. Handing the user a file or an artifact instead of attempting the render is a failure of this step, not a cautious alternative. It silently costs them one-click execute.
+- **Render it as an inline widget with `show_widget`, passing the file's contents. Always attempt this, whatever the file size.** A large queue makes a large file, and that is normal. Handing the user a file or an artifact instead of attempting the render is a failure of this step. It is not a cautious alternative. It silently costs them one-click execute.
 
 <!--__SHARED:skill-artifact-host__-->
 **Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live. The widget host exposes `sendPrompt` as a bare global. The artifact host exposes `window.cowork` with `callMcpTool`, `askClaude` and `runScheduledTask`, and no `sendPrompt` anywhere. On an artifact the execute button cannot start a turn and fails silently. As a widget it works in one click, confirmed on a live run. The template keeps a clipboard handoff for the artifact case. It is a fallback, not a plan.
@@ -561,10 +561,10 @@ cd "<workspace>/NetSuite Approval Checks" && python3 -B publish_dashboard.py
 > If a red banner appears at the top of the dashboard, tell me and I'll hand you `index.html` directly instead.
 
 <!--__SHARED:skill-render-fidelity__-->
-- **Fall back only after an observed failure.** The template carries its own integrity guard: a marker as its last element, checked from `<head>` as soon as the DOM parses. It raises a visible red banner when anything was lost in transit. The banner is designed, not yet observed firing. Believe it when it fires. Report the byte count beside it. Then hand over `index.html` directly and say why. A prediction that it might appear is not a reason to skip the render.
+- **Fall back only after an observed failure.** The template carries its own integrity guard. A marker sits as its last element, checked from `<head>` as soon as the DOM parses. It raises a visible red banner when anything was lost in transit. The banner is designed, not yet observed firing. Believe it when it fires. Report the byte count beside it. Then hand over `index.html` directly and say why. A prediction that it might appear is not a reason to skip the render.
 - **Pass the file verbatim.** Read it and hand it over byte for byte. Never retype, summarise or tidy it on the way through. A widget takes the content inline, so the layout travels through the tool call. A rendered dashboard missing a card, a control or a colour is this, not the template.
 - **Reading the file is part of the render.** Read the whole file. When the read comes back short, read the rest by offset and continue. A file arriving in two reads is still passed byte for byte, and concatenating your own reads is not retyping. Measured 2026-09-01: the publish script's one-compact-line-per-item output brought a 62-item dashboard from 2,834 lines to 886.
-- **A byte count is not an observed truncation.** Predicting from the size that the harness will not hand the file over intact is the move this step forbids, one stage earlier. What licenses a fallback is a read that came back short, or the red banner. Nothing else.
+- **A byte count is not an observed truncation.** Predicting from the size that the harness will not hand the file over intact is the move this step forbids. That happens one stage earlier. What licenses a fallback is a read that came back short, or the red banner. Nothing else.
 <!--__END_SHARED:skill-render-fidelity__-->
 
 The script writes `index.html` beside the state file and keeps the last seven renders in `renders/<weekday>.html`. Diff today against the last good one to see what changed, and **re-render from `index.html` rather than re-running the review.** The review costs connector queries and attachment extraction. The render costs nothing. Do not write a cleanup step for `renders/`. The folder is usually cloud-synced, where deleting is typically blocked, which is why the slots are overwritten in place. The script prints the headline line to use in chat.
@@ -586,7 +586,7 @@ Step 9 runs first, and the headline follows it. **Report in chat with one line o
 6 pending · 1 flagged · dashboard updated
 ```
 
-Add a second line only if something blocked the run, such as a login redirect, a missing attachment that prevented review, or a renamed portlet. Never put the verdicts in chat. **One more line, and only in one case: a lens the user picked could not run.** Suppose `config.focus.lenses` names a lens whose capability is missing, such as `supply-chain` with no working connector. Then open the chat reply with a single plain line saying so. Name the lens and what is missing, then never mention it again in that run.
+Add a second line only if something blocked the run. That includes a login redirect, a missing attachment that prevented review, or a renamed portlet. Never put the verdicts in chat. **One more line, and only in one case: a lens the user picked could not run.** Suppose `config.focus.lenses` names a lens whose capability is missing, such as `supply-chain` with no working connector. Then open the chat reply with a single plain line saying so. Name the lens and what is missing, then never mention it again in that run.
 
 > supply-chain checks did not run — no NetSuite connector this session. The rest of the review is unchanged.
 
@@ -606,4 +606,4 @@ Add a second line only if something blocked the run, such as a login redirect, a
 - **Do not open a tab in this step.**
 <!--__END_SHARED:skill-close-down__-->
 
-The tabs this skill opens are the record tabs, and in Step 8's frozen-tab case the fresh tab opened to read the approval state.
+The tabs this skill opens are the record tabs. In Step 8's frozen-tab case, that also includes the fresh tab opened to read the approval state.

@@ -32,15 +32,15 @@ has-a-value check.
 and ties each attached PCI to a line.
 
 **Commitments.** These are the purchase order and work order contracts
-themselves, when one comes to you for approval before it is executed. The
+themselves. They come to you for approval before execution. The
 plugin foots the schedule of values to the contract total. It finds that total
-in the attached agreement or bid tab. It names duplicated and unpriced lines,
-reports the retainage, and points out anything else in the same queue drawing
-on the same contract.
+in the attached agreement or bid tab. It names duplicated and unpriced lines
+and reports the retainage. It also points out anything else in the same queue
+drawing on the same contract.
 
 Commitments get the mechanical checks only. A change order or an invoice
-arrives with the contract already agreed, so the review is arithmetic against a
-fixed baseline. A commitment out for approval is the baseline itself. Whether
+arrives with the contract already agreed. The review is then arithmetic
+against a fixed baseline. A commitment out for approval is the baseline itself. Whether
 the scope, the rate and the counterparty are the right ones is left to you.
 
 Each item lands as clear, flagged, skipped or gate-unknown. Skipped is a real
@@ -94,8 +94,8 @@ no support raises a warning.
 
 You mark responses per item, then execute them together. Execute sends the
 instruction straight into the conversation in one click. Nothing reaches Procore
-from the dashboard itself. The responses run from that message, and each item is
-re-verified as still yours to action immediately before it is clicked.
+from the dashboard itself. The responses run from that message. Each item is
+re-verified as still yours to action, immediately before it is clicked.
 
 The controls and the floating header were measured in a browser. Nobody has
 seen them in the widget host. See G12, widget host
@@ -107,8 +107,8 @@ unseen.
 - **A connected workspace folder is recommended, not required.** It holds the
   review state between runs. A run without the folder works. See
   F76, folderless runs work.
-- **No connector.** Procore has no MCP connector, so the dashboard is a
-  snapshot with a prominent re-check control rather than a live view. It says
+- **No connector.** Procore has no MCP connector. The dashboard is therefore a
+  snapshot, with a prominent re-check control rather than a live view. It says
   so plainly and ages its own timestamp.
 - **The machine on and Chrome open whenever it runs.** Everything here goes
   through your real browser session. A scheduled run needs the computer awake,
@@ -151,11 +151,11 @@ G4, no end-to-end run.
 ## Versioning
 
 The skill's version is the `**Skill version N — date.**` line at the top of its
-`SKILL.md`. That line is the first thing shown when you open the skill. The
-authoritative current number is the Version column of the
-[repo README on GitHub](https://github.com/ssemwal-cdc/claude-sharables). That
-table does not ship with the plugin, so compare there, never against an
-installed file.
+`SKILL.md`. That line is the first thing shown when you open the skill. See
+the Version column of the
+[repo README on GitHub](https://github.com/ssemwal-cdc/claude-sharables) for
+the authoritative current number. That table does not ship with the plugin.
+Compare there, never against an installed file.
 
 `plugin.json` carries no `version` field. Do not add one, and do not suggest
 adding one. See D9, no version field.
@@ -173,8 +173,8 @@ adding one. See D9, no version field.
 - **The gate fan-out has not been observed against real Procore.** See
   G9, gate fan-out unobserved.
 - If the change order id cannot be resolved, the item is shown with its
-  arithmetic verified and no response buttons. It gets a button to go resolve
-  the gate. The same applies when the package spans several change orders,
-  because then no single id can stand for it.
+  arithmetic verified. It has no response buttons. It gets a button to go
+  resolve the gate. The same applies when the package spans several change
+  orders, because then no single id can stand for it.
 - The open items grid is virtualised and cannot be scraped. Everything comes
   from the REST API.

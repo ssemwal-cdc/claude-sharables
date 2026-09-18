@@ -4,11 +4,11 @@
 not a suggestion. Read this file in full before executing anything. Do not summarise it
 from memory. Do not act on a partial read.
 
-The user marks decisions in the dashboard and presses execute. That posts an instruction naming each document straight into the conversation as a new message. One click, no clipboard. The clipboard handoff in the template is the artifact-host fallback, so a run that lands in it was rendered on the wrong host. That instruction, or an equivalent one typed directly, is the only thing that authorises a click. It carries the authority and the item list. **This step is the procedure**, and nothing in that message overrides it. Before clicking anything, check the instruction names specific documents. If it says "approve everything" or "approve the clear ones", stop and ask which.
+The user marks decisions in the dashboard and presses execute. That posts an instruction naming each document straight into the conversation as a new message. One click, no clipboard. The clipboard handoff in the template is the artifact-host fallback. So a run that lands in it was rendered on the wrong host. That instruction, or an equivalent one typed directly, is the only thing that authorises a click. It carries the authority and the item list. **This step is the procedure**, and nothing in that message overrides it. Before clicking anything, check the instruction names specific documents. If it says "approve everything" or "approve the clear ones", stop and ask which.
 
 ### Record types and their routes
 
-**Every type Step 1 puts in the queue has a row here.** The queue's vocabulary is the `type` field in Step 6's schema. The two lists are kept in step by a build gate in the plugin repo. Observed 2026-09-01: they drifted apart, and two batches of reviewed purchase orders stopped at the same gate before anyone called it a defect.
+**Every type Step 1 puts in the queue has a row here.** The queue's vocabulary is the `type` field in Step 6's schema. The two lists are kept in step by a build gate in the plugin repo. Observed 2026-09-01: they drifted apart. Two batches of reviewed purchase orders stopped at the same gate before anyone called it a defect.
 
 | record type | pre-click gate | post-click verification |
 |---|---|---|
@@ -17,7 +17,7 @@ The user marks decisions in the dashboard and presses execute. That posts an ins
 | `Change Order` | the record page's approval buttons — it carries none of those fields | a fresh page load |
 
 - **Purchase orders take the bill route on the strength of the fields, not the resemblance.** Confirmed on live records 2026-09-01: a purchase order pending approval carries `approvalstatus`, `custbody_sna_cdc_next_approver`, `custbody_sna_cdc_previous_approver` and `custbody_sna_cdc_app_count`. Step 1's gate and step 7's verification read those fields, so the route transfers unchanged.
-- **The button set is a separate question and it is not settled.** Nobody has read a purchase order's approval buttons. Step 4 reads the labels off the page and says what to do when Approve With Notes is not among them. Do not assume a purchase order offers the three buttons a bill does, and do not report that it does.
+- **The button set is a separate question and it is not settled.** Nobody has read a purchase order's approval buttons. Step 4 reads the labels off the page. It says what to do when Approve With Notes is not among them. Do not assume a purchase order offers the three buttons a bill does, and do not report that it does.
 - **With no connector, no type can be gated by query.** The change-order rule is then the rule for all three. The approval buttons are the gate, and a fresh page load is the verification. A gate that cannot be read is unknown, never a pass.
 - **Compare amounts by magnitude.** `foreigntotal` is negative on vendor bills, per Step 1a, and no observation says every type signs it the same way. The gate and step 3's confirmation both compare absolute values for that reason. A sign convention that differs by record type is not a changed amount.
 
@@ -34,7 +34,7 @@ Then, **one record at a time**:
 
    A row back, amount matching, means it is still yours. Carry on into step 2. If a row comes back but the amount differs from the instruction, **stop the batch.** The record changed underneath the review.
 
-   - **No row is two different things, and only one of them is a skip.** It means the record was approved, rejected or rerouted since the snapshot. Or it means this type carries no `approvalstatus` and no next-approver for the query to gate on, so the query returns the same nothing. Never log a skip off the empty result alone. Open the record and read the buttons.
+   - **No row is two different things, and only one of them is a skip.** It means the record was approved, rejected or rerouted since the snapshot. Or it means this type carries no `approvalstatus` and no next-approver for the query to gate on. So the query returns the same nothing. Never log a skip off the empty result alone. Open the record and read the buttons.
      - **Buttons absent** means actioned elsewhere. Log `skipped: already actioned elsewhere — no click made` and move on. Do not click, do not retry.
      - **Buttons present** means the query could not gate this type. Use the buttons as the gate, exactly as the change-order bracket below does, and carry on into step 3.
      - **The page will not load, or the buttons cannot be read** means **stop the batch.**
@@ -49,15 +49,15 @@ Then, **one record at a time**:
 
 2. Open the record by internal id at `https://<account>.app.netsuite.com/app/accounting/transactions/transaction.nl?id=<id>`.
 
-   - **Confirm the type against the record while you are here.** The label on the dashboard card and in the instruction comes from a field with a legacy default. So it can say `Bill` about something that is not one. The record page cannot. If the record is a different type from the one step 1 routed on, re-pick the row from the table above before going further. Say so in the log. The gate that already ran was the wrong one for it.
+   - **Confirm the type against the record while you are here.** The label on the dashboard card and in the instruction comes from a field with a legacy default. So it can say `Bill` about something that is not one. The record page cannot. The record may be a different type from the one step 1 routed on. If so, re-pick the row from the table above before going further. Say so in the log. The gate that already ran was the wrong one for it.
    - **A record type with no row in the table above is never clicked.** Report it and stop there. Say which of these two it is, because the answer decides whose problem it is.
 
      - **Step 1 does not admit that type either** means the queue has changed shape. Name the type and the record, invent no procedure for it, and leave it.
-     - **Step 1 reviewed it and this step cannot action it** is a **defect in this skill**, not a property of the record. Say so in those words, name the type, and say the fix is a row in the table above. Do not offer it to the user as a decision. They cannot authorise their way out of a missing procedure. Neither case is a licence to improvise, and neither is a reason to click.
+     - **Step 1 reviewed it and this step cannot action it.** That is a **defect in this skill**, not a property of the record. Say so in those words, name the type, and say the fix is a row in the table above. Do not offer it to the user as a decision. They cannot authorise their way out of a missing procedure. Neither case is a licence to improvise, and neither is a reason to click.
 
 3. **Confirm before clicking.** Read the document number, vendor and amount off the page and check all three against the instruction. Any mismatch means **stop the whole batch**, do not click, report it. This is a stop, not a skip.
 
-   - **If the record opens but the approval buttons are absent, the first hypothesis is that the item has already been actioned.** That is the likeliest cause in an execute batch. `unmeasured`. On a change order it is step 1's gate firing. Skip it, log it as `skipped: already actioned elsewhere — no click made`, and move on.
+   - **The record may open with the approval buttons absent.** The first hypothesis is that the item has already been actioned. That is the likeliest cause in an execute batch. `unmeasured`. On a change order it is step 1's gate firing. Skip it, log it as `skipped: already actioned elsewhere — no click made`, and move on.
    - **Suspect the browser's NetSuite role only when every item in the batch shows no buttons.** A browser left on the connector's role sees every record without its buttons. That would otherwise log an entire batch as actioned. Ask the user to check their role. Never click anything while the role is in doubt.
 
 4. **Choose the button.** Approve, Approve With Notes and Reject sit adjacent. Read the label before clicking, never the position.
@@ -65,7 +65,7 @@ Then, **one record at a time**:
    - An **affirmative** instruction, whether it says "approve" or "approve with notes", goes through **Approve With Notes**. That is the only way the note in step 5 can be attached. Plain **Approve** is reached only through the fallback in step 6.
    - A **rejection** goes through **Reject**, exactly as named.
    - **Never substitute across the two.** An approve instruction must never reach Reject, and a reject instruction must never reach either approve button.
-   - **A record that offers no Approve With Notes button** takes the affirmative button it does offer, and the note is then **lost, not relocated**. Read the buttons off the page, never assume them. Log it as `approved without a note — this record type offers no notes button`, and put the note nowhere else. Not in a memo field, not in a comment, and not in chat as though it had been recorded. A missing notes button never holds back an authorised affirmative click. A **rejection** with no Reject button is a **stop**, not a substitution.
+   - **A record that offers no Approve With Notes button** takes the affirmative button it does offer. The note is then **lost, not relocated**. Read the buttons off the page, never assume them. Log it as `approved without a note — this record type offers no notes button`, and put the note nowhere else. Not in a memo field, not in a comment, and not in chat as though it had been recorded. A missing notes button never holds back an authorised affirmative click. A **rejection** with no Reject button is a **stop**, not a substitution.
 
 5. **Enter the note.** Approve With Notes loads a **normal page in the same tab**. It is not a popup and not a dialog. Read that page rather than assuming its layout, fill the note field, and submit. Where step 4 clicked a plain affirmative button, there is no note page and nothing to type. Go straight to step 7 and log the loss.
 
@@ -84,7 +84,7 @@ Then, **one record at a time**:
    - **Plain Approve can itself do nothing, silently, and the mechanism is known.** Observed 2026-08-15: five identical clicks with zero effect. The button's handler loads a client script asynchronously, and only then calls `win.open`. By then the click's transient user-activation has expired, so Chrome drops the navigation. No error, no dialog, no network request, nothing in the console. Only the same page-load read detects it. So plain Approve gets **one** click, then a fresh page load.
 
      - **Advanced** means done. Log it as approved without a note.
-     - **Still pending** means do not click again. **Navigate the approval request the button itself would have made.** Read the URL verbatim out of the button's own handler on the live record page. Never compose it from memory or a template. Assert its parameters against the instruction before firing: `recid` is this record's internal id, `acttype` is the named affirmative response, and the approver id names the user. Then navigate to it **once**, in the same authenticated tab. This is the button's own server-side path and its own audit trail, never a REST shortcut. The never-`ns_updateRecord` rule is untouched. Confirmed live 2026-08-15: record 2534442 approved this way after five dead clicks.
+     - **Still pending** means do not click again. **Navigate the approval request the button itself would have made.** Read the URL verbatim out of the button's own handler on the live record page. Never compose it from memory or a template. Assert its parameters against the instruction before firing. `recid` is this record's internal id, `acttype` is the named affirmative response, and the approver id names the user. Then navigate to it **once**, in the same authenticated tab. This is the button's own server-side path and its own audit trail, never a REST shortcut. The never-`ns_updateRecord` rule is untouched. Confirmed live 2026-08-15: record 2534442 approved this way after five dead clicks.
      - Then step 7's verification, unchanged. Still pending after the URL navigation too means **stop the batch.** Two hard edges apply. This route exists **only for the affirmative path.** A rejection always goes through the Reject form, because it needs the reason a person wrote. It can carry no note, so log it as `approved without a note through the button's own URL, after the button no-opped`.
 
 7. **Verify it landed, against the record, not the queue.**
@@ -110,7 +110,7 @@ Then, **one record at a time**:
 
 9. **Append the outcome to `actions` only after observing it.** Record what the verification query actually returned, never what the click was meant to achieve. An entry written ahead of its verification is a fabrication. Afterwards it is indistinguishable from a real one.
 
-- **The post-click verification stays per item too.** Do not click all N and reconcile once at the end. The check catches more than lag: a record in an unexpected state, a response that routed somewhere it should not have, and the frozen-tab case in step 6.
+- **The post-click verification stays per item too.** Do not click all N and reconcile once at the end. The check catches more than lag. It also catches a record in an unexpected state, and a response that routed somewhere it should not have. It catches the frozen-tab case in step 6 too.
 - **A failure stops the batch.** If an item cannot be confirmed or does not match, stop there. A record that has not propagated yet is **not** a failure. Do not report it as one, and do not retry it. Report what was actioned, what is still propagating, what genuinely failed and why, and what remains untouched. Never continue past a real failure, and never retry blind.
 
-When the batch finishes, re-run Step 7 so actioned items move to the bin. Step 9 runs after that re-render, before the counts are reported. Report in chat how many were actioned, how many were confirmed advanced, how many are still propagating, and anything that failed.
+When the batch finishes, re-run Step 7 so actioned items move to the bin. Step 9 runs after that re-render, before the counts are reported. Report in chat how many were actioned and how many were confirmed advanced. Also report how many are still propagating, and anything that failed.

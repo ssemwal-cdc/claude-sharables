@@ -25,7 +25,7 @@ The cause list is gone.
 
 Three states were collapsed into two. Kept, refused and not attempted. The state that means nobody looked reported as the state that means it failed.
 
-The step now names all three, ties the session-local fallback to the refused state alone, and requires the write to be read back rather than merely issued.
+The step now names all three, and it ties the session-local fallback to the refused state alone. It requires the write to be read back rather than merely issued.
 
 It forbids inferring the outcome from any property of the folder, and requires a genuine fallback to name the error that refused it.
 

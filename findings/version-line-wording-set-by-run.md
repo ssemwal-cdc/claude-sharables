@@ -13,7 +13,7 @@ date: 2026-08-21
 
 Asked which version it ran, the installed skill reported its line correctly.
 
-It then looked for the README table locally and found nothing, because a `git-subdir` install ships the plugin folder and never the repo root.
+It then looked for the README table locally and found nothing. A `git-subdir` install ships the plugin folder and never the repo root.
 
 It reported the staleness check as unrunnable and proposed adding a `version` field to `plugin.json`. That is the field D9, no version field, bans.
 

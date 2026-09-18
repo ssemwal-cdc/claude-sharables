@@ -121,9 +121,9 @@ Say "run my approval check". Setup happens once, automatically:
 1. Checks whether a NetSuite connector is available, and records which one
 2. Asks which dashboard portlet holds your bills
 3. Looks up your NetSuite employee internal id from your email, where a
-   connector is available, and asks you to confirm the name it found. Without a
+   connector is available. It asks you to confirm the name it found. Without a
    connector this step is skipped. The portlets are saved searches already
-   scoped to whoever is signed in, so the queue is yours with no id to
+   scoped to whoever is signed in. So the queue is yours with no id to
    configure
 4. Copies its template and publish script into your workspace folder
 

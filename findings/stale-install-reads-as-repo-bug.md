@@ -11,7 +11,7 @@ date: 2026-08-14
 
 **Argument.**
 
-A report said that `publish_dashboard.py` hardcoded the change order type that returns a 400, and the repo had shipped the working type the day before. Both observations were correct.
+A report said that `publish_dashboard.py` hardcoded the change order type that returns a 400. The repo had shipped the working type the day before. Both observations were correct.
 
 Procore Step 0 copies plugin assets over the workspace copies on every run. So the workspace mirrors the installed plugin, not the repo.
 

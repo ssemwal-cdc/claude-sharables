@@ -23,7 +23,7 @@ The stat tiles stay three across at 390px. Two labels wrap onto a second line, s
 
 The dashboard execute bar is `position:sticky`. A full-page capture paints it once, over the rows near the bottom edge of the first viewport. That overlap is a capture artefact and not a layout defect. `summary.txt` says so.
 
-One product defect was seen while looking. Both templates write the `.po` element without an empty guard, so a row with no context text renders an empty grey strip.
+One product defect was seen while looking. Both templates write the `.po` element without an empty guard. A row with no context text renders an empty grey strip.
 
 **Evidence.**
 

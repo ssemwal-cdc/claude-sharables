@@ -30,7 +30,7 @@ The old glyph sat at the same line pitch as the arithmetic above it, so two unre
 **Evidence.**
 
 - Run in 2026-08 and landed 2026-08-24 in both plugins.
-- The label shift measured 16px between the two NetSuite verdict words, and the Procore gate-unknown label would have set a gutter of about 118px for every row.
+- The label shift measured 16px between the two NetSuite verdict words. The Procore gate-unknown label would have set a gutter of about 118px for every row.
 - Capping the figures panel measured 216px against 221px, so it cost more height than it saved.
 - The prose clamp needs its control conditioned on clipping. See F59, a clamp needs real clipping.
 

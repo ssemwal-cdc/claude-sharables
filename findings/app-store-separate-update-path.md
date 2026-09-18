@@ -13,7 +13,7 @@ date: 2026-08-21
 
 App-installed plugins live in the account-synced store of the app, not in `~/.claude/plugins`.
 
-The force-update path is profile, then Settings, then Plugins, then Browse, then the Personal tab, then the `claude-sharables` chip beside Local uploads, then the overflow menu, then Check for updates.
+The force-update path is profile, then Settings, then Plugins, then Browse, then the Personal tab. Then it is the `claude-sharables` chip beside Local uploads, then the overflow menu, then Check for updates.
 
 That menu also carries the Sync automatically toggle and shows Synced commit. Synced commit is the installed release and is directly comparable to the tip of `main`.
 

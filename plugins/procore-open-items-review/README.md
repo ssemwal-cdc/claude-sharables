@@ -44,7 +44,7 @@ fixed baseline. A commitment out for approval is the baseline itself. Whether
 the scope, the rate and the counterparty are the right ones is left to you.
 
 Each item lands as clear, flagged, skipped or gate-unknown. Skipped is a real
-verdict. An item with no support attached is not ready for review, so it is not
+verdict. An item with no support attached is not ready for review. So it is not
 approved, not rejected, and not given a verdict it has not earned.
 
 ## Support is read without downloading anything
@@ -120,14 +120,14 @@ unseen.
 
 Say "run my Procore review". Setup happens once. It asks you to confirm your
 company id. Then, for each custom tool your queue draws change items from, it
-asks for that tool's id and its cost custom field mapping. All of those differ
-per company, and the field mapping differs per tool as well.
+asks for that tool's id. It also asks for its cost custom field mapping. All of
+those differ per company, and the field mapping differs per tool as well.
 
 More than one custom tool is normal. Every run reconciles the tools it finds in
 the queue against the ones it has been told about. A tool it has not seen
 before is set up then and there, and named in the run report. A tool it cannot
 resolve is still reviewed and still respondable. That tool's items carry no
-record link and cannot come back `clear`, because the cost fields those checks
+record link and cannot come back `clear`. The cost fields those checks
 read are mapped per tool.
 
 There is no user id to configure. Procore's queue endpoint and permission gate
@@ -172,8 +172,8 @@ adding one. See D9, no version field.
 - **The gate fan-out has not been observed against real Procore.** See
   G9, gate fan-out unobserved.
 - If the change order id cannot be resolved, the item is shown with its
-  arithmetic verified, no response buttons, and a button to go resolve the
-  gate. The same applies when the package spans several change orders, because
-  then no single id can stand for it.
+  arithmetic verified and no response buttons. It gets a button to go resolve
+  the gate. The same applies when the package spans several change orders,
+  because then no single id can stand for it.
 - The open items grid is virtualised and cannot be scraped. Everything comes
   from the REST API.

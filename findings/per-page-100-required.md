@@ -15,7 +15,7 @@ A page size of 100 is required on the workflow instances endpoint.
 
 On the default page size the endpoint hid live instances outright.
 
-The likely mechanism is that the page window is applied before the filters, so on a project with many instances the filtered one is not on page 1.
+The likely mechanism is that the page window is applied before the filters. So on a project with many instances, the filtered one is not on page 1.
 
 It now rides on every gate query, for every item type.
 

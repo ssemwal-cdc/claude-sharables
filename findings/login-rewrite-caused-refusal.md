@@ -33,6 +33,6 @@ It is the shape of that sentence, quoted back as though it were a rule.
 **Evidence.** Reported 2026-09-10, one run.
 The prose changed in `6df1570`, the commit that rewrote the login rung as an
 absolute.
-See G13, a run assembling a refusal from repo prose, the same shape.
+See G13, three runs blaming the platform, the same shape.
 
 **Checks.** `test_login_states()` in `scripts/test_skill_code.py`.

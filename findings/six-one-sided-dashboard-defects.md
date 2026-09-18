@@ -39,8 +39,6 @@ That is why this is six defects and not seven.
 Only `account` is used.
 
 **Evidence.** Audit dated 2026-08-24.
-See `F‹audit-list-38-items-resolved›`, the pass that fixed the
-unused-config-keys defect this shares a cause with.
 
 **Checks.** `check_verdict_vocabulary()` in `scripts/shared_blocks.py` covers
 defect 2.

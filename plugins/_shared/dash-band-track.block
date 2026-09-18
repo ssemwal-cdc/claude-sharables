@@ -3,7 +3,7 @@
 // window.innerHeight === document.scrollHeight and window.scrollY never leaves 0. Both
 // position:sticky and position:fixed freeze at a document coordinate and slide off screen
 // with everything else - which is why the header could not just be made sticky, and why
-// nobody has ever seen the execute bar pinned.
+// nobody has ever seen the floating bar pinned.
 //
 // IntersectionObserver is the one instrument that reaches across the frame boundary. Its
 // intersectionRect is clipped by every ancestor viewport, cross-origin ones included, so from
@@ -80,6 +80,22 @@ function toFilters(){
   // control this page has over where the reader is looking, and it is what makes the floating
   // bar a way BACK to the header rather than a replacement for it.
   if(t)t.scrollIntoView({block:"start"});
+}
+
+// What the bar carries. The full header is ~380px of chrome and reproducing that mid-queue
+// would cost half a 700px viewport, so what floats is only what is worth having in the second
+// before a glance: where you are in the filter, and one press back to the real controls. The
+// whole bar is aria-hidden with tabindex="-1" throughout, because it duplicates controls that
+// are already in the page and a screen reader gains nothing from meeting them twice.
+// It once mirrored the execute button too - retired, see actionable-retired/_shared/
+// dash-header-mirror.block, review-only-mode.
+function floatPaint(){
+  var fh=document.getElementById("floathdr");
+  if(!fh)return;
+  fh.innerHTML='<div class="floatbar">'+
+    '<span class="fc">'+esc(window.__vsum||"")+'</span>'+
+    '<span class="fsp"></span>'+
+    '<button tabindex="-1" onclick="toFilters()">Filters ↑</button></div>';
 }
 
 if(window.ResizeObserver){

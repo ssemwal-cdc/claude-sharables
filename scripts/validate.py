@@ -391,9 +391,7 @@ if shared_blocks is not None:
     _problems += shared_blocks.check_template_versions()
     _problems += shared_blocks.check_verdict_vocabulary()
     _problems += shared_blocks.check_check_registry()
-    _problems += shared_blocks.check_execute_type_coverage()
     _problems += shared_blocks.check_capability_verdicts()
-    _problems += shared_blocks.check_execute_prompt_purity()
     _problems += shared_blocks.check_onboarding_page()
     for _p in _problems:
         fail("[shared] " + _p.replace("\n", " ").replace("      ", " "))
@@ -404,6 +402,11 @@ if shared_blocks is not None:
         )
 
 # ------------------------------------------------------- records, index, prose
+# actionable-retired/ needs no skip entry. Every scanner below is allow-listed by
+# path: the record and prose checks read CLAUDE.md, README.md, plugins/*/README.md,
+# plugins/*/skills/**, decisions/, findings/ and gaps/, and shared_blocks walks
+# plugins/ only. Nothing walks the repo root, so the retired folder is out of scope
+# by construction. See review-only-mode, execute mode retired out of the plugins.
 # The global mandate says a file is the fallback, not the enforcement. So the prose
 # rules are checks too: every record carries its frontmatter, every citation resolves
 # and carries a gloss, each _index.md matches the frontmatter it is generated from,

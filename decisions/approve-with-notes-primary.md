@@ -2,10 +2,12 @@
 id: D28
 slug: approve-with-notes-primary
 kind: decision
-status: settled
+status: superseded
 date: 2026-08-15
 ---
 # Approve With Notes stays primary
+
+**Superseded by** D91, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
 
 **Rule.** Route every NetSuite approval through Approve With Notes. Reach plain Approve only as the stated fallback.
 

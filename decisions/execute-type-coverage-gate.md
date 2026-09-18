@@ -2,10 +2,12 @@
 id: D75
 slug: execute-type-coverage-gate
 kind: decision
-status: settled
+status: superseded
 date: 2026-09-01
 ---
 # Gate the two type lists
+
+**Superseded by** D91, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
 
 **Rule.** Keep the review type vocabulary, the execute route table and the type manifest naming the same types.
 

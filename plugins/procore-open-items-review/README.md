@@ -1,7 +1,7 @@
 # Procore open items review
 
 Reviews the Procore items genuinely waiting on your workflow response.
-Publishes the results to a dashboard you can act from.
+Publishes the results to a read-only dashboard.
 
 The hard part is not the review. It is working out which of your open items
 actually need you. Procore's My Open Items list mixes things awaiting your
@@ -70,15 +70,8 @@ unreadable". That phrase reads identically whether the file was a scan, a
 spreadsheet or a link that timed out. Entire formats went unreviewed with
 nothing in the log to show it. The reason is now specific enough to act on.
 
-## Every response it makes says so
-
-A response the plugin executes carries the comment **"Approved by Claude"**,
-recorded in Procore's audit trail against that item. Your own comment for an
-item replaces it verbatim. Rejection reasons are never defaulted, and the
-plugin stops and asks if one is missing.
-
-A response recorded with no comment reads as though you clicked it by hand. See
-D20, Approved by Claude comment.
+Execute mode was retired on 2026-09-18. Its prose and code sit in
+`actionable-retired/` at the repo root.
 
 ## The dashboard
 
@@ -87,15 +80,9 @@ summary cards, a fact strip per item you can judge without expanding anything,
 and sort and filter controls. The filter axes are campus, then building, then
 type, plus search.
 
-Response buttons come from each item's own workflow step rather than a fixed
-set. So invoices offer Approve / Revise and Resubmit, while change risks at a
-cost gate offer Yes / Reject. Marking an affirmative response on an item with
-no support raises a warning.
-
-You mark responses per item, then execute them together. Execute sends the
-instruction straight into the conversation in one click. Nothing reaches Procore
-from the dashboard itself. The responses run from that message. Each item is
-re-verified as still yours to action, immediately before it is clicked.
+The dashboard is a read-only page. It shows the row, the details and the
+verdict pill per item. It does not carry buttons or send anything to Procore.
+You act on an item in Procore itself.
 
 The controls and the floating header were measured in a browser. Nobody has
 seen them in the widget host. See G12, widget host
@@ -127,7 +114,7 @@ those differ per company, and the field mapping differs per tool as well.
 More than one custom tool is normal. Every run reconciles the tools it finds in
 the queue against the ones it has been told about. A tool it has not seen
 before is set up then and there, and named in the run report. A tool it cannot
-resolve is still reviewed and still respondable. That tool's items carry no
+resolve is still reviewed and still shown. That tool's items carry no
 record link and cannot come back `clear`. The cost fields those checks
 read are mapped per tool.
 
@@ -136,17 +123,7 @@ are both scoped to the signed-in session, so the review is automatically yours.
 
 ## Safety
 
-The plugin never responds on its own judgement. A verdict is a recommendation.
-
-The dashboard is a snapshot, so executing re-verifies every item against the
-live workflow before any click. An item you already actioned in Procore
-directly is skipped and logged, never clicked or retried. A stale page
-therefore cannot cause a double response. A changed amount stops the whole
-batch instead. Success is confirmed by re-querying the API, never by the click
-appearing to work.
-
-This execute path has never been observed on real data. See
-G4, no end-to-end run.
+The plugin is read-only. A verdict is a recommendation, not an action.
 
 ## Versioning
 
@@ -173,8 +150,8 @@ adding one. See D9, no version field.
 - **The gate fan-out has not been observed against real Procore.** See
   G9, gate fan-out unobserved.
 - If the change order id cannot be resolved, the item is shown with its
-  arithmetic verified. It has no response buttons. It gets a button to go
-  resolve the gate. The same applies when the package spans several change
+  arithmetic verified. Its step and due date are unknown. It gets a button
+  to go resolve the gate. The same applies when the package spans several change
   orders, because then no single id can stand for it.
 - The open items grid is virtualised and cannot be scraped. Everything comes
   from the REST API.

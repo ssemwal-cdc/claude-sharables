@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>NetSuite approval queue</title>
-<!-- layout template v12 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v13 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -28,8 +28,6 @@ button.primary:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
 .row:hover{box-shadow:var(--sh2)}
 .row.vclear{border-left-color:var(--ok-line)}
 .row.vflag{border-left-color:var(--bad-fg)}
-.row.mk{background:var(--acc-bg);border-top-color:var(--acc-line);border-right-color:var(--acc-line);border-bottom-color:var(--acc-line)}
-.row.mkr{background:var(--bad-bg);border-top-color:var(--bad-line);border-right-color:var(--bad-line);border-bottom-color:var(--bad-line)}
 .rh{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
 .doc{font-size:15px;font-weight:600;flex:1;min-width:130px}
 .amt{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
@@ -55,37 +53,12 @@ ul.f li{margin:1px 0}
 button{font:500 12.5px/1 inherit;padding:7px 13px;background:transparent;border:1px solid var(--ctl);border-radius:var(--r);color:var(--ink);cursor:pointer;transition:background .15s ease,border-color .15s ease,color .15s ease}
 button:hover{background:var(--sunk);border-color:var(--ctl2)}
 button:focus-visible{outline:2px solid var(--acc-fg);outline-offset:2px}
-button.on{background:var(--acc-bg);border-color:var(--acc-fg);color:var(--acc-fg);font-weight:600}
-button.rj{border-color:var(--bad-line);color:var(--bad-fg)}
-button.rj:hover{background:var(--bad-bg);border-color:var(--bad-fg)}
-button.rj.on{background:var(--bad-bg);border-color:var(--bad-fg);color:var(--bad-fg)}
-button.go{border-color:var(--ctl2);font-size:13px}
-button.go.big{background:var(--ink);color:var(--bg);border-color:var(--ink);font-size:14px;font-weight:600;padding:11px 20px;border-radius:11px;box-shadow:0 2px 10px rgba(20,20,19,.18)}
-button.go.big:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
-button.go.big[disabled]{background:transparent;color:var(--ink3);border-color:var(--ctl);cursor:not-allowed;box-shadow:none}
-button.go.big[disabled]:hover{background:transparent;border-color:var(--ctl)}
-button.go.big[disabled].blocked{color:var(--warn-fg);border-color:var(--warn-line);background:var(--warn-bg)}
-button.go.big[disabled].blocked:hover{background:var(--warn-bg);border-color:var(--warn-line)}
-.barbtns .clear{background:none;border:0;padding:7px 4px;font-size:12.5px;color:var(--ink2);text-decoration:underline;cursor:pointer}
-.barbtns .clear:hover{color:var(--ink);background:none}
-.blockedpill{background:var(--warn-bg);color:var(--warn-fg)}
+/* retired: see actionable-retired/netsuite-approval-review/dashboard_template.cut.html, review-only-mode */
 input[type=text]{width:100%;font:400 13px inherit;padding:8px 11px;border:1px solid var(--ctl);border-radius:var(--r);margin-top:10px;background:var(--card);color:var(--ink)}
 input[type=text]:focus{border-color:var(--acc-fg);outline:2px solid var(--acc-bg)}
 a{color:var(--acc-fg);text-decoration:none;font-size:12.5px}
 a:hover{text-decoration:underline}
-.bar{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:15px 17px;margin-top:20px;box-shadow:var(--sh3)}
-/* Sticky resolves against the PARENT box, so this has to sit on #bar inside .worksec - on
-   .bar itself the parent is exactly as tall as the bar and it never travels. Measured. */
-.worksec{position:relative}
-#bar{position:sticky;bottom:10px;z-index:5}
-.barhead{font-size:14px;font-weight:600}
-.barlive{font-size:13px;color:var(--ink2);margin-top:4px}
-.barsum{font-size:12.5px;color:var(--ink3);margin-top:4px;font-variant-numeric:tabular-nums}
-.barbtns{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
-.stephead{display:flex;align-items:center;gap:10px;margin:18px 0 10px}
-.stepnum{width:24px;height:24px;border-radius:50%;background:var(--acc-fg);color:var(--inv);font-size:12.5px;font-weight:650;display:flex;align-items:center;justify-content:center;flex:none}
-.stephead .st{font-size:14px;font-weight:600}
-.stephead .sd{font-size:12.5px;color:var(--ink2)}
+/* retired: see actionable-retired/netsuite-approval-review/dashboard_template.cut.html, review-only-mode */
 .topright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .note{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
 .banner{border-radius:var(--r2);padding:12px 15px;margin-bottom:14px;font-size:13.5px}
@@ -120,11 +93,9 @@ input.search{width:auto;flex:1;min-width:130px;margin-top:0;font-size:12.5px;pad
 .floatbar .fc{font-size:12.5px;color:var(--ink2);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .floatbar .fsp{flex:1;min-width:8px}
 .floatbar button{white-space:nowrap}
-.floatbar .go.big{padding:8px 14px;font-size:13px;box-shadow:none}
 /*__END_SHARED:dash-float-css__*/
 @media (prefers-color-scheme:dark){:root{--ink:#eceae4;--ink2:#a6a49d;--ink3:#9a978d;--line:#35342f;--bg:#191816;--card:#22201d;--surf:#272521;--sunk:#2d2a26;--ctl:#46433d;--ctl2:#6b6860;--ctl-on:#37342e;--inv:#191816;--ink-hi:#ffffff;--ok-bg:#16301d;--ok-fg:#79c78c;--ok-line:#2b5436;--bad-bg:#381d1b;--bad-fg:#ef8b84;--bad-line:#61302c;--warn-bg:#31260f;--warn-fg:#dfb25e;--warn-line:#57431e;--acc-bg:#16283c;--acc-fg:#7db3ed;--acc-line:#2a4868;--sh1:0 1px 2px rgba(0,0,0,.25),0 4px 14px rgba(0,0,0,.28);--sh2:0 2px 6px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.38);--sh3:0 -1px 6px rgba(0,0,0,.25),0 12px 34px rgba(0,0,0,.5);--ring:rgba(255,255,255,.07)}
 select{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%23a6a49d' stroke-width='1.4'/%3E%3C/svg%3E")}
-button.go.big{box-shadow:0 2px 10px rgba(0,0,0,.4)}
 }
 </style>
 <script>
@@ -145,7 +116,7 @@ document.addEventListener("DOMContentLoaded",function(){
 </head>
 <body>
 <div class="wrap">
-<h2 class="sr">NetSuite approval queue dashboard. Each item pending your approval is listed with its verdict from the last review, its aging, and the funding purchase order context. Decisions are marked per item and executed together.</h2>
+<h2 class="sr">NetSuite approval queue dashboard. Each item pending your approval is listed with its verdict from the last review, its aging, and the funding purchase order context. The page is a read-only review; it carries no decision controls.</h2>
 
 <div class="top">
   <div>
@@ -155,7 +126,6 @@ document.addEventListener("DOMContentLoaded",function(){
   <div class="topright">
     <span class="pill" id="conn" style="background:var(--warn-bg);color:var(--warn-fg)">Snapshot</span>
     <button class="primary" onclick="sendRun()">Re-run the check now ↗</button>
-    <span id="topexec"></span>
   </div>
 </div>
 <p class="fresh" id="freshtext"></p>
@@ -187,15 +157,10 @@ document.addEventListener("DOMContentLoaded",function(){
 
 <div id="banners"></div>
 
-<div class="worksec">
-<div class="stephead" id="step1"><span class="stepnum">1</span><span><span class="st">Mark the items you want to action</span> <span class="sd">— nothing is sent to NetSuite yet</span></span></div>
+<!-- retired: see actionable-retired/netsuite-approval-review/dashboard_template.cut.html, review-only-mode -->
 <div id="rows"></div>
 
-<div class="stephead" id="step2"><span class="stepnum">2</span><span><span class="st">Execute</span> <span class="sd">— sends one instruction to the chat, which does the clicking</span></span></div>
-<div id="bar"></div>
-</div>
-
-<p class="note" style="margin-top:22px">Verdicts are written by the netsuite-approval-double-check skill. This page is a snapshot and never queries NetSuite by itself. Every record is re-verified against the live queue at execute time, immediately before it is clicked.</p>
+<p class="note" style="margin-top:22px">Verdicts are written by the netsuite-approval-double-check skill. This page is a snapshot and never queries NetSuite by itself. A verdict is a recommendation; every approval is still made in NetSuite by you.</p>
 </div>
 
 <script>
@@ -205,13 +170,14 @@ var REVIEW=/*__REVIEW_DATA__*/{"lastRun":"","items":[]}/*__END__*/;
 // record of which route produced the review, but the page has no use for them.
 ACCT=(REVIEW.config&&REVIEW.config.account)||"";
 
-var KEY="ns_marks_v1", marks={};
-try{marks=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){marks={}}
-function saveMarks(){try{localStorage.setItem(KEY,JSON.stringify(marks))}catch(e){}}
+// Mark keys, kept named although nothing writes them. The per-item marks lived in
+// localStorage under `ns_marks_v1`, each entry {kind:"approve"|"notes"|"reject", text:""}.
+// Never rename or reuse that key: an old browser still holds real decisions under it.
+// D38, never rename a marks key; retired by review-only-mode.
 
 // ---- view state: sort / filter / search, persisted ---------------------------
-// A NEW key beside ns_marks_v1, never a rename of it. Marks are decisions the user has
-// made and not yet executed; a view is just what they are looking at. Losing the second
+// A NEW key beside ns_marks_v1, never a rename of it. Marks were decisions the user had
+// made; a view is just what they are looking at. Losing the second
 // costs a scroll, losing the first silently discards real work.
 // v2 because the default sort changed. A stored v1 view would otherwise pin everyone who
 // has ever touched the toolbar to the old default for good, and the change would reach
@@ -340,8 +306,7 @@ function nav(a){
 function recUrl(id){return "https://"+ACCT+".app.netsuite.com/app/accounting/transactions/transaction.nl?id="+id}
 
 // This page never queries NetSuite. The widget host exposes no callMcpTool, and an on-open
-// query would be stale by the time execute is pressed anyway. Freshness is enforced in the
-// execute turn instead, which re-verifies each record immediately before clicking it.
+// query would be stale by the time anyone read it anyway.
 // So every row is a snapshot reading, which is what `stale` below records. A `live` queue
 // variable and the gone/changed/unreviewed states it fed were carried here unassigned for
 // several versions - dead in every render. Removed; do not reintroduce an on-open query.
@@ -404,7 +369,7 @@ function render(){
   var vOldest=vAges.length?Math.max.apply(null,vAges):0;
 
   // The one line the floating header carries that depends on the filter, so it has to be set
-  // before renderBar(), which is what paints that bar.
+  // before floatPaint(), which is what paints that bar.
   window.__vsum=(hidden>0?vrows.length+" of "+rows.length+" shown":rows.length+" pending")+
                 (vFlagged?" · "+vFlagged+" flagged":"");
 
@@ -420,19 +385,11 @@ function render(){
    (hidden>0?'<p class="hid">'+hidden+' item'+(hidden>1?'s':'')+' hidden by the current filter. <a href="#" onclick="resetView();return false">Show everything</a></p>':"")+
    (body||'<div class="empty">'+(viewActive()?"No items match this filter.":"Nothing pending your approval right now.")+'</div>');
 
-  // Step headings frame the queue, so with no queue they frame nothing and only add noise
-  // above the empty state.
-  var hasWork=REVIEW.items.length>0;
-  ["step1","step2"].forEach(function(id){var e=document.getElementById(id); if(e)e.style.display=hasWork?"":"none"});
-
-  renderBar();
+  floatPaint();
   trimMores();
 }
 //__SHARED:dash-of-total__
 // Tiles follow the filter, so they can never disagree with the list underneath them.
-// renderBar() deliberately does NOT - a marked item hidden by a filter still has to
-// execute, and narrowing it to what is on screen would silently drop decisions the
-// user made before they filtered. Do not "fix" the bar to match these.
 function ofTotal(v,t){return String(v)===String(t)?String(t)
   :v+'<span class="of"> of '+t+'</span>'}
 //__END_SHARED:dash-of-total__
@@ -452,16 +409,15 @@ function poLine(it){
 }
 
 function itemRow(it,c2){
-  var m=marks[it.id]||null, cls="row"+(m?(m.kind==="reject"?" mkr":" mk"):"");
+  var cls="row";
   var a=ageDays(it.trandate);
   // Verdict rides the card's left rail and a label on the meta line below.
   var flag=c2.state==="flagged";
   var vlab='<span class="vlab" style="color:'+(flag?"var(--bad-fg)":"var(--ok-fg)")+
            '">'+(flag?"Flagged":"Clear")+'</span> · ';
-  var mk=m?'<span class="pill" style="background:'+(m.kind==="reject"?"var(--bad-bg)":"var(--acc-bg)")+';color:'+(m.kind==="reject"?"var(--bad-fg)":"var(--acc-fg)")+'">'+(m.kind==="reject"?"Will reject":m.kind==="notes"?"Will approve with notes":"Will approve")+'</span>':"";
   var h='<div class="'+cls+(flag?" vflag":" vclear")+'" id="row'+it.id+'">'+
   '<div class="rh">'+
-  '<span class="doc">'+esc(it.type)+' · '+esc(it.doc)+'</span>'+mk+
+  '<span class="doc">'+esc(it.type)+' · '+esc(it.doc)+'</span>'+
   '<span class="amt">'+money(it.amt)+'</span></div>'+
   '<p class="ven">'+vlab+esc(it.vendor)+(a!=null?' <span style="color:'+(a>14?"var(--bad-fg)":"var(--ink3)")+'">· '+a+' days pending'+(a>14?' · over 14d':'')+'</span>':'')+'</p>';
   h+='<p class="head">'+esc(it.head)+'</p>'+
@@ -473,15 +429,10 @@ function itemRow(it,c2){
   '<p class="det" id="det'+it.id+'">'+esc(it.detail)+
    (it.att?'<br><span class="att">Read: '+esc(it.att)+'</span>':'')+'</p>'+
   '<div class="acts">'+
-  '<button class="'+(m&&m.kind==="approve"?"on":"")+'" onclick="mark('+it.id+',\'approve\')">'+(m&&m.kind==="approve"?"✓ ":"")+'Approve</button>'+
-  '<button class="'+(m&&m.kind==="notes"?"on":"")+'" onclick="mark('+it.id+',\'notes\')">'+(m&&m.kind==="notes"?"✓ ":"")+'With notes</button>'+
-  '<button class="rj '+(m&&m.kind==="reject"?"on":"")+'" onclick="mark('+it.id+',\'reject\')">'+(m&&m.kind==="reject"?"✓ ":"")+'Reject</button>'+
   '<span style="flex:1"></span>'+
   '<a href="#" onclick="tog('+it.id+',this);return false">Show detail</a>'+
   '<a href="'+recUrl(it.id)+'" target="_blank" rel="noopener" onclick="return nav(this)">Open record</a>'+
   '</div>';
-  if(m&&m.kind==="notes")h+='<input type="text" placeholder="Note to record with the approval" value="'+esc(m.text||"")+'" oninput="setText('+it.id+',this.value)">';
-  if(m&&m.kind==="reject")h+='<input type="text" placeholder="Reason for rejection (required)" value="'+esc(m.text||"")+'" oninput="setText('+it.id+',this.value)">';
   return h+'</div>'
 }
 
@@ -489,17 +440,11 @@ function pwtog(id,btn){var t=document.getElementById("pw"+id);if(!t)return;
   var open=t.className.indexOf("open")>=0;
   t.className=open?"txt":"txt open";btn.textContent=open?"more":"less"}
 function tog(id,btn){var d=document.getElementById("det"+id);var open=d.style.display==="block";d.style.display=open?"none":"block";btn.textContent=open?"Show detail":"Hide detail"}
-function mark(id,kind){
-  if(marks[id]&&marks[id].kind===kind)delete marks[id];
-  else marks[id]={kind:kind,text:(marks[id]&&marks[id].text)||""};
-  saveMarks();render();
-}
-function setText(id,v){if(marks[id]){marks[id].text=v;saveMarks();renderBar()}}
-function clearAll(){marks={};saveMarks();render()}
+// retired: see actionable-retired/netsuite-approval-review/dashboard_template.cut.html, review-only-mode
 function sendRun(){say("Run my NetSuite approval check now")}
 function say(t){
   // Two hosts with disjoint surfaces, both probed live. The widget host exposes sendPrompt as a
-  // bare global — that is the path this dashboard takes, and the execute button is one click.
+  // bare global — that is the path this dashboard takes, and the re-run button is one click.
   // The artifact host exposes window.cowork (callMcpTool, askClaude, runScheduledTask) and no
   // sendPrompt anywhere, so it cannot start a turn. The cowork branch is a hedge in case the two
   // surfaces ever converge on that namespace; it matches nothing today.
@@ -518,7 +463,7 @@ function handoff(t,copied){
   d.style.cssText="position:fixed;inset:0;z-index:99;background:rgba(20,20,19,.45);display:flex;align-items:center;justify-content:center;padding:24px";
   d.innerHTML='<div style="background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.18);max-width:640px;width:100%;padding:20px">'+
    '<div style="font-size:15px;font-weight:600">'+(copied?"Copied — paste it into chat and send":"Copy this, then paste it into chat")+'</div>'+
-   '<p class="note" style="margin:4px 0 12px">Nothing has reached NetSuite yet. The approval runs from your message, not from this page.</p>'+
+   '<p class="note" style="margin:4px 0 12px">Nothing has reached NetSuite. The re-run starts from your message, not from this page.</p>'+
    '<textarea readonly style="width:100%;height:170px;box-sizing:border-box;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:10px;resize:vertical"></textarea>'+
    '<div style="display:flex;gap:8px;margin-top:12px"><button class="go" onclick="recopy()">Copy again</button><button onclick="closeHandoff()">Close</button></div></div>';
   d.addEventListener("click",function(e){if(e.target===d)closeHandoff()});
@@ -531,108 +476,14 @@ function recopy(){var ta=document.querySelector("#handoff textarea");if(!ta)retu
 function closeHandoff(){var o=document.getElementById("handoff");if(o)o.parentNode.removeChild(o)}
 document.addEventListener("keydown",function(e){if(e.key==="Escape")closeHandoff()});
 
-function renderBar(){
-  // REVIEW.items, never the filtered rows. A marked item that is currently hidden by a
-  // filter still has to execute - narrowing to what is on screen looks like a tidy-up and
-  // would silently drop decisions the user made before they filtered.
-  var byId={}; REVIEW.items.forEach(function(i){byId[i.id]=i});
-  // Drop marks whose item is no longer in the review. Filtering them for display left them in
-  // localStorage forever, so a decision on a bill approved elsewhere would reappear the moment
-  // NetSuite reused that internal id. Same sweep as the Procore template.
-  var orphan=false;
-  Object.keys(marks).forEach(function(k){if(!byId[k]){delete marks[k];orphan=true}});
-  if(orphan)saveMarks();
-  var ks=Object.keys(marks);
-  var ap=[],rj=[],missing=[];
-  ks.forEach(function(k){var it=byId[k],m=marks[k];
-    if(m.kind==="reject"){rj.push(it);if(!m.text||!m.text.trim())missing.push(it.doc)}else ap.push(it)});
-  var apSum=ap.reduce(function(s,i){return s+i.amt},0), rjSum=rj.reduce(function(s,i){return s+i.amt},0);
-  var lines=ks.map(function(k,n){var it=byId[k],m=marks[k];
-    var verb=m.kind==="reject"?"reject":m.kind==="notes"?"approve with notes":"approve";
-    return (n+1)+") "+verb+" "+it.type.toLowerCase()+" "+it.doc+" ("+it.vendor+", "+money(it.amt)+
-           ", internal id "+it.id+") [reviewed: "+esc(it.verdict)+"]"+
-           (m.text&&m.text.trim()?" — "+(m.kind==="reject"?"reason":"note")+": "+m.text.trim():"")});
-  // AUTHORITY ONLY. This message names what may be actioned; it does not say how.
-  //
-  // It used to carry procedure, and the procedure it carried was wrong: "click the named button
-  // only" contradicts Step 8, which routes every affirmative through Approve With Notes, and
-  // "re-query the pending queue" is the retired verification that CLAUDE.md records as inviting
-  // a re-run that would approve twice. Neither error was reachable by any test, because this is
-  // a JavaScript string in an HTML template and nothing reads it.
-  //
-  // So the rule is now explicit: Step 8 is the specification, this message is the authorisation,
-  // and the two must never overlap. Verified with the maintainer 2026-08-24 - execute is always
-  // pressed in the same session that ran the review, so the skill is loaded and in context; and
-  // the run is not watched, which is exactly why the gates belong in the governed text rather
-  // than here. scripts/shared_blocks.py check_execute_prompt_purity() enforces it.
-  var prompt=
-   "Execute my marked NetSuite approval decisions, one record at a time.\n\n"+
-   "Follow Step 8 of the netsuite-approval-double-check skill exactly. That is the procedure. "+
-   "Nothing in this message replaces, overrides or abbreviates any part of it, and this message "+
-   "deliberately does not restate it.\n\n"+
-   "This list came from a dashboard snapshot taken "+REVIEW.lastRun+
-   ", so treat it as possibly out of date - I may have actioned some of these in NetSuite directly.\n\n"+
-   "Items:\n"+lines.join("\n")+"\n\n"+
-   "Report back per item: the response you submitted, what the record read when you verified it "+
-   "afterwards, and anything you skipped or stopped on. I am not watching this run, so that "+
-   "report is the only thing I will see.";
-  var undec=REVIEW.items.length-ks.length;
-  var blocked=missing.length>0, canRun=ks.length>0&&!blocked;
-  // The bar renders in every state, zero marks included. It used to collapse to one line of
-  // grey text, so step 2 was invisible until you had already worked out step 1 unaided -
-  // backwards for the one thing this page has to teach.
-  var liveText=!ks.length ? "Nothing marked yet — use the buttons on each item above"
-              : blocked   ? "A rejection still needs its reason before this can run"
-              :             ks.length+" marked · ready to execute";
-  document.getElementById("bar").innerHTML='<div class="bar">'+
-   '<div class="barhead">'+(ks.length?ks.length+' decided · nothing sent yet':'Nothing sent yet')+'</div>'+
-   '<div class="barlive">'+liveText+'</div>'+
-   '<div class="barsum">'+(ks.length
-      ? ap.length+' to approve ('+money(apSum)+') · '+rj.length+' to reject ('+money(rjSum)+')'+(undec>0?' · '+undec+' left undecided and will stay pending':'')
-      : 'Nothing reaches NetSuite until you press execute.')+'</div>'+
-   (missing.length?'<div class="note" style="color:var(--bad-fg);margin-top:6px">Reason required before executing: '+missing.map(esc).join(", ")+'</div>':'')+
-   '<div class="barbtns">'+
-   '<button class="go big'+(blocked?" blocked":"")+'" '+(canRun?'onclick="go()"':'disabled')+'>Execute '+ks.length+' decision'+(ks.length===1?"":"s")+' in NetSuite ↗</button>'+
-   (ks.length?'<button class="clear" onclick="clearAll()">Clear all marks</button>':'')+'</div></div>';
-  //__SHARED:dash-header-mirror__
-  // Header mirror: the same one click, reachable the moment the page opens instead of only
-  // after scrolling the whole queue. Silent until something is marked, so it never competes
-  // with the toolbar for attention.
-  //
-  // It also renders when execution is BLOCKED. Gating it on canRun alone left the top of the
-  // page saying nothing at exactly the moment something was standing in the way - which is
-  // when a reader is most likely to be looking up there for it.
-  function execMirror(dup){
-    var x=dup?' tabindex="-1"':'';
-    return canRun
-      ? '<button class="go big"'+x+' onclick="go()">Execute '+ks.length+' ↗</button>'
-      : ks.length ? '<span class="pill blockedpill">'+ks.length+' marked · needs a reason</span>'
-      : '';
-  }
-  var te=document.getElementById("topexec");
-  if(te)te.innerHTML=execMirror(false);
-  // And a third home for it, on the bar that rides the host's visible band. The full header is
-  // ~380px of chrome and reproducing that mid-queue would cost half a 700px viewport, so what
-  // floats is only what is worth having in the second before a click: where you are in the
-  // filter, one press back to the real controls, and the commit button itself. The whole bar
-  // is aria-hidden with tabindex="-1" throughout, because it duplicates controls that are
-  // already in the page and a screen reader gains nothing from meeting them twice.
-  var fh=document.getElementById("floathdr");
-  if(fh)fh.innerHTML='<div class="floatbar">'+
-    '<span class="fc">'+esc(window.__vsum||"")+'</span>'+
-    '<span class="fsp"></span>'+
-    '<button tabindex="-1" onclick="toFilters()">Filters ↑</button>'+
-    execMirror(true)+'</div>';
-  window.__prompt=prompt;
-  //__END_SHARED:dash-header-mirror__
-}
+// retired: see actionable-retired/netsuite-approval-review/dashboard_template.cut.html, review-only-mode
 //__SHARED:dash-band-track__
 // ---- the host's visible band, and the floating header that rides it ---------------------
 // This frame does not scroll. It is sized to its own content and the HOST page scrolls, so
 // window.innerHeight === document.scrollHeight and window.scrollY never leaves 0. Both
 // position:sticky and position:fixed freeze at a document coordinate and slide off screen
 // with everything else - which is why the header could not just be made sticky, and why
-// nobody has ever seen the execute bar pinned.
+// nobody has ever seen the floating bar pinned.
 //
 // IntersectionObserver is the one instrument that reaches across the frame boundary. Its
 // intersectionRect is clipped by every ancestor viewport, cross-origin ones included, so from
@@ -711,6 +562,22 @@ function toFilters(){
   if(t)t.scrollIntoView({block:"start"});
 }
 
+// What the bar carries. The full header is ~380px of chrome and reproducing that mid-queue
+// would cost half a 700px viewport, so what floats is only what is worth having in the second
+// before a glance: where you are in the filter, and one press back to the real controls. The
+// whole bar is aria-hidden with tabindex="-1" throughout, because it duplicates controls that
+// are already in the page and a screen reader gains nothing from meeting them twice.
+// It once mirrored the execute button too - retired, see actionable-retired/_shared/
+// dash-header-mirror.block, review-only-mode.
+function floatPaint(){
+  var fh=document.getElementById("floathdr");
+  if(!fh)return;
+  fh.innerHTML='<div class="floatbar">'+
+    '<span class="fc">'+esc(window.__vsum||"")+'</span>'+
+    '<span class="fsp"></span>'+
+    '<button tabindex="-1" onclick="toFilters()">Filters ↑</button></div>';
+}
+
 if(window.ResizeObserver){
   // The page's height changes whenever a filter narrows the queue or a reader opens a detail,
   // and tiles that stopped short of the new bottom would leave the band unreadable down there
@@ -722,8 +589,7 @@ if(window.ResizeObserver){
 } else { bandBuild(); }
 //__END_SHARED:dash-band-track__
 //__SHARED:dash-render-tail__
-function go(){say(window.__prompt)}
-
+// retired: see actionable-retired/_shared/dash-render-tail.cut.block, review-only-mode
 render();
 // The tick ages the freshness line and flips the Snapshot pill. It must NEVER call
 // render(), which rebuilds #rows from scratch: that silently collapsed every expanded

@@ -171,16 +171,7 @@ async function suite(page, p) {
      "toolbar y=" + (tb ? tb.y.toFixed(0) : "off screen"));
   ck("and the bar stands down once the real header is back", (await disp()) === "none");
 
-  await sc(0); await page.waitForTimeout(200);
-  await (await fr.$("#rows .row .acts button")).click();
-  await page.waitForTimeout(250);
-  await sc(2600); await page.waitForTimeout(320);
-  ck("a marked item puts Execute on the bar, out of the tab order",
-     await fr.evaluate(() => { const e = document.getElementById("floathdr");
-       return /Execute/.test(e.textContent) && e.querySelectorAll('button[tabindex="-1"]').length >= 2; }));
-  const eb = await box("#floathdr .go.big");
-  ck("that Execute button is itself reachable on screen",
-     !!eb && eb.y >= 0 && eb.y + eb.height <= VH, eb ? "y=" + eb.y.toFixed(0) : "off screen");
+  // retired: see actionable-retired/scripts/measure_float.cut.js, review-only-mode
   await fr.evaluate(() => { try { localStorage.clear(); } catch (e) {} });
 }
 
@@ -255,7 +246,7 @@ async function captures(browser, dir) {
     "widths: " + SHOT_WIDTHS.join("px, ") + "px. schemes: " + SHOT_SCHEMES.join(", ") + ".",
     "scrollWidth is document.documentElement.scrollWidth after load.",
     "overflow is scrollWidth minus the viewport width. Above 0 means a horizontal scrollbar.",
-    "the dashboard execute bar is position:sticky. A full-page capture paints it once, over",
+    "the dashboard float header is position:sticky. A full-page capture paints it once, over",
     "the rows near the bottom edge of the first viewport. That overlap is a capture artefact.",
     "",
     pad("file", 30) + pad("page", 12) + pad("viewport", 10) + pad("scheme", 8) +

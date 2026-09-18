@@ -114,7 +114,7 @@ those differ per company, and the field mapping differs per tool as well.
 More than one custom tool is normal. Every run reconciles the tools it finds in
 the queue against the ones it has been told about. A tool it has not seen
 before is set up then and there, and named in the run report. A tool it cannot
-resolve is still reviewed and still respondable. That tool's items carry no
+resolve is still reviewed and still shown. That tool's items carry no
 record link and cannot come back `clear`. The cost fields those checks
 read are mapped per tool.
 

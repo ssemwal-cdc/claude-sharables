@@ -1,8 +1,7 @@
 # NetSuite approval review
 
 Reviews everything sitting in your NetSuite approval queue. Publishes the
-results to a dashboard you can act from. Approvals stop meaning a trip through
-the NetSuite UI.
+results to a read-only dashboard. You still approve through the NetSuite UI.
 
 ## What it does
 
@@ -22,28 +21,15 @@ and for each one it:
 - publishes a clear or flagged verdict per item to a dashboard, with the
   figures visible without clicking into anything
 
-Purchase orders are reviewed. Their execute route has never fired against a
-real purchase order. See G16, PO execute route
-unfired.
+Purchase orders are reviewed. Execute mode was retired on 2026-09-18. Its
+prose and code sit in `actionable-retired/` at the repo root.
 
 The dashboard is a snapshot and shows its own age. It warns once the snapshot
 passes 3 hours. A re-run button refreshes it in one click.
 
-Every record is re-verified at execute time, immediately before the click. An
-item actioned since the review is skipped rather than clicked twice. The skip
-is written to the review log and named in the run report. Bills and purchase
-orders are re-checked by query. Change orders carry no approval-status field,
-so they are re-checked by reading the record page. The approval buttons appear
-there only while the item is still pending and still yours.
-
-You mark approve, approve with notes, or reject per item. Then you execute them
-together. Execute sends the instruction straight into the conversation in one
-click. Nothing reaches NetSuite from the dashboard itself. The approvals run
-from that message. Execution drives the real NetSuite buttons through your own
-authenticated browser session. The approval workflow therefore routes normally,
-and the audit trail records you as the approver. Reported for one
-URL-recovery approval. The ordinary click-through path is still unobserved.
-See G4, no end-to-end run.
+The dashboard is a read-only page. It shows the row, the details and the
+verdict pill for every item. It does not carry buttons or send anything to
+NetSuite. You act on an item in the NetSuite UI itself.
 
 ## Support is read without downloading anything
 
@@ -70,17 +56,6 @@ A file that cannot be read is named rather than filed as "unreadable". That one
 word covered a scan, a workbook and an expired link equally well. Whole formats
 went unreviewed and nobody noticed.
 
-## Every approval it makes says so
-
-An approval the plugin executes carries the note **"Approved by Claude"**,
-recorded in NetSuite against that document. A live approval confirmed this
-note lands on the record (F144, approval note
-confirmed). Your own note for an item replaces it verbatim. Rejection reasons
-are never defaulted, and the plugin stops and asks if one is missing.
-
-An approval recorded with no note reads as though you clicked it by hand. See
-D20, Approved by Claude comment.
-
 ## Requirements
 
 - **Claude in Chrome, signed in to NetSuite.** That is the requirement.
@@ -102,13 +77,11 @@ D20, Approved by Claude comment.
   have this. Check your email for a Compass invitation to add the NetSuite MCP
   connector. Contact IT if there is no invitation. It is worth doing, but do
   not wait on it to start using the plugin.
-- The plugin only ever reads through the connector. Approvals go through the
-  real NetSuite buttons in your browser. The workflow therefore routes
-  normally, and the audit trail records you.
-- **Keep the browser on your normal account when approving.** The
-  Claude-enabled account is for reading. The queue and the approve buttons are
-  both role-scoped. In the wrong account you see a queue that is not yours, or
-  a record with no buttons on it.
+- The plugin only ever reads through the connector. It never writes to
+  NetSuite.
+- **Keep the browser on your normal account when reading.** The
+  Claude-enabled account is for reading. The queue is role-scoped. In the
+  wrong account you see a queue that is not yours.
 - **The machine on and Chrome open whenever it runs.** Claude works through
   your real browser session. A scheduled run needs the computer awake, Chrome
   running, and you still signed in. A missed window does not queue up and run
@@ -144,11 +117,7 @@ state stay local to your install.
 
 ## Safety
 
-The plugin never approves or rejects on its own judgement. A verdict is a
-recommendation. It clicks an approval button only when you name specific
-documents. It confirms the document number, the vendor and the amount on the
-record before clicking. If any item in a batch cannot be confirmed, it stops
-rather than continuing.
+The plugin is read-only. A verdict is a recommendation, not an action.
 
 It never writes to NetSuite through the connector.
 

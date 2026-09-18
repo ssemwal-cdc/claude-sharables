@@ -25,7 +25,7 @@ The reason the rule is a property and not a list is F90, a list let a stray thro
 
 A run once invented a to-delete folder and asked the user to empty it. That folder appears nowhere in this repo.
 
-The rule already existed in two places and had never been stated for the first step. The publish script survives a refused move, and the render archive is a fixed set of weekday slots overwritten in place.
+The rule already existed in two places and had never been stated for the first step. The publish script survives a refused move. The render archive is a fixed set of weekday slots overwritten in place.
 
 That archive is fixed precisely because anything that accumulates can never be cleaned up.
 

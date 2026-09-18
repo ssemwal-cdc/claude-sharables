@@ -13,17 +13,17 @@ date: 2026-08-14
 
 Both skills fan out their reads now, and the fan-out has one failure mode that governs the whole design.
 
-The Procore gate used to issue one request per queue item, most of them only to learn the item was noise. NetSuite re-read each record page when the bulk query already carried most of those fields.
+The Procore gate used to issue one request per queue item. Most of them served only to learn the item was noise. NetSuite re-read each record page when the bulk query already carried most of those fields.
 
 The dominant cost in both was round trips, not the size of any one response.
 
 Turning sequential requests into concurrent ones changes what a failure looks like.
 
-A request that fails and returns nothing is indistinguishable from an item with no workflow instance, which both skills define as already actioned elsewhere.
+A request that fails and returns nothing is indistinguishable from an item with no workflow instance. Both skills define that item as already actioned elsewhere.
 
 So a blip silently suppresses a live item and logs it as done, plurally and quietly. That is the same bug class as a change order resolving to the wrong workflow id.
 
-Hence every fan-out returns three states per item, and a failure is named and excluded rather than folded into the suppressed count.
+Hence every fan-out returns three states per item. A failure is named and excluded rather than folded into the suppressed count.
 
 A rate-limit response is a failure, not an empty result. That is why concurrency is capped rather than let rip.
 

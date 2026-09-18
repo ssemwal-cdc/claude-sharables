@@ -22,8 +22,8 @@ is not.
 That is worse than silence.
 
 Step 0 now specifies the hand-off as an action.
-Say it, name the field that made it a `wall`, ask them to sign in, then carry on
-in the same run.
+Say it, and name the field that made it a `wall`. Ask them to sign in,
+then carry on in the same run.
 It answers the unwatched case explicitly, and forbids the retry sentence by
 name, with its reason attached.
 

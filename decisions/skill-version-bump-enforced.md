@@ -13,7 +13,7 @@ date: 2026-09-16
 
 **Argument.**
 
-`D43`, four synced version sites, requires the four to agree. It says so itself: `scripts/validate.py` "can enforce the match, not the bump — bumping is the habit." `F102`, fetch tab navigated, and `D87`, a run closes every tab it opened, (2026-09-16) landed a real content change to both skills. Each gained a new Absolute rule and a Step 9. Neither skill's version line moved. `validate.py` was green the whole time, because the four sites still agreed with each other. They just had not moved.
+`D43`, four synced version sites, requires the four to agree. It says so itself: `scripts/validate.py` "can enforce the match, not the bump — bumping is the habit." `F102`, fetch tab navigated, and `D87`, a run closes every tab it opened, both landed on 2026-09-16. Together they made a real content change to both skills. Each gained a new Absolute rule and a Step 9. Neither skill's version line moved. `validate.py` was green the whole time, because the four sites still agreed with each other. They just had not moved.
 
 The fix is `scripts/check_version_bump.py`. It diffs the branch against its merge-base with `main`. It groups changed files by `(plugin, skill)`, then reads each skill's version line at both ends of that range. A skill with changed files but no higher version fails the build. A skill absent from the merge-base is new, and is exempt. That matches the "new skill starts at version 1" rule in `D43`, four synced version sites.
 

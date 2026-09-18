@@ -17,7 +17,7 @@ It then fails in the desktop app plugin browser. The catalog lists both plugins,
 
 The cause is in the Anthropic docs for the equivalent URL case. A surface that holds `marketplace.json` without a clone of the repo has nothing for a relative path to point at.
 
-The docs say that URL-based marketplaces download the manifest file alone, and that relative paths reference files that were not downloaded.
+The docs say that URL-based marketplaces download the manifest file alone. Relative paths then reference files that were not downloaded.
 
 The CLI works only because `marketplace add` clones the whole repository.
 

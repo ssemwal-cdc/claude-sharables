@@ -7,8 +7,8 @@ date: 2026-08-24
 ---
 # The onboarding break moved to step 3's end
 
-**Outcome protected.** A reader can find the point where they may stop, before they have
-already started the step it lets them defer.
+**Outcome protected.** A reader can find the point where they may stop. That happens before they
+have already started the step it lets them defer.
 
 **Argument.** The posture paragraph had to be cut in half, because it outgrew the list
 it introduces.
@@ -17,12 +17,12 @@ already carried.
 
 The break is marked at the end of step 3 now, and where it sits is the whole
 point.
-It existed before as a clause inside step 4.
+It existed before as a clause inside step four.
 So the only reader who could find it had already started the step it lets
 them defer.
 
 It reuses the existing note class rather than adding one.
-The sheet had just been through a brevity pass, and a bespoke class for one
+The sheet had just been through a brevity pass. A bespoke class for one
 element is the accretion that pass was removing.
 The placement guard is anchored to the element after the section anchor, not
 to a phrase.

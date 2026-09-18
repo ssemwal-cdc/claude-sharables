@@ -101,7 +101,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F70 | `slim-build-saves-little` | The slim build saves little | superseded | 2026-08-24 | A reviewer keeps the response buttons a folded row would cost. |
 | pending | `slim-fold-saves-0-to-12-percent` | Slim build is no fallback | settled | 2026-08-24 | A skipped item keeps the response button it most often needs. |
 | pending | `staleness-check-missed-second-site` | Staleness fix was itself stale | settled | 2026-08-24 | A version check compares every site that carries the version, not just the first. |
-| pending | `step3-break-marker-relocated` | The onboarding break moved to step 3's end | observed | 2026-08-24 | A reader can find the point where they may stop, before they have already started the step it lets them defer. |
+| pending | `step3-break-marker-relocated` | The onboarding break moved to step 3's end | observed | 2026-08-24 | A reader can find the point where they may stop. |
 | pending | `template-version-check-blind-to-lockstep` | The version check missed lockstep staleness | settled | 2026-08-24 | A run tells the user when its workspace copies are old. |
 | F72 | `tick-must-not-render` | The tick must not render | observed | 2026-08-24 | An open detail stays open while the reader reads it. |
 | pending | `verdict-vocabulary-check-reproduces-bin` | The verdict check reproduces the dead bin | settled | 2026-08-24 | A check that passes because its own mutation never landed is caught, not trusted. |

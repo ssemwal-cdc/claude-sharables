@@ -21,11 +21,11 @@ Labelling is the more informative fix and it is not the one asked for.
 
 The reader of that sheet has no terminal install. The sheet walks them through the app, start to finish.
 
-So every terminal block was reference material for a thing they do not have, in the middle of instructions they do.
+So every terminal block was reference material for a thing they do not have. That sat in the middle of instructions they do have.
 
-Three confusion-table rows went with the commands. Those rows document errors only a terminal command produces, so with the commands gone they describe failures the reader cannot reach.
+Three confusion-table rows went with the commands. Those rows document errors only a terminal command produces. So with the commands gone, they describe failures the reader cannot reach.
 
-Nothing verified was lost. The screenshot-verified in-app force-update path and the which-version question are what the update section is made of, and the app-side last-updated row stayed.
+Nothing verified was lost. The screenshot-verified in-app force-update path and the which-version question are what the update section is made of. The app-side last-updated row stayed too.
 
 The maintainer-facing command guidance stays in this repo, because the maintainer does work in a terminal.
 

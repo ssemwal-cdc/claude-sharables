@@ -15,9 +15,9 @@ The NetSuite attachment row said a missing attachment makes the item skipped. Th
 
 It was almost certainly copied from Procore, where that verdict is real.
 
-The template-branch check did not catch it, because that check reads the template branches, not the skill prose telling a run which verdict to assign. The two are different surfaces and both now have a gate.
+The template-branch check did not catch it. That check reads the template branches, not the skill prose telling a run which verdict to assign. The two are different surfaces and both now have a gate.
 
-It bit on the first attempt. The gate reads every backticked verdict in the absence-behaviour column, so a sentence explaining that the verdict does not exist here failed it too.
+It bit on the first attempt. The gate reads every backticked verdict in the absence-behaviour column. So a sentence explaining that the verdict does not exist here failed it too.
 
 The row says so in plain words for that reason. Do not re-add the backticks.
 

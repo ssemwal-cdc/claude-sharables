@@ -21,7 +21,7 @@ So the script reproduces the host arrangement and measures it. That is a cross-o
 
 It is not in CI, and `validate.py` may not assume a browser.
 
-Run it after touching the band track block, the float CSS block, the header mirror block, or anything that changes the page height.
+Run it after touching the band track block, the float CSS block or the header mirror block. Also run it after anything that changes the page height.
 
 Invoke it with the global module path exported, then node and the script path.
 

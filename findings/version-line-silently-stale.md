@@ -11,7 +11,7 @@ date: 2026-09-16
 
 **Argument.**
 
-PR #19 gave both skills a new Absolute rule and a Step 9 close-down. Neither skill's `**Skill version N — date.**` line changed. `scripts/validate.py` reported success. Its only check on the version lines is that the four sites agree with each other, per `D43`, four synced version sites. It does not compare against what shipped before.
+PR #19 gave both skills a new Absolute rule and a Step 9 close-down. Neither skill's `**Skill version N — date.**` line changed. `scripts/validate.py` reported success. Its only check on the version lines is that the four sites agree with each other. That check is per `D43`, four synced version sites. It does not compare against what shipped before.
 
 The result: a teammate ran `Check for updates`, then compared the version line to the README table. Both numbers agreed with each other and looked current. The skill underneath had already changed. The version display was not frozen by anything in the desktop app. The source never moved.
 

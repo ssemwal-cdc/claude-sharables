@@ -23,11 +23,11 @@ Name an unbuilt type as a defect in the skill, not as a property of the record.
 
 A missing procedure is not something a user can authorise their way out of. Asking implies it is.
 
-The tell that this branch was missing: a run offered the user a choice between authorising a workaround and having the plugin fixed.
+The tell that this branch was missing was this: a run offered the user a choice. That choice was between authorising a workaround and having the plugin fixed.
 
 **Evidence.**
 
-- The Procore case was reported 2026-08-28. A purchase order contract with a live responder at Financial Analyst Review, due that day, was handed over as a link with no response buttons.
+- The Procore case was reported 2026-08-28. A purchase order contract had a live responder at Financial Analyst Review, due that day. It was handed over as a link with no response buttons.
 - The NetSuite case was reported 2026-09-01. See F94, NetSuite reviewed a type it could not click.
 - The valid type strings are listable. See F35, the tools endpoint needs v2.
 

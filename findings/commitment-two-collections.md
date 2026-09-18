@@ -21,7 +21,7 @@ A commitment with no workflow type is demoted to ungated. That is the change ord
 
 Both strings are valid workflowable types. So the wrong one carrying the right id returns 200 with zero rows rather than a 400.
 
-The execute step reads an empty instance as already actioned elsewhere, so a live contract would be logged as done with no click.
+The execute step reads an empty instance as already actioned elsewhere. So a live contract would be logged as done with no click.
 
 This is the seventh instance of the shape these records keep recording.
 

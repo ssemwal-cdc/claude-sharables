@@ -13,7 +13,7 @@ date: 2026-08-24
 message.
 It is the text closest to a real approve click.
 It was the least-governed text in either plugin, a JavaScript string inside an HTML
-template, covered by no shared block and read by no test.
+template. No shared block covered it, and no test read it.
 
 Both copies had independently drifted into carrying procedure, and both got it wrong in
 the same week.

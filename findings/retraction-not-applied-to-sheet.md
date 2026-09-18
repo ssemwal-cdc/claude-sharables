@@ -23,7 +23,7 @@ The retraction was applied in one place and not the other. So the notes asserted
 
 Nothing shipped wrong. The sheet itself never carried the over-claim. A later session reading only the second copy would have cited it as established.
 
-The sheet gives the reason rather than only the prohibition, because a rule with no reason is the one people talk themselves out of.
+The sheet gives the reason rather than only the prohibition. A rule with no reason is the one people talk themselves out of.
 
 **Evidence.**
 

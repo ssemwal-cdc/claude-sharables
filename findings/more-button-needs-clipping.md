@@ -15,7 +15,7 @@ Template v9 emitted the more button whenever the warning text was non-empty.
 
 So a one-line warning offered a control that did nothing visible.
 
-A trim pass now compares the scroll height against the client height after each render, and hides the button when nothing is cut.
+A trim pass now compares the scroll height against the client height after each render. It hides the button when nothing is cut.
 
 **Evidence.**
 

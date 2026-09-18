@@ -12,10 +12,10 @@ one does not.
 
 **Argument.** The Bash hook was proved with 15 sample payloads on stdin.
 Each forbidden form exited 2 with one line on stderr.
-The forbidden forms are the stash, the reset, the restore, a checkout naming a
-path, a pattern kill and a pid list.
+The forbidden forms are the stash, the reset and the restore. They also
+include a checkout naming a path, a pattern kill and a pid list.
 
-A bare branch name, a new branch and a harmless command exited 0.
+A bare branch name, a new branch and a harmless command exited zero.
 A forbidden form after a separator still exited 2, so a separator hides
 nothing.
 A forbidden form inside a shell wrapper exited 2, after the quote strip was

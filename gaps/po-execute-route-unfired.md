@@ -29,7 +29,7 @@ That is the whole basis for putting purchase orders on the bill route, and it is
 - **The note.** Every approval this skill has made carried `Approved by Claude` through Approve With Notes.
   A purchase order approved without a note has never happened.
   So the log line naming a record type with no notes button has never been written.
-- **The plain-Approve no-op.** The dropped `win.open` failure was pinned on a bill, record 2534442.
+- **The plain-Approve no-op.** The dropped `win.open` failure was pinned on a bill, record 2534442 itself.
   Whether a purchase order's button behaves the same way is untested.
   The recovery is written to apply, and applying is not the same as working.
 - **The gate in browser mode.** NS v23 states that with no connector the buttons are the gate for every type.
@@ -49,7 +49,7 @@ Reported 2026-09-01: five purchase orders reviewed, five refused at the click.
 The run behaved correctly. It re-verified all five, clicked nothing and reported the gap.
 Record 2534442 is the bill where the URL recovery was pinned.
 `check_execute_type_coverage()` is mutation-tested five ways.
-Those mutations are dropping the row, shrinking the schema, inventing a fourth type, renaming the
-heading and blanking a gate cell.
+Those mutations are dropping the row, shrinking the schema and inventing a fourth type. They
+also include renaming the heading and blanking a gate cell.
 
 **Checks.** `check_execute_type_coverage()` in `scripts/shared_blocks.py`.

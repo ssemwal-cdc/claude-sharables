@@ -16,9 +16,9 @@ This closes one more: every screen measured.
 `check_device_shots()` reads `.claude/shots/summary.txt`.
 It fails on any capture overflow, or on fewer than 18 rows.
 Read against `scripts/check_records.py`'s `check_device_shots()` on
-2026-09-17, it has a third branch: when the summary file is missing
+2026-09-17. It has a third branch: when the summary file is missing
 entirely, it returns no problems at all.
-That absence is a note from `device_shots_note()`, not a failure, so an
+That absence is a note from `device_shots_note()`, not a failure. So an
 environment that never captured shots still passes this check silently.
 
 A new `shots` CI job runs the capture and this check together.

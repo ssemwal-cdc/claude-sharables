@@ -21,7 +21,7 @@ Stating the rule as a property rather than a list of mechanisms is what made thi
 
 What stays forbidden is a file staged to move bytes.
 
-Had the rule still been the mechanism list, the only working write on that mount would have been against the rules.
+Had the rule still been the mechanism list, only one write on that mount would have worked. That write would have been against the rules.
 
 **Evidence.**
 

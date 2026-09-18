@@ -13,7 +13,7 @@ date: 2026-08-14
 
 **Argument.**
 
-A run once invented the text, then stopped a 15-item batch worth 61.2 million dollars to ask whether to keep it. The hesitation came from the wording being improvised.
+A run once invented the text. It then stopped a 15-item batch worth 61.2 million dollars to ask whether to keep it. The hesitation came from the wording being improvised.
 
 An agent that made up the text has something to second-guess. Specifying the text removes the question.
 

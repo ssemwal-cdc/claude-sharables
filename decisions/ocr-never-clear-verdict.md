@@ -15,9 +15,9 @@ date: 2026-08-14
 
 Chrome renders the file, so navigating to it and reading it visually is more accurate and needs no CDN.
 
-OCR is the fallback only. An OCR-derived figure is labelled as read by OCR and not independently verified, and the item stays flagged for a human.
+OCR is the fallback only. An OCR-derived figure is labelled as read by OCR and not independently verified. The item then stays flagged for a human.
 
-A misread digit in an eight-figure line is worse than an honest skip, and a table is exactly where OCR misreads.
+A misread digit in an eight-figure line is worse than an honest skip. A table is exactly where OCR misreads.
 
 If that cap ever feels noisy, fix the visual read. Do not relax the cap.
 

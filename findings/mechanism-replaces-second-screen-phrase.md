@@ -16,8 +16,8 @@ In a sheet whose second section is a prerequisites list, it read as a hardware
 requirement.
 
 What replaced it names the mechanism instead.
-Most of the elapsed time is a download, an install, a restart, and a run that
-pauses and waits for you.
+Most of the elapsed time is a download, an install and a restart. The rest
+is a run that pauses and waits for you.
 That is a claim about the work, and it is checkable.
 
 It sits above the prerequisites list, not in it.
@@ -29,8 +29,8 @@ The first wording over-corrected and was caught the same day.
 Saying that none of this needs your full attention invites starting it and
 leaving, and the run cannot survive that.
 
-The landed line leads with the two facts a reader decides from, how long and
-where they can stop, with the posture following as explanation.
+The landed line leads with the two facts a reader decides from: how long
+and where they can stop. The posture follows as explanation.
 Stating the consequence beat issuing a rule.
 The consequence is what makes someone stay.
 

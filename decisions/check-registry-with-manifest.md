@@ -7,7 +7,7 @@ date: 2026-08-26
 ---
 # Declare checks in a registry
 
-**Rule.** Declare every check with an id, a lens and a capability, and add the id to the manifest in the same edit.
+**Rule.** Declare every check with an id, a lens and a capability. Add the id to the manifest in the same edit.
 
 **Outcome protected.** A later lens can select checks by id, and a check cannot vanish unnoticed.
 
@@ -17,7 +17,7 @@ Each skill verify step opens with a check registry. Each row carries an id, the 
 
 Above a capability table, the registry says what happens when each capability is absent.
 
-The registry is descriptive, not a selector. The `core` lens is the whole table, so a run with no configured lenses does exactly what every earlier run did.
+The registry is descriptive, not a selector. The `core` lens is the whole table. So a run with no configured lenses does exactly what every earlier run did.
 
 The gate is what makes it worth having. `REGISTRY_MANIFEST` hardcodes every id, so a check that stops being declared fails the build.
 

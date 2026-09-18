@@ -15,11 +15,11 @@ date: 2026-09-01
 
 Purchase orders take the bill route on the strength of the fields, not the resemblance.
 
-A pending purchase order carries the approval status and the three approver custom fields that the pre-click gate and the post-click verification read. So the route transfers unchanged.
+A pending purchase order carries the approval status. It also carries the three approver custom fields that the pre-click gate and the post-click verification read. So the route transfers unchanged.
 
 The button set is a separate question and is still unread. Nobody has looked at the approval buttons of a purchase order.
 
-So the step reads the labels, as it always did, and now says what happens when Approve With Notes is not among them.
+So the step reads the labels, as it always did. It now also says what happens when Approve With Notes is not among them.
 
 The affirmative button is still clicked, and the note is logged as lost. It is never written somewhere else.
 

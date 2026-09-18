@@ -13,7 +13,7 @@ date: 2026-08-15
 
 A rendered dashboard is a snapshot of the template. An old conversation keeps offering its old instruction forever.
 
-A resolve-the-gate button was quoted with wording that had been removed, so the install was called out as predating that commit. It was not. The install already contained the fix.
+A resolve-the-gate button was quoted with wording that had been removed. So the install was called out as predating that commit. It was not. The install already contained the fix.
 
 The button sat in a dashboard rendered before the update.
 

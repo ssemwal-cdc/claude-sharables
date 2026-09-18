@@ -31,7 +31,7 @@ The ids came from `wfId` values already recorded in the log.
 So the `line_items[].holder.id` read is still unobserved.
 Execute mode has still not been walked.
 
-**Partially observed, NetSuite.** One approval completed live on record 2534442.
+**Partially observed, NetSuite.** One approval completed live on record 2534442 itself.
 It executed by navigating the Approve button's own URL after the button no-opped five times.
 That confirms the URL recovery in Step 8.6 and not the ordinary path.
 Approve With Notes remains unwalked, so no approval has gone through the primary route with a note.
@@ -51,7 +51,7 @@ Bill 2532506, one live pdf.js test.
 F‹netsuite-approval-note-confirmed›, the once-unseen notes page, is now read on the record.
 Reported by the maintainer, date unrecorded.
 An approved record showed the maintainer as approver, and the item moved on to the next approver.
-This confirms the audit-trail half of the URL-recovery approval already recorded on 2534442.
+This confirms the audit-trail half of the URL-recovery approval already recorded on 2534442 itself.
 The ordinary Approve With Notes route, and the Procore execute walk, remain unwalked.
 
 **Checks.** `scripts/test_skill_code.py`, mocks only.

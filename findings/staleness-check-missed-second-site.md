@@ -13,7 +13,7 @@ the first.
 **Argument.** The staleness check added the previous turn was itself stale.
 Procore's Step 0 stated it ships `v5` and then tested for `v4`.
 The check written to detect a stale workspace would have called a current one
-stale, and would have passed a genuinely stale one.
+stale. It would also have passed a genuinely stale one.
 
 `check_template_versions()` missed it because `re.search` stops at the first match.
 There were two sites carrying the version string.

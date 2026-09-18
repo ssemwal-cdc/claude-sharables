@@ -30,7 +30,7 @@ One detail is worth keeping. The helper emits the of-total half in a small light
 **Evidence.**
 
 - The tile contradiction was fixed 2026-08-24.
-- The bar test was missing until 2026-08-20. The note asserted one existed for a day and it did not, which is worth remembering the next time these records claim coverage.
+- The bar test was missing until 2026-08-20. The note asserted one existed for a day and it did not. That is worth remembering the next time these records claim coverage.
 - The card rules came from a blind critique. See F55, four rules from a critique.
 - The per-row amber caveat is gone. See F52, amber was the real finding.
 - Larger type measured worse. See F54, bigger type measured worse.

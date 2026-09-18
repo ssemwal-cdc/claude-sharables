@@ -11,7 +11,7 @@ date: 2026-08-24
 
 **Argument.**
 
-Two things were tried and measured wrong before landing, and both were caught by measuring the render rather than looking at it.
+Two things were tried and measured wrong before landing. Both were caught by measuring the render rather than looking at it.
 
 Raising type sizes while trying to cut density was the first. Fewer type settings is the goal. Larger type is not.
 

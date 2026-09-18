@@ -15,7 +15,7 @@ date: 2026-08-24
 
 The copies are stale because the write failed. Deleting the destination does not make the plugin root reachable.
 
-The next run fails the same way, and rung 3 of the sync ladder then has nothing to fall back on. Delete-then-write converts a fail-open into a fail-closed.
+The next run fails the same way. Rung 3 of the sync ladder then has nothing to fall back on. Delete-then-write converts a fail-open into a fail-closed.
 
 It also destroys the state file in that folder. That file holds `config`, the review history and `lastCompletedRun`. Publish then aborts rather than guessing an identity.
 

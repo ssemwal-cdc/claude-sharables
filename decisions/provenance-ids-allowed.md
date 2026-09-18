@@ -26,6 +26,7 @@ The copied patterns are covered by D60, shipped examples use placeholders.
 **Evidence.**
 
 - Separated from the placeholder rule 2026-08-24, when the two cases were conflated.
-- The worked example is F42, bill PO comes from linkage.
+- The worked example is `F‹phantom-po-miscoding-flag-was-wrong›`, bill PO
+  comes from linkage.
 
 **Checks.** none

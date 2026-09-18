@@ -25,6 +25,7 @@ A capability table is a second surface with the same risk. See F74, capability r
 
 **Evidence.**
 
-- Added 2026-08-24. The unreachable bin is F51, the actioned bin never rendered.
+- Added 2026-08-24. The unreachable bin is
+  `F‹procore-bin-blocked-by-verdict-guard›`, the actioned bin never rendered.
 
 **Checks.** `check_verdict_vocabulary()` in `scripts/shared_blocks.py`.

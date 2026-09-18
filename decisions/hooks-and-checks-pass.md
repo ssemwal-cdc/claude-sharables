@@ -39,7 +39,7 @@ The hook and the five checks landed in the same pass.
 No hook existed in this repo. The count was zero.
 The mandate asks for a hook that refuses `git stash`, `git reset`, `git checkout <path>` and `git restore`.
 Every check below went red on the defect it guards before it was trusted.
-See `F100`, the mutation results.
+See `F‹check-mutations-all-caught-defect›`, the mutation results.
 
 **Checks.**
 

@@ -27,6 +27,7 @@ The sticky rule stays anyway. It costs nothing and it starts working the day a h
 
 - Reported 2026-08-26 and reproduced mechanically the same day. The bar sat at a fixed 3,874px down a 4,114px document, and the header mirror was 1,621px above the viewport.
 - The overlap defect measured 5 row buttons returning the bar from a point hit test, so it is genuinely unclickable where a frame does scroll.
-- The fix is F84, tiled sentinels track the band.
+- The fix is `F‹tiled-sentinels-beat-single-sentinel›`, tiled sentinels track
+  the band.
 
 **Checks.** `test_dashboard_view` in `scripts/test_skill_code.py` and `scripts/measure_float.js` by hand.

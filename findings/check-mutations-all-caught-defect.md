@@ -1,27 +1,30 @@
 ---
-id: F100
-slug: record-checks-mutation-tested
+id: pending
+slug: check-mutations-all-caught-defect
 kind: finding
 status: observed
 date: 2026-09-15
 ---
-# Record checks went red first
+# Every record check caught its mutation
 
 **Outcome protected.** A check is trusted only after it fails on the defect it guards.
 
 **Argument.** A green check proves only its platform and its fixture.
-So each check in `scripts/check_records.py` was mutation-tested before it was wired into
-`scripts/validate.py`.
+So each check in `scripts/check_records.py` was mutation-tested before it was
+wired into `scripts/validate.py`.
 Each mutation was made in place, with a `.bak` copy as the undo.
 No checkout-wide git write ran, because the checkout is shared.
-One mutation found a real defect in the checker.
-That row is named below.
+
+Every row in the table below went red on its mutation, and green again once
+the file was restored.
+One mutation found a real defect in the checker instead of only proving the
+check.
+See `F‹citation-regex-was-blind-once›`, the check that was blind once, for that
+row.
 
 **Evidence.** Measured on 2026-09-15, on this branch over `3a63144`.
-Each row is one mutation of one file.
-Every row went red on the mutation, and green again once the file was restored.
-Ids and paths are described, never written, so this record stays inside the citation
-rule it reports on.
+Ids and paths are described, never written, so this record stays inside the
+citation rule it reports on.
 
 | Check | Mutation | What the check said |
 |---|---|---|
@@ -42,27 +45,5 @@ rule it reports on.
 | `check_index_size` | a plugin name misspelled in the index | the registered plugin is not named |
 | `check_sentence_length` | a 40-word sentence appended to a record | a 40-word sentence, over the 30-word ceiling |
 | `check_sentence_length` | the same sentence appended to the index | a 40-word sentence, over the 30-word ceiling |
-
-The slug-citation row was blind on the first run.
-The pattern asked for a word boundary after the closing guillemet, which never comes.
-So a slug citation matched nothing and passed.
-The fix landed before the check was trusted.
-
-The hook was proved the same way, with 15 sample payloads on stdin.
-Each forbidden form exited 2 with one line on stderr.
-The forbidden forms are the stash, the reset, the restore, a checkout naming a path, a
-pattern kill and a pid list.
-A bare branch name, a new branch and a harmless command exited 0.
-A forbidden form after a separator still exited 2, so a separator hides nothing.
-A forbidden form inside a shell wrapper exited 2, after the quote strip was added.
-A quoted mention inside an `echo` exited 0, and so did a `grep` for the word.
-The `sed` fallback was proved with `jq` off the path.
-
-The id claim was proved twice.
-On this tree the dry run reports nothing pending.
-On a scratch copy with two pending records it assigned the next free number per kind,
-rewrote one slug citation, converted one supersedes slug and regenerated the three
-indexes.
-No existing id moved.
 
 **Checks.** `python3 scripts/validate.py`, which calls the five checks.

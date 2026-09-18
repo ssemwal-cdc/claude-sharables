@@ -5,7 +5,7 @@ Reads the review log beside this script, injects it into dashboard_template.html
 index.html, whose contents are then rendered inline with show_widget.
 
 (An earlier design published this to an artifact. That path was dropped on 2026-08-11: the
-artifact host exposes no sendPrompt, so a dashboard there cannot put the execute instruction
+artifact host exposes no sendPrompt, so a dashboard there cannot put the re-run instruction
 into chat. The clipboard handoff still in dashboard_template.html is the deliberate fallback
 for that host and is not leftover - do not remove it.)
 

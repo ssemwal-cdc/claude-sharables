@@ -1,0 +1,6 @@
+Cut from `plugins/_shared/dash-of-total.block` by review-only-mode. Verbatim; do not edit.
+
+===== plugins/_shared/dash-of-total.block lines 2-4 =====
+// renderBar() deliberately does NOT - a marked item hidden by a filter still has to
+// execute, and narrowing it to what is on screen would silently drop decisions the
+// user made before they filtered. Do not "fix" the bar to match these.

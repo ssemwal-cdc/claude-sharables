@@ -1,5 +1,4 @@
-function go(){say(window.__prompt)}
-
+// retired: see actionable-retired/_shared/dash-render-tail.cut.block, review-only-mode
 render();
 // The tick ages the freshness line and flips the Snapshot pill. It must NEVER call
 // render(), which rebuilds #rows from scratch: that silently collapsed every expanded

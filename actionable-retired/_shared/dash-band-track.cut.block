@@ -1,0 +1,7 @@
+Cut from `plugins/_shared/dash-band-track.block` by review-only-mode. Verbatim; do not edit.
+
+===== plugins/_shared/dash-band-track.block line 5, sentence trim =====
+was: // with everything else - which is why the header could not just be made sticky, and why
+// nobody has ever seen the execute bar pinned.
+now: // with everything else - which is why the header could not just be made sticky, and why
+// nobody has ever seen the floating bar pinned.

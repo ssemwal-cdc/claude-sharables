@@ -1,0 +1,4 @@
+Cut from `plugins/_shared/dash-float-css.block` by review-only-mode. Verbatim; do not edit.
+
+===== plugins/_shared/dash-float-css.block lines 17-17 =====
+.floatbar .go.big{padding:8px 14px;font-size:13px;box-shadow:none}

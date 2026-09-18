@@ -1,4 +1,4 @@
-- **This step is the last action of every run.** It runs after Step 7. Report nothing before it has run.
+- **This step is the last action of every run.** In review mode it runs after Step 7. In execute mode it runs after Step 8's re-render. Report nothing before it has run.
 - **Call `tabs_context_mcp`.** For every open tab, decide one thing: opened by this run, or not. Close every tab this run opened. Leave every other tab exactly as it is, including a tab the user opened from the dashboard.
 - **A tab this run opened that is still open after this step is a defect of this run.** It is not a convenience for the user. The dashboard card is the route to a record.
 - **Do not open a tab in this step.**

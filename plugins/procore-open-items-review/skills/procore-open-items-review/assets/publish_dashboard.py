@@ -5,7 +5,7 @@ Reads the review log beside this script, injects it into dashboard_template.html
 index.html, whose contents are then rendered inline with show_widget.
 
 (An earlier design published this to an artifact. That path was dropped on 2026-08-11: the
-artifact host exposes no sendPrompt, so a dashboard there cannot put the execute instruction
+artifact host exposes no sendPrompt, so a dashboard there cannot put the re-run instruction
 into chat. The clipboard handoff still in dashboard_template.html is the deliberate fallback
 for that host and is not leftover - do not remove it.)
 
@@ -152,8 +152,7 @@ def main():
         amt = it.get("amount", None)
         # A CCO can only be gated through its commitment change order id. Without one there is no
         # query that works, and guessing the package id is worse than not offering the buttons:
-        # workflows/instances 400s on it, and the execute instruction reads "no instance" as
-        # "already actioned elsewhere", so a live item would be silently logged as done.
+        # workflows/instances 400s on it, so the gate can never be confirmed for that item.
         wf_id = str(it.get("wfId", "") or "")
         if kind == "cco" and not wf_id:
             if verdict not in ("skipped", "ungated"):
@@ -241,21 +240,15 @@ def main():
         print("WARNING: no wfType on a commitment, so demoted to ungated with no response "
               "buttons: " + ", ".join(untyped) + ". Record the queue's item_type verbatim - "
               "PurchaseOrderContract or WorkOrderContract (Step 2) - and re-publish to make "
-              "them respondable. It decides both the record link's collection and the type the "
-              "execute step re-queries with, and the wrong one returns an empty instance rather "
-              "than an error.")
+              "them respondable. It decides the record link's collection, and the wrong one "
+              "returns an empty instance rather than an error.")
 
     thin = [i["doc"] for i in items if not i["head"] or not i["facts"]]
     if thin:
         print("WARNING: no head/facts for: " + ", ".join(thin) +
               " - these rows will render thin", file=sys.stderr)
 
-    no_resp = [i["doc"] for i in items
-               if i["verdict"] in ("clear", "flagged", "skipped") and not i["resp"]]
-    if no_resp:
-        print("WARNING: no response verbs captured for: " + ", ".join(no_resp) +
-              " - those rows will offer no buttons. Capture available_responses "
-              "from the workflow step.", file=sys.stderr)
+# retired: see actionable-retired/procore-open-items-review/publish_dashboard.cut.py, review-only-mode
 
     payload = {
         "lastRun": log.get("lastRunTime") or log.get("lastCompletedRun", ""),

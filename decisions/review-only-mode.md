@@ -7,7 +7,9 @@ date: 2026-09-18
 ---
 # Review-only mode
 
-**Rule.** Ship review-only as a stored config key inside each existing plugin, never as a second plugin or a cloned repo. In `review-only` the skill has no Step 8.
+**Question.** How should a review-only variant of the two plugins ship?
+In review-only the skill has no Step 8.
+The owner has not chosen an option yet. This record proposes, and settles nothing.
 The dashboard renders no mark button and no execute bar. It renders no header mirror.
 
 **Outcome protected.** A reviewer with no approval authority gets a shorter dashboard, and one push to `main` still fixes every copy.
@@ -16,15 +18,19 @@ The dashboard renders no mark button and no execute bar. It renders no header mi
 
 The two plugins already run in review mode by default. Execute mode is Step 8, and it runs only on an explicit instruction. So the review path exists. What does not exist is a way to hide the decision controls. Some readers will never issue that instruction.
 
-Two ways to get there were weighed.
+**Options.**
 
-A. A second plugin per lens, `netsuite-approval-review-readonly` and `procore-open-items-review-readonly`, each a copy with Step 8 removed.
+A. A second plugin per lens, `netsuite-approval-review-readonly` and `procore-open-items-review-readonly`, each a copy with Step 8 removed. Two new marketplace entries.
 
 B. One config key per plugin, asked once in Step 0 and stored in the state file.
 
-B wins on the recorded arguments. D55, persona plugins, abandoned a fork per persona and named the cost: a second copy drifts. D56, plugins are prerequisite buckets, buckets by external prerequisite. Approval authority is not an external prerequisite. Both variants sign in to the same NetSuite or Procore. D2, first-run setup is per plugin, already gives the question a home. D79, repo workflow beats org protocol, is why a cloned repo is out: the teammate would hold two copies.
+C. A cloned repo and a second marketplace.
 
-**Plan, in order.**
+**Recommendation.** B, on the recorded arguments. D55, persona plugins, abandoned a fork per persona and named the cost: a second copy drifts. D56, plugins are prerequisite buckets, buckets by external prerequisite. Approval authority is not an external prerequisite. Both variants sign in to the same NetSuite or Procore. D2, first-run setup is per plugin, already gives the question a home. D79, repo workflow beats org protocol, and D10, never create a second marketplace, weigh against C. The teammate would hold two copies.
+
+A is still open. It gives a reviewer a plugin that cannot be switched into full mode by a config edit. If that separation matters more than drift, choose A.
+
+**Plan under B, in order.**
 
 1. Add `mode` to the Step 0 setup questions in both `SKILL.md` files. Two values, `full` and `review-only`. Default `full`, so every existing state file keeps its behaviour. Store it under `config.mode`. D74, adopt config from conflict copy, covers it on a conflict.
 2. In both `SKILL.md` files, add one line to the Two modes section. In `review-only`, Step 8 is not available. An execute instruction gets one line naming the mode and the key that changes it. Leave the Absolute rules alone. They are read-only rules and still hold.
@@ -44,7 +50,7 @@ Hiding it protects the same outcome from the other side. The reader is not shown
 D37, render the execute bar always, stays settled for `full`. This record adds the one condition.
 D46, the bar ignores filters, and D45, keep reference text out, are untouched. The bar is absent, not restyled.
 
-**What this record does not do.** It does not change what a verdict means. A `clear` in review-only is still a recommendation. It does not add a third plugin, and it does not touch the marketplace file.
+**What this record does not do, under either option.** It does not change what a verdict means. A `clear` in review-only is still a recommendation. It does not add a third plugin, and it does not touch the marketplace file.
 
 **Evidence.**
 

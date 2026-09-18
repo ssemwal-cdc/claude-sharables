@@ -2,59 +2,66 @@
 id: pending
 slug: review-only-mode
 kind: decision
-status: open
+status: settled
 date: 2026-09-18
 ---
-# Review-only mode
+# Review-only plugins
 
-**Question.** How should a review-only variant of the two plugins ship?
-In review-only the skill has no Step 8.
-The owner has not chosen an option yet. This record proposes, and settles nothing.
-The dashboard renders no mark button and no execute bar. It renders no header mirror.
+**Rule.** Remove execute mode from both plugins. Move every removed line of prose and code into `actionable-retired/`, one file per source, named by its original path.
+Do it in one pull request, from one branch, so one `git revert` of the merge commit also puts it back.
+Keep every state key and every mark key as it is, so a reinstated execute mode reads old logs unchanged.
 
-**Outcome protected.** A reviewer with no approval authority gets a shorter dashboard, and one push to `main` still fixes every copy.
+**Outcome protected.** A reviewer gets a dashboard with no decision controls. A future session can read what was removed, diff it against the live files, and put it back.
 
 **Argument.**
 
-The two plugins already run in review mode by default. Execute mode is Step 8, and it runs only on an explicit instruction. So the review path exists. What does not exist is a way to hide the decision controls. Some readers will never issue that instruction.
+The owner chose this on 2026-09-18, after weighing a second plugin and a stored mode key.
+Both kept execute mode alive for somebody. Nobody needs it today.
+Dead code that no user can reach is not built, so it goes.
 
-**Options.**
+Reinstatement has to stay cheap, and readable without git archaeology.
+So the removed material lives in `actionable-retired/`, in the tree, where a session can open it and diff it.
+Git gives the second path. When the removal is one merge commit, one revert restores everything together.
+Splitting the removal across several pull requests would make that revert a hunt.
 
-A. A second plugin per lens, `netsuite-approval-review-readonly` and `procore-open-items-review-readonly`, each a copy with Step 8 removed. Two new marketplace entries.
+The folder sits at the repo root, outside `plugins/`, so nothing in it installs or ships. The validator skips it.
 
-B. One config key per plugin, asked once in Step 0 and stored in the state file.
+The three things a revert cannot fix are the reasons for the three guard rules below.
 
-C. A cloned repo and a second marketplace.
+**Reinstatement recipe.** Two paths, and the folder README carries both.
+By hand: open `actionable-retired/`, read its README map, and paste each file back at the path it names. Diff first, because the live file may have moved on.
+By git: tag the last `main` commit before the merge as `execute-mode-last`. Run `git revert -m 1 <merge sha>` on a branch, resolve drift against the tag, and open a pull request.
+The superseded records below return to `settled` in that same pull request.
 
-**Recommendation.** B, on the recorded arguments. D55, persona plugins, abandoned a fork per persona and named the cost: a second copy drifts. D56, plugins are prerequisite buckets, buckets by external prerequisite. Approval authority is not an external prerequisite. Both variants sign in to the same NetSuite or Procore. D2, first-run setup is per plugin, already gives the question a home. D79, repo workflow beats org protocol, and D10, never create a second marketplace, weigh against C. The teammate would hold two copies.
+**Guard rules for the removal.**
 
-A is still open. It gives a reviewer a plugin that cannot be switched into full mode by a config edit. If that separation matters more than drift, choose A.
+1. Never rename or delete a state file key. The `actions` array stays, empty on new runs, and is never read. D15, one state file per skill, and D74, adopt config from conflict copy, still apply.
+2. Never rename a per-item marks key. D38, never rename a marks key, still applies, even with nothing writing them.
+3. Never change what a verdict means. A `clear` stays a recommendation. D63, gate verdicts against publish, still applies.
 
-**Plan under B, in order.**
+**Plan, in order.**
 
-1. Add `mode` to the Step 0 setup questions in both `SKILL.md` files. Two values, `full` and `review-only`. Default `full`, so every existing state file keeps its behaviour. Store it under `config.mode`. D74, adopt config from conflict copy, covers it on a conflict.
-2. In both `SKILL.md` files, add one line to the Two modes section. In `review-only`, Step 8 is not available. An execute instruction gets one line naming the mode and the key that changes it. Leave the Absolute rules alone. They are read-only rules and still hold.
-3. In both `publish_dashboard.py` scripts, pass `config.mode` into the payload beside `me` and `tool`.
-4. In both `dashboard_template.html` files, gate three things on the payload mode. The Approve, Approve with notes, Reject buttons and the reject-reason input in the row renderer. The execute bar in the `#bar` element. The header mirror. In review-only the row keeps the link, the details and the verdict pill. The bar region renders nothing, and the queue gets the height back.
-5. The header mirror lives in `plugins/_shared/dash-header-mirror.block`. Edit the canonical block, then sync and check. D58, sync shared blocks from canonical. Test the gate inside the block, never in the two host templates, or the block drifts.
-6. Extend `test_dashboard_view` in `scripts/test_skill_code.py`. Render both templates with `mode: review-only` and assert zero `onclick="mark(`, an empty `#bar`, and no mirror markup. Render with `mode: full` and assert the existing counts. A guard counts only once it goes red on the defect it guards. Break the gate once and watch it fail.
-7. Run the float measurement by hand on the review-only render. D70, measure position in a browser. Record the bar height as zero and the queue rows visible in the first 700px.
-8. Bump the four version sites in one commit. D43, four synced version sites.
-9. Add a README line per plugin naming the mode and the question that sets it.
+1. Tag `main` at its current head as `execute-mode-last` and push the tag. Create `actionable-retired/` with a README. The README holds the reinstatement recipe and a two-column map: retired file, original path and lines.
+2. In both `SKILL.md` files, cut the Two modes section, Step 8 and the execute-only Absolute rules. Save each cut as `actionable-retired/<plugin>/SKILL.md.cut.md`. Renumber Step 9 to Step 8. Keep the rule that never calls a write endpoint. Keep the rule that never approves on its own judgement.
+3. Move both `references/step-8-execute.md` files into the folder under their plugin. Cut the execute paragraph from `references/lenses-delivery-design.md` into a `.cut.md` beside them.
+4. In both `dashboard_template.html` files, cut the decision controls. That is the three buttons and the reject-reason input. It is the `mark` and `setText` functions. It is the `#bar` element, its renderer, and the marks read from local storage. Save the cut as `actionable-retired/<plugin>/dashboard_template.cut.html`, with a line comment at each cut site in the live file. Keep the row link, the details and the verdict pill. Keep every mark-key name in a comment naming this record.
+5. Move `dash-header-mirror.block` into `actionable-retired/_shared/` and remove its marked sites. Cut the execute lines from `dash-band-track.block`, `dash-of-total.block`, `skill-artifact-host.block` and `skill-close-down.block` into `.cut` files beside it. Sync and check. D58, sync shared blocks from canonical.
+6. In both `publish_dashboard.py` files, cut the execute payload fields into `publish_dashboard.cut.py`. Keep reading `actions` so an old log still loads.
+7. In `scripts/shared_blocks.py`, move `check_execute_type_coverage` and `check_execute_prompt_purity` into `actionable-retired/scripts/`. Remove their two calls from `scripts/validate.py`. Add `actionable-retired/` to the validator's skip list. Keep the verdict checks.
+8. In `scripts/test_skill_code.py`, move `test_gate_states` and the bar and mirror assertions of `test_dashboard_view` into `actionable-retired/scripts/`. Add one assertion that neither template contains `onclick="mark(` or an element with id `bar`. Break it once and watch it go red.
+9. Run the float measurement by hand on both renders. D70, measure position in a browser. Record the queue rows visible in the first 700px as a finding.
+10. Mark eleven decisions `superseded`, each citing this record. They are D14, never pre-write an action, through D78, an unmapped subtype keeps buttons, and the list sits under Evidence. Close G7, execute button blocked state unseen, and G16, purchase order route unfired, as moot. Regenerate the indexes.
+11. Rewrite the marketplace descriptions, the READMEs, `CLAUDE.md` and the onboarding sheet. No line may say the dashboard approves or responds. D33, the page is the file. Add a `CLAUDE.md` line naming `actionable-retired/` as read-only reference.
+12. Bump the four version sites in one commit. D43, four synced version sites.
+13. Open one pull request. The maintainer claims ids in the last commit and merges. The merge sha goes into this record under Evidence.
 
-**What D37, render the execute bar always, says, and why this is not a repeal.** D37, render the execute bar always, protects a first-time reader. They see step 2 before doing step 1.
-
-In review-only there is no step 2.
-The bar would teach a step that does not exist for this reader.
-Hiding it protects the same outcome from the other side. The reader is not shown a control they cannot use.
-D37, render the execute bar always, stays settled for `full`. This record adds the one condition.
-D46, the bar ignores filters, and D45, keep reference text out, are untouched. The bar is absent, not restyled.
-
-**What this record does not do, under either option.** It does not change what a verdict means. A `clear` in review-only is still a recommendation. It does not add a third plugin, and it does not touch the marketplace file.
+**What stays.** D6, never act without an instruction, stays settled. It is now trivially true and still the right rule if execute mode returns. D29, auto mode, stays. D87, a run closes its tabs, stays.
 
 **Evidence.**
 
-- Unmeasured. The 2026-08-24 measurement in D45, keep reference text out, put the bar at 153px in a 700px viewport. Review-only should return about a fifth of the frame to the queue. Confirm with step 7.
-- The row buttons sit in the renderer at one site per template, observed 2026-09-18. The bar is one element. The mirror is one shared block. Three gates, no fourth.
+- Surveyed 2026-09-18. Step 8 is one section plus one reference file per plugin. The controls sit in one row renderer, one bar element and one shared block per template.
+- Eleven decisions describe execute behaviour only. D14, never pre-write an action. D18, never batch the click checks. D20, default the approval comment. D28, Approve With Notes stays primary. D37, render the execute bar always. D45, keep reference text out. D46, the bar ignores filters. D48, the message authorises only. D75, gate the two type lists. D76, purchase orders take bill route. D78, an unmapped subtype keeps buttons.
+- Two gaps do. G7, execute button blocked state unseen. G16, purchase order route unfired.
+- Merge sha: not yet merged.
 
 **Checks.** `python3 scripts/validate.py`, `python3 scripts/test_skill_code.py`, and `scripts/measure_float.js` by hand.

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F51
 slug: run-before-reading-wastes-turns
 kind: finding
 status: settled

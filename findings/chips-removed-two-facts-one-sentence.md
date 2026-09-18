@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F104
 slug: chips-removed-two-facts-one-sentence
 kind: finding
 status: observed

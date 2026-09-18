@@ -34,7 +34,7 @@ A canonical file that nobody references fails the build. So does a marker naming
 - Measured 2026-08-24. The two dashboard templates were 54.5% line-identical and the two publish scripts 54.9%.
 - 10 of the 22 commits that ever touched a `SKILL.md` had to touch both. Every one was a mechanics or convention change.
 - 6 defects had accumulated in that gap, each a fix that reached one plugin
-  only. See `F‹six-one-sided-dashboard-defects›`, six one-sided defects.
+  only. See `F120`, six one-sided defects.
 - `SKILL.md` coverage is smaller than the duplication suggests. See F68, only 34 eligible lines.
 
 **Checks.** `scripts/validate.py` runs `shared_blocks.py --check` on every build.

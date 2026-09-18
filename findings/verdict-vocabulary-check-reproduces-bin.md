@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F127
 slug: verdict-vocabulary-check-reproduces-bin
 kind: finding
 status: settled

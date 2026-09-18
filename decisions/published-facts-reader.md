@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D90
 slug: published-facts-reader
 kind: decision
 status: settled
@@ -7,7 +7,7 @@ date: 2026-09-18
 ---
 # Published facts reader
 
-**Rule.** Ruling 3 of `D‹markdown-compliance-fix-plan›`, the markdown
+**Rule.** Ruling 3 of `D89`, the markdown
 compliance fix plan, gets a full, independent accounting. No fact from the
 four files is dropped silently.
 
@@ -42,7 +42,7 @@ exist, or the build fails outright.
 - `docs/onboarding.html` must exist, or the build fails.
   `scripts/shared_blocks.py`'s `check_onboarding_page()` silently returned
   `[]` on a missing file before this lane. See
-  `F‹onboarding-check-silent-on-missing-file›`, the check passed on a
+  `F149`, the check passed on a
   missing file.
 - `docs/index.html` must exist. `README.md` links the GitHub Pages root,
   which redirects through it.

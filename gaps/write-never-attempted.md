@@ -51,7 +51,7 @@ Do not cite it as established.
 The 2026-08-28 stray file was a 6 KB `log.gz.b64` left beside the state file.
 `test_step0_write_states()` fails the build if the three outcomes stop being named.
 It is mutation-tested four ways.
-`F‹login-rewrite-caused-refusal›`, a run assembling a refusal from repo prose, is
+`F135`, a run assembling a refusal from repo prose, is
 the same shape.
 
 **Checks.** `test_step0_write_states()` in `scripts/test_skill_code.py`.

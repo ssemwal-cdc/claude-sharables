@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F120
 slug: six-one-sided-dashboard-defects
 kind: finding
 status: settled

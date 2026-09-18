@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F117
 slug: second-source-found-what-self-check-couldnt
 kind: finding
 status: observed
@@ -18,6 +18,6 @@ same repo the whole time.
 That is what made the six-defect drift findable at all.
 
 **Evidence.** Audit dated 2026-08-24.
-See `F‹six-one-sided-dashboard-defects›`, the six defects this found.
+See `F120`, the six defects this found.
 
 **Checks.** none.

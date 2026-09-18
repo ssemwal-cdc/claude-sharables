@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F75
 slug: typed-reference-read-as-coding-not-linkage
 kind: finding
 status: settled
@@ -17,7 +17,7 @@ The query step already read the right table and never asked it for the link.
 All three defects are now fixed in the cross-check step.
 
 **Evidence.** Found by a teammate and confirmed against production 2026-08-20.
-See `F‹phantom-po-miscoding-flag-was-wrong›`, the bills this produced a false
+See `F71`, the bills this produced a false
 flag on.
 
 **Checks.** `scripts/test_skill_code.py` runs the code the cross-check step

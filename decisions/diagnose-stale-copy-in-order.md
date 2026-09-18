@@ -22,7 +22,7 @@ The symptoms overlap almost completely, so the order matters.
 Check the installed version against `main`. Then check the workspace `layout template vN` against the version Step 0 states. That is a direct check rather than an inference from a modification date. Then check the render date on the widget.
 
 The template version marker catches a torn sync only, not a stale one. See
-`F‹template-version-check-blind-to-lockstep›`, the marker misses a stale sync.
+`F126`, the marker misses a stale sync.
 
 **Evidence.**
 

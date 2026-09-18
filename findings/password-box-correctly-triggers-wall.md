@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F138
 slug: password-box-correctly-triggers-wall
 kind: finding
 status: observed
@@ -16,6 +16,6 @@ If a password box really was on it, `wall` was the correct call.
 Only the wording and the recovery were wrong, not the read of the screen.
 
 **Evidence.** Reported 2026-09-10, the same run as
-`F‹login-rewrite-caused-refusal›`, a prose rewrite caused the refusal.
+`F135`, a prose rewrite caused the refusal.
 
 **Checks.** `test_login_states()` in `scripts/test_skill_code.py`.

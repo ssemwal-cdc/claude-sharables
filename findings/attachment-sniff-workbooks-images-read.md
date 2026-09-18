@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F67
 slug: attachment-sniff-workbooks-images-read
 kind: finding
 status: observed

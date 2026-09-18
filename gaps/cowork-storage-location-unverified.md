@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G3
 slug: cowork-storage-location-unverified
 kind: gap
 status: unobserved

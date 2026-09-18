@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F132
 slug: sticky-fails-cross-origin-iframe
 kind: finding
 status: observed

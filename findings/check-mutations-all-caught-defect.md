@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F139
 slug: check-mutations-all-caught-defect
 kind: finding
 status: observed
@@ -19,7 +19,7 @@ Every row in the table below went red on its mutation, and green again once
 the file was restored.
 One mutation found a real defect in the checker instead of only proving the
 check.
-See `F‹citation-regex-was-blind-once›`, the check that was blind once, for that
+See `F140`, the check that was blind once, for that
 row.
 
 **Evidence.** Measured on 2026-09-15, on this branch over `3a63144`.

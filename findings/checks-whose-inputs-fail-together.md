@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F101
 slug: checks-whose-inputs-fail-together
 kind: finding
 status: observed
@@ -18,7 +18,7 @@ It is the same family as the CCO wrong-id case, where a 200-empty response
 looks like no instance.
 
 **Evidence.** Found 2026-08-24, generalised from
-`F‹template-version-check-blind-to-lockstep›`, the version check blind to
+`F126`, the version check blind to
 lockstep.
 
 **Checks.** none.

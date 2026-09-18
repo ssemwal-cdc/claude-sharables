@@ -26,6 +26,6 @@ A check then fails the build if the rule stops being stated.
 
 - Recorded 2026-08-27 from F86, three write states.
 - The same shape recurred with the login rung. See
-  `F‹login-rewrite-caused-refusal›`, a run banned itself from login.
+  `F135`, a run banned itself from login.
 
 **Checks.** `test_step0_write_states` and `test_login_states` in `scripts/test_skill_code.py`.

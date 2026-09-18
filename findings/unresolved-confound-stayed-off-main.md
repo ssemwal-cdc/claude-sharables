@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F56
 slug: unresolved-confound-stayed-off-main
 kind: finding
 status: observed
@@ -19,7 +19,7 @@ shipping to teammates.
 
 **Evidence.** Dated 2026-08-15.
 One deleted onboarding section, same incident as
-`F‹confounded-comparison-looked-like-fix›`, the confound that looked like a
+`F5`, the confound that looked like a
 fix.
 
 **Checks.** none.

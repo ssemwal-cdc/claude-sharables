@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F121
 slug: skill-md-duplication-not-block-coverable
 kind: finding
 status: observed

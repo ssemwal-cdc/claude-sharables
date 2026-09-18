@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F29
 slug: diagnostic-overgeneralized-from-probe
 kind: finding
 status: observed

@@ -18,7 +18,7 @@ and for each one it:
   to catch duplicates, missing intermediate applications and
   over-commitment. This runs only where a NetSuite connector is available. A
   live connector-mode run confirmed this check
-  (F‹po-crosscheck-run-confirmed›, po cross-check run confirmed)
+  (F146, po cross-check run confirmed)
 - publishes a clear or flagged verdict per item to a dashboard, with the
   figures visible without clicking into anything
 
@@ -74,7 +74,7 @@ went unreviewed and nobody noticed.
 
 An approval the plugin executes carries the note **"Approved by Claude"**,
 recorded in NetSuite against that document. A live approval confirmed this
-note lands on the record (F‹netsuite-approval-note-confirmed›, approval note
+note lands on the record (F144, approval note
 confirmed). Your own note for an item replaces it verbatim. Rejection reasons
 are never defaulted, and the plugin stops and asks if one is missing.
 

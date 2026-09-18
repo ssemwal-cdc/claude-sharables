@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F149
 slug: onboarding-check-silent-on-missing-file
 kind: finding
 status: observed
@@ -8,7 +8,7 @@ date: 2026-09-18
 # The onboarding page check passed on a missing file
 
 **Outcome protected.** A missing `docs/onboarding.html` fails the build, per
-`D‹markdown-compliance-fix-plan›`, the markdown compliance fix plan,
+`D89`, the markdown compliance fix plan,
 ruling 3.
 
 **Argument.**

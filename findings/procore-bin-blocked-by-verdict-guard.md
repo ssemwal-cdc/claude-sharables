@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F115
 slug: procore-bin-blocked-by-verdict-guard
 kind: finding
 status: settled

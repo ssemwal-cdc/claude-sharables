@@ -40,7 +40,7 @@ Do not cite any of them as established.
 `python3 scripts/test_skill_code.py` covers the logic against mocks.
 It cannot cover these gaps, because they are about real systems.
 The shell's inability to see `${CLAUDE_PLUGIN_ROOT}` was observed 2026-08-15 in a Cowork run.
-F‹netsuite-approval-note-confirmed›, the notes page now seen once, carries the fourth unknown's consequence.
+F144, the notes page now seen once, carries the fourth unknown's consequence.
 One clean read does not confirm the button's handler for every case.
 
 **Checks.** none.

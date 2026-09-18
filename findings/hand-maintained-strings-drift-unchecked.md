@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F108
 slug: hand-maintained-strings-drift-unchecked
 kind: finding
 status: observed

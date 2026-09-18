@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F116
 slug: same-session-self-fixes
 kind: finding
 status: settled

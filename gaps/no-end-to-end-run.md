@@ -48,7 +48,7 @@ It cannot cover this gap, because this gap is about a real system.
 Partial observations dated 2026-08-15, Procore and NetSuite.
 Record 2534442, NetSuite, one live approval by URL.
 Bill 2532506, one live pdf.js test.
-F‹netsuite-approval-note-confirmed›, the once-unseen notes page, is now read on the record.
+F144, the once-unseen notes page, is now read on the record.
 Reported by the maintainer, date unrecorded.
 An approved record showed the maintainer as approver, and the item moved on to the next approver.
 This confirms the audit-trail half of the URL-recovery approval already recorded on 2534442 itself.

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F133
 slug: tiled-sentinels-beat-single-sentinel
 kind: finding
 status: observed

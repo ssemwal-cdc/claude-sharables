@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F53
 slug: serial-reads-should-batch
 kind: finding
 status: settled

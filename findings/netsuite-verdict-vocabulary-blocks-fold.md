@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F112
 slug: netsuite-verdict-vocabulary-blocks-fold
 kind: finding
 status: settled
@@ -32,7 +32,7 @@ vacuousness.
 is not.
 
 **Evidence.** Recorded 2026-08-24, alongside
-`F‹slim-fold-saves-0-to-12-percent›`, the fold's own size measurement.
+`F123`, the fold's own size measurement.
 
 **Checks.** `check_verdict_vocabulary()` in `scripts/shared_blocks.py` pins the
 NetSuite vocabulary.

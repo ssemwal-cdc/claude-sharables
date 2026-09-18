@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F123
 slug: slim-fold-saves-0-to-12-percent
 kind: finding
 status: settled

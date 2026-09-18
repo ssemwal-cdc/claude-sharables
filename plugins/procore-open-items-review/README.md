@@ -114,7 +114,7 @@ unseen.
   through your real browser session. A scheduled run needs the computer awake,
   Chrome running, and you still signed in to Procore. A missed window does not
   queue up and run later. A maintainer report confirmed this
-  (F‹procore-missed-window-confirmed›, missed window confirmed). That is why
+  (F147, missed window confirmed). That is why
   the schedule is worth more than one fire time.
 
 ## First run

@@ -203,7 +203,7 @@ It checks eleven things:
   threshold in its shipped template.
 
 Every other command, URL and path here is prose. Each is cited to a record or
-marked `unmeasured`. See D‹published-facts-reader›, published facts reader.
+marked `unmeasured`. See D90, published facts reader.
 
 One check does not run in CI, because it needs a browser. The dashboards place
 a floating header from JavaScript, against the slice of the page the reader can

@@ -9,7 +9,7 @@ date: 2026-08-20
 
 **Outcome protected.** A workbook or an image is read, not filed as unreadable.
 
-**Argument.** `F‹attachment-sniff-workbooks-images-read›`, vendor workbooks and
+**Argument.** `F67`, vendor workbooks and
 images read outside mocks, closed the workbook and image branches. Two
 branches are still unfired. Do not read them as covered.
 The first is `scanned`, then rasterise, then look.

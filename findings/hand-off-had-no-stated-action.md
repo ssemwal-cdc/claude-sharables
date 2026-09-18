@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F134
 slug: hand-off-had-no-stated-action
 kind: finding
 status: settled
@@ -28,6 +28,6 @@ It answers the unwatched case explicitly, and forbids the retry sentence by
 name, with its reason attached.
 
 **Evidence.** Reported 2026-09-10, one run, the same incident as
-`F‹login-rewrite-caused-refusal›`, a prose rewrite caused the refusal.
+`F135`, a prose rewrite caused the refusal.
 
 **Checks.** `test_login_states()` in `scripts/test_skill_code.py`.

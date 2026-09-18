@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F122
 slug: skill-md-is-the-fixed-point-for-freshness
 kind: finding
 status: settled
@@ -27,7 +27,7 @@ Adding a synced site without adding its enforcement is the mistake this pass
 cleaned up twice.
 
 **Evidence.** Found 2026-08-24, the fix for
-`F‹template-version-check-blind-to-lockstep›`, the version check blind to
+`F126`, the version check blind to
 lockstep.
 
 **Checks.** `scripts/validate.py` compares all three version sites.

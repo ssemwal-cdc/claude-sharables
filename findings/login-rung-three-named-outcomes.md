@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F136
 slug: login-rung-three-named-outcomes
 kind: finding
 status: settled

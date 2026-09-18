@@ -2,10 +2,12 @@
 id: D45
 slug: bar-holds-only-commit-controls
 kind: decision
-status: settled
+status: superseded
 date: 2026-08-24
 ---
 # Keep reference text out
+
+**Superseded by** D‹review-only-mode›, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
 
 **Rule.** Put reference text in the note below the bar. Keep the bar to what a reviewer needs before a click.
 

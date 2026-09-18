@@ -7,6 +7,8 @@ date: 2026-09-16
 ---
 # Execute button blocked state unseen
 
+**Moot** since D‹review-only-mode›, review-only plugins, on 2026-09-18. The branch this gap watched was retired. It reopens with execute mode.
+
 **Outcome protected.** A blocked execute button reads as blocked, not as broken.
 
 **Argument.** The dashboard template carries three button states.

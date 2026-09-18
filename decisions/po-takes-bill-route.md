@@ -2,10 +2,12 @@
 id: D76
 slug: po-takes-bill-route
 kind: decision
-status: settled
+status: superseded
 date: 2026-09-01
 ---
 # Purchase orders take bill route
+
+**Superseded by** D‹review-only-mode›, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
 
 **Rule.** Action a purchase order by the bill route. Log a lost note when Approve With Notes is absent.
 

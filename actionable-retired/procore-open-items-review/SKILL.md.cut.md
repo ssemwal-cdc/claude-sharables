@@ -20,8 +20,6 @@ Cut from `plugins/procore-open-items-review/skills/procore-open-items-review/SKI
 ===== plugins/procore-open-items-review/skills/procore-open-items-review/SKILL.md lines 42-42 =====
 - The `Approved by Claude` comment keeps the trail honest about what performed the click. Step 8 still stops the batch: the item is still theirs, the figures match, the response is offered.
 
-===== plugins/procore-open-items-review/skills/procore-open-items-review/SKILL.md lines 442-442 =====
-- Items where `can_respond` is `false` are **suppressed**, not skipped. They collapse to a single count.
 
 ===== plugins/procore-open-items-review/skills/procore-open-items-review/SKILL.md lines 523-525 =====
 ## Step 8 — Execute responses, only on explicit instruction

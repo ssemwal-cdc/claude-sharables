@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v14"
+TEMPLATE_VERSION = "v15"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -174,8 +174,8 @@ def main():
         # tool, and cost fields read from the wrong mapping are simply absent, which reads as a
         # blank field rather than as a check that never ran. So fail closed on both counts - no
         # link rather than a wrong one, and an item whose cost fields were never located cannot
-        # be `clear`. Its response buttons are untouched: the workflow gate is per item and
-        # independent of this, so responding is still safe. Only the reading is incomplete.
+        # be `clear`. The row is still reviewed and still shown: the workflow gate is per item
+        # and independent of this. Only the reading is incomplete.
         subtype = str(it.get("subtype", "") or "")
         tool_id = ""
         if kind == "icr":
@@ -222,10 +222,10 @@ def main():
                  ". Allowed: " + ", ".join(VERDICTS))
 
     if ungated:
-        print("WARNING: no wfId, so demoted to ungated with no response buttons: " +
+        print("WARNING: no wfId, so demoted to ungated - the gate could not be read: " +
               ", ".join(ungated) + ". Resolve each one's commitment change order id "
               "from line_items[].holder.id on the package payload (Step 2) and "
-              "re-publish to make them respondable.")
+              "re-publish to show each one under its own step and due date.")
 
     if unmapped:
         print("WARNING: no custom tool mapped for: " + ", ".join(unmapped) +
@@ -237,11 +237,11 @@ def main():
               "wrong tool, which is indistinguishable from the right one.")
 
     if untyped:
-        print("WARNING: no wfType on a commitment, so demoted to ungated with no response "
-              "buttons: " + ", ".join(untyped) + ". Record the queue's item_type verbatim - "
-              "PurchaseOrderContract or WorkOrderContract (Step 2) - and re-publish to make "
-              "them respondable. It decides the record link's collection, and the wrong one "
-              "returns an empty instance rather than an error.")
+        print("WARNING: no wfType on a commitment, so demoted to ungated - the gate could "
+              "not be read: " + ", ".join(untyped) + ". Record the queue's item_type verbatim "
+              "- PurchaseOrderContract or WorkOrderContract (Step 2) - and re-publish to show "
+              "each one's own step. It decides the record link's collection, and the wrong "
+              "one returns an empty instance rather than an error.")
 
     thin = [i["doc"] for i in items if not i["head"] or not i["facts"]]
     if thin:

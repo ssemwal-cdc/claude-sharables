@@ -114,7 +114,7 @@ those differ per company, and the field mapping differs per tool as well.
 More than one custom tool is normal. Every run reconciles the tools it finds in
 the queue against the ones it has been told about. A tool it has not seen
 before is set up then and there, and named in the run report. A tool it cannot
-resolve is still reviewed and still respondable. That tool's items carry no
+resolve is still reviewed and still shown. That tool's items carry no
 record link and cannot come back `clear`. The cost fields those checks
 read are mapped per tool.
 
@@ -150,8 +150,8 @@ adding one. See D9, no version field.
 - **The gate fan-out has not been observed against real Procore.** See
   G9, gate fan-out unobserved.
 - If the change order id cannot be resolved, the item is shown with its
-  arithmetic verified. It has no response buttons. It gets a button to go
-  resolve the gate. The same applies when the package spans several change
+  arithmetic verified. Its step and due date are unknown. It gets a button
+  to go resolve the gate. The same applies when the package spans several change
   orders, because then no single id can stand for it.
 - The open items grid is virtualised and cannot be scraped. Everything comes
   from the REST API.

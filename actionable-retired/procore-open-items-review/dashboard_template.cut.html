@@ -262,3 +262,14 @@ now: >no record link</span>')+'</div>';
 ===== plugins/procore-open-items-review/skills/procore-open-items-review/assets/dashboard_template.html line 529, sentence trim =====
 was:   // bare global — that is the path this dashboard takes, and the execute button is one click.
 now:   // bare global — that is the path this dashboard takes, and the re-run button is one click.
+
+===== plugins/procore-open-items-review/skills/procore-open-items-review/assets/dashboard_template.html lines 363-371 =====
+// The verbs come from each item's own workflow step (available_responses), so these two lists are
+// samples, not the vocabulary - Step 2 says never assume a fixed triplet. An UNRECOGNISED verb used
+// to answer false to both questions, which is unsafe twice over: it needed no reason, and it did not
+// count as affirmative, so the no-support caution never fired for it. Unknown now answers YES to
+// both, which is the conservative direction on each axis independently.
+var AFFIRM_VERBS=["Yes","Approve"], SENTBACK_VERBS=["Reject","Revise and Resubmit"];
+function knownVerb(v){return AFFIRM_VERBS.indexOf(v)>=0||SENTBACK_VERBS.indexOf(v)>=0}
+function isAffirmative(v){return AFFIRM_VERBS.indexOf(v)>=0||!knownVerb(v)}
+function needsReason(v){return SENTBACK_VERBS.indexOf(v)>=0||!knownVerb(v)}

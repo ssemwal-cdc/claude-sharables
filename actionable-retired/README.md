@@ -50,7 +50,7 @@ superseded decisions return to `settled` in that same pull request.
 | `procore-open-items-review/SKILL.md.cut.md` | `plugins/procore-open-items-review/skills/procore-open-items-review/SKILL.md` | 9-12, 18, 23, 25-27, 42, 442, 523-525, plus 11 sentence trims |
 | `procore-open-items-review/references/step-8-execute.md` | `plugins/procore-open-items-review/skills/procore-open-items-review/references/step-8-execute.md` | whole file, 22 lines |
 | `procore-open-items-review/references/lenses-delivery-design.cut.md` | `plugins/procore-open-items-review/skills/procore-open-items-review/references/lenses-delivery-design.md` | 22 |
-| `procore-open-items-review/dashboard_template.cut.html` | `plugins/procore-open-items-review/skills/procore-open-items-review/assets/dashboard_template.html` | 34-35, 58-73, 80-92, 132, 163, 196-197, 199-203, 230-232, 576-582, 622-722, plus 11 sentence trims |
+| `procore-open-items-review/dashboard_template.cut.html` | `plugins/procore-open-items-review/skills/procore-open-items-review/assets/dashboard_template.html` | 34-35, 58-73, 80-92, 132, 163, 196-197, 199-203, 230-232, 576-582, 622-722, 363-371, plus 11 sentence trims |
 | `procore-open-items-review/publish_dashboard.cut.py` | `plugins/procore-open-items-review/skills/procore-open-items-review/assets/publish_dashboard.py` | 253-258, plus 3 sentence trims |
 | `_shared/dash-header-mirror.block` | `plugins/_shared/dash-header-mirror.block` | whole file, 29 lines |
 | `_shared/dash-band-track.cut.block` | `plugins/_shared/dash-band-track.block` | 1 sentence trim at line 5 |
@@ -61,12 +61,17 @@ superseded decisions return to `settled` in that same pull request.
 | `_shared/skill-close-down.cut.block` | `plugins/_shared/skill-close-down.block` | whole file as it stood, 4 lines |
 | `scripts/shared_blocks.cut.py` | `scripts/shared_blocks.py` | 288-302, 346-391, 552-663, 513-514 |
 | `scripts/validate.cut.py` | `scripts/validate.py` | 394, 396 |
-| `scripts/test_skill_code.cut.py` | `scripts/test_skill_code.py` | 186-227, 579-607 |
+| `scripts/test_skill_code.cut.py` | `scripts/test_skill_code.py` | 579-607 |
 
 A range is the range in the file as that one cut found it. Several cuts on one file shift the
 numbering, so read the ranges in the order the retired file lists them.
 
-## Two notes for whoever puts this back
+## Three notes for whoever puts this back
+
+`test_gate_states` is not here. The record's step 8 listed it, and the record was wrong.
+That test covers the `__gate` block in Procore Step 2, which filters the queue by
+`can_respond` and clicks nothing. It stayed in `scripts/test_skill_code.py`.
+
 
 The floating header survived. Only its execute mirror went. `floatPaint()` now lives in
 `plugins/_shared/dash-band-track.block`, and both templates call it where they once called

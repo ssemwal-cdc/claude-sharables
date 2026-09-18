@@ -12,8 +12,8 @@ separates them.
 
 For every item in your queue it checks `user_permissions.can_respond` on the
 live workflow. Items you cannot action are counted and suppressed, not shown.
-On one real Compass queue that took 75 items down to 32. The date of that run
-was not recorded.
+It narrows the queue to the items that need a person to decide.
+It drops the rest with a clear paper trail for why.
 
 For the ones that remain:
 
@@ -32,24 +32,25 @@ has-a-value check.
 and ties each attached PCI to a line.
 
 **Commitments.** These are the purchase order and work order contracts
-themselves, when one comes to you for approval before it is executed. The
+themselves. They come to you for approval before execution. The
 plugin foots the schedule of values to the contract total. It finds that total
-in the attached agreement or bid tab. It names duplicated and unpriced lines,
-reports the retainage, and points out anything else in the same queue drawing
-on the same contract.
+in the attached agreement or bid tab. It names duplicated and unpriced lines
+and reports the retainage. It also points out anything else in the same queue
+drawing on the same contract.
 
 Commitments get the mechanical checks only. A change order or an invoice
-arrives with the contract already agreed, so the review is arithmetic against a
-fixed baseline. A commitment out for approval is the baseline itself. Whether
+arrives with the contract already agreed. The review is then arithmetic
+against a fixed baseline. A commitment out for approval is the baseline itself. Whether
 the scope, the rate and the counterparty are the right ones is left to you.
 
 Each item lands as clear, flagged, skipped or gate-unknown. Skipped is a real
-verdict. An item with no support attached is not ready for review, so it is not
+verdict. An item with no support attached is not ready for review. So it is not
 approved, not rejected, and not given a verdict it has not earned.
 
 ## Support is read without downloading anything
 
-Procore attachments sit behind a 60-second presigned S3 link. The browser's PDF
+Procore attachments sit behind a presigned S3 link, timed by Procore, not by
+this plugin. `unmeasured`. See D24, do not overrun the window. The browser's PDF
 viewer exposes no text and cannot be scripted. The storage host blocks
 cross-origin reads. The plugin routes around all three and reads the file
 in-browser, so nothing lands in your downloads folder.
@@ -93,8 +94,8 @@ no support raises a warning.
 
 You mark responses per item, then execute them together. Execute sends the
 instruction straight into the conversation in one click. Nothing reaches Procore
-from the dashboard itself. The responses run from that message, and each item is
-re-verified as still yours to action immediately before it is clicked.
+from the dashboard itself. The responses run from that message. Each item is
+re-verified as still yours to action, immediately before it is clicked.
 
 The controls and the floating header were measured in a browser. Nobody has
 seen them in the widget host. See G12, widget host
@@ -106,27 +107,28 @@ unseen.
 - **A connected workspace folder is recommended, not required.** It holds the
   review state between runs. A run without the folder works. See
   F76, folderless runs work.
-- **No connector.** Procore has no MCP connector, so the dashboard is a
-  snapshot with a prominent re-check control rather than a live view. It says
+- **No connector.** Procore has no MCP connector. The dashboard is therefore a
+  snapshot, with a prominent re-check control rather than a live view. It says
   so plainly and ages its own timestamp.
 - **The machine on and Chrome open whenever it runs.** Everything here goes
   through your real browser session. A scheduled run needs the computer awake,
   Chrome running, and you still signed in to Procore. A missed window does not
-  queue up and run later. That is why the schedule is worth more than one fire
-  time.
+  queue up and run later. A maintainer report confirmed this
+  (F147, missed window confirmed). That is why
+  the schedule is worth more than one fire time.
 
 ## First run
 
 Say "run my Procore review". Setup happens once. It asks you to confirm your
 company id. Then, for each custom tool your queue draws change items from, it
-asks for that tool's id and its cost custom field mapping. All of those differ
-per company, and the field mapping differs per tool as well.
+asks for that tool's id. It also asks for its cost custom field mapping. All of
+those differ per company, and the field mapping differs per tool as well.
 
 More than one custom tool is normal. Every run reconciles the tools it finds in
 the queue against the ones it has been told about. A tool it has not seen
 before is set up then and there, and named in the run report. A tool it cannot
 resolve is still reviewed and still respondable. That tool's items carry no
-record link and cannot come back `clear`, because the cost fields those checks
+record link and cannot come back `clear`. The cost fields those checks
 read are mapped per tool.
 
 There is no user id to configure. Procore's queue endpoint and permission gate
@@ -149,11 +151,11 @@ G4, no end-to-end run.
 ## Versioning
 
 The skill's version is the `**Skill version N — date.**` line at the top of its
-`SKILL.md`. That line is the first thing shown when you open the skill. The
-authoritative current number is the Version column of the
-[repo README on GitHub](https://github.com/ssemwal-cdc/claude-sharables). That
-table does not ship with the plugin, so compare there, never against an
-installed file.
+`SKILL.md`. That line is the first thing shown when you open the skill. See
+the Version column of the
+[repo README on GitHub](https://github.com/ssemwal-cdc/claude-sharables) for
+the authoritative current number. That table does not ship with the plugin.
+Compare there, never against an installed file.
 
 `plugin.json` carries no `version` field. Do not add one, and do not suggest
 adding one. See D9, no version field.
@@ -171,8 +173,8 @@ adding one. See D9, no version field.
 - **The gate fan-out has not been observed against real Procore.** See
   G9, gate fan-out unobserved.
 - If the change order id cannot be resolved, the item is shown with its
-  arithmetic verified, no response buttons, and a button to go resolve the
-  gate. The same applies when the package spans several change orders, because
-  then no single id can stand for it.
+  arithmetic verified. It has no response buttons. It gets a button to go
+  resolve the gate. The same applies when the package spans several change
+  orders, because then no single id can stand for it.
 - The open items grid is virtualised and cannot be scraped. Everything comes
   from the REST API.

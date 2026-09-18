@@ -13,9 +13,9 @@ date: 2026-08-27
 
 The queue step had a rule for a renamed portlet and nothing for found none.
 
-On an account with no stored portlet setting, the run inspected the home and approvals pages, found no approval portlets, said so, and published the other types.
+On an account with no stored portlet setting, the run inspected the home and approvals pages. It found no approval portlets, said so, and published the other types.
 
-Change orders were structurally absent, because that step is the only place they can be identified, and the transaction table cannot be queried for their pending status.
+Change orders were structurally absent. That step is the only place they can be identified. The transaction table cannot be queried for their pending status.
 
 This was not a regression. The navigation instruction is byte-identical to what it always was. What was missing was the empty case.
 

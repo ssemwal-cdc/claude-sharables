@@ -15,7 +15,7 @@ date: 2026-08-17
 
 The sheet is served by GitHub Pages from the docs folder on the default branch. There is no publish step and no second copy to drift.
 
-It replaced a published artifact because that arrangement had two silent failure modes. Editing the file changed nothing teammates saw, and republishing without passing the existing URL minted a second artifact while everyone kept reading the first.
+It replaced a published artifact because that arrangement had two silent failure modes. Editing the file changed nothing teammates saw. Republishing without passing the existing URL minted a second artifact while everyone kept reading the first.
 
 The sheet must stay a complete HTML document, with a doctype, a head and a character-set meta tag. Pages serves the file verbatim.
 
@@ -23,7 +23,7 @@ It was originally written as an artifact fragment, because the artifact host wra
 
 So it can no longer be published as an artifact as is. Handing the file to a render tool would nest a second root element. Strip the wrapper first, or send the Pages link.
 
-A redirect file makes the bare URL work, because Pages has no directory index and would otherwise return a 404 on the short link.
+A redirect file makes the bare URL work. Pages has no directory index and would otherwise return a 404 on the short link.
 
 The sheet carries one small script and that is the only one. See F89, copy buttons built at run time.
 
@@ -34,6 +34,7 @@ The sheet is written click by click for someone who has never touched any of thi
 - Moved to Pages in 2026-08. The theme blocks were removed 2026-08-17.
 - The live page cannot be fetched from the sandbox. See F37, the live page is unfetchable.
 - Four claimed tests over the sheet did not exist. See F63, four claimed tests were absent.
-- The time and posture wording is settled. See F67, say how long and where.
+- The time and posture wording is settled. See
+  `F104`, say how long and where.
 
 **Checks.** `check_onboarding_page()` in `scripts/shared_blocks.py`.

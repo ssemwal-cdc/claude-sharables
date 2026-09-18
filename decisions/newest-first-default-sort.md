@@ -15,7 +15,7 @@ date: 2026-08-20
 
 This was asked for directly and it overrides the earlier note.
 
-That note argued that flagged-first is what the page is for, and that a reader who touches nothing must see what they saw before.
+That note argued that flagged-first is what the page is for. It also argued that a reader who touches nothing must see what they saw before.
 
 The reasoning was sound and was still outranked. The person reading the queue every day wanted recency.
 

@@ -21,9 +21,9 @@ The two steps are numbered in the markup.
 
 A second execute button is mirrored in the page header once something is marked.
 
-Both exist because whether the widget frame scrolls internally is not knowable from the agent side. Do not delete one as redundant.
+Both exist because the widget frame never scrolls. F82, the widget frame never scrolls, settled this on 2026-08-26: the bar sat 3,874px down a 4,114px document. Do not delete one as redundant.
 
-The header mirror renders a blocked chip instead of vanishing. Gating it on readiness alone left the top of the page silent at exactly the moment something was in the way.
+The header mirror renders a blocked chip instead of vanishing. Gating it on readiness alone left the top of the page silent. That happened at exactly the moment something was in the way.
 
 **Evidence.**
 

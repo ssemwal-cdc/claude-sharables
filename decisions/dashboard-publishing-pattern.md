@@ -7,7 +7,7 @@ date: 2026-09-15
 ---
 # Publish through the widget
 
-**Rule.** Ship a dashboard template and a publish script as assets, copy them into the workspace, and render the output through the widget.
+**Rule.** Ship a dashboard template and a publish script as assets. Copy them into the workspace, and render the output through the widget.
 
 **Outcome protected.** A reviewer gets a one-click dashboard from either plugin, built the same way.
 

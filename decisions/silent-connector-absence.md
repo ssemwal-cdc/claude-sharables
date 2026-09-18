@@ -30,7 +30,7 @@ Any future lens that reports a check as not run inherits this split.
 **Evidence.**
 
 - Recorded 2026-08-26 with the check registry. Both skill registries state the split.
-- Reaffirmed in the 2026-09-15 interview as decision 3. The silence is kept and recorded as an exception with its argument attached.
+- Reaffirmed in the 2026-09-15 interview as decision three. The silence is kept and recorded as an exception with its argument attached.
 - The reader benefit of silence is `unmeasured`. No run has been timed with and without the caveat.
 
 **Checks.** `check_check_registry()` in `scripts/shared_blocks.py` asserts every capability states an absence behaviour.

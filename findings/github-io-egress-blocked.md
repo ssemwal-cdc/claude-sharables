@@ -21,7 +21,7 @@ Editing the sheet works normally. Only fetching the published page does not.
 
 What is checkable locally is worth checking after any edit. The file decodes as UTF-8 and the markup has no unclosed tags. The character-set meta tag is present and the body sets its own background from a token. Every custom property used is defined on a bare root selector.
 
-That last one is what stops the page rendering one theme text on the other theme ground for anyone on the system setting.
+That last check is what stops a mismatch. It would otherwise render one theme's text on the other theme's ground for anyone on the system setting.
 
 Anything genuinely visual has to be eyeballed by the user. Ask rather than assume.
 

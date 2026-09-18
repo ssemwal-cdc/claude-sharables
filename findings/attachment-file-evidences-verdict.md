@@ -15,7 +15,7 @@ The attachment filename field reaches the dashboard now, inside the show detail 
 
 It is the only field that evidences a verdict rather than asserting one, and it was invisible.
 
-Procore had no equivalent and no prose telling a run to name one. It has a support-read list now, a list rather than a single name because one item can carry several change items.
+Procore had no equivalent and no prose telling a run to name one. It has a support-read list now, a list rather than a single name. That is because one item can carry several change items.
 
 An empty list beside a skipped verdict is the honest pairing. Beside a clear verdict it is a contradiction.
 

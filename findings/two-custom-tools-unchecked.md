@@ -15,7 +15,7 @@ One run held 62 items across two custom tools. The second tool was unknown to th
 
 Three defects sat behind it. The tool id in the config was singular, and every record link was built from it.
 
-A wrong tool id does not return a 404. It resolves to a real page in the wrong tool, indistinguishable from the right one.
+A wrong tool id does not return a 404 error. It resolves to a real page in the wrong tool, indistinguishable from the right one.
 
 The cost field mapping was one flat mapping for all custom tools. The two field sets are different, not renamed, so three checks read fields that do not exist there.
 
@@ -29,12 +29,12 @@ The config is now keyed by the queue item subtype, carrying that tool id and its
 
 The run where a new tool first appears is the run that has to notice.
 
-Ask what field already carries the distinction when a queue turns out wider than the config. It is usually already in the payload.
+Ask, when a queue turns out wider than the config, what field already carries the distinction. It is usually already in the payload.
 
 **Evidence.**
 
 - Reported 2026-09-01. The second tool was 37 of the 62 items.
 - The old singular tool id survives as the link floor for rows logged before subtypes existed. The back-fill restructures an old config in place.
-- This is the seventh instance of the shape these records keep recording, and the second where a wrong but valid identifier is the whole danger.
+- This is the seventh instance of the shape these records keep recording. It is also the second where a wrong but valid identifier is the whole danger.
 
 **Checks.** `test_custom_tool_subtype` in `scripts/test_skill_code.py`.

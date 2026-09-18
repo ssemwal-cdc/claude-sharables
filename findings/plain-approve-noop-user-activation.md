@@ -19,7 +19,7 @@ Chrome drops the navigation with no error, no dialog and no network request.
 
 The post-click page read is the only thing that catches it.
 
-Recovery is one click, a page-load check, then navigating the approval URL read verbatim out of the handler of the button.
+Recovery is one click and a page-load check. Then it navigates the approval URL read verbatim out of the handler of the button.
 
 Assert the parameters, which are the record id, the action type and the approver id of the user. Fire once.
 

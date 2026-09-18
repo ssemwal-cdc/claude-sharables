@@ -38,7 +38,7 @@ Borrowing names from the sibling endpoint is the right method and is not guessin
 Three of four held because they came from a payload in the same collection.
 Keep using the family as the source.
 Keep labelling a borrowed name unconfirmed.
-One name in four was wrong, and it was the one no check runs on, so nothing would have failed loudly.
+One name in four was wrong. It was the one no check runs on, so nothing would have failed loudly.
 `WorkOrderContract` is still unread.
 Step 3 narrows the report-the-keys instruction to that collection rather than dropping it.
 Same tool, separate collection, very likely identical.
@@ -48,7 +48,7 @@ That reasoning is exactly what produced `vendor.name`.
 `publish_dashboard.py` demotes a commitment with no `wfType` to `ungated`.
 It does not default to `PurchaseOrderContract`.
 Both strings are valid workflowable types.
-So the wrong one carrying the right id returns 200 with zero rows, not a 400.
+So the wrong one carrying the right id returns 200 with zero rows, not a 400 error.
 Step 8 reads an empty instance as already actioned elsewhere.
 That would log a live contract as done with no click.
 

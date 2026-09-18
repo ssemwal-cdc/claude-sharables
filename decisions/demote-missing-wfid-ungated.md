@@ -25,7 +25,7 @@ An ungated item renders a resolve-the-gate control instead of response buttons, 
 
 Keep that guard if the lookup is ever changed.
 
-The workflow type is per item now, with the instance id beside it. The queue item type and the workflow endpoint type are not the same thing, and the old constant assumed they were.
+The workflow type is per item now, with the instance id beside it. The queue item type and the workflow endpoint type are not the same thing. The old constant assumed they were.
 
 **Evidence.**
 

@@ -15,7 +15,7 @@ date: 2026-08-19
 
 An expired connector session is a third state and it must not be silent.
 
-The say-nothing rule covers the never-provisioned case only, where a caveat is an apology on a loop for something the reader cannot fix.
+The say-nothing rule covers the never-provisioned case only. There, a caveat is an apology on a loop for something the reader cannot fix.
 
 A stale session takes seconds to fix and restores the cross-check.
 

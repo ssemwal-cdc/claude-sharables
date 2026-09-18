@@ -39,13 +39,13 @@ The hook and the five checks landed in the same pass.
 No hook existed in this repo. The count was zero.
 The mandate asks for a hook that refuses `git stash`, `git reset`, `git checkout <path>` and `git restore`.
 Every check below went red on the defect it guards before it was trusted.
-See `F100`, the mutation results.
+See `F139`, the mutation results.
 
 **Checks.**
 
 - `.claude/settings.json` denies the two NetSuite write tools. It also runs the hook below before every Bash call.
 - `scripts/refuse_shared_tree.sh` refuses `git stash`, `git reset`, `git restore`, a `git checkout` that names a path, `pkill -f` and `lsof -t`. A bare branch name passes.
-- `check_frontmatter` reads every record. It asserts the five keys, the slug, the kind, the status, the date, a unique id, an H1 and an outcome line.
+- `check_frontmatter` reads every record. It asserts the five keys: the slug, the kind, the status and the date. It also asserts a unique id, an H1 and an outcome line.
 - `check_citations` asserts that every citation resolves and carries a gloss. It refuses a path citation.
 - `check_index_fresh` regenerates each `_index.md` from frontmatter and refuses a stale file.
 - `check_index_size` holds `CLAUDE.md` at 150 lines or fewer, naming both plugins.

@@ -7,7 +7,7 @@ date: 2026-08-11
 ---
 # First-run setup is per plugin
 
-**Rule.** Ask the user to confirm the identifiers that differ per person or per company, and store them in the state file.
+**Rule.** Ask the user to confirm the identifiers that differ per person or per company. Store them in the state file.
 
 **Outcome protected.** A second run asks nothing and reviews immediately.
 
@@ -19,7 +19,7 @@ The answers live in the state file in the workspace folder.
 
 That is why the folder is declared rather than chosen. See D64, declare the workspace folder Downloads.
 
-A declared field that no step reads is worse than no field, so every stored key must be read by a step.
+A declared field that no step reads is worse than no field. Every stored key must be read by a step.
 
 **Evidence.**
 

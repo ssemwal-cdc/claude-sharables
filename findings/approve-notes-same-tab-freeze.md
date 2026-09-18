@@ -19,7 +19,7 @@ The run verified two ways and refused to re-click. That was correct.
 
 The freeze was diagnosed as a blocking native dialog, and a browser prompt override was designed on that reasoning. That reasoning was almost certainly wrong and the override was never built.
 
-Note the standing of the claim. Nobody has seen the notes page and nobody has read the handler of that button, so the absence of a popup is inference from the UI.
+Note the standing of the claim. Nobody has seen the notes page and nobody has read the handler of that button. So the absence of a popup is inference from the UI.
 
 So a freeze is an unknown outcome, never a failed one.
 
@@ -31,6 +31,6 @@ Gating on a connector read would eventually click twice on a bill already approv
 
 - Observed once in 2026-08. The frequency is `unmeasured`.
 - The lag is F10, verify the record not the queue.
-- The unread handler is G3, the notes page is unseen.
+- The once-unseen page is F144, the note read on the record.
 
 **Checks.** none

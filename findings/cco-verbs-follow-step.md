@@ -15,7 +15,7 @@ Change orders at Financial Analyst Review offer Approve and Revise and Resubmit.
 
 They do not offer the change risk verbs.
 
-This is worth stating because the wrong guess is the intuitive one. A change order and a change risk are both change work, so the pairing reads as though it should follow the subject matter.
+This is worth stating because the wrong guess is the intuitive one. A change order and a change risk are both change work. So the pairing reads as though it should follow the subject matter.
 
 It follows the workflow step.
 

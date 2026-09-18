@@ -38,7 +38,7 @@ Such a teammate would get a correctly scoped queue reviewed against questions th
 interview and let one run be watched.
 Nothing here should be designed from imagination, by this repo's own standard.
 Second, whether a NetSuite-only supply-chain skill would be split out of the NetSuite bucket by the
-audience rule, or given to everyone.
+audience rule. Or whether it would be given to everyone instead.
 See D56, a plugin is a prerequisite bucket.
 
 **Evidence.** Declined 2026-08-24.

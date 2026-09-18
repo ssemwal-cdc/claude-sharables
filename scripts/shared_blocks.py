@@ -404,7 +404,8 @@ def check_onboarding_page():
     rel = os.path.join("docs", "onboarding.html")
     fp = os.path.join(REPO, rel)
     if not os.path.isfile(fp):
-        return []
+        return ["%s is missing. D33, the page is the file: GitHub Pages serves this "
+                "exact path, so its absence is a build failure, not a skip." % rel]
     problems = []
     raw = open(fp, "rb").read()
     try:
@@ -594,6 +595,18 @@ def check_execute_type_coverage():
                 continue
             text = open(fp, encoding="utf-8").read()
 
+            # D62/ruling 4: a spine may point at a references/ file instead of carrying a
+            # section inline. The route table can live in either place, so the heading
+            # search looks in both. The type-vocabulary check stays on the spine alone,
+            # because Step 6's schema line never moves.
+            route_text = text
+            refs_dir = os.path.join(skills, skill, "references")
+            if os.path.isdir(refs_dir):
+                for ref_name in sorted(os.listdir(refs_dir)):
+                    ref_path = os.path.join(refs_dir, ref_name)
+                    if os.path.isfile(ref_path):
+                        route_text += "\n" + open(ref_path, encoding="utf-8").read()
+
             vocab = _TYPE_VOCAB.findall(text)
             if len(vocab) != 1:
                 problems.append(
@@ -617,7 +630,7 @@ def check_execute_type_coverage():
                         % (entry, skill, bad))
 
             m = re.search(r"^%s$(.*?)^(?:#{2,3} |\d+\. )" % re.escape(_ROUTE_HEADING),
-                          text, re.M | re.S)
+                          route_text, re.M | re.S)
             if not m:
                 problems.append(
                     "%s/%s: SKILL.md has no '%s' section. Without it there is nothing saying "

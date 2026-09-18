@@ -19,7 +19,8 @@ A sheet that says terminal and then shows the slash command is wrong.
 
 **Evidence.**
 
-- Corrected 2026-08-24.
-- The sheet now carries neither. See D59, no terminal commands in sheet.
+Reported by the maintainer, date unrecorded.
+The maintainer has typed the wrong command on the wrong surface themself.
+The run is unmeasured.
 
 **Checks.** none

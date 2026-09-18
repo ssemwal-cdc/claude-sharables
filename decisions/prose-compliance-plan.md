@@ -67,8 +67,8 @@ supersedes: <id>       # optional
 
 - On a branch a record has `id: pending` and is cited as `D‹slug›, gloss`.
 - At merge the maintainer names the act. The last commit on the branch claims the next
-  number per kind (`D`, `F`, `G`), writes it into the frontmatter, and rewrites every
-  `D‹slug›` citation to `D12`. The filename does not change.
+  number per kind (`D`, `F`, `G`). It writes that number into the frontmatter, and rewrites
+  every `D‹slug›` citation to `D12`. The filename does not change.
 - A citation is always `id, gloss`. Example: `D13, public repo`. Never a bare id. Never a path.
 - Step ordinals inside a document are positions, not ids. They are not cited across files.
 
@@ -125,9 +125,9 @@ Each is a repo sentence that breaks a mandate sentence. Line numbers are as of `
 | `CLAUDE.md:1642, 2068` | Bare commit SHAs | Add a gloss to each |
 | `CLAUDE.md:421` | Silence about skipped `core` checks | Keep. Record as `decisions/silent-connector-absence`, a named exception, argument attached |
 | `README.md:162` | "enforces everything" is false. 2 of about 28 published strings are checked | State what `validate.py` checks. Say the rest is unchecked |
-| `README.md:36` vs `:121` | Auto sync "leave checked" vs "off by default" | One statement, verified against the Add dialog |
-| `README.md:34` vs `:86` | Cowork "works differently" vs "the same way" | Delete one |
-| `README.md:99-100` vs plugin READMEs | Needs cells omit the workspace folder | Agree the three files |
+| `README.md:36` compared to `:121` | Auto sync "leave checked" compared to "off by default" | One statement, verified against the Add dialog |
+| `README.md:34` compared to `:86` | Cowork "works differently" compared to "the same way" | Delete one |
+| `README.md:99-100` compared to plugin READMEs | Needs cells omit the workspace folder | Agree the three files |
 | `netsuite README:68` | Workspace folder called a hard requirement. `prose.md:60-70` falsified that | Restate as recommended. Cite the finding |
 | `netsuite README:9`, `README.md:99` | Purchase-order execute route published as working. Never fired | Add the gap marker |
 | `procore README:15` | "75 items down to 32" has no date or source | Add date and finding id |

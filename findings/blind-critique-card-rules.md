@@ -21,16 +21,16 @@ Marks are the card tint and a will-do pill now.
 
 The verdict label sits on the meta line, never before the title. A token whose width depends on its own word shifts every title it precedes.
 
-Cap the measure on running prose only, never on the figures panel. Capping the figures too was tried and measured, and its long figure strings wrapped over more lines than the clamp saved.
+Cap the measure on running prose only, never on the figures panel. Capping the figures too was tried and measured. Its long figure strings wrapped over more lines than the clamp saved.
 
-A bare exclamation prefix is not a label. The warning is its own block now, with a rule above it and an uppercase heading, clamped to three lines behind a more control.
+A bare exclamation prefix is not a label. The warning is its own block now, with a rule above it and an uppercase heading. It is clamped to three lines behind a more control.
 
-The old glyph sat at the same line pitch as the arithmetic above it, so two unrelated blocks read as one paragraph.
+The old glyph sat at the same line pitch as the arithmetic above it. So two unrelated blocks read as one paragraph.
 
 **Evidence.**
 
 - Run in 2026-08 and landed 2026-08-24 in both plugins.
-- The label shift measured 16px between the two NetSuite verdict words, and the Procore gate-unknown label would have set a gutter of about 118px for every row.
+- The label shift measured 16px between the two NetSuite verdict words. The Procore gate-unknown label would have set a gutter of about 118px for every row.
 - Capping the figures panel measured 216px against 221px, so it cost more height than it saved.
 - The prose clamp needs its control conditioned on clipping. See F59, a clamp needs real clipping.
 

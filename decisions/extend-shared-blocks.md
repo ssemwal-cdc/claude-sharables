@@ -37,6 +37,7 @@ Option C is new machinery for a problem no defect has produced yet.
 This record is not a commitment.
 It records what was considered, deferred, and why.
 Coverage today is `unmeasured` as a share of near-identical lines.
-F56, six one-sided fixes, is the cost this mechanism exists to stop.
+`F120`, six one-sided fixes, is the cost this
+mechanism exists to stop.
 
 **Checks.** `python3 scripts/shared_blocks.py --check`, run by `scripts/validate.py`.

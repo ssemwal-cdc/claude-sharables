@@ -13,7 +13,7 @@ date: 2026-09-16
 
 **Argument.**
 
-`D43`, four synced version sites, requires the four to agree. It says so itself: `scripts/validate.py` "can enforce the match, not the bump — bumping is the habit." `F102`, fetch tab navigated, and `D87`, a run closes every tab it opened, (2026-09-16) landed a real content change to both skills. Each gained a new Absolute rule and a Step 9. Neither skill's version line moved. `validate.py` was green the whole time, because the four sites still agreed with each other. They just had not moved.
+`D43`, four synced version sites, requires the four to agree. It says so itself: `scripts/validate.py` "can enforce the match, not the bump — bumping is the habit." `F102`, fetch tab navigated, and `D87`, a run closes every tab it opened, both landed on 2026-09-16. Together they made a real content change to both skills. Each gained a new Absolute rule and a Step 9. Neither skill's version line moved. `validate.py` was green the whole time, because the four sites still agreed with each other. They just had not moved.
 
 The fix is `scripts/check_version_bump.py`. It diffs the branch against its merge-base with `main`. It groups changed files by `(plugin, skill)`, then reads each skill's version line at both ends of that range. A skill with changed files but no higher version fails the build. A skill absent from the merge-base is new, and is exempt. That matches the "new skill starts at version 1" rule in `D43`, four synced version sites.
 
@@ -21,7 +21,7 @@ This is a repo-side check, not a git hook, on purpose. `.github/workflows/valida
 
 **Evidence.**
 
-- Observed 2026-09-16: PR #19 changed both `SKILL.md` files. The version line on each stayed at the number that shipped the day before. See finding, pending, `version-line-silently-stale`.
+- Observed 2026-09-16: PR #19 changed both `SKILL.md` files. The version line on each stayed at the number that shipped the day before. See `F103`, version line silently stale.
 - `scripts/check_version_bump.py`, run against that same diff by hand, fails with the message this decision describes.
 
 **Checks.** `python3 scripts/check_version_bump.py` standalone, or `python3 scripts/validate.py` as part of the build gate.

@@ -32,7 +32,7 @@ A skill that designed itself is judgment all the way down.
 It leaves no reviewable text a maintainer ever vetted.
 
 **Evidence.** Declined 2026-08-24.
-G7, the Step 5 fix, is the push that reached every installed copy.
+F146, the Step 5 fix, is the push that reached every installed copy.
 D9, version resolves from the commit SHA, is why one push ships.
 The count of generated copies a fix would reach is zero, by construction.
 

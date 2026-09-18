@@ -13,7 +13,7 @@ date: 2026-08-24
 
 A per-row snapshot caveat closed every single NetSuite row, in the same amber that carries the genuine per-item unknowns.
 
-So the one colour that means look here was mostly boilerplate, and a real warning had to shout over nine copies of a constant.
+So the one colour that means look here was mostly boilerplate. A real warning had to shout over nine copies of a constant.
 
 The snapshot fact is already stated four times. That is the header pill, the freshness line, the step 1 caption and the footer note.
 
@@ -23,6 +23,8 @@ Procore never had one. Its staleness note lives below the execute bar.
 
 **Evidence.**
 
-- Landed 2026-08-24 in the card re-pitch.
+Reported by the maintainer, date unrecorded.
+The maintainer has seen a rendered NetSuite dashboard with clean rows and no per-row snapshot caveat.
+The run is unmeasured.
 
 **Checks.** none

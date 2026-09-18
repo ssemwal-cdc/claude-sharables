@@ -87,9 +87,11 @@ supporting files travel with the plugin. They resolve through
 
 ### Cowork
 
-These plugins install and run in Cowork the same way. Verified against both
-plugins on 2026-08-11, including the inline dashboard widgets and the
-`assets/`.
+These plugins install and run in Cowork the same way. The install and the
+`assets/` were verified against both plugins on 2026-08-11. See F2, Cowork
+runs installed plugins. The widget was
+reported drawing inside Cowork, seen directly. Its position and behaviour at
+real scale remain unobserved. See G12, dashboard unseen in widget host.
 
 A cloud session against a repository is different. Declare the plugin in that
 repo's `.claude/settings.json` under `enabledPlugins`. It then installs at
@@ -99,8 +101,8 @@ session start.
 
 | Plugin | Version | What it does | Needs |
 |---|---|---|---|
-| `netsuite-approval-review` | v29 | Reviews the bills, purchase orders and change orders in your NetSuite approval queue. Publishes a verdict per item to a live dashboard. Lets you approve or reject from it. | Claude in Chrome, signed in to NetSuite. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. The NetSuite MCP connector is optional. It adds bulk queries and the PO cross-check. |
-| `procore-open-items-review` | v29 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Lets you respond from a dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
+| `netsuite-approval-review` | v30 | Reviews the bills, purchase orders and change orders in your NetSuite approval queue. Publishes a verdict per item to a live dashboard. Lets you approve or reject from it. | Claude in Chrome, signed in to NetSuite. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. The NetSuite MCP connector is optional. It adds bulk queries and the PO cross-check. |
+| `procore-open-items-review` | v30 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Lets you respond from a dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
 
 Purchase orders are reviewed. Their execute route has never fired against a
 real purchase order. See G16, PO execute route
@@ -121,12 +123,14 @@ stale. No version anywhere means the same. Update or reinstall the plugin.
 
 Push to the default branch. That is the whole release. The version resolves
 from the commit SHA, so every push is a new version. Observed 2026-08-11: an
-install reports a commit SHA prefix as its version.
+install reports a commit SHA prefix as its version. See D9, no version field.
 
-If the push changes anything under a skill, bump two places in the same commit.
-Bump that skill's `**Skill version N — date.**` line. Bump the Version cell in
-the table above. `validate.py` checks that the two agree. It cannot check the
-bump itself, so that part is habit.
+If the push changes anything under a skill, bump four sites in the same
+commit. Bump that skill's `**Skill version N — date.**` line. Bump the
+frontmatter description's version prefix and the `plugin.json` description's
+version suffix. Bump the Version cell in the table above. `validate.py`
+checks that all four agree. It cannot check the bump itself, so that part is
+habit.
 
 Teammates get an update automatically only while auto sync is on for this
 marketplace. Turn it on from `/plugin` → **Marketplaces** →
@@ -162,9 +166,9 @@ Drop the plugin in `plugins/<name>/` with its own
 with a `git-subdir` source pointing at `plugins/<name>`. Then run
 `python3 scripts/validate.py`.
 
-The layout rules are D4, git-subdir sources;
-D9, no version field; and D56,
-prerequisite bucket. Records live under `decisions/`, `findings/` and `gaps/`.
+The layout rules are three decisions. D4, git-subdir sources. D9, no version
+field. D56, prerequisite bucket. Records live under `decisions/`, `findings/`
+and `gaps/`.
 
 ## Checks
 
@@ -174,7 +178,7 @@ prerequisite bucket. Records live under `decisions/`, `findings/` and `gaps/`.
 python3 scripts/validate.py
 ```
 
-It checks seven things:
+It checks eleven things:
 
 - Every marketplace entry resolves to a plugin folder, and the names agree.
 - No `plugin.json` and no marketplace entry sets a `version` field.
@@ -183,9 +187,23 @@ It checks seven things:
   one.
 - Each Version cell in the table above matches that skill's version line.
 - Neither of those documents tells anyone to write a relative-path source.
-- The shared-block checks in `scripts/shared_blocks.py` pass.
+- The shared-block checks in `scripts/shared_blocks.py` pass. That includes
+  `docs/onboarding.html` existing.
+- The record and prose checks in `scripts/check_records.py` pass. They cover
+  frontmatter, citations, bare-slug citations, index freshness and size.
+  They also cover sentence length, waiter loops, and device shots. They
+  cover no pending record on `main`, a claim dry run, and visual-read
+  mention counts too.
+- A skill whose files changed since the branch's merge base has raised its
+  version. `scripts/check_version_bump.py` checks this.
+- Every `scripts/` and `.github/workflows/` path named in CLAUDE.md or a
+  README exists on disk. Every named marketplace name and repo URL matches
+  `marketplace.json` and this repo.
+- The NetSuite dashboard's published "3 hours" staleness warning matches the
+  threshold in its shipped template.
 
-Every other command, URL and path in this README is unchecked.
+Every other command, URL and path here is prose. Each is cited to a record or
+marked `unmeasured`. See D90, published facts reader.
 
 One check does not run in CI, because it needs a browser. The dashboards place
 a floating header from JavaScript, against the slice of the page the reader can

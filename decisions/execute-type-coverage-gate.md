@@ -13,7 +13,7 @@ date: 2026-09-01
 
 **Argument.**
 
-`check_execute_type_coverage()` asserts that the review step type vocabulary, the execute step route table and the hardcoded manifest all name the same three types.
+`check_execute_type_coverage()` asserts that three things name the same three types. Those are the review step type vocabulary, the execute step route table and the hardcoded manifest.
 
 Both lists are prose, and prose gains a type on one side without the other.
 

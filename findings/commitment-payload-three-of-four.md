@@ -25,7 +25,7 @@ That is why the report-the-keys instruction was worth its one line.
 
 Borrowing from a sibling endpoint is a good method and not a substitute for confirming. One in four was wrong.
 
-The five checks that shipped are mechanical only. A commitment out for approval is the baseline the other three types are checked against, so scope, rate and counterparty are the reviewer call.
+The five checks that shipped are mechanical only. A commitment out for approval is the baseline the other three types are checked against. So scope, rate and counterparty are the reviewer call.
 
 A substantive checklist comes from asking the maintainer, never from inventing one.
 

@@ -7,7 +7,7 @@ date: 2026-08-19
 ---
 # A failed call is unknown
 
-**Rule.** Switch a run to the browser route when a connector call errors or returns anything that is not a result set.
+**Rule.** Switch a run to the browser route when a connector call errors. Also switch when it returns anything that is not a result set.
 
 **Outcome protected.** A user is never told their approval queue is empty because a call failed.
 
@@ -15,7 +15,7 @@ date: 2026-08-19
 
 The bulk query step is what finds bills pending approval.
 
-So an authentication failure read as no rows reports an empty approval queue, and the user closes the tab believing nothing is waiting.
+So an authentication failure read as no rows reports an empty approval queue. The user then closes the tab believing nothing is waiting.
 
 An error, an authentication challenge, or any non-result-set response means switch that run to the browser route.
 

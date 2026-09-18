@@ -2,7 +2,7 @@
 id: D62
 slug: skill-spine-plus-references
 kind: decision
-status: open
+status: settled
 date: 2026-08-24
 ---
 # Thin spine plus reference modules
@@ -42,4 +42,11 @@ This record is not a commitment.
 The dead-weight share is estimated at about a third and is `unmeasured`.
 The spine size of the in-house precedent is 158 lines.
 
-**Checks.** none. `scripts/test_skill_code.py` would need re-pointing before any split lands.
+- Settled 2026-09-17 by commit `4a81d8c`. It split Step 8 and the lens sections into
+  `references/` in both `SKILL.md` prompts. Step 8 got a mandatory-read pointer in each
+  spine. `scripts/shared_blocks.py`'s route-table check now also reads `references/`, so
+  `D75`, gate the two type lists, still holds. Option B, chosen as recommended.
+
+**Checks.** `scripts/shared_blocks.py`'s `check_execute_type_coverage`, which now also reads a
+skill's `references/` files. `scripts/test_skill_code.py`, confirmed unaffected because the
+extracted code blocks sit in Steps 2-4, outside both moved ranges.

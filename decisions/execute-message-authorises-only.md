@@ -19,7 +19,7 @@ It names no endpoint, no query parameter, no verification method and no button r
 
 This was settled on two facts about how execute is used. It is always pressed in the same session that ran the review, so the skill is loaded and in context.
 
-And the run is not watched, which is precisely why the gates belong in the governed text rather than in a JavaScript string no test reads.
+And the run is not watched. That is precisely why the gates belong in the governed text rather than in a JavaScript string no test reads.
 
 Both prompts had independently drifted into carrying procedure and both had got it wrong. One contradicted the execute step, and the other omitted one of its gates.
 

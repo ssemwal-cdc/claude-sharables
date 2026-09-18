@@ -11,9 +11,9 @@ date: 2026-08-26
 
 **Argument.**
 
-An audit across the two skills asked whether the stated best practices are followed rather than asserted, and was told to raise rather than fix.
+An audit across the two skills asked whether the stated best practices are followed, rather than merely asserted. It was told to raise rather than fix.
 
-Three of five findings were real. Two were wrong, and both false positives came from the same move, grepping one plugin for the vocabulary of the other.
+Three of five findings were real. Two were wrong. Both false positives came from the same move, grepping one plugin for the vocabulary of the other.
 
 Two were caught and fixed. Procore recorded nothing about which file backed a verdict. The NetSuite record capability row still assumed pre-opened tabs, an hour after the queue step stopped opening them.
 

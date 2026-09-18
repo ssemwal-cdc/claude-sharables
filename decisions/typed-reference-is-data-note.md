@@ -23,6 +23,7 @@ The signal was real. Only its category was wrong.
 
 **Evidence.**
 
-- Recorded 2026-08-20 from F42, a bill PO comes from linkage.
+- Recorded 2026-08-20 from `F71`, a bill PO
+  comes from linkage.
 
 **Checks.** none

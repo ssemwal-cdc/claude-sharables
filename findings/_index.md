@@ -50,6 +50,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F39 | `connector-needs-second-account` | The connector needs another account | observed | 2026-08-19 | A teammate knows whether they were provisioned or not. |
 | F40 | `netsuite-view-controls-port` | NetSuite got the Procore toolbar | observed | 2026-08-19 | Both dashboards sort, filter and search the same way. |
 | F41 | `age-clamp-wrong-in-comparator` | Never clamp an ordering key | observed | 2026-08-20 | A future-dated row sorts correctly and reads sensibly. |
+| pending | `attachment-sniff-workbooks-images-read` | Vendor workbooks and images read outside mocks | observed | 2026-08-20 | A workbook or an image is read, not filed as unreadable. |
 | pending | `contract-and-billed-off-unjoined-keys` | Contract and billed totals used unjoined keys | settled | 2026-08-20 | No correctly coded bill is flagged as miscoded. |
 | F43 | `ordbill-dedupe-line-pairs` | Dedupe the link rows first | observed | 2026-08-20 | A billed-to-date total is the truth, not a multiple of it. |
 | pending | `phantom-po-miscoding-flag-was-wrong` | Bill PO comes from linkage | observed | 2026-08-20 | No correctly coded bill is flagged as miscoded. |
@@ -104,7 +105,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | pending | `template-version-check-blind-to-lockstep` | The version check missed lockstep staleness | settled | 2026-08-24 | A run tells the user when its workspace copies are old. |
 | F72 | `tick-must-not-render` | The tick must not render | observed | 2026-08-24 | An open detail stays open while the reader reads it. |
 | pending | `verdict-vocabulary-check-reproduces-bin` | The verdict check reproduces the dead bin | settled | 2026-08-24 | A check that passes because its own mutation never landed is caught, not trusted. |
-| pending | `withdrawn-uncommitted-fixtures` | Uncommitted fixtures were withdrawn, not faked | abandoned | 2026-08-24 | A certification that cannot be reproduced is withdrawn, not patched with an after-the-fact fixture. |
+| pending | `withdrawn-uncommitted-fixtures` | Uncommitted fixtures were withdrawn, not faked | observed | 2026-08-24 | A certification that cannot be reproduced is withdrawn, not patched with an after-the-fact fixture. |
 | F73 | `attachment-file-evidences-verdict` | Name the file read | observed | 2026-08-26 | A clear item can be asked what was read to clear it. |
 | F74 | `capability-verdicts-gate` | Capability rows name real verdicts | observed | 2026-08-26 | A capability table cannot promise a verdict the publish script rejects. |
 | F76 | `folderless-run-works` | Folderless run works | observed | 2026-08-26 | A teammate with no workspace folder can still review their queue. |
@@ -151,3 +152,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | pending | `procore-missed-window-confirmed` | Procore missed window confirmed | observed | 2026-09-16 | A scheduled Procore window reviews the queue once, not repeatedly. |
 | F103 | `version-line-silently-stale` | A version line can silently miss its bump | observed | 2026-09-16 | A teammate compares their installed version against the README table. |
 | pending | `waiter-loop-check-fires-on-defect` | The waiter-loop check fires on a real defect | observed | 2026-09-16 | No sentence in this repo instructs an unbounded wait-and-retry. |
+| pending | `onboarding-check-silent-on-missing-file` | The onboarding page check passed on a missing file | observed | 2026-09-18 | A missing `docs/onboarding.html` fails the build, per `D‹markdown-compliance-fix-plan›`, the markdown compliance fix plan, ruling 3. |

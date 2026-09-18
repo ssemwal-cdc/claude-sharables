@@ -290,6 +290,84 @@ for doc in ("README.md", "CLAUDE.md"):
                 f"which validate.py rejects. Say git-subdir."
             )
 
+# --------------------------------------------------------- published facts
+# D84 ruling 3 (markdown-compliance-fix-plan): give every published number and
+# path in CLAUDE.md and the three READMEs a reader. These are the ones that
+# are genuinely mechanical. See decisions/published-facts-reader.md for the
+# full accounting of what is left as honest, cited prose instead.
+PUBLISHED_FACT_DOCS = [os.path.join(REPO, "CLAUDE.md"), os.path.join(REPO, "README.md")]
+for _d in on_disk:
+    _rp = os.path.join(PLUGINS_DIR, _d, "README.md")
+    if os.path.isfile(_rp):
+        PUBLISHED_FACT_DOCS.append(_rp)
+
+SCRIPT_PATH_RE = re.compile(r"(?<![\w/`])((?:scripts|\.github/workflows)/[\w./-]+)")
+# Three ways a marketplace name is actually declared, not just discussed:
+# "Marketplace name `x`.", an "@x" install/update suffix, and a "marketplace
+# update x" CLI line. Matching the bare phrase "marketplace name" would also
+# catch prose glosses like "D5, marketplace name differs from repo".
+MARKETPLACE_NAME_RES = (
+    re.compile(r"[Mm]arketplace name `([a-z0-9][a-z0-9-]*)`"),
+    re.compile(r"@([a-z0-9][a-z0-9-]*)\b"),
+    re.compile(r"marketplace update ([a-z0-9][a-z0-9-]*)\b"),
+)
+GITHUB_URL_RE = re.compile(r"https://github\.com/[\w.-]+/[\w.-]+")
+EXPECTED_REPO_URL = REPO_URL[:-len(".git")]
+
+for _doc_path in PUBLISHED_FACT_DOCS:
+    _rel = os.path.relpath(_doc_path, REPO)
+    with open(_doc_path, encoding="utf-8") as fh:
+        _body = fh.read()
+
+    # Every scripts/ or .github/workflows/ path named must exist, whether it
+    # sits in a backtick span or a fenced shell example.
+    for _m in SCRIPT_PATH_RE.finditer(_body):
+        _p = _m.group(1).rstrip("`.,;:)")
+        _target = os.path.join(REPO, _p)
+        if not os.path.isfile(_target):
+            fail(f"{_rel} names {_p!r}, which does not exist on disk")
+
+    # A marketplace name mentioned by any route must match marketplace.json.
+    for _name_re in MARKETPLACE_NAME_RES:
+        for _m in _name_re.finditer(_body):
+            if _m.group(1) != mkt.get("name"):
+                fail(
+                    f"{_rel} names marketplace {_m.group(1)!r}; marketplace.json's "
+                    f"name is {mkt.get('name')!r}"
+                )
+
+    # A GitHub repo URL mentioned in prose must be this repo, not a stray one.
+    # Prose drops the .git suffix; the marketplace.json example keeps it.
+    for _m in GITHUB_URL_RE.finditer(_body):
+        if _m.group(0) not in (EXPECTED_REPO_URL, REPO_URL):
+            fail(f"{_rel} links {_m.group(0)!r}; the repo is {EXPECTED_REPO_URL!r}")
+
+# README.md sends teammates to the GitHub Pages root, which redirects from
+# docs/index.html. That file existing is as load-bearing as onboarding.html.
+if "github.io" in open(os.path.join(REPO, "README.md"), encoding="utf-8").read():
+    if not os.path.isfile(os.path.join(REPO, "docs", "index.html")):
+        fail("README.md links the GitHub Pages root, but docs/index.html is missing")
+
+# The NetSuite dashboard's "3 hours" staleness warning, published in its README
+# and SKILL.md, must match the actual threshold in the shipped JS template.
+_NETSUITE_TEMPLATE = os.path.join(
+    PLUGINS_DIR, "netsuite-approval-review", "skills",
+    "netsuite-approval-double-check", "assets", "dashboard_template.html")
+if os.path.isfile(_NETSUITE_TEMPLATE):
+    with open(_NETSUITE_TEMPLATE, encoding="utf-8") as fh:
+        _tm = re.search(r"function isStale\(\)\{var m=ageOfRun\(\);return m!=null&&m>(\d+)\}",
+                         fh.read())
+    if not _tm:
+        fail(f"{_NETSUITE_TEMPLATE}: isStale() threshold not found in the expected shape; "
+             f"the published '3 hours' claim has nothing to check it against")
+    else:
+        _hours = int(_tm.group(1)) / 60
+        if _hours != 3:
+            fail(
+                f"the NetSuite README and SKILL.md say the dashboard warns after 3 "
+                f"hours, but dashboard_template.html's isStale() fires at {_hours:g} hour(s)"
+            )
+
 # ------------------------------------------------- shared blocks (cross-plugin)
 # The two plugins carry a good deal of byte-identical machinery and cannot share it at run
 # time - ${CLAUDE_PLUGIN_ROOT} is per plugin, and a git-subdir install ships only

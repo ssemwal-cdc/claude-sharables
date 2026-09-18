@@ -21,7 +21,7 @@ This is a repo-side check, not a git hook, on purpose. `.github/workflows/valida
 
 **Evidence.**
 
-- Observed 2026-09-16: PR #19 changed both `SKILL.md` files. The version line on each stayed at the number that shipped the day before. See finding, pending, `version-line-silently-stale`.
+- Observed 2026-09-16: PR #19 changed both `SKILL.md` files. The version line on each stayed at the number that shipped the day before. See `F103`, version line silently stale.
 - `scripts/check_version_bump.py`, run against that same diff by hand, fails with the message this decision describes.
 
 **Checks.** `python3 scripts/check_version_bump.py` standalone, or `python3 scripts/validate.py` as part of the build gate.

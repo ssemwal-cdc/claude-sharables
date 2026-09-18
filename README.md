@@ -88,7 +88,8 @@ supporting files travel with the plugin. They resolve through
 ### Cowork
 
 These plugins install and run in Cowork the same way. The install and the
-`assets/` were verified against both plugins on 2026-08-11. The widget was
+`assets/` were verified against both plugins on 2026-08-11. See F2, Cowork
+runs installed plugins. The widget was
 reported drawing inside Cowork, seen directly. Its position and behaviour at
 real scale remain unobserved. See G12, dashboard unseen in widget host.
 
@@ -122,7 +123,7 @@ stale. No version anywhere means the same. Update or reinstall the plugin.
 
 Push to the default branch. That is the whole release. The version resolves
 from the commit SHA, so every push is a new version. Observed 2026-08-11: an
-install reports a commit SHA prefix as its version.
+install reports a commit SHA prefix as its version. See D9, no version field.
 
 If the push changes anything under a skill, bump four sites in the same
 commit. Bump that skill's `**Skill version N — date.**` line. Bump the
@@ -177,7 +178,7 @@ and `gaps/`.
 python3 scripts/validate.py
 ```
 
-It checks nine things:
+It checks eleven things:
 
 - Every marketplace entry resolves to a plugin folder, and the names agree.
 - No `plugin.json` and no marketplace entry sets a `version` field.
@@ -186,14 +187,23 @@ It checks nine things:
   one.
 - Each Version cell in the table above matches that skill's version line.
 - Neither of those documents tells anyone to write a relative-path source.
-- The shared-block checks in `scripts/shared_blocks.py` pass.
-- The record and prose checks in `scripts/check_records.py` pass. They check
-  frontmatter, citations, index freshness, index size, sentence length, waiter
-  loops, device shots, no pending record on `main`, and a claim dry run.
+- The shared-block checks in `scripts/shared_blocks.py` pass. That includes
+  `docs/onboarding.html` existing.
+- The record and prose checks in `scripts/check_records.py` pass. They cover
+  frontmatter, citations, bare-slug citations, index freshness and size.
+  They also cover sentence length, waiter loops, and device shots. They
+  cover no pending record on `main`, a claim dry run, and visual-read
+  mention counts too.
 - A skill whose files changed since the branch's merge base has raised its
   version. `scripts/check_version_bump.py` checks this.
+- Every `scripts/` and `.github/workflows/` path named in CLAUDE.md or a
+  README exists on disk. Every named marketplace name and repo URL matches
+  `marketplace.json` and this repo.
+- The NetSuite dashboard's published "3 hours" staleness warning matches the
+  threshold in its shipped template.
 
-Every other command, URL and path in this README is unchecked.
+Every other command, URL and path here is prose. Each is cited to a record or
+marked `unmeasured`. See D‹published-facts-reader›, published facts reader.
 
 One check does not run in CI, because it needs a browser. The dashboards place
 a floating header from JavaScript, against the slice of the page the reader can

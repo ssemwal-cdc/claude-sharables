@@ -145,10 +145,9 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | pending | `hook-proved-with-15-payloads` | The shared-tree hook was proved on 15 payloads | observed | 2026-09-15 | A forbidden shared-tree command exits 2 before it runs, and a safe one does not. |
 | pending | `device-shots-check-catches-overflow-and-count` | The device-shots check has three outcomes | observed | 2026-09-16 | Every screen is measured at three widths and both themes, or the gap is a stated note. |
 | F102 | `fetch-tab-state-lost` | Fetch tab navigated, first pass lost | observed | 2026-09-16 | A run fetches its data once, and leaves no tab parked on a dead link. |
-| F101 | `mandate-gaps-closed` | Three mandate gaps closed | observed | 2026-09-16 | Three mandate rules run as a command, not a memory. |
 | pending | `netsuite-approval-note-confirmed` | NetSuite approval note confirmed | observed | 2026-09-16 | An approval note lands where the auditor will look for it. |
+| pending | `pending-id-checks-gate-main-and-citations` | Pending-id checks gate main and citations | observed | 2026-09-16 | No numbered record is claimed on a branch, and no citation stays unresolved after claiming. |
 | pending | `po-crosscheck-run-confirmed` | PO cross-check run confirmed | observed | 2026-09-16 | A correctly coded bill is never flagged as coded to the wrong purchase order. |
 | pending | `procore-missed-window-confirmed` | Procore missed window confirmed | observed | 2026-09-16 | A scheduled Procore window reviews the queue once, not repeatedly. |
-| pending | `pending-id-checks-gate-main-and-citations` | Pending-id checks gate main and citations | observed | 2026-09-16 | No numbered record is claimed on a branch, and no citation stays unresolved after claiming. |
 | F103 | `version-line-silently-stale` | A version line can silently miss its bump | observed | 2026-09-16 | A teammate compares their installed version against the README table. |
 | pending | `waiter-loop-check-fires-on-defect` | The waiter-loop check fires on a real defect | observed | 2026-09-16 | No sentence in this repo instructs an unbounded wait-and-retry. |

@@ -31,8 +31,6 @@ button.primary:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
 .row.vflag{border-left-color:var(--bad-fg)}
 .row.vskip{border-left-color:var(--warn-fg)}
 .row.vgate{border-left-color:var(--acc-fg)}
-.row.mk{background:var(--acc-bg);border-top-color:var(--acc-line);border-right-color:var(--acc-line);border-bottom-color:var(--acc-line)}
-.row.mkr{background:var(--bad-bg);border-top-color:var(--bad-line);border-right-color:var(--bad-line);border-bottom-color:var(--bad-line)}
 .rh{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
 .doc{font-size:15px;font-weight:600;flex:1;min-width:150px}
 .amt{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
@@ -55,41 +53,14 @@ ul.f li{margin:1px 0}
 button{font:500 12.5px/1 inherit;padding:7px 13px;background:transparent;border:1px solid var(--ctl);border-radius:var(--r);color:var(--ink);cursor:pointer;transition:background .15s ease,border-color .15s ease,color .15s ease}
 button:hover{background:var(--sunk);border-color:var(--ctl2)}
 button:focus-visible{outline:2px solid var(--acc-fg);outline-offset:2px}
-button.on{background:var(--acc-bg);border-color:var(--acc-fg);color:var(--acc-fg);font-weight:600}
-button.rj{border-color:var(--bad-line);color:var(--bad-fg)}
-button.rj:hover{background:var(--bad-bg);border-color:var(--bad-fg)}
-button.rj.on{background:var(--bad-bg);border-color:var(--bad-fg);color:var(--bad-fg)}
-button.go{border-color:var(--ctl2);font-size:13px}
-button.go.big{background:var(--ink);color:var(--bg);border-color:var(--ink);font-size:14px;font-weight:600;padding:11px 20px;border-radius:11px;box-shadow:0 2px 10px rgba(20,20,19,.18)}
-button.go.big:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
-button.go.big[disabled]{background:transparent;color:var(--ink3);border-color:var(--ctl);cursor:not-allowed;box-shadow:none}
-button.go.big[disabled]:hover{background:transparent;border-color:var(--ctl)}
-button.go.big[disabled].blocked{color:var(--warn-fg);border-color:var(--warn-line);background:var(--warn-bg)}
-button.go.big[disabled].blocked:hover{background:var(--warn-bg);border-color:var(--warn-line)}
-.barbtns .clear{background:none;border:0;padding:7px 4px;font-size:12.5px;color:var(--ink2);text-decoration:underline;cursor:pointer}
-.barbtns .clear:hover{color:var(--ink);background:none}
-.blockedpill{background:var(--warn-bg);color:var(--warn-fg)}
-button.caution{border-color:var(--warn-line);color:var(--warn-fg)}
-button.caution:hover{background:var(--warn-bg);border-color:var(--warn-fg)}
+/* retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode */
 button.acc{border-color:var(--acc-line);color:var(--acc-fg)}
 button.acc:hover{background:var(--acc-bg);border-color:var(--acc-fg)}
 input[type=text]{width:100%;font:400 13px inherit;padding:8px 11px;border:1px solid var(--ctl);border-radius:var(--r);margin-top:10px;background:var(--card);color:var(--ink)}
 input[type=text]:focus{border-color:var(--acc-fg);outline:2px solid var(--acc-bg)}
 a{color:var(--acc-fg);text-decoration:none;font-size:12.5px}
 a:hover{text-decoration:underline}
-.bar{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:15px 17px;margin-top:20px;box-shadow:var(--sh3)}
-/* Sticky resolves against the PARENT box, so this has to sit on #bar inside .worksec - on
-   .bar itself the parent is exactly as tall as the bar and it never travels. Measured. */
-.worksec{position:relative}
-#bar{position:sticky;bottom:10px;z-index:5}
-.barhead{font-size:14px;font-weight:600}
-.barlive{font-size:13px;color:var(--ink2);margin-top:4px}
-.barsum{font-size:12.5px;color:var(--ink3);margin-top:4px;font-variant-numeric:tabular-nums}
-.barbtns{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
-.stephead{display:flex;align-items:center;gap:10px;margin:18px 0 10px}
-.stepnum{width:24px;height:24px;border-radius:50%;background:var(--acc-fg);color:var(--inv);font-size:12.5px;font-weight:650;display:flex;align-items:center;justify-content:center;flex:none}
-.stephead .st{font-size:14px;font-weight:600}
-.stephead .sd{font-size:12.5px;color:var(--ink2)}
+/* retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode */
 .topright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .note{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
 .banner{border-radius:var(--r2);padding:12px 15px;margin-bottom:14px;font-size:13.5px}
@@ -125,11 +96,9 @@ input.search{width:auto;flex:1;min-width:130px;margin-top:0;font-size:12.5px;pad
 .floatbar .fc{font-size:12.5px;color:var(--ink2);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .floatbar .fsp{flex:1;min-width:8px}
 .floatbar button{white-space:nowrap}
-.floatbar .go.big{padding:8px 14px;font-size:13px;box-shadow:none}
 /*__END_SHARED:dash-float-css__*/
 @media (prefers-color-scheme:dark){:root{--ink:#eceae4;--ink2:#a6a49d;--ink3:#9a978d;--line:#35342f;--bg:#191816;--card:#22201d;--surf:#272521;--sunk:#2d2a26;--ctl:#46433d;--ctl2:#6b6860;--ctl-on:#37342e;--inv:#191816;--ink-hi:#ffffff;--ok-bg:#16301d;--ok-fg:#79c78c;--ok-line:#2b5436;--bad-bg:#381d1b;--bad-fg:#ef8b84;--bad-line:#61302c;--warn-bg:#31260f;--warn-fg:#dfb25e;--warn-line:#57431e;--acc-bg:#16283c;--acc-fg:#7db3ed;--acc-line:#2a4868;--sh1:0 1px 2px rgba(0,0,0,.25),0 4px 14px rgba(0,0,0,.28);--sh2:0 2px 6px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.38);--sh3:0 -1px 6px rgba(0,0,0,.25),0 12px 34px rgba(0,0,0,.5);--ring:rgba(255,255,255,.07)}
 select{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%23a6a49d' stroke-width='1.4'/%3E%3C/svg%3E")}
-button.go.big{box-shadow:0 2px 10px rgba(0,0,0,.4)}
 }
 </style>
 <script>
@@ -150,7 +119,7 @@ document.addEventListener("DOMContentLoaded",function(){
 </head>
 <body>
 <div class="wrap">
-<h2 class="sr">Procore open items dashboard. Every item awaiting Shivam's workflow response is listed with the verdict from the last review. Items he cannot respond to are filtered out. Responses are marked per item and executed together only after he presses execute.</h2>
+<h2 class="sr">Procore open items dashboard. Every item awaiting Shivam's workflow response is listed with the verdict from the last review. Items he cannot respond to are filtered out. The page is a read-only review; it carries no response controls.</h2>
 
 <div class="top">
   <div>
@@ -160,7 +129,6 @@ document.addEventListener("DOMContentLoaded",function(){
   <div class="topright">
     <span class="pill" id="conn" style="background:var(--warn-bg);color:var(--warn-fg)">Snapshot</span>
     <button class="primary" onclick="sendRun()">Re-check Procore now ↗</button>
-    <span id="topexec"></span>
   </div>
 </div>
 <p class="fresh" id="freshtext"></p>
@@ -193,14 +161,8 @@ document.addEventListener("DOMContentLoaded",function(){
 
 <div id="banners"></div>
 
-<div class="worksec">
-<div class="stephead" id="step1"><span class="stepnum">1</span><span><span class="st">Mark the items you want to action</span> <span class="sd">— nothing is sent to Procore yet</span></span></div>
+<!-- retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode -->
 <div id="rows"></div>
-
-<div class="stephead" id="step2"><span class="stepnum">2</span><span><span class="st">Execute</span> <span class="sd">— sends one instruction to the chat, which does the clicking</span></span></div>
-<div id="bar"></div>
-<div id="barnote"></div>
-</div>
 <div id="ungatedwrap"></div>
 <div id="skipwrap"></div>
 
@@ -227,9 +189,10 @@ REVIEW.items.forEach(function(i){
   if(!i.facts)i.facts=[];
 });
 
-var KEY="pc_marks_v1", marks={};
-try{marks=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){marks={}}
-function saveMarks(){try{localStorage.setItem(KEY,JSON.stringify(marks))}catch(e){}}
+// Mark keys, kept named although nothing writes them. The per-item marks lived in
+// localStorage under `pc_marks_v1`, each entry {kind:"<Procore response verb>", text:""}.
+// Never rename or reuse that key: an old browser still holds real decisions under it.
+// D38, never rename a marks key; retired by review-only-mode.
 
 var showSkipped=false;
 
@@ -448,10 +411,6 @@ function render(){
 
 
   var b="";
-  var affirmSkipped=Object.keys(marks).filter(function(k){var it=byId(k);return it&&it.verdict==="skipped"&&isAffirmative(marks[k].kind)});
-  if(affirmSkipped.length)
-    b+='<div class="banner" style="background:var(--bad-bg);color:var(--bad-fg);border:1px solid var(--bad-line)">'+
-       affirmSkipped.length+' item'+(affirmSkipped.length>1?'s are':' is')+' marked affirmative despite having no support to review. That answers the cost-completeness gate yes on an item with no verified cost.</div>';
   document.getElementById("banners").innerHTML=b;
 
   fillFilters(all);
@@ -467,7 +426,7 @@ function render(){
   var vValue=vReady.reduce(function(s,i){return s+(i.amt||0)},0);
 
   // The one line the floating header carries that depends on the filter, so it has to be set
-  // before renderBar(), which is what paints that bar.
+  // before floatPaint(), which is what paints that bar.
   window.__vsum=(hidden>0?shown+" of "+all.length+" shown":all.length+" awaiting you")+
                 (vFlagged?" · "+vFlagged+" flagged":"");
 
@@ -484,12 +443,7 @@ function render(){
       ? vReady.map(function(i){return itemRow(i)}).join("")
       : '<div class="empty">'+(viewActive()?"No decidable items match this filter.":"Nothing ready to decide.")+'</div>');
 
-  // Step headings frame the decidable queue, so with nothing in it they frame nothing and
-  // only add noise above the empty state.
-  var hasWork=ready.length>0;
-  ["step1","step2"].forEach(function(id){var e=document.getElementById(id); if(e)e.style.display=hasWork?"":"none"});
-
-  renderBar();
+  floatPaint();
 
   document.getElementById("ungatedwrap").innerHTML = vUngated.length
     ? '<h2>Gate unresolved ('+cnt(vUngated,ungated)+')</h2>'+
@@ -507,9 +461,6 @@ function render(){
 }
 //__SHARED:dash-of-total__
 // Tiles follow the filter, so they can never disagree with the list underneath them.
-// renderBar() deliberately does NOT - a marked item hidden by a filter still has to
-// execute, and narrowing it to what is on screen would silently drop decisions the
-// user made before they filtered. Do not "fix" the bar to match these.
 function ofTotal(v,t){return String(v)===String(t)?String(t)
   :v+'<span class="of"> of '+t+'</span>'}
 //__END_SHARED:dash-of-total__
@@ -517,7 +468,7 @@ function cd(l,v,col){return '<div class="card"><div class="l">'+l+'</div><div cl
 function byId(id){for(var i=0;i<REVIEW.items.length;i++){if(REVIEW.items[i].id===String(id))return REVIEW.items[i]}return null}
 
 function itemRow(it){
-  var m=marks[it.id]||null, cls="row"+(m?(needsReason(m.kind)?" mkr":" mk"):"");
+  var cls="row";
   var a=daysSince(it.due);
   // Verdict rides the card's left rail and a label on the meta line below. Four
   // verdicts here against NetSuite's two, which is exactly why the label cannot sit
@@ -528,11 +479,10 @@ function itemRow(it){
   else if(it.verdict==="ungated"){vcls="vgate";vtxt="Gate unknown";vcol="var(--acc-fg)"}
   else{vcls="vclear";vtxt="Clear";vcol="var(--ok-fg)"}
   var vlab='<span class="vlab" style="color:'+vcol+'">'+vtxt+'</span> · ';
-  var mk=m?'<span class="pill" style="background:'+(needsReason(m.kind)?"var(--bad-bg)":"var(--acc-bg)")+';color:'+(needsReason(m.kind)?"var(--bad-fg)":"var(--acc-fg)")+'">Will '+esc(m.kind.toLowerCase())+'</span>':"";
 
   var h='<div class="'+cls+' '+vcls+'" id="row'+it.id+'">'+
    '<div class="rh">'+
-   '<span class="doc">'+esc(it.type)+' · '+esc(it.doc)+'</span>'+mk+
+   '<span class="doc">'+esc(it.type)+' · '+esc(it.doc)+'</span>'+
    '<span class="amt">'+money(it.amt)+'</span></div>'+
    '<p class="ven">'+vlab+esc(it.projLabel)+' · '+esc(it.vendor)+
      (a!=null?' <span style="color:'+(a>30?"var(--bad-fg)":a>7?"var(--warn-fg)":"var(--ink3)")+'">· step due '+esc(it.due)+', '+dueText(a)+'</span>':'')+'</p>'+
@@ -549,13 +499,6 @@ function itemRow(it){
   if(it.verdict==="ungated"){
     h+='<button class="acc" onclick="resolveGate(\''+it.id+'\')">Resolve the gate on this ↗</button>'+
        '<button class="acc" onclick="reviewSupport(\''+it.id+'\')">Read the attached PCIs ↗</button>';
-  } else {
-    it.resp.forEach(function(v){
-      var on = m&&m.kind===v;
-      var caution = it.verdict==="skipped" && isAffirmative(v);
-      var klass = (needsReason(v)?"rj ":"") + (caution?"caution ":"") + (on?"on":"");
-      h+='<button class="'+klass.trim()+'" onclick="mark(\''+it.id+'\',\''+v+'\')" title="'+(caution?"No support was reviewed on this item":"Procore response: "+v)+'">'+(on?"✓ ":"")+esc(v)+'</button>';
-    });
   }
 
   h+='<span style="flex:1"></span>'+
@@ -563,8 +506,6 @@ function itemRow(it){
      (recUrl(it)
         ? '<a href="'+recUrl(it)+'" target="_blank" rel="noopener" onclick="return nav(this)">Open in Procore</a>'
         : '<span style="color:var(--ink3)" title="No custom tool is mapped for this subtype, so the record URL cannot be built. Adding it to config.customTools restores the link.">no record link</span>')+'</div>';
-
-  if(m) h+='<input type="text" placeholder="'+(needsReason(m.kind)?"Reason (required — goes into the Procore response comment)":"Comment to record with the response (optional)")+'" value="'+esc(m.text||"")+'" oninput="setText(\''+it.id+'\',this.value)">';
   return h+'</div>';
 }
 
@@ -573,13 +514,7 @@ function pwtog(id,btn){var t=document.getElementById("pw"+id);if(!t)return;
   t.className=open?"txt":"txt open";btn.textContent=open?"more":"less"}
 function tog(id,btn){var d=document.getElementById("det"+id);var open=d.style.display==="block";d.style.display=open?"none":"block";btn.textContent=open?"Show detail":"Hide detail"}
 function toggleSkipped(){showSkipped=!showSkipped;render()}
-function mark(id,kind){
-  if(marks[id]&&marks[id].kind===kind)delete marks[id];
-  else marks[id]={kind:kind,text:(marks[id]&&marks[id].text)||""};
-  saveMarks();render();
-}
-function setText(id,v){if(marks[id]){marks[id].text=v;saveMarks();renderBar()}}
-function clearAll(){marks={};saveMarks();render()}
+// retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode
 function sendRun(){say("Re-run my Procore open items review now.")}
 function resolveGate(id){var it=byId(id);
   say("Resolve the workflow gate for Procore change order package "+it.doc+" (package id "+it.id+", project id "+it.pid+", commitment "+it.cid+"). The workflow is not attached to the package, which is why ChangeOrderPackage returns a 400. Fetch the change order package record for project "+it.pid+" and read line_items[].holder.id - that is the commitment change order id the workflow hangs off. Dedupe it across the lines: exactly one id is the answer; several means the package spans several change orders, so report the ids and leave it ungated rather than picking one; none means fall back to opening the commitment_contract_change_orders URL for the package id and noting the id it redirects to. Then query workflows/instances for project "+it.pid+" with filters[workflowable_object_type]=CommitmentChangeOrder and filters[workflowable_object_id] set to that change order id, page=1, view=action_card. Save the id as wfId on the item in the log so the dashboard can compose it, and update the dashboard with can_respond, the step name, due date and available responses. Never query with the package id. Do not click Respond.");}
@@ -587,7 +522,7 @@ function reviewSupport(id){var it=byId(id);
   say("Read every PCI attached to Procore change order package "+it.doc+" (id "+it.id+", project id "+it.pid+"), tie each one to a line item, confirm the PCI totals sum to the package grand total, and flag any line without support or any PCI without a line. Then update the dashboard. Do not respond to the item.");}
 function say(t){
   // Two hosts with disjoint surfaces, both probed live. The widget host exposes sendPrompt as a
-  // bare global — that is the path this dashboard takes, and the execute button is one click.
+  // bare global — that is the path this dashboard takes, and the re-run button is one click.
   // The artifact host exposes window.cowork (callMcpTool, askClaude, runScheduledTask) and no
   // sendPrompt anywhere, so it cannot start a turn. The cowork branch is a hedge in case the two
   // surfaces ever converge on that namespace; it matches nothing today.
@@ -619,114 +554,14 @@ function recopy(){var ta=document.querySelector("#handoff textarea");if(!ta)retu
 function closeHandoff(){var o=document.getElementById("handoff");if(o)o.parentNode.removeChild(o)}
 document.addEventListener("keydown",function(e){if(e.key==="Escape")closeHandoff()});
 
-function renderBar(){
-  // drop marks whose item is no longer in the review — an item actioned since the
-  // last run must not linger as a pending decision
-  var orphan=false;
-  Object.keys(marks).forEach(function(k){if(!byId(k)){delete marks[k];orphan=true}});
-  if(orphan)saveMarks();
-
-  var mins=ageOfRun(), stale=(mins!=null&&mins>180);
-  var ks=Object.keys(marks);
-  var missing=[], affirm=[], neg=[], sum=0;
-  ks.forEach(function(k){var it=byId(k),m=marks[k];
-    if(needsReason(m.kind)){neg.push(it); if(!m.text||!m.text.trim())missing.push(it.doc)}
-    else {affirm.push(it); sum+=it.amt||0}
-  });
-
-  var lines=ks.map(function(k,n){
-    var it=byId(k),m=marks[k];
-    return (n+1)+') respond "'+m.kind+'" to '+it.type+' '+it.doc+
-           ' [workflowable_object_type '+wfType(it)+', workflowable_object_id '+wfIdOf(it)+
-           (wfIdOf(it)!==it.id?', record id '+it.id+' (different - use it to open the record, never for the lookup)':'')+
-           ', project_id '+it.pid+', '+it.projLabel+
-           (it.amt?', '+money(it.amt):'')+']'+
-           ' [reviewed: '+esc(it.verdict)+']'+
-           (m.text&&m.text.trim()?' — comment: '+m.text.trim():'');
-  });
-
-  // AUTHORITY ONLY - see the matching note in the NetSuite template. This message names what may
-  // be actioned; Step 8 of the skill says how. The full five-step ladder that used to live here
-  // omitted per_page=100 from its gate query, and the skill's own Step 2 records that on the
-  // default page size the endpoint hid live instances outright - which Step 8 then reads as
-  // "already actioned elsewhere, skip it". A missing query parameter in an unread template
-  // string could silently log a live invoice as done.
-  var prompt=
-   "Execute my marked Procore responses, one record at a time.\n\n"+
-   "Follow Step 8 of the procore-open-items-review skill exactly. That is the procedure. "+
-   "Nothing in this message replaces, overrides or abbreviates any part of it, and this message "+
-   "deliberately does not restate it.\n\n"+
-   "This list came from a dashboard snapshot taken "+REVIEW.lastRun+
-   ", so treat it as possibly out of date - I may have already actioned some of these in Procore "+
-   "directly.\n\n"+
-   "Items:\n"+lines.join("\n")+"\n\n"+
-   "Report back per item: the response you submitted, what the workflow read when you verified it "+
-   "afterwards, and anything you skipped or stopped on. I am not watching this run, so that "+
-   "report is the only thing I will see.";
-
-  var undec=REVIEW.items.length-ks.length;
-  var blocked=missing.length>0, canRun=ks.length>0&&!blocked;
-  // The bar renders in every state, zero marks included. It used to collapse to one line of
-  // grey text, so step 2 was invisible until you had already worked out step 1 unaided -
-  // backwards for the one thing this page has to teach.
-  var liveText=!ks.length ? "Nothing marked yet — use the response buttons on each item above"
-              : blocked   ? "A response that needs a reason is still missing one"
-              :             ks.length+" marked · ready to execute";
-  document.getElementById("bar").innerHTML='<div class="bar">'+
-   '<div class="barhead">'+(ks.length?ks.length+' marked · nothing sent yet':'Nothing sent yet')+'</div>'+
-   '<div class="barlive">'+liveText+'</div>'+
-   '<div class="barsum">'+(ks.length
-      ? affirm.length+' affirmative ('+money(sum)+') · '+neg.length+' sent back'+(undec>0?' · '+undec+' left alone and will stay in your queue':'')
-      : 'Nothing reaches Procore until you press execute, and nothing is ever responded to without you naming it here.')+'</div>'+
-   (missing.length?'<div class="note" style="color:var(--bad-fg);margin-top:6px">Reason required before executing: '+missing.map(esc).join(", ")+'</div>':'')+
-   '<div class="barbtns">'+
-   '<button class="go big'+(blocked?" blocked":"")+'" '+(canRun?'onclick="go()"':'disabled')+'>Execute '+ks.length+' response'+(ks.length===1?"":"s")+' in Procore ↗</button>'+
-   (ks.length?'<button class="clear" onclick="clearAll()">Clear all marks</button>':'')+'</div>'+
-   '</div>';
-  // Below the sticky box, deliberately. Both of these are things to read once, not state to
-  // watch while marking, and inside the bar they pushed it to a third of the viewport.
-  document.getElementById("barnote").innerHTML=
-   (stale?'<p class="note" style="color:var(--warn-fg)">This snapshot is '+ageText()+'. Executing is still safe — each item is re-checked against Procore before any click — but a re-check first would give you a truer picture of what is left.</p>':'')+
-   '<p class="note"><b>Stale-safe.</b> This page is a snapshot, so before each click the live workflow is re-queried: if you already actioned an item in Procore yourself, it is skipped and logged, never re-clicked or retried. A changed amount stops the whole batch instead.</p>';
-  //__SHARED:dash-header-mirror__
-  // Header mirror: the same one click, reachable the moment the page opens instead of only
-  // after scrolling the whole queue. Silent until something is marked, so it never competes
-  // with the toolbar for attention.
-  //
-  // It also renders when execution is BLOCKED. Gating it on canRun alone left the top of the
-  // page saying nothing at exactly the moment something was standing in the way - which is
-  // when a reader is most likely to be looking up there for it.
-  function execMirror(dup){
-    var x=dup?' tabindex="-1"':'';
-    return canRun
-      ? '<button class="go big"'+x+' onclick="go()">Execute '+ks.length+' ↗</button>'
-      : ks.length ? '<span class="pill blockedpill">'+ks.length+' marked · needs a reason</span>'
-      : '';
-  }
-  var te=document.getElementById("topexec");
-  if(te)te.innerHTML=execMirror(false);
-  // And a third home for it, on the bar that rides the host's visible band. The full header is
-  // ~380px of chrome and reproducing that mid-queue would cost half a 700px viewport, so what
-  // floats is only what is worth having in the second before a click: where you are in the
-  // filter, one press back to the real controls, and the commit button itself. The whole bar
-  // is aria-hidden with tabindex="-1" throughout, because it duplicates controls that are
-  // already in the page and a screen reader gains nothing from meeting them twice.
-  var fh=document.getElementById("floathdr");
-  if(fh)fh.innerHTML='<div class="floatbar">'+
-    '<span class="fc">'+esc(window.__vsum||"")+'</span>'+
-    '<span class="fsp"></span>'+
-    '<button tabindex="-1" onclick="toFilters()">Filters ↑</button>'+
-    execMirror(true)+'</div>';
-  window.__prompt=prompt;
-  //__END_SHARED:dash-header-mirror__
-}
+// retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode
 //__SHARED:dash-band-track__
 // ---- the host's visible band, and the floating header that rides it ---------------------
 // This frame does not scroll. It is sized to its own content and the HOST page scrolls, so
 // window.innerHeight === document.scrollHeight and window.scrollY never leaves 0. Both
 // position:sticky and position:fixed freeze at a document coordinate and slide off screen
 // with everything else - which is why the header could not just be made sticky, and why
-// nobody has ever seen the execute bar pinned.
+// nobody has ever seen the floating bar pinned.
 //
 // IntersectionObserver is the one instrument that reaches across the frame boundary. Its
 // intersectionRect is clipped by every ancestor viewport, cross-origin ones included, so from
@@ -805,6 +640,22 @@ function toFilters(){
   if(t)t.scrollIntoView({block:"start"});
 }
 
+// What the bar carries. The full header is ~380px of chrome and reproducing that mid-queue
+// would cost half a 700px viewport, so what floats is only what is worth having in the second
+// before a glance: where you are in the filter, and one press back to the real controls. The
+// whole bar is aria-hidden with tabindex="-1" throughout, because it duplicates controls that
+// are already in the page and a screen reader gains nothing from meeting them twice.
+// It once mirrored the execute button too - retired, see actionable-retired/_shared/
+// dash-header-mirror.block, review-only-mode.
+function floatPaint(){
+  var fh=document.getElementById("floathdr");
+  if(!fh)return;
+  fh.innerHTML='<div class="floatbar">'+
+    '<span class="fc">'+esc(window.__vsum||"")+'</span>'+
+    '<span class="fsp"></span>'+
+    '<button tabindex="-1" onclick="toFilters()">Filters ↑</button></div>';
+}
+
 if(window.ResizeObserver){
   // The page's height changes whenever a filter narrows the queue or a reader opens a detail,
   // and tiles that stopped short of the new bottom would leave the band unreadable down there
@@ -816,8 +667,7 @@ if(window.ResizeObserver){
 } else { bandBuild(); }
 //__END_SHARED:dash-band-track__
 //__SHARED:dash-render-tail__
-function go(){say(window.__prompt)}
-
+// retired: see actionable-retired/_shared/dash-render-tail.cut.block, review-only-mode
 render();
 // The tick ages the freshness line and flips the Snapshot pill. It must NEVER call
 // render(), which rebuilds #rows from scratch: that silently collapsed every expanded

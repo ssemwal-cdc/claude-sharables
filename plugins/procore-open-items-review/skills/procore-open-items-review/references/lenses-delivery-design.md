@@ -19,7 +19,7 @@ blank, and none of those is misconduct. So both lenses are **lenient by design**
 - **`pc.dsn-drawing-ref`** pulls drawing, sheet, spec and bulletin references out of the record and its support. **Report them as found. Do not verify them.**
 - This skill cannot open the drawing set, and a reference it cannot resolve is not thereby wrong.
 - **`pc.dsn-unknown-workflow`** lists every queue row whose `item_type` is not one of the four. It gives each row's `title` and `url`, under a plain heading. Say in that heading that these are workflows this skill does not yet know.
-- **Never review such an item, never guess its verbs, and never let it reach the execute list.**
+- **Never review such an item and never guess its verbs.**
 
 **On what these lenses cannot reach, stated plainly because it matters most to design.**
 This skill reviews the workflow-response queue from `open_items/mine`. **The daily

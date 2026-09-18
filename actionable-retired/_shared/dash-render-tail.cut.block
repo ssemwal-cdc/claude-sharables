@@ -1,0 +1,5 @@
+Cut from `plugins/_shared/dash-render-tail.block` by review-only-mode. Verbatim; do not edit.
+
+===== plugins/_shared/dash-render-tail.block lines 1-2 =====
+function go(){say(window.__prompt)}
+

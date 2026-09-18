@@ -13,7 +13,7 @@ date: 2026-08-24
 Any freshness check needs one input that cannot go stale.
 
 This is the same family as the connector-lag rule, verify the record, not the
-queue, because the queue lags with it.
+queue. That is because the queue lags with it.
 It is the same family as the CCO wrong-id case, where a 200-empty response
 looks like no instance.
 

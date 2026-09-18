@@ -19,7 +19,7 @@ That was invisible while verdict was the default sort. It is wrong at the top of
 
 There are two helpers now. One is unclamped for ordering. One is clamped for display, because a negative day count is nonsense to read.
 
-Procore had the mirror image. Its day count was correctly unsigned-free, and the display was the broken half, rendering a negative day count for a deadline still ahead.
+Procore had the mirror image. Its day count was correctly unsigned-free. The display was the broken half, rendering a negative day count for a deadline still ahead.
 
 A phrasing helper fixes the display there, and the comparator still gets the sign.
 

@@ -15,7 +15,7 @@ date: 2026-08-17
 
 The sheet is served by GitHub Pages from the docs folder on the default branch. There is no publish step and no second copy to drift.
 
-It replaced a published artifact because that arrangement had two silent failure modes. Editing the file changed nothing teammates saw, and republishing without passing the existing URL minted a second artifact while everyone kept reading the first.
+It replaced a published artifact because that arrangement had two silent failure modes. Editing the file changed nothing teammates saw. Republishing without passing the existing URL minted a second artifact while everyone kept reading the first.
 
 The sheet must stay a complete HTML document, with a doctype, a head and a character-set meta tag. Pages serves the file verbatim.
 
@@ -23,7 +23,7 @@ It was originally written as an artifact fragment, because the artifact host wra
 
 So it can no longer be published as an artifact as is. Handing the file to a render tool would nest a second root element. Strip the wrapper first, or send the Pages link.
 
-A redirect file makes the bare URL work, because Pages has no directory index and would otherwise return a 404 on the short link.
+A redirect file makes the bare URL work. Pages has no directory index and would otherwise return a 404 on the short link.
 
 The sheet carries one small script and that is the only one. See F89, copy buttons built at run time.
 

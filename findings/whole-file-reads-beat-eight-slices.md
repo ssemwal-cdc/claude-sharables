@@ -37,8 +37,8 @@ Checked again 2026-09-17, `plugins/netsuite-approval-review/skills/`
 `netsuite-approval-double-check/SKILL.md` is 730 lines and
 `plugins/procore-open-items-review/skills/procore-open-items-review/SKILL.md`
 is 561 lines.
-Both are well past the size a single read stops paying for itself, so the
-counter-rule is the operative one for both today.
+Both are well past the size a single read stops paying for itself. So
+the counter-rule is the operative one for both today.
 The token cost of the eight slices against one read is `unmeasured` in
 absolute terms.
 

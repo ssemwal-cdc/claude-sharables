@@ -11,7 +11,7 @@ date: 2026-08-24
 
 **Argument.** A documentation sweep found this, not a run.
 Both skills' carry-forward rules kept an item for one run after it left the
-queue, so the dashboard could show it in an actioned bin.
+queue. That let the dashboard show it in an actioned bin.
 Neither bin could render.
 
 NetSuite's was collateral from the same day.

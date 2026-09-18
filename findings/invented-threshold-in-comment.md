@@ -13,7 +13,7 @@ date: 2026-09-01
 
 `publish_dashboard.py` shipped a comment claiming that past roughly 90 KB the render stops being reliable and gets refused.
 
-It shipped for months, while the skill prose twelve lines away called a claim of exactly that form a prediction written as a fact.
+It shipped for months. The skill prose twelve lines away called a claim of exactly that form a prediction written as a fact.
 
 A run reads both. So the repo supplied the words for an authoritative-sounding refusal.
 

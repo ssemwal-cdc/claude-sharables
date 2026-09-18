@@ -72,5 +72,5 @@ Prove each new guard red on the defect it guards before the pass lands.
 **Left open.** A record line ceiling is recommended and not ruled.
 Ruling 15 splits 15 records today, and nothing stops the next one growing.
 
-**Deferred records to close.** `D62`, never move safety prose into an on-demand file, is settled by ruling 4.
+**Deferred records to close.** `D62`, never move safety prose into an on-demand file, is settled by ruling four.
 `D85`, skill prose pass, is settled by rulings 1, 2 and 4.

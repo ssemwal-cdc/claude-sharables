@@ -15,7 +15,7 @@ The NetSuite connector lags the user interface by minutes after an approval. The
 
 The execute step used to verify by re-querying the pending queue and checking that the item no longer returned.
 
-Two things break that. The approval status stays at the pending value after a successful approval, because the record is now pending the next approver.
+Two things break that. The approval status stays at the pending value after a successful approval. That happens because the record is now pending the next approver.
 
 And the connector takes minutes to catch up, so even a correct query returns stale rows straight after the click.
 
@@ -23,7 +23,7 @@ Together they produce a false failure on work that succeeded. That stops the bat
 
 So verify the record. Select the approval status, the next approver, the previous approver and the approval count for that record id.
 
-Advanced means the previous approver is now the user, the next approver is someone else, and the count went up by one.
+Advanced means the previous approver is now the user, and the next approver is someone else. It also means the count went up by one.
 
 Unchanged means not yet, never failed. Report `still propagating` once and end the round. Never re-click on it, and never write a waiter loop around it.
 

@@ -11,7 +11,7 @@ date: 2026-08-12
 
 **Argument.**
 
-The two skills used to share a state filename, differing only by parent folder, with both folders under the same workspace parent.
+The two skills used to share a state filename, differing only by parent folder. Both folders sat under the same workspace parent.
 
 An agent running both in one session resolved the bare name against the wrong folder.
 

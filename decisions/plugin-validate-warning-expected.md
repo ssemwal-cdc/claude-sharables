@@ -21,7 +21,7 @@ Recording the warning costs one line and keeps the output intact. A future warni
 
 **Evidence.**
 
-- Changed 2026-09-15 in the prose pass. The former wording sat in `CLAUDE.md` at line 146 as of commit `3775cc8`, the tip of `main` when the pass started.
+- Changed 2026-09-15 in the prose pass. The former wording sat in `CLAUDE.md` at line 146 as of commit `3775cc8`. That commit was the tip of `main` when the pass started.
 - No other warning from that command has been observed, so the set of expected warnings is `unmeasured`.
 
 **Checks.** none

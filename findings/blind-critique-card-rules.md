@@ -21,11 +21,11 @@ Marks are the card tint and a will-do pill now.
 
 The verdict label sits on the meta line, never before the title. A token whose width depends on its own word shifts every title it precedes.
 
-Cap the measure on running prose only, never on the figures panel. Capping the figures too was tried and measured, and its long figure strings wrapped over more lines than the clamp saved.
+Cap the measure on running prose only, never on the figures panel. Capping the figures too was tried and measured. Its long figure strings wrapped over more lines than the clamp saved.
 
-A bare exclamation prefix is not a label. The warning is its own block now, with a rule above it and an uppercase heading, clamped to three lines behind a more control.
+A bare exclamation prefix is not a label. The warning is its own block now, with a rule above it and an uppercase heading. It is clamped to three lines behind a more control.
 
-The old glyph sat at the same line pitch as the arithmetic above it, so two unrelated blocks read as one paragraph.
+The old glyph sat at the same line pitch as the arithmetic above it. So two unrelated blocks read as one paragraph.
 
 **Evidence.**
 

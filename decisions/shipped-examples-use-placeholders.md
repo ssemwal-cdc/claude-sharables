@@ -25,7 +25,7 @@ Anything genuinely confidential belongs in neither category and does not go here
 
 **Evidence.**
 
-- Sanitised 2026-08-24. Before that both skills shipped a real company id, a real tool id, 3 custom-field ids, a named subcontractor and a real commitment balance.
+- Sanitised 2026-08-24. Before that both skills shipped a real company id, a real tool id and 3 custom-field ids. They also shipped a named subcontractor and a real commitment balance.
 - `README.md` claimed at the same time that the plugins carried no customer data.
 - The repo is public by decision. See D13, keep this repo public.
 

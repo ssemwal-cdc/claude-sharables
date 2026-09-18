@@ -21,7 +21,7 @@ Neither could be told where a queue actually lives. NetSuite took a portlet name
 
 The config now carries a URL and a free-text description on both. Both are optional and empty by default, and empty is exactly the old behaviour.
 
-Both queue steps consult it before assuming their default. A declared field that no step reads is worse than no field, so the wiring is the change, not the schema entry.
+Both queue steps consult it before assuming their default. A declared field that no step reads is worse than no field. So the wiring is the change, not the schema entry.
 
 When a described queue cannot be resolved, ask once. Never substitute the nearest queue found.
 

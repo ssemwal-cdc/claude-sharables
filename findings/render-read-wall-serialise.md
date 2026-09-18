@@ -29,7 +29,7 @@ The run still predicted the wall from a byte count rather than observing a short
 
 **Evidence.**
 
-- Measured 2026-09-01 against a 62-item fixture, 164 KB in the run and 174 KB over 2,834 lines when published with indentation. A default file read shows 2,000 lines.
+- Measured 2026-09-01 against a 62-item fixture. That fixture is 164 KB in the run and 174 KB over 2,834 lines when published with indentation. A default file read shows 2,000 lines.
 - The run arithmetic checked out. The template is 55,118 bytes before any data.
 - The compact form is 886 lines and 161 KB, longest line 1,780 characters. One single line is 63 bytes smaller and puts 110 KB on one line.
 - Restoring indentation fails the build at 3,013 lines.

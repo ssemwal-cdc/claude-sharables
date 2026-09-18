@@ -11,8 +11,8 @@ date: 2026-08-24
 note.
 
 **Argument.** 38 audit items needed no maintainer decision.
-They closed as a check, a fix, or a stated reason during the same pass that
-resolved the items needing one.
+They closed as a check, a fix, or a stated reason. That happened during the
+same pass that resolved the items needing one.
 
 **Evidence.** Pass dated 2026-08-24, immediately after the audit.
 See `F‹nine-agent-audit-corrected-four-claims›`, 122 findings and 29 surviving,

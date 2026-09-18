@@ -21,7 +21,7 @@ That makes the boundary a prerequisite boundary. List the external prerequisites
 
 Compare that set to each existing plugin, exactly. An identical set joins that plugin. Any difference at all means a new plugin.
 
-Always a new plugin when the skill ships `.mcp.json`, `hooks/`, `bin/`, `monitors/`, `.lsp.json`, or a root `settings.json` that must not apply to the other skills. Those activate on plugin enable, not on skill invocation.
+Always a new plugin when the skill ships `.mcp.json`, `hooks/`, `bin/`, `monitors/` or `.lsp.json`. Also a new plugin when it ships a root `settings.json` that must not apply to the other skills. Those activate on plugin enable, not on skill invocation.
 
 Also a new plugin when a different subset of the team should have it. Audience counts on its own.
 

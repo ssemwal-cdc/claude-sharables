@@ -29,6 +29,6 @@ The old guard covered input and select elements only. So typing a rejection reas
 
 **Evidence.**
 
-- Measured on template v9. A click gives an expanded display value, and one render later it is empty with the label back to show detail.
+- Measured on template v9. A click gives an expanded display value. One render later it is empty, with the label back to show detail.
 
 **Checks.** `test_dashboard_view` in `scripts/test_skill_code.py`.

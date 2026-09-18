@@ -67,8 +67,8 @@ supersedes: <id>       # optional
 
 - On a branch a record has `id: pending` and is cited as `D‹slug›, gloss`.
 - At merge the maintainer names the act. The last commit on the branch claims the next
-  number per kind (`D`, `F`, `G`), writes it into the frontmatter, and rewrites every
-  `D‹slug›` citation to `D12`. The filename does not change.
+  number per kind (`D`, `F`, `G`). It writes that number into the frontmatter, and rewrites
+  every `D‹slug›` citation to `D12`. The filename does not change.
 - A citation is always `id, gloss`. Example: `D13, public repo`. Never a bare id. Never a path.
 - Step ordinals inside a document are positions, not ids. They are not cited across files.
 

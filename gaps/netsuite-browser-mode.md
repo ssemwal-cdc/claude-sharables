@@ -20,7 +20,7 @@ None of browser mode has been run.
 `publish_dashboard.py` hard-aborted when `config.me` or `config.tool` was missing.
 Step 0 omits both in browser mode by design.
 The portlets are per-user saved searches, already scoped to whoever is signed in.
-So a browser-mode run completed the whole review and then died at Step 7.
+So a browser-mode run completed the whole review and then died at step seven.
 It told the user to run a first-time setup they had done correctly.
 The fix: `account` is required on both routes.
 `me` and `tool` are required in connector mode only.

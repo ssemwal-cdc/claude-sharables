@@ -19,7 +19,7 @@ It was not a limitation. It was one missing type check, and the misfiling is wha
 
 Neither skill sniffed the bytes. The pdf.js loader throws an invalid-PDF error on a workbook, which is the same error a corrupt download gives.
 
-Both skills then read that error through a two-state rule with no room for it. The Procore rule folded a non-PDF into the expired case, a clause written for expired-signature XML that a spreadsheet also satisfies.
+Both skills then read that error through a two-state rule with no room for it. The Procore rule folded a non-PDF into the expired case. That case is a clause written for expired-signature XML that a spreadsheet also satisfies.
 
 So Excel support was re-fetched, failed identically, and landed as skipped, sometimes described as a scanned image. The retry had no exit and no type check.
 

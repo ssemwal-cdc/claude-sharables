@@ -15,9 +15,9 @@ date: 2026-08-12
 
 The widget host and the artifact host expose disjoint bridges. See F3, no bridge overlap.
 
-An artifact cannot send a message to chat. A button that hands an instruction back to the conversation is inert there and fails closed, with no throw and no console output.
+An artifact cannot send a message to chat. A button that hands an instruction back to the conversation is inert there and fails closed. It gives no throw and no console output.
 
-`askClaude` is not a substitute. It runs a small model in the page and returns to the page, so it cannot start a turn with real tool access.
+`askClaude` is not a substitute. It runs a small model in the page and returns to the page. So it cannot start a turn with real tool access.
 
 The cost is that `callMcpTool` is unavailable, so the page cannot re-query its own data. The NetSuite dashboard used to do that on open.
 

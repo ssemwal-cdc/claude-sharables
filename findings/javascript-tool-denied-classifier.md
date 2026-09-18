@@ -17,7 +17,7 @@ Everything load-bearing goes through that tool. That is the Procore gate fan-out
 
 So a denial is not a degraded run. It is no run.
 
-The agent was right to stop rather than route around it, and right to reject the sandbox as a substitute. The sandbox is a different network and a different cross-origin environment, so a result from there would not answer the question asked.
+The agent was right to stop rather than route around it, and right to reject the sandbox as a substitute. The sandbox is a different network and a different cross-origin environment. So a result from there would not answer the question asked.
 
 Refusing to launder a denial through a different execution context is the correct instinct. Keep it.
 

@@ -23,9 +23,9 @@ Never move the tab to an HTML page. It must stay same-origin with the presigned 
 
 NetSuite is unaffected, because it runs pdf.js in the record tab, which is ordinary HTML. Do not normalise the two.
 
-Worth noting how this surfaced. It was an incidental error in a probe written to ask about something else, and it was disclosed rather than smoothed over.
+Worth noting how this surfaced. It was an incidental error in a probe written to ask about something else. It was disclosed rather than smoothed over.
 
-A run could have caught the exception quietly and reported four clean results. That would have left a broken render call in the skill, to be found later by a scanned invoice in production.
+A run could have caught the exception quietly and reported four clean results. That would have left a broken render call in the skill. It would be found later by a scanned invoice in production.
 
 **Evidence.**
 

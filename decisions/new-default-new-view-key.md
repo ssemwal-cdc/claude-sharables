@@ -15,7 +15,7 @@ date: 2026-08-20
 
 A stored view overrides the default on every load.
 
-So shipping a new default under the old key reaches nobody who has ever touched the toolbar, which is everyone it is for.
+So shipping a new default under the old key reaches nobody who has ever touched the toolbar. That is everyone it is for.
 
 Both templates migrate the old key. Filters and search carry across, and only the sort resets.
 

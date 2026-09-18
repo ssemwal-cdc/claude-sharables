@@ -29,7 +29,7 @@ The blocker is the host. npm stopped at 0.18.5, and cdnjs mirrors npm, so cdnjs 
 
 SheetJS serves 0.20.2 from `cdn.sheetjs.com`. Executing a script from that host in these two tabs is unprobed.
 
-So nothing is bumped today. Bump only after a `script-src` probe passes for the new host, because an unexecutable library is worse than an old one.
+So nothing is bumped today. Bump only after a `script-src` probe passes for the new host. An unexecutable library is worse than an old one.
 
 **Evidence.**
 

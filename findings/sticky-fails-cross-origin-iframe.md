@@ -19,6 +19,6 @@ So a fixed position freezes at a document coordinate exactly as sticky does.
 
 **Evidence.** Closed 2026-08-27.
 One full-height sentinel with 401 thresholds gave 4 callbacks for a whole page
-of scrolling, and a stale band at 3 of 6 offsets.
+of scrolling. It also gave a stale band at 3 of 6 offsets.
 
 **Checks.** `test_dashboard_view` pins the mechanism, mutation-tested.

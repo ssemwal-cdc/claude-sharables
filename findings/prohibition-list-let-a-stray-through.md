@@ -21,7 +21,7 @@ A transfer encoding is none of those three by name. So the run filed its own fil
 
 The transferable lesson generalises past this folder. A list of the forms a mistake has taken is not a rule.
 
-The next instance arrives in a form the list does not name, and a run checking itself against the list passes.
+The next instance arrives in a form the list does not name. A run checking itself against the list then passes.
 
 State what may exist, not what may not.
 

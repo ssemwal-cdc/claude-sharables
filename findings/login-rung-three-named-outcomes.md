@@ -10,8 +10,8 @@ date: 2026-09-10
 **Outcome protected.** A run decides the login screen on what is on screen, not on a
 misread absolute.
 
-**Argument.** A login refusal was the Step 0 shape for the fourth time, and the third
-where the refusal came from this repo's own words.
+**Argument.** A login refusal was the Step 0 shape for the fourth time. It was the
+third where the refusal came from this repo's own words.
 The workspace-write announcement was built from Step 0's own cause list.
 The render refusals were built from the do-not-trust-this-tool note.
 The invented 90 KB ceiling shipped in a `publish_dashboard.py` comment.

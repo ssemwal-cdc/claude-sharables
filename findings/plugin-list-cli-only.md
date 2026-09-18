@@ -15,7 +15,7 @@ date: 2026-08-21
 
 The CLI and the app keep separate inventories. The CLI inventory is `~/.claude/plugins/installed_plugins.json`. The app keeps its own store.
 
-So the terminal update commands touch the CLI copy only, and an empty list does not mean the app has no plugins.
+So the terminal update commands touch the CLI copy only. An empty list does not mean the app has no plugins.
 
 Update app installs through the app. See F48, the app has its own store.
 

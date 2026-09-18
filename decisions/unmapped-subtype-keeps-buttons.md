@@ -7,7 +7,7 @@ date: 2026-09-01
 ---
 # An unmapped subtype keeps buttons
 
-**Superseded by** D‹review-only-mode›, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
+**Superseded by** D91, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
 
 **Rule.** Strip the record link and the `clear` verdict from an unmapped subtype. Keep its response buttons.
 

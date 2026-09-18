@@ -7,7 +7,7 @@ date: 2026-08-14
 ---
 # Default the approval comment
 
-**Superseded by** D‹review-only-mode›, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
+**Superseded by** D91, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
 
 **Rule.** Attach `Approved by Claude` to every affirmative response. A comment the user supplies for that item replaces it verbatim.
 

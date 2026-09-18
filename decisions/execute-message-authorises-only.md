@@ -7,7 +7,7 @@ date: 2026-08-24
 ---
 # The message authorises only
 
-**Superseded by** D‹review-only-mode›, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
+**Superseded by** D91, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
 
 **Rule.** Let the execute message carry the authority, the item list, each verdict and any user comment. Keep the procedure in `SKILL.md`.
 

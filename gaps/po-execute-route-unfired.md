@@ -7,7 +7,7 @@ date: 2026-09-01
 ---
 # Purchase order route unfired
 
-**Moot** since D‹review-only-mode›, review-only plugins, on 2026-09-18. The branch this gap watched was retired. It reopens with execute mode.
+**Moot** since D91, review-only plugins, on 2026-09-18. The branch this gap watched was retired. It reopens with execute mode.
 
 **Outcome protected.** A reviewed purchase order can be actioned, and only as the reviewer instructed.
 

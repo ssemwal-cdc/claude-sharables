@@ -7,7 +7,7 @@ date: 2026-08-20
 ---
 # Render the execute bar always
 
-**Superseded by** D‹review-only-mode›, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
+**Superseded by** D91, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
 
 **Rule.** Render the execute bar in every state, including zero marks. Keep the header mirror as well.
 

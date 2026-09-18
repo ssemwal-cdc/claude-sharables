@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D91
 slug: review-only-mode
 kind: decision
 status: settled

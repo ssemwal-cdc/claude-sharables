@@ -51,7 +51,7 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand. Needs a brow
 - Remote `https://github.com/ssemwal-cdc/claude-sharables`, default branch `main`. Marketplace name `compass-claude-plugins`.
 - `netsuite-approval-review` holds skill `netsuite-approval-double-check`. It needs Claude in Chrome signed in to NetSuite. The MCP connector is optional.
 - `procore-open-items-review` holds skill `procore-open-items-review`. It needs Claude in Chrome signed in to Procore. It has no connector.
-- `actionable-retired/` holds the prose and code removed with execute mode. Read-only reference. Never install or sync from it. `D‹review-only-mode›`, review-only plugins.
+- `actionable-retired/` holds the prose and code removed with execute mode. Read-only reference. Never install or sync from it. `D91`, review-only plugins.
 - The repo is public. To change that, challenge the argument in `D13`, keep this repo public, never the prose.
 - No token and no credential may land here. Stop and raise it if a ported skill carries any.
 - CI is `.github/workflows/validate.yml`, which runs `scripts/validate.py`.

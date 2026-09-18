@@ -7,7 +7,7 @@ date: 2026-08-12
 ---
 # Never pre-write an action
 
-**Superseded by** D‹review-only-mode›, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
+**Superseded by** D91, review-only plugins, on 2026-09-18. Execute mode was retired. The rule returns with it, and the text lives on in `actionable-retired/`.
 
 **Rule.** Write an outcome to the actions log only after it is observed.
 

@@ -94,4 +94,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D87 | `run-closes-its-tabs` | A run closes every tab it opened | settled | 2026-09-16 | A finished run leaves the browser as it found it. |
 | D88 | `skill-version-bump-enforced` | The version bump is a check, not a habit | settled | 2026-09-16 | A teammate compares their installed version against the README table. |
 | D90 | `published-facts-reader` | Published facts reader | settled | 2026-09-18 | A published number or path in `CLAUDE.md` or a README has a reader. |
-| pending | `review-only-mode` | Review-only plugins | settled | 2026-09-18 | A reviewer gets a dashboard with no decision controls. |
+| D91 | `review-only-mode` | Review-only plugins | settled | 2026-09-18 | A reviewer gets a dashboard with no decision controls. |

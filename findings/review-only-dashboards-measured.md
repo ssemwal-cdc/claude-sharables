@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F150
 slug: review-only-dashboards-measured
 kind: finding
 status: observed
@@ -11,7 +11,7 @@ date: 2026-09-18
 
 **Argument.**
 
-D‹review-only-mode›, review-only plugins, step 9 asks for the float measurement after the cut.
+D91, review-only plugins, step 9 asks for the float measurement after the cut.
 Run on 2026-09-18 with `scripts/measure_float.js --shots`, after the execute assertions moved to `actionable-retired/`.
 
 Every measurement passed for both dashboards. The float header still tracks every scroll offset. The Filters link still returns to the toolbar.

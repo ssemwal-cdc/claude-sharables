@@ -30,7 +30,7 @@ The three things a revert cannot fix are the reasons for the three guard rules b
 
 **Reinstatement recipe.** Two paths, and the folder README carries both.
 By hand: open `actionable-retired/`, read its README map, and paste each file back at the path it names. Diff first, because the live file may have moved on.
-By git: tag the last `main` commit before the merge as `execute-mode-last`. Run `git revert -m 1 <merge sha>` on a branch, resolve drift against the tag, and open a pull request.
+By git: tag the last `main` commit before the merge as `execute-mode-last`. Run `git revert -m 1 4b0dff1` on a branch, resolve drift against the tag, and open a pull request.
 The superseded records below return to `settled` in that same pull request.
 
 **Guard rules for the removal.**
@@ -62,6 +62,6 @@ The superseded records below return to `settled` in that same pull request.
 - Surveyed 2026-09-18. Step 8 is one section plus one reference file per plugin. The controls sit in one row renderer, one bar element and one shared block per template.
 - Eleven decisions describe execute behaviour only. D14, never pre-write an action. D18, never batch the click checks. D20, default the approval comment. D28, Approve With Notes stays primary. D37, render the execute bar always. D45, keep reference text out. D46, the bar ignores filters. D48, the message authorises only. D75, gate the two type lists. D76, purchase orders take bill route. D78, an unmapped subtype keeps buttons.
 - Two gaps do. G7, execute button blocked state unseen. G16, purchase order route unfired.
-- Built on branch 2026-09-18. The retired folder holds 21 files. Two shared blocks, the measurement script and the float header were not in the plan. The retired README names each. Merge sha: not yet merged.
+- Built on branch 2026-09-18. The retired folder holds 21 files. Two shared blocks, the measurement script and the float header were not in the plan. The retired README names each. Merged 2026-09-18 as 4b0dff1. Reinstate with `git revert -m 1 4b0dff1`.
 
 **Checks.** `python3 scripts/validate.py`, `python3 scripts/test_skill_code.py`, and `scripts/measure_float.js` by hand.

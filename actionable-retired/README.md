@@ -35,7 +35,7 @@ The last `main` commit before the removal is `cdaaf90`. A local tag `execute-mod
 points at it. **That tag exists only in one working copy. It was never pushed, so it is not
 on the remote and nobody else has it.** Use the sha, and re-create the tag if you want one.
 
-Run `git revert -m 1 <merge sha>` on a branch. `<merge sha>` is the merge commit of the
+Run `git revert -m 1 4b0dff1` on a branch. `<merge sha>` is the merge commit of the
 removal pull request. Resolve drift against `cdaaf90`, then open a pull request. The
 superseded decisions return to `settled` in that same pull request.
 

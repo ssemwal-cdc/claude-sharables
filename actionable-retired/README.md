@@ -31,9 +31,9 @@ records a `was:` line and a `now:` line. Put the `was:` text back over the `now:
 
 ## Reinstatement, by git
 
-The last `main` commit before the removal is `cdaaf90`. A local tag `execute-mode-last`
-points at it. **That tag exists only in one working copy. It was never pushed, so it is not
-on the remote and nobody else has it.** Use the sha, and re-create the tag if you want one.
+The last `main` commit before the removal is `cdaaf90`. The annotated tag `execute-mode-last`
+points at it and is on the remote. Run `git fetch origin --tags` to get it. Diff against the
+tag, or against the sha when the tag is absent.
 
 Run `git revert -m 1 4b0dff1` on a branch. `<merge sha>` is the merge commit of the
 removal pull request. Resolve drift against `cdaaf90`, then open a pull request. The

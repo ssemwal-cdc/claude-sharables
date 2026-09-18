@@ -35,7 +35,7 @@ The last `main` commit before the removal is `cdaaf90`. The annotated tag `execu
 points at it and is on the remote. Run `git fetch origin --tags` to get it. Diff against the
 tag, or against the sha when the tag is absent.
 
-Run `git revert -m 1 <merge sha>` on a branch. `<merge sha>` is the merge commit of the
+Run `git revert -m 1 4b0dff1` on a branch. `<merge sha>` is the merge commit of the
 removal pull request. Resolve drift against `cdaaf90`, then open a pull request. The
 superseded decisions return to `settled` in that same pull request.
 

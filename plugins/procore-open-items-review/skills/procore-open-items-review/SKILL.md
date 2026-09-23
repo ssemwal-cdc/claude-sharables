@@ -387,7 +387,7 @@ Every check below carries an **id**, the **lens** it serves, and the **capabilit
 7. **Where the accepted cost is blank, tie Cost Impact to the proposal total instead.** Check 2 needs an accepted cost and cannot run without one. This check runs only then, and it compares Cost Impact directly to the proposal's total. A match makes the item `tied`. The figures agree, and only the accepted-cost field is missing. A mismatch is still a FLAG.
 
 **Three states for a cost field, and only *mapped and populated* lets these checks run.** On that state the check runs normally.
-- **Mapped and blank:** the check does **not** run. The item is `skipped` naming the field, in words such as "Approved Customer Cost is blank on the record". That is a property of the record and the fix is in Procore. A whole subtype blank is one pattern, not a finding per item. A mapped-and-blank accepted cost is not `skipped`, and may be `tied` under check 7.
+- **Mapped and blank:** the check does **not** run. The item is `skipped` naming the field, in words such as "Approved Customer Cost is blank on the record". That is a property of the record and the fix is in Procore. A whole subtype blank is one pattern, not a finding per item. Where check 7 ties Cost Impact to the proposal total, the item is `tied` rather than `skipped`.
 - **Not mapped:** the check does not run either, and the reason is different. The field's id is not in `config.customTools[subtype]`. In Step 1, the fix is the config. **Say which of the two it was.**
 - Checks 1, 2 and 4 need an accepted cost, and 2 and 4 also need a proposed one. **Checks 3 and 5 need neither.** So both run on a tool with no cost mapping, and both can still FLAG.
 - **An ICR whose cost checks never ran is not `clear`, and may be `tied`.** Name which ones did not run, because "cost checks did not run" is the `unreadable` defect again.
@@ -417,7 +417,7 @@ Then:
 4. **Retainage.** Report the withheld percent. **A commitment withholding none is worth naming, not flagging.**
 5. **Queue context.** Where another item in this run draws on the same contract, name it with its amount. An invoice whose `commitment_id` matches, or a CCO whose `contract_id` matches, both count. **Context, never a flag.**
 
-**A commitment that could not be added up is not clear.** If `line_items[]` or the contract total is missing from the payload, checks 1 and 3 did not run. Say which, by name. The verdict is `skipped` with that as its stated cause. A commitment missing `line_items[]` while `grand_total` is present is not `skipped`, and may be `tied` under `pc.com-support-tie`.
+**A commitment that could not be added up is not clear.** If `line_items[]` or the contract total is missing from the payload, checks 1 and 3 did not run. Say which, by name. The verdict is `skipped` with that as its stated cause. Where `grand_total` is present and `pc.com-support-tie` locates it in the support, the item is `tied` rather than `skipped`.
 ### The `delivery` and `design` lenses
 
 If `config.focus.lenses` names `delivery` or `design`, read `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/references/lenses-delivery-design.md` now, in full, before Step 5 continues. Absent both, Step 5 ends above.
@@ -442,7 +442,7 @@ Five outcomes.
 | `inv` | `previous_requisition_id` absent while previous certificates are non-zero | `pc.inv-support-tie` |
 | `cco` | one line with no PCI, the rest tying | `pc.cco-pci-tie` |
 - **skipped** means that the item is not ready for review. **It is not approved, not rejected, and not a criticism.**
-- A `skipped` covers no attachment, support that could not be read, or a record missing the needed figures. For a commitment that is fields the payload never held. For a change risk it is a blank or unmapped accepted cost. This is a deliberate third state. An item with nothing to check against must not be given a verdict. A blank or unmapped accepted cost is not `skipped`, and may be `tied` under check 7.
+- A `skipped` covers no attachment, support that could not be read, or a record missing the needed figures. For a commitment that is fields the payload never held. For a change risk it is a blank or unmapped accepted cost. This is a deliberate third state. An item with nothing to check against must not be given a verdict. Where check 7 ties, a blank accepted cost gives `tied` rather than `skipped`.
 - **A skip must name which of the Step 4 outcomes caused it**, in the words that outcome uses.
 - Use "support is a scanned image, text not extractable". Or use "support is a .xlsx and the workbook reader was unavailable". Or use "the attachment link expired twice".
 - "Unreadable" on its own reads identically for a scan, a spreadsheet and a timed-out link. A skip that cannot name its cause is a defect in Step 4.

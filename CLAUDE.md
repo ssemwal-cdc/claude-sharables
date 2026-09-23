@@ -45,7 +45,7 @@ python3 scripts/test_skill_code.py           # runs the code the skills carry. N
 python3 scripts/check_records.py --write-index   # by hand. Also --claim-ids [--apply], at merge
 python3 scripts/shared_blocks.py --sync      # push plugins/_shared into every marked site
 python3 scripts/shared_blocks.py --check     # what validate.py runs
-NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand. Needs a browser.
+NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand, not in the gate. The cloud image has Chromium.
 ```
 ## Repo facts
 - Remote `https://github.com/ssemwal-cdc/claude-sharables`, default branch `main`. Marketplace name `compass-claude-plugins`.

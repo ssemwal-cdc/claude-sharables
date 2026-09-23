@@ -54,7 +54,7 @@ button{font:500 12.5px/1 inherit;padding:7px 13px;background:transparent;border:
 button:hover{background:var(--sunk);border-color:var(--ctl2)}
 button:focus-visible{outline:2px solid var(--acc-fg);outline-offset:2px}
 /* retired: see actionable-retired/netsuite-approval-review/dashboard_template.cut.html, review-only-mode */
-input[type=text]{width:100%;font:400 13px inherit;padding:8px 11px;border:1px solid var(--ctl);border-radius:var(--r);margin-top:10px;background:var(--card);color:var(--ink)}
+input[type=text]{width:100%;font-weight:400;font-size:13px;font-family:inherit;padding:8px 11px;border:1px solid var(--ctl);border-radius:var(--r);margin-top:10px;background:var(--card);color:var(--ink)}
 input[type=text]:focus{border-color:var(--acc-fg);outline:2px solid var(--acc-bg)}
 a{color:var(--acc-fg);text-decoration:none;font-size:12.5px}
 a:hover{text-decoration:underline}
@@ -68,7 +68,7 @@ h2{font-size:15px;font-weight:600;margin:22px 0 0}
 .toolbar{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:11px 13px;margin:16px 0 0;box-shadow:var(--sh1)}
 .fgrp{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto}
 .tbl{font-size:12px;font-weight:550;color:var(--ink3)}
-select{font:500 12.5px/1 inherit;padding:7px 26px 7px 10px;border:1px solid var(--ctl);border-radius:var(--r);background:var(--card) url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%235f5e5a' stroke-width='1.4'/%3E%3C/svg%3E") no-repeat right 8px center/11px;color:var(--ink);cursor:pointer;-webkit-appearance:none;appearance:none;transition:border-color .15s ease}
+select{font-weight:500;font-size:12.5px;line-height:1.2;font-family:inherit;padding:7px 26px 7px 10px;border:1px solid var(--ctl);border-radius:var(--r);background:var(--card) url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8l3.5-3.5' fill='none' stroke='%235f5e5a' stroke-width='1.4'/%3E%3C/svg%3E") no-repeat right 8px center/11px;color:var(--ink);cursor:pointer;-webkit-appearance:none;appearance:none;transition:border-color .15s ease}
 select:hover{border-color:var(--ctl2)}
 select.act{border-color:var(--acc-line);background-color:var(--acc-bg);color:var(--acc-fg)}
 input.search{width:auto;flex:1;min-width:130px;margin-top:0;font-size:12.5px;padding:7px 11px}

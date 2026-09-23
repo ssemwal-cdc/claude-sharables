@@ -1,9 +1,9 @@
 ---
 name: procore-open-items-review
-description: v31 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still waiting on their response. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged or skipped verdict per item. This skill is read-only: it never clicks Respond, Approve, Reject or Revise and Resubmit, every Procore call it makes is a GET, and the dashboard it publishes carries no response controls. Every verdict is a recommendation, and the response itself stays yours to make in Procore.
+description: v32 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still waiting on their response. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged, skipped or tied verdict per item. This skill is read-only: it never clicks Respond, Approve, Reject or Revise and Resubmit, every Procore call it makes is a GET, and the dashboard it publishes carries no response controls. Every verdict is a recommendation, and the response itself stays yours to make in Procore.
 ---
 # Procore Open Items Review
-**Skill version 31 — 2026-09-18.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
+**Skill version 32 — 2026-09-23.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
 
 Review every Procore item **waiting on the user's workflow response**. Verify each item's figures against its attached support. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget. Chat gets one headline line.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
@@ -75,11 +75,11 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 2. **Read, then Write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/` and write it over the workspace copy byte for byte. Never retype, trim or tidy. Then prove the copy landed: the template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and `python3 -m py_compile publish_dashboard.py` passes. This rung is designed, not yet observed. Say so in the run report if it also fails.
 3. **Use the existing workspace copies and say so once.** One line near the headline, naming the modification date from `ls -l`: "dashboard code is from the last successful sync, \<date\>". Do not stop the run. The procedure ships in this file, so the verdicts stay current when the widget's wording does not. **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, stop before Step 7 and say exactly that. Inventing a template is forbidden by the Absolute rules.
 
-**This plugin ships layout template `v15`. Confirm the sync landed by reading it back:**
+**This plugin ships layout template `v16`. Confirm the sync landed by reading it back:**
 ```bash
 head -n 8 "<workspace>/Procore Open Items/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
-If that does not say `v15`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
+If that does not say `v16`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
 
 Then read `Procore Open Items/_procore_review_log.json`. A file already carrying a `config` block finishes this step, apart from the two back-fills below. Go to Step 1. Otherwise run setup once.
 
@@ -343,7 +343,7 @@ Every check below carries an **id**, the **lens** it serves, and the **capabilit
 
 | capability | means | when it is absent |
 |---|---|---|
-| `record` | fields from the Step 3 record reads | the read is never absent, because the queue is built from it. A named field the payload does not carry is a different state. Every check needing that field is reported as not run, by name, and the item cannot be `clear` |
+| `record` | fields from the Step 3 record reads | the read is never absent, because the queue is built from it. A named field the payload does not carry is a different state. Every check needing that field is reported as not run, by name, and the item cannot be `clear`. It may still be `tied` |
 | `attachment` | a Step 4 attachment outcome of `text` or `spreadsheet` | the item is `skipped`, **naming which outcome** caused it |
 | `queue` | the other items in this run, not this item alone | never absent. It marks the check as cross-item |
 
@@ -354,6 +354,7 @@ Every check below carries an **id**, the **lens** it serves, and the **capabilit
 | `pc.icr-phase-sum` | core | `attachment` | ICR 3 — the proposal's phase lines sum to its total |
 | `pc.icr-proposed-delta` | core | `record` | ICR 4 — report both figures, flag only if accepted exceeds proposed |
 | `pc.icr-placeholder` | core | `record` | ICR 5 — `yes_known` carrying a placeholder value |
+| `pc.icr-impact-support-tie` | core | `attachment` | ICR 7 — where the accepted cost is blank, Cost Impact against the proposal total |
 | `pc.inv-g702` | core | `record` | Invoice — the six G702 identities, re-derived |
 | `pc.inv-support-tie` | core | `attachment` | Invoice — each headline figure located in the pay application |
 | `pc.inv-sequence` | core | `record` | Invoice — sequence integrity against previous certificates |
@@ -383,12 +384,13 @@ Every check below carries an **id**, the **lens** it serves, and the **capabilit
 4. **Report both the proposed and the accepted figure.** **Not a flag**, because that gap is negotiation. Flag only if accepted *exceeds* proposed.
 5. **A `yes_known` status carrying a placeholder value**, such as `$0.01`, is a FLAG. It passes a naive has-a-value check but is not a cost.
 6. **Narrative fields blank**, such as Entitlement, Need v. Want, 5 Whys or Options to Mitigate, is **not a flag**. Mention it only when a blank field prevents judging the cost.
+7. **Where the accepted cost is blank, tie Cost Impact to the proposal total instead.** Check 2 needs an accepted cost and cannot run without one. This check runs only then, and it compares Cost Impact directly to the proposal's total. A match makes the item `tied`. The figures agree, and only the accepted-cost field is missing. A mismatch is still a FLAG.
 
 **Three states for a cost field, and only *mapped and populated* lets these checks run.** On that state the check runs normally.
 - **Mapped and blank:** the check does **not** run. The item is `skipped` naming the field, in words such as "Approved Customer Cost is blank on the record". That is a property of the record and the fix is in Procore. A whole subtype blank is one pattern, not a finding per item.
 - **Not mapped:** the check does not run either, and the reason is different. The field's id is not in `config.customTools[subtype]`. In Step 1, the fix is the config. **Say which of the two it was.**
 - Checks 1, 2 and 4 need an accepted cost, and 2 and 4 also need a proposed one. **Checks 3 and 5 need neither.** So both run on a tool with no cost mapping, and both can still FLAG.
-- **An ICR whose cost checks never ran is not `clear`.** Name which ones did not run, because "cost checks did not run" is the `unreadable` defect again.
+- **An ICR whose cost checks never ran is not `clear`, and may be `tied`.** Name which ones did not run, because "cost checks did not run" is the `unreadable` defect again.
 ### Invoice
 Re-derive all six G702 identities from the record rather than reading the summary back.
 - `original_contract_sum + net_change_by_change_orders = contract_sum_to_date`
@@ -420,15 +422,31 @@ Then:
 
 If `config.focus.lenses` names `delivery` or `design`, read `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/references/lenses-delivery-design.md` now, in full, before Step 5 continues. Absent both, Step 5 ends above.
 ## Step 6 — Verdicts
-Four outcomes.
-- **clear** means the figures tie and the support is adequate.
-- **flagged** means a specific number is wrong or unsupported. Say which, with figures.
-- **skipped** means not ready for review. **It is not approved, not rejected, and not a criticism.**
+Five outcomes.
+- **clear** means that the figures tie and the support is adequate.
+- **flagged** means that a specific number is wrong or unsupported. Say which, with figures.
+- **tied** means that every core check that could run agreed, and exactly one named field is blank in Procore. The name states the evidence, never the action. It is not an approval.
+- An item is `tied` when all four hold.
+  1. Exactly one named field is absent from the record. Blank or unmapped. Never a read failure.
+  2. Every other core check for that kind ran, and every one passed. One FLAG makes the item `flagged`. One further check that could not run makes it `skipped`.
+  3. At least one headline figure was located verbatim in readable support. That attachment's Step 4 outcome was `text` or `spreadsheet`.
+  4. `supportRead` is not empty.
+- **A Step 4 failure never reaches `tied`.** `scanned`, `expired` and `unsupported` stay `skipped`. So does a record field the payload never carried.
+- **`ungated` outranks `tied`.** The demotions in `publish_dashboard.py` test `verdict not in ("skipped", "ungated")`, so an unresolved gate still demotes a `tied` item.
+- The blank field and the check that carries the tie, per kind:
+
+| kind | The blank field | The tie that carries it |
+|---|---|---|
+| `icr` | accepted cost, meaning Cost: Compass Accepted or Approved Customer Cost | `pc.icr-impact-support-tie`, Cost Impact against the proposal total |
+| `com` | `line_items[]` absent while `grand_total` is present | `pc.com-support-tie` |
+| `inv` | `previous_requisition_id` absent while previous certificates are non-zero | `pc.inv-support-tie` |
+| `cco` | one line with no PCI, the rest tying | `pc.cco-pci-tie` |
+- **skipped** means that the item is not ready for review. **It is not approved, not rejected, and not a criticism.**
 - A `skipped` covers no attachment, support that could not be read, or a record missing the needed figures. For a commitment that is fields the payload never held. For a change risk it is a blank or unmapped accepted cost. This is a deliberate third state. An item with nothing to check against must not be given a verdict.
 - **A skip must name which of the Step 4 outcomes caused it**, in the words that outcome uses.
 - Use "support is a scanned image, text not extractable". Or use "support is a .xlsx and the workbook reader was unavailable". Or use "the attachment link expired twice".
 - "Unreadable" on its own reads identically for a scan, a spreadsheet and a timed-out link. A skip that cannot name its cause is a defect in Step 4.
-- **ungated** means the arithmetic was checked but Procore would not confirm the user is a responder. Its frequency is `unmeasured`.
+- **ungated** means that the arithmetic was checked but Procore would not confirm the user is a responder. Its frequency is `unmeasured`.
 - Three cases reach it: no resolvable `holder.id`, several commitment change orders, or no resolvable `wfType`.
 - An `ungated` item is reviewed and shown like any other. **Say which of the three it was.**
 - Items where `can_respond` is `false` are **suppressed**, not skipped. They collapse to a single count.
@@ -476,6 +494,7 @@ On each run:
 - **Mark the row `carried forward, not re-read` on the dashboard.**
 - Previously **flagged** is re-checked in full, because the attachment may have been swapped. A changed amount is treated as new.
 - Previously **skipped** is re-checked in full every run, because support gets added later.
+- Previously **tied** is re-checked in full every run, like `skipped`, because the blank field may later be filled.
 - **No longer in the queue is dropped.** **Count the departed items and name the count in the chat line.**
 - There is no actioned bin. A lingering entry would show as an apparently-pending row.
 
@@ -511,7 +530,7 @@ cd "<workspace>/Procore Open Items" && python3 -B publish_dashboard.py
 - If the script aborts because the sentinels are missing, **restore the template from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/`.** **Do not rebuild the template from memory.** Keep the sentinels intact.
 - A design change goes in the plugin repo, not the workspace copy, which Step 0 overwrites on every run.
 
-Step 8 runs first, and the headline follows it. **Report in chat with one line only**, in the shape `32 awaiting you · 0 flagged · 25 skipped · dashboard updated`. Add a second line only if something blocked the run. Never put verdicts in chat.
+Step 8 runs first, and the headline follows it. **Report in chat with one line only**, in the shape `32 awaiting you · 0 flagged · 3 tie out · 22 skipped · dashboard updated`. Add a second line only if something blocked the run. Never put verdicts in chat.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
 ## Step 8 — Close down
 

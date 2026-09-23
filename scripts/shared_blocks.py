@@ -320,7 +320,7 @@ def check_capability_verdicts():
                 for verdict in re.findall(r"`([a-z]+)`", row):
                     if verdict in ("core", "connector", "attachment", "record", "queue"):
                         continue
-                    if verdict in ("clear", "flagged", "skipped", "ungated") and verdict not in allowed:
+                    if verdict in ("clear", "flagged", "skipped", "ungated", "tied") and verdict not in allowed:
                         problems.append(
                             "%s/%s: the capability table tells a run to mark an item `%s`, "
                             "which is not in that plugin's VERDICTS (%s) - publish_dashboard.py "
@@ -390,7 +390,8 @@ REGISTRY_MANIFEST = {
     },
     "procore-open-items-review": {
         "pc.icr-cost-impact", "pc.icr-proposal-tie", "pc.icr-phase-sum",
-        "pc.icr-proposed-delta", "pc.icr-placeholder", "pc.inv-g702",
+        "pc.icr-proposed-delta", "pc.icr-placeholder", "pc.icr-impact-support-tie",
+        "pc.inv-g702",
         "pc.inv-support-tie", "pc.inv-sequence", "pc.inv-duplicates",
         "pc.inv-retainage", "pc.cco-line-sum", "pc.cco-pci-tie", "pc.cco-icr-tie",
         "pc.com-line-sum", "pc.com-support-tie", "pc.com-line-integrity",

@@ -54,6 +54,9 @@ Covered:
                            collections. Both are valid workflowable types, so the
                            wrong one with the right id returns an empty instance,
                            which the execute step reads as already-actioned.
+ 15. `tied` verdict     - the fifth verdict survives publish, obeys the same
+                           demotions as every other verdict, and is not folded
+                           into widget.html's display-only rows.
 
 Usage:  python3 scripts/test_skill_code.py
 Needs node on PATH for 1-3; those are skipped with a notice if it is missing.
@@ -348,6 +351,11 @@ def test_cco_demotion():
                                "counterparty": "X", "amount": 2000, "step": "FA Review",
                                "responses": ["Approve"], "verdict": "clear",
                                "head": "h", "facts": ["f"], "detail": "d"},
+                "tied_unresolved": {"itemId": "333", "projectId": "9", "commitmentId": "8",
+                               "kind": "cco", "type": "CCO", "docNo": "#020", "project": "A - B",
+                               "counterparty": "X", "amount": 3000, "step": "FA Review",
+                               "responses": ["Approve"], "verdict": "tied",
+                               "head": "h", "facts": ["f"], "detail": "d"},
             },
         }
         json.dump(log, open(os.path.join(d, "_procore_review_log.json"), "w"))
@@ -362,6 +370,7 @@ def test_cco_demotion():
         items = {i["doc"]: i for i in json.loads(blob)["items"]}
         ok = items["#002"]
         bad = items["#010"]
+        bad_tied = items["#020"]
         check("cco: resolved wfId keeps its response buttons",
               ok["verdict"] == "clear" and ok["resp"] and ok["wfId"] == "999")
         check("cco: resolved wfId is distinct from the record id", ok["wfId"] != ok["id"])
@@ -370,6 +379,9 @@ def test_cco_demotion():
         check("cco: unresolved wfId is demoted to ungated", bad["verdict"] == "ungated", bad["verdict"])
         check("cco: unresolved wfId offers no response buttons", bad["resp"] == [])
         check("cco: demotion is announced, not silent", "wfId" in (r.stdout + r.stderr))
+        check("cco: a tied item with no wfId is demoted to ungated too",
+              bad_tied["verdict"] == "ungated", bad_tied["verdict"])
+        check("cco: the demoted tied item offers no response buttons", bad_tied["resp"] == [])
     finally:
         shutil.rmtree(d, ignore_errors=True)
 
@@ -781,7 +793,9 @@ def test_custom_tool_subtype():
                                subtype="Customer Change Request (77)"),
                    "unmapped": dict(base, itemId="333", docNo="#NEW-1",
                                     subtype="Some Other Tool (99)"),
-                   "nosubtype": dict(base, itemId="444", docNo="#OLD-1", verdict="flagged")}}
+                   "nosubtype": dict(base, itemId="444", docNo="#OLD-1", verdict="flagged"),
+                   "unmapped_tied": dict(base, itemId="555", docNo="#NEW-2",
+                                    subtype="Some Other Tool (99)", verdict="tied")}}
         json.dump(log, open(os.path.join(d, "_procore_review_log.json"), "w"))
         out_html = os.path.join(d, "index.html")
         r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
@@ -802,6 +816,8 @@ def test_custom_tool_subtype():
               items["#NEW-1"]["verdict"] == "skipped", items["#NEW-1"]["verdict"])
         check("subtype: it keeps its response buttons - the gate is unaffected",
               items["#NEW-1"]["resp"] == ["Yes", "Reject"])
+        check("subtype: an unmapped subtype demotes a tied item too",
+              items["#NEW-2"]["verdict"] == "skipped", items["#NEW-2"]["verdict"])
         check("subtype: an item with no subtype recorded is not guessed either",
               items["#OLD-1"]["toolId"] == "")
         check("subtype: a flagged item stays flagged - a flag found is still a flag",
@@ -828,6 +844,57 @@ def test_custom_tool_subtype():
         check("subtype: recUrl prefers the item's own tool id", "it.toolId" in rec)
         check("subtype: recUrl returns no link rather than a wrong one",
               "if(!tid) return " in rec)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+# --------------------------------------------------- 15. the `tied` verdict
+def test_tied_verdict():
+    """`tied` is the fifth verdict: support was read and a headline figure ties, with
+    exactly one named field blank in Procore. It renders like `clear` and `flagged` -
+    full detail and its own response verbs - and must not fold into widget.html's
+    display-only rows the way `skipped` and `ungated` do.
+    """
+    d = tempfile.mkdtemp()
+    try:
+        assets = os.path.join(PC, "assets")
+        for f in ("publish_dashboard.py", "dashboard_template.html"):
+            shutil.copy(os.path.join(assets, f), d)
+        log = {
+            "lastCompletedRun": "2026-09-23", "lastRunTime": "2026-09-23 09:00",
+            "suppressed": 0, "config": {"company": "0", "icrToolId": "0"},
+            "items": {
+                "tied": {"itemId": "555", "projectId": "9", "commitmentId": "8",
+                         "kind": "icr", "type": "Internal Change Risk", "docNo": "#ICR-9",
+                         "project": "A - B", "counterparty": "X", "amount": 5000,
+                         "step": "Cost Gate", "responses": ["Yes", "Reject"],
+                         "verdict": "tied", "head": "h", "facts": ["f"], "detail": "d",
+                         "supportRead": ["proposal.pdf"]},
+            },
+        }
+        json.dump(log, open(os.path.join(d, "_procore_review_log.json"), "w"))
+        out_html = os.path.join(d, "index.html")
+        r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
+                            out_html], capture_output=True, text=True, timeout=60)
+        if r.returncode != 0:
+            check("tied: publish script runs", False,
+                  (r.stderr or r.stdout).strip().splitlines()[-1:] or "")
+            return
+        blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/",
+                         open(out_html, encoding="utf-8").read(), re.S).group(1)
+        items = {i["doc"]: i for i in json.loads(blob)["items"]}
+        check("tied: survives publish and lands in index.html",
+              "#ICR-9" in items and items["#ICR-9"]["verdict"] == "tied",
+              items.get("#ICR-9", {}).get("verdict"))
+
+        widget = os.path.join(d, "widget.html")
+        wblob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/",
+                          open(widget, encoding="utf-8").read(), re.S).group(1)
+        witems = {i["doc"]: i for i in json.loads(wblob)["items"]}
+        check("tied: not folded in widget.html - keeps its response verbs",
+              witems["#ICR-9"].get("resp") == ["Yes", "Reject"], witems["#ICR-9"].get("resp"))
+        check("tied: not folded in widget.html - keeps full detail",
+              witems["#ICR-9"].get("detail") == "d", witems["#ICR-9"].get("detail"))
     finally:
         shutil.rmtree(d, ignore_errors=True)
 
@@ -950,6 +1017,7 @@ def main():
     test_cco_demotion()
     test_commitment_kind()
     test_custom_tool_subtype()
+    test_tied_verdict()
     test_render_fits_one_read()
     test_template_version()
     test_step0_write_states()

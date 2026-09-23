@@ -1,5 +1,8 @@
 // Measures the floating header in a real browser. NOT part of the build: it needs Chromium
-// and Playwright, neither of which validate.py may assume. Run it by hand after touching
+// and Playwright, neither of which validate.py may assume. That is about the gate, not
+// about your session: the cloud image ships Chromium at /opt/pw-browsers and playwright
+// in $(npm root -g). Probe before you claim this cannot run, because a read that never
+// ran is unknown, never absent. Run it by hand after touching
 // dash-band-track, dash-float-css, dash-header-mirror or anything about the page's height:
 //
 //   NODE_PATH=$(npm root -g) node scripts/measure_float.js

@@ -43,9 +43,15 @@ arrives with the contract already agreed. The review is then arithmetic
 against a fixed baseline. A commitment out for approval is the baseline itself. Whether
 the scope, the rate and the counterparty are the right ones is left to you.
 
-Each item lands as clear, flagged, skipped or gate-unknown. Skipped is a real
-verdict. An item with no support attached is not ready for review. So it is not
-approved, not rejected, and not given a verdict it has not earned.
+Each item lands as clear, flagged, tied, skipped or gate-unknown. Skipped is a
+real verdict. An item with no support attached is not ready for review. So it
+is not approved, not rejected, and not given a verdict it has not earned.
+
+Tied is a fifth verdict, for one narrow case. Every core check that could run
+agreed, and exactly one field is blank in Procore. That is genuinely different
+from an item with nothing to check against. So it renders in its own section
+above the skipped block. Tied is not an approval either. The response is still
+yours to make.
 
 ## Support is read without downloading anything
 

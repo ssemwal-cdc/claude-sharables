@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F151
 slug: browser-assumed-absent-in-cloud
 kind: finding
 status: observed

@@ -154,6 +154,6 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F148 | `waiter-loop-check-fires-on-defect` | The waiter-loop check fires on a real defect | observed | 2026-09-16 | No sentence in this repo instructs an unbounded wait-and-retry. |
 | F149 | `onboarding-check-silent-on-missing-file` | The onboarding page check passed on a missing file | observed | 2026-09-18 | A missing `docs/onboarding.html` fails the build, per `D89`, the markdown compliance fix plan, ruling 3. |
 | F150 | `review-only-dashboards-measured` | Review-only dashboards measured | observed | 2026-09-18 | A reviewer sees the whole queue, with no control they cannot use. |
-| pending | `browser-assumed-absent-in-cloud` | A session assumed no browser | observed | 2026-09-23 | A capability is measured before a run claims it cannot run. |
-| pending | `invalid-font-shorthand-dropped` | An invalid shorthand was dropped | observed | 2026-09-23 | A control renders in the font the template authored for it. |
-| pending | `toolbar-select-overflow` | Long option text overflows toolbar | observed | 2026-09-23 | A reader on a narrow panel is not made to scroll sideways. |
+| F151 | `browser-assumed-absent-in-cloud` | A session assumed no browser | observed | 2026-09-23 | A capability is measured before a run claims it cannot run. |
+| F152 | `invalid-font-shorthand-dropped` | An invalid shorthand was dropped | observed | 2026-09-23 | A control renders in the font the template authored for it. |
+| F153 | `toolbar-select-overflow` | Long option text overflows toolbar | observed | 2026-09-23 | A reader on a narrow panel is not made to scroll sideways. |

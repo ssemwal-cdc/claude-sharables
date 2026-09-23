@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F152
 slug: invalid-font-shorthand-dropped
 kind: finding
 status: observed

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D92
 slug: tied-verdict-for-verified-blanks
 kind: decision
 status: settled

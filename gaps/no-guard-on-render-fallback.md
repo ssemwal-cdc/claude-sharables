@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G10
 slug: no-guard-on-render-fallback
 kind: gap
 status: unobserved

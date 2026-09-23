@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G19
 slug: tied-verdict-unobserved
 kind: gap
 status: unobserved

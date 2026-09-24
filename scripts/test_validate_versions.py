@@ -28,6 +28,17 @@ p = plugin_tail_problems(
     "Does a thing. beta skill version 5 — 2026-09-10. alpha skill version 2 — 2026-09-01.", [A, B])
 assert p, p
 
+# a longer skill name must not stand in for a tail: no left boundary
+p = plugin_tail_problems(
+    "Does a thing. pre-alpha skill version 2 — 2026-09-01. beta skill version 5 — 2026-09-10.",
+    [A, B])
+assert p, p
+
+# the beta tail is missing; the alpha-beta tail must not hide it
+AB, B2 = ("alpha-beta", 5, "2026-09-10"), ("beta", 5, "2026-09-10")
+p = plugin_tail_problems("Does a thing. alpha-beta skill version 5 — 2026-09-10.", [AB, B2])
+assert any("'beta skill" in m for m in p), p
+
 # (d) single-skill form unchanged
 assert plugin_tail_problems("Does a thing. Skill version 2 — 2026-09-01.", [A]) == []
 assert plugin_tail_problems("Does a thing. Skill version 1 — 2026-09-01.", [A])
@@ -40,5 +51,8 @@ p = readme_row_problems(["| `p` | alpha v2 | x |"], [("alpha", 2), ("beta", 5)])
 assert p and all("beta" in m for m in p), p
 p = readme_row_problems(["| `p` | alpha v2, beta v4 | x |"], [("alpha", 2), ("beta", 5)])
 assert p and all("beta" in m for m in p), p
+# versions swapped between skills: each vN must bind to its own skill name
+p = readme_row_problems(["| `p` | alpha v5, beta v2 | x |"], [("alpha", 2), ("beta", 5)])
+assert len(p) == 2, p
 
 print("OK: version tail and README row checks passed")

@@ -19,11 +19,11 @@ def plugin_tail_problems(desc, tails):
                 f"{skill}/SKILL.md — bump both in the same commit."]
     each = [(t[0], "%s skill version %d — %s." % t) for t in tails]
     want = " ".join(tail for _, tail in each)
-    if desc.endswith(want):
+    if desc == want or desc.endswith(" " + want):
         return []
     out = [f"plugin.json description lacks {tail!r} to match {skill}/SKILL.md "
            f"— bump both in the same commit."
-           for skill, tail in each if tail not in desc]
+           for skill, tail in each if " " + tail not in " " + desc]
     return out or [f"plugin.json description must end with every skill's tail, in "
                    f"sorted skill order: {want!r}"]
 

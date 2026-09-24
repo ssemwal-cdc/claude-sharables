@@ -157,4 +157,5 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F151 | `browser-assumed-absent-in-cloud` | A session assumed no browser | observed | 2026-09-23 | A capability is measured before a run claims it cannot run. |
 | F152 | `invalid-font-shorthand-dropped` | An invalid shorthand was dropped | observed | 2026-09-23 | A control renders in the font the template authored for it. |
 | F153 | `toolbar-select-overflow` | Long option text overflows toolbar | observed | 2026-09-23 | A reader on a narrow panel is not made to scroll sideways. |
+| pending | `no-guard-on-render-fallback` | No guard on the render fallback | observed | 2026-09-24 | A verdict the allowlist accepts always reaches its own branch on the dashboard, never the `clear` default. |
 | F154 | `plugin-skill-switch-off` | One plugin skill can be switched off | observed | 2026-09-24 | A teammate can switch off the work they cannot run, and keeps the work they can. |

@@ -71,11 +71,16 @@ Covered:
                            verdict-setting review left it, never this run's own
                            (empty) opens. Connector mode's blind spot - it only
                            ever sees the named-field file - is named, not fixed.
+ 18. Verdict render guard - every verdict the publish allowlist accepts renders
+                           its own branch in both templates' real itemRow(),
+                           never the bare `else`/ternary fallback that renders
+                           `clear`. Closes `no-guard-on-render-fallback`, a
+                           dropped verdict branch defaulting silently to clear.
 
 Usage:  python3 scripts/test_skill_code.py
-Needs node on PATH for 1-3 and 16; those are skipped with a notice if it is missing.
+Needs node on PATH for 1-3, 16 and 18; those are skipped with a notice if it is missing.
 """
-import json, os, re, shutil, subprocess, sys, tempfile
+import ast, json, os, re, shutil, subprocess, sys, tempfile
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NS = os.path.join(REPO, "plugins/netsuite-approval-review/skills/"
@@ -115,11 +120,13 @@ def run_node(script):
 
 
 def extract_fn(src, name):
-    """Pull one top-level `function NAME(...) { ... }` out of a template's inline
-    <script>, by brace balancing rather than a line range, so the extraction survives
-    the function moving. Used to render a real row with real functions, instead of
-    grepping the template's source text for the strings a render is supposed to use."""
-    m = re.search(r"function\s+" + re.escape(name) + r"\s*\(", src)
+    """Pull one top-level `function NAME(...) { ... }` (or `var NAME=function(...) { ... }`,
+    NetSuite's `money`) out of a template's inline <script>, by brace balancing rather than
+    a line range, so the extraction survives the function moving. Used to render a real row
+    with real functions, instead of grepping the template's source text for the strings a
+    render is supposed to use."""
+    m = re.search(r"function\s+" + re.escape(name) + r"\s*\(|"
+                  r"var\s+" + re.escape(name) + r"\s*=\s*function\s*\(", src)
     if not m:
         sys.exit("ABORT: no function %r in the template - fix this test if it moved "
                   "or was renamed." % name)
@@ -135,19 +142,24 @@ def extract_fn(src, name):
     sys.exit("ABORT: unbalanced braces extracting %r" % name)
 
 
-def render_item_row(tpl_path, item):
+def render_item_row(tpl_path, item, fn_names=("esc", "money", "daysSince", "dueText",
+                                               "recUrl", "itemRow"), call=None):
     """Render one dashboard row with the template's own itemRow() and its real
-    dependencies (esc, money, daysSince, dueText, recUrl), executed by node. Returns
-    the HTML string itemRow() actually produced - not a guess from the source text."""
+    dependencies (esc, money, daysSince, dueText, recUrl by default), executed by node.
+    Returns the HTML string itemRow() actually produced - not a guess from the source
+    text. `fn_names` and `call` adapt this same harness to a template whose itemRow()
+    takes a different helper set or a second argument (NetSuite's classify()) - the
+    harness, and the fact that it drives the template's own code, do not change."""
     src = open(tpl_path, encoding="utf-8").read()
-    fns = "\n".join(extract_fn(src, n)
-                     for n in ("esc", "money", "daysSince", "dueText", "recUrl", "itemRow"))
+    fns = "\n".join(extract_fn(src, n) for n in fn_names)
+    call_expr = call or ("itemRow(%s)" % json.dumps(item))
     harness = ("""
 var REVIEW = {config:{company:"0", icrToolId:"0"}};
 var CO=(REVIEW.config&&REVIEW.config.company)||"";
 var ICR_TOOL=(REVIEW.config&&REVIEW.config.icrToolId)||"";
+var ACCT="0";
 """ + fns + """
-console.log(itemRow(""" + json.dumps(item) + """));
+console.log(""" + call_expr + """);
 """)
     rc, out, err = run_node(harness)
     if rc != 0:
@@ -1048,6 +1060,80 @@ def test_carried_attachments():
         shutil.rmtree(d, ignore_errors=True)
 
 
+# ------------------------------------------ 18. verdict render guard
+def _publish_verdicts(publish_py):
+    """The exact verdicts a publish script accepts, parsed from its own VERDICTS
+    constant - never a hand-typed copy, so a verdict added to the allowlist is
+    covered here without anyone remembering to update a second list
+    (`no-guard-on-render-fallback`, a dropped verdict branch defaulting to clear)."""
+    src = open(publish_py, encoding="utf-8").read()
+    m = re.search(r"^VERDICTS\s*=\s*(\(.*?\))\s*$", src, re.M)
+    if not m:
+        sys.exit("ABORT: no VERDICTS constant in %s" % publish_py)
+    return ast.literal_eval(m.group(1))
+
+
+def test_verdict_render_guard():
+    """`no-guard-on-render-fallback`: `itemRow()` in each template branches on the
+    verdict with an if/else-if chain (Procore) or a ternary (NetSuite) ending in a
+    bare `clear` fallback. A reviewer once deleted the `tied` branch and every
+    automated check stayed green,
+    because the only render test read the JSON payload out of index.html and never
+    called itemRow(). This drives the template's real itemRow() for every verdict
+    the publish allowlist accepts, and fails if a non-clear verdict's row carries
+    clear's row class instead of its own.
+    """
+    procore_markers = {"flagged": "vflag", "skipped": "vskip", "ungated": "vgate",
+                        "tied": "vtied", "clear": "vclear"}
+
+    def procore_item(v):
+        return {"id": "1", "pid": "9", "cid": "8", "kind": "icr", "wf": "GenericToolItem",
+                "toolId": "1", "type": "ICR", "doc": "#D-1", "vendor": "V",
+                "projLabel": "P", "amt": 100, "due": None, "step": "S", "resp": [],
+                "verdict": v, "head": "h", "facts": ["f"], "po": "", "poWarn": "",
+                "detail": "d", "att": "", "carried": ""}
+
+    netsuite_markers = {"flagged": "vflag", "clear": "vclear"}
+    netsuite_fns = ("esc", "money", "recUrl", "parseNsDate", "ageDaysRaw", "ageDays",
+                    "poLine", "classify", "itemRow")
+
+    def netsuite_item(v):
+        return {"id": "1", "type": "Bill", "doc": "BILL-1", "vendor": "V", "amt": 100,
+                "trandate": None, "verdict": v, "head": "h", "facts": ["f"],
+                "po": "", "poWarn": "", "detail": "d", "att": "", "poLink": ""}
+
+    cases = [
+        ("procore-open-items-review", os.path.join(PC, "assets/publish_dashboard.py"),
+         os.path.join(PC, "assets/dashboard_template.html"), procore_markers,
+         procore_item, None, None),
+        ("netsuite-approval-double-check", os.path.join(NS, "assets/publish_dashboard.py"),
+         os.path.join(NS, "assets/dashboard_template.html"), netsuite_markers,
+         netsuite_item, netsuite_fns, "classify"),
+    ]
+    for label, publish_py, tpl_path, markers, make_item, fn_names, second_arg_fn in cases:
+        verdicts = _publish_verdicts(publish_py)
+        missing = [v for v in verdicts if v not in markers]
+        if missing:
+            sys.exit("ABORT: %s: no expected row class for verdict(s) %s - this test's "
+                      "marker map needs one, read from the template's itemRow()."
+                      % (label, missing))
+        for v in verdicts:
+            item = make_item(v)
+            if fn_names:
+                call = "itemRow(%s, %s(%s))" % (json.dumps(item), second_arg_fn,
+                                                 json.dumps(item))
+                html = render_item_row(tpl_path, item, fn_names=fn_names, call=call)
+            else:
+                html = render_item_row(tpl_path, item)
+            own = 'class="row %s"' % markers[v]
+            check("%s: verdict %r renders its own row class (%s)" % (label, v, markers[v]),
+                  own in html, html[:200])
+            if v != "clear":
+                clear_marker = 'class="row %s"' % markers["clear"]
+                check("%s: verdict %r does not fall back to clear's row class"
+                      % (label, v), clear_marker not in html, html[:200])
+
+
 # ------------------------------------------ 13. a large render survives a read
 def test_render_fits_one_read():
     """The rendered dashboard has to be readable before it can be handed to show_widget.
@@ -1161,9 +1247,11 @@ def main():
         test_sheets()
         test_po_line()
         test_carried_attachments()
+        test_verdict_render_guard()
     else:
         print("  SKIP  node not on PATH - extractor, page budget, gate states, "
-              "sniff, sheets, poLine and carried attachments not run")
+              "sniff, sheets, poLine, carried attachments and verdict render "
+              "guard not run")
     test_cco_demotion()
     test_commitment_kind()
     test_custom_tool_subtype()

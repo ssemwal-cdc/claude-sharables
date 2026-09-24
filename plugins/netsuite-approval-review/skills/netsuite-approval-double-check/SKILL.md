@@ -354,9 +354,8 @@ Three things are not optional:
 - **Whether to read further pages is a judgement, not a promise.** Base it on what page 1 shows, for example a cover email that points to pricing inside. Do not promise a route to a later page the skill lacks. If a further page is needed and cannot be reached, say so.
 - **A file counts as fully read only when every page was read.** Define a partial read as any page left unread. A gap in the middle counts too, not only a stop at the end.
 - **A partial read is neither a read nor a genuine absence.** Keep a successful read, a genuine absence and a failure as three named states. A partial read can never support a claim that a figure is absent from the file. It can never produce a `clear` verdict either. Name it as the cause, in words such as `support partly read: pages 1 of 17`.
-- **In `supportRead`, write a partial read as `'<file> (pages <list> of <N>)'`**, for example `'CCR-20 scope.pdf (pages 1, 2 of 17)'`.
-- **A long `scanned` PDF or multi-page `image` may need a fresh link mid-read.** Treat it as any other expired link (D27, retry only an expired link).
 <!--__END_SHARED:skill-first-page-read__-->
+- **This skill has no `supportRead` field.** Name a partial read in `detail`, with the same wording, `support partly read: pages 1 of 17`. `attachmentFile` names the file read, never how much of it was read. It must never stand in for that sentence.
 
 - **A `[BLOCKED: …]` string is never a value.** The output filter redacts on more than query strings. A plain version number came back as `[BLOCKED: JWT token]` because its dotted shape matched a credential pattern. Dotted identifiers are ordinary in this data. If one appears where a figure should be, re-return the field in a different shape and read it again. Never let the marker reach a verdict or a note, and never read it as the field being empty.
 - **Say which outcome caused a skip**, in that outcome's own words. "Unreadable" alone is what let entire formats go unread.

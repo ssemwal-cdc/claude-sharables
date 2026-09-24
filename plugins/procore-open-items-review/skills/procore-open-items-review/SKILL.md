@@ -326,9 +326,10 @@ window.__sheets = function(ab, from){
 - **Whether to read further pages is a judgement, not a promise.** Base it on what page 1 shows, for example a cover email that points to pricing inside. Do not promise a route to a later page the skill lacks. If a further page is needed and cannot be reached, say so.
 - **A file counts as fully read only when every page was read.** Define a partial read as any page left unread. A gap in the middle counts too, not only a stop at the end.
 - **A partial read is neither a read nor a genuine absence.** Keep a successful read, a genuine absence and a failure as three named states. A partial read can never support a claim that a figure is absent from the file. It can never produce a `clear` verdict either. Name it as the cause, in words such as `support partly read: pages 1 of 17`.
+<!--__END_SHARED:skill-first-page-read__-->
 - **In `supportRead`, write a partial read as `'<file> (pages <list> of <N>)'`**, for example `'CCR-20 scope.pdf (pages 1, 2 of 17)'`.
 - **A long `scanned` PDF or multi-page `image` may need a fresh link mid-read.** Treat it as any other expired link (D27, retry only an expired link).
-<!--__END_SHARED:skill-first-page-read__-->
+- **After two failed retries mid-read, the item is `skipped`, naming the cause `support partly read: pages <list> of <N>`.** The link expiry is the reason the read stopped.
 - **A partial read can never produce `tied` either.** `tied` also asserts that the figures agree. The item is `skipped`, naming the partial read as the cause.
 
 - `get_page_text` and `read_page` extract text, and `find` locates text. The console and network tools read logs, and `upload_image` and `file_upload` are inputs.
@@ -473,7 +474,7 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
   "lastCompletedRun": "2026-08-11", "lastRunTime": "2026-08-11 16:20", "suppressed": 41,
   "items": { "<item_type>:<item_id>": {
       "itemId": "<item id>", "projectId": "<project id>", "commitmentId": "<commitment id>",
-      "supportRead": ["every file this run actually opened and parsed, e.g. 'PCI 42 — proposal.pdf' - a partial read lists its page range instead of the whole file, e.g. 'CCR-20 scope.pdf (pages 1, 2 of 17)'"],
+      "supportRead": ["every file this run actually opened and parsed, e.g. 'PCI 42 — proposal.pdf' - a partial read lists its page list instead of the whole file, comma-space separated, e.g. 'CCR-20 scope.pdf (pages 1, 2 of 17)'"],
       "wfId": "CCOs only - the commitment change order id from line_items[].holder.id",
       "wfType": "commitments only - the queue's item_type verbatim, always",
       "kind": "inv", "subtype": "GenericToolItem rows only - the queue's item_subtype verbatim",

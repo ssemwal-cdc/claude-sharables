@@ -342,7 +342,7 @@ Three things are not optional:
 
 - **Nothing is written to disk.** The bytes stay in the page as an ArrayBuffer. So there is no downloads folder to poll, and no stale file from an earlier run to re-read.
 - **No attachment at all flags the item.**
-- **Sniff the bytes before parsing. Never hand a non-PDF to pdf.js.** Handing a workbook to `getDocument` throws `InvalidPDFException`, the same error a corrupt download gives. So a good spreadsheet gets logged as unreadable support. Non-PDF support is common here.
+- **Sniff the bytes before parsing. Never hand a non-PDF to pdf.js.** Handing a workbook to `getDocument` throws `InvalidPDFException`, the same error a corrupt download gives. So a good spreadsheet gets logged as unreadable support. Non-PDF support occurs here.
 - **Sniff the first four bytes before choosing a reader.** `%PDF` is a PDF. `PK\x03\x04` is a ZIP container, and a workbook only if it holds `xl/` entries. `\xFF\xD8\xFF` is JPEG. `\x89PNG` is PNG. Anything that decodes cleanly as text is text. Six outcomes, kept distinct: `text`, `spreadsheet`, `image`, `scanned`, `expired`, `unsupported`.
 - **`scanned` means that the bytes were a PDF, it parsed, and it yielded almost nothing.** A parse that threw is never `scanned`. It is `spreadsheet`, `image` or `unsupported`, named by what the bytes actually were.
 - **Multiple attachments: open every attached file, and read at least page 1 of each.** Check the figures against the file the AP INVOICE or CHANGE ORDER ATTACHMENT field names. Mention the others, and say what page 1 of each showed when it bears on the item.

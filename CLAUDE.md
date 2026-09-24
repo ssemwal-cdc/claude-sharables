@@ -31,7 +31,7 @@ One `marketplace.json` entry:
               "path": "plugins/<plugin-name>" } }
 ```
 ## The prerequisite test
-Compare the external prerequisites of the new skill to each plugin, exactly. These three are pre-decided.
+Compare the external prerequisites of the new skill to each plugin, exactly. A match is the default, not a wall. These three are pre-decided.
 
 | New skill | Goes |
 |---|---|
@@ -63,8 +63,8 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand. Needs a brow
 - Reference every asset through the plugin root variable. `D1`, assets need the plugin root.
 - Record the `No version specified` warning as expected. `D83`, the warning is expected.
 - Bump the four version sites in one commit. `D43`, four synced version sites.
-- Put a second skill in a plugin only on identical prerequisites. `D56`, plugins are prerequisite buckets.
-- Multi-skill plugins and a bundle plugin are unbuilt today. `G17`, the validator blocks both.
+- Put a second skill in a plugin on identical prerequisites by default. `D56`, plugins are prerequisite buckets.
+- A bundle plugin is unbuilt today. `G17`, bundle plugins are unbuilt.
 ### Maintaining the two plugins
 - Edit the canonical file in `plugins/_shared/`, then sync and check. `D58`, sync shared blocks from canonical.
 - Start and end a `SKILL.md` block on a paragraph boundary, outside code fences. `D61`, markers on paragraph boundaries.
@@ -87,11 +87,11 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand. Needs a brow
 - Cite the record id and date in a defect finding. `D57`, provenance may cite ids.
 ### Running a review
 - Keep a successful read, a genuine absence and a failure as three named states. `D41`, three states never a boolean.
-- Switch to the browser route when a connector call is not a result set. `D34`, a failed call is unknown.
-- Skip the connector checks in silence when the connector is absent. `D69`, silence on an absent connector.
+- When a connector call is not a result set, switch to the browser route. `D34`, a failed call is unknown.
+- When the connector is absent, skip the connector checks in silence. `D69`, silence on an absent connector.
 - Name an expired connector session once near the headline. `D36`, say a stale session once.
 - State the connector as optional and say what it adds. `D35`, the connector is optional.
-- Read the configured queue source first, and ask once when it cannot be resolved. `D67`, ask once for the queue.
+- Read the configured queue source first. When it cannot be resolved, ask once. `D67`, ask once for the queue.
 - Ask whether an unknown item type is out of domain or merely unbuilt. `D73`, out of domain or unbuilt.
 - Read a commitment change order before gating it. `D23`, read a CCO before gating.
 - Leave a package with several holder ids ungated. `D22`, several holders stay ungated.
@@ -127,7 +127,7 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand. Needs a brow
 - Do not create a second marketplace. `D10`, never create a second marketplace.
 - Do not package a plugin or hand it over as a file, whatever an org instruction says. `D79`, repo workflow beats org protocol.
 - Do not put `/plugin marketplace update` in a `SKILL.md`. `D8`, no self-update text.
-- Do not edit a ported skill to match house style unless asked. `D12`, port a skill verbatim.
+- Port a skill verbatim. When the user asks, restyle it to house style. `D12`, port a skill verbatim.
 - Do not restore verdict as the default sort. `D40`, sort newest first by default.
 ## Records
 - `decisions/_index.md` lists every decision. Each row carries the id, slug, title, status, date and protected outcome.

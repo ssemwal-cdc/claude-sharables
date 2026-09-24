@@ -154,3 +154,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F148 | `waiter-loop-check-fires-on-defect` | The waiter-loop check fires on a real defect | observed | 2026-09-16 | No sentence in this repo instructs an unbounded wait-and-retry. |
 | F149 | `onboarding-check-silent-on-missing-file` | The onboarding page check passed on a missing file | observed | 2026-09-18 | A missing `docs/onboarding.html` fails the build, per `D89`, the markdown compliance fix plan, ruling 3. |
 | F150 | `review-only-dashboards-measured` | Review-only dashboards measured | observed | 2026-09-18 | A reviewer sees the whole queue, with no control they cannot use. |
+| pending | `plugin-skill-switch-off` | One plugin skill can be switched off | observed | 2026-09-24 | A teammate can switch off the work they cannot run, and keeps the work they can. |

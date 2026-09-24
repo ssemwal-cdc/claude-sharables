@@ -1,6 +1,6 @@
 // Measures the floating header in a real browser. NOT part of the build: it needs Chromium
 // and Playwright, neither of which validate.py may assume. Run it by hand after touching
-// dash-band-track, dash-float-css, dash-header-mirror or anything about the page's height:
+// dash-band-track, dash-float-css or anything about the page's height:
 //
 //   NODE_PATH=$(npm root -g) node scripts/measure_float.js
 //   CHROME_PATH=/path/to/chrome NODE_PATH=... node scripts/measure_float.js   # if the

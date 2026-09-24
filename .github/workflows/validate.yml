@@ -9,20 +9,26 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
+      # Full history, so check_version_bump.py finds origin/main and a merge-base.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
       # Enforces the layout, manifest and doc rules described in CLAUDE.md, plus the
-      # cross-plugin shared-block, cdnjs-pin, template-version, verdict-reachability and
-      # execute-prompt-purity checks in scripts/shared_blocks.py.
+      # cross-plugin shared-block, cdnjs-pin, template-version and verdict-reachability
+      # checks in scripts/shared_blocks.py.
       - name: Validate marketplace, plugins and docs
         run: python3 scripts/validate.py
 
       - name: Test the plugin.json tail and README row rules
         run: python3 scripts/test_validate_versions.py
+
+      - name: Test the version-bump check
+        run: python3 scripts/test_check_version_bump.py
 
       # Runs the executable code the skills carry, extracted from SKILL.md itself. Was a
       # manual gate until 2026-08-24 while README.md told contributors it ran here, so the

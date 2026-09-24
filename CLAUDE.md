@@ -42,7 +42,8 @@ Compare the external prerequisites of the new skill to each plugin, exactly. A m
 ```bash
 python3 scripts/validate.py                  # the build gate. Runs the shared-block checks too.
 python3 scripts/test_skill_code.py           # runs the code the skills carry. Needs node.
-python3 scripts/test_validate_versions.py    # the per-skill version tail checkspython3 scripts/check_records.py --write-index   # by hand. Also --claim-ids [--apply], at merge
+python3 scripts/test_validate_versions.py    # the per-skill version tail checks
+python3 scripts/test_check_version_bump.py   # the bump gate, on throwaway repospython3 scripts/check_records.py --write-index   # by hand. Also --claim-ids [--apply], at merge
 python3 scripts/shared_blocks.py --sync      # push plugins/_shared into every marked site
 python3 scripts/shared_blocks.py --check     # what validate.py runs
 NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand, not in the gate. The cloud image has Chromium.

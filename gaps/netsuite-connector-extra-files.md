@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G20
 slug: netsuite-connector-extra-files
 kind: gap
 status: unobserved

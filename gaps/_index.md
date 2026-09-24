@@ -23,3 +23,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | G7 | `execute-button-blocked-state-unseen` | Execute button blocked state unseen | unobserved | 2026-09-16 | A blocked execute button reads as blocked, not as broken. |
 | G10 | `no-guard-on-render-fallback` | No guard on the render fallback | unobserved | 2026-09-23 | A verdict the allowlist accepts always reaches its own branch on the dashboard, never the `clear` default. |
 | G19 | `tied-verdict-unobserved` | Tied verdict unobserved live | unobserved | 2026-09-23 | A `tied` row on the dashboard is never cited as proven until a real run produced it. |
+| G20 | `netsuite-connector-extra-files` | NetSuite connector misses extra files | unobserved | 2026-09-24 | A new file on a bill that was already reviewed gets read before the verdict carries forward. |

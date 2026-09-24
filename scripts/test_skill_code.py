@@ -57,9 +57,23 @@ Covered:
  15. `tied` verdict     - the fifth verdict survives publish, obeys the same
                            demotions as every other verdict, and is not folded
                            into widget.html's display-only rows.
+ 16. Carried attachments - `supportCarried` (files read on an earlier run, not
+                           reopened this run) survives publish as its own field,
+                           and never merges into `supportRead`, whose contract is
+                           the files the run that set the verdict opened and
+                           parsed. Also renders under its own label, proven by
+                           actually executing the template's itemRow(), not by
+                           grepping its source for the field name.
+ 17. NetSuite multi-file  - a clear bill's carry is decided by every attached
+     carry                 file's id (`attachmentFiles`), not by the single
+                           `attachmentFile` the figures are checked against. A
+                           whole-entry carry keeps `attachmentFiles` as the
+                           verdict-setting review left it, never this run's own
+                           (empty) opens. Connector mode's blind spot - it only
+                           ever sees the named-field file - is named, not fixed.
 
 Usage:  python3 scripts/test_skill_code.py
-Needs node on PATH for 1-3; those are skipped with a notice if it is missing.
+Needs node on PATH for 1-3 and 16; those are skipped with a notice if it is missing.
 """
 import json, os, re, shutil, subprocess, sys, tempfile
 
@@ -98,6 +112,47 @@ def run_node(script):
         return r.returncode, r.stdout.strip(), r.stderr.strip()
     finally:
         os.unlink(p)
+
+
+def extract_fn(src, name):
+    """Pull one top-level `function NAME(...) { ... }` out of a template's inline
+    <script>, by brace balancing rather than a line range, so the extraction survives
+    the function moving. Used to render a real row with real functions, instead of
+    grepping the template's source text for the strings a render is supposed to use."""
+    m = re.search(r"function\s+" + re.escape(name) + r"\s*\(", src)
+    if not m:
+        sys.exit("ABORT: no function %r in the template - fix this test if it moved "
+                  "or was renamed." % name)
+    i = src.index("{", m.start())
+    depth = 0
+    for j in range(i, len(src)):
+        if src[j] == "{":
+            depth += 1
+        elif src[j] == "}":
+            depth -= 1
+            if depth == 0:
+                return src[m.start():j + 1]
+    sys.exit("ABORT: unbalanced braces extracting %r" % name)
+
+
+def render_item_row(tpl_path, item):
+    """Render one dashboard row with the template's own itemRow() and its real
+    dependencies (esc, money, daysSince, dueText, recUrl), executed by node. Returns
+    the HTML string itemRow() actually produced - not a guess from the source text."""
+    src = open(tpl_path, encoding="utf-8").read()
+    fns = "\n".join(extract_fn(src, n)
+                     for n in ("esc", "money", "daysSince", "dueText", "recUrl", "itemRow"))
+    harness = ("""
+var REVIEW = {config:{company:"0", icrToolId:"0"}};
+var CO=(REVIEW.config&&REVIEW.config.company)||"";
+var ICR_TOOL=(REVIEW.config&&REVIEW.config.icrToolId)||"";
+""" + fns + """
+console.log(itemRow(""" + json.dumps(item) + """));
+""")
+    rc, out, err = run_node(harness)
+    if rc != 0:
+        sys.exit("ABORT: itemRow() render failed: %s" % (err or out))
+    return out
 
 
 # ---------------------------------------------------------------- 1. extractor
@@ -602,6 +657,44 @@ def test_login_states():
           "hard constraint" in step1)
 
 
+# ------------------------------------------------ 17. NetSuite multi-file carry
+def test_netsuite_multifile_carry():
+    """A bill with an invoice plus a backup schedule saw the schedule as new on every
+    run, because the old rule tested only the single `attachmentFile` for "new
+    attachment" - so a second file that was always there never stopped looking new,
+    and the carry never applied to a multi-file bill (reported by the maintainer).
+
+    The first fix defined `attachmentFiles` as "every attached file THIS RUN opened" -
+    which a carry run opens none of, so the field would go empty and break the carry
+    on the very next run. Fixed to "opened by the review that set this verdict", the
+    same phrasing Procore already uses for its own whole-entry carry, and the clear
+    bullet now says explicitly that the whole entry, `attachmentFiles` included, is
+    carried untouched.
+
+    This is also where the bandaid lives, named rather than hidden: connector mode
+    only ever sees the one named-field file, so a new *unnamed* file on a connector-
+    mode bill still is not detected. Browser mode's `media.nl` DOM read sees every
+    attachment. Building a connector query to list every file is out of scope here;
+    the gap is recorded as a gap, not silently left implied by the prose.
+    """
+    txt = open(os.path.join(NS, "SKILL.md"), encoding="utf-8").read()
+    on_each_run = txt.split("On each run:")[1].split("## Step 7")[0] if \
+        "On each run:" in txt else ""
+    check("netsuite: On each run is where the carry rule sits", bool(on_each_run))
+
+    check("netsuite: attachmentFiles is a documented log field", "attachmentFiles" in txt)
+    check("netsuite: the field is the verdict-setting review's own opens, not this run's",
+          "every attached file the review that set this verdict opened" in txt)
+    check("netsuite: the new-attachment test compares file ids, not the single "
+          "attachmentFile", "Compare NetSuite file ids, not names" in on_each_run)
+    check("netsuite: the test is against the whole attachmentFiles list",
+          "absent from the last review's `attachmentFiles`" in on_each_run)
+    check("netsuite: a whole-entry carry keeps attachmentFiles untouched, not reset",
+          "The whole entry, `attachmentFiles` included, is carried untouched" in on_each_run)
+    check("netsuite: the connector-mode limit is named, not left implicit",
+          "In connector mode only the named-field files are visible" in on_each_run)
+
+
 # ------------------------------------------------------- 8. PO identity rules
 def test_dashboard_view():
     """The toolbar had no coverage at all, and the default sort is the one setting every
@@ -899,6 +992,62 @@ def test_tied_verdict():
         shutil.rmtree(d, ignore_errors=True)
 
 
+# ------------------------------------------ 16. carried-forward attachments
+def test_carried_attachments():
+    """`supportCarried` (files read on an earlier run, not reopened this run) must stay a
+    field of its own, distinct from `supportRead`, all the way through publish and into
+    the template's render. Folding the two together is exactly the defect this field
+    exists to avoid: `supportRead` names the files the run that set the verdict opened
+    and parsed, and a carried file merged into it would make that no longer true, on the
+    very carry the field exists to describe.
+    """
+    d = tempfile.mkdtemp()
+    try:
+        assets = os.path.join(PC, "assets")
+        for f in ("publish_dashboard.py", "dashboard_template.html"):
+            shutil.copy(os.path.join(assets, f), d)
+        log = {
+            "lastCompletedRun": "2026-09-24", "lastRunTime": "2026-09-24 09:00",
+            "suppressed": 0, "config": {"company": "0", "icrToolId": "0"},
+            "items": {
+                "carried": {"itemId": "777", "projectId": "9", "commitmentId": "8",
+                            "kind": "icr", "type": "Internal Change Risk", "docNo": "#ICR-7",
+                            "project": "A - B", "counterparty": "X", "amount": 3000,
+                            "step": "Cost Gate", "responses": ["Yes", "Reject"],
+                            "verdict": "skipped", "head": "h", "facts": ["f"], "detail": "d",
+                            "supportRead": ["CCR-20 — new-invoice.pdf"],
+                            "supportCarried": ["CCR-11 — proposal.pdf"]},
+            },
+        }
+        json.dump(log, open(os.path.join(d, "_procore_review_log.json"), "w"))
+        out_html = os.path.join(d, "index.html")
+        r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
+                            out_html], capture_output=True, text=True, timeout=60)
+        if r.returncode != 0:
+            check("carried: publish script runs", False,
+                  (r.stderr or r.stdout).strip().splitlines()[-1:] or "")
+            return
+        blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/",
+                         open(out_html, encoding="utf-8").read(), re.S).group(1)
+        items = {i["doc"]: i for i in json.loads(blob)["items"]}
+        it = items["#ICR-7"]
+        check("carried: supportRead stays this-run-only",
+              it.get("att") == "CCR-20 — new-invoice.pdf", it.get("att"))
+        check("carried: supportCarried lands in its own field, not merged into att",
+              it.get("carried") == "CCR-11 — proposal.pdf", it.get("carried"))
+
+        # Render the row for real, with the template's own itemRow() and its real
+        # helpers - not a grep for the field name in the template's source text, which
+        # would stay green even if the label rendered the wrong field's value.
+        html = render_item_row(os.path.join(d, "dashboard_template.html"), it)
+        check("carried: Show detail reads 'Read: CCR-20 — new-invoice.pdf'",
+              "Read: CCR-20 — new-invoice.pdf" in html, html)
+        check("carried: the carried label carries the carried value, not supportRead's",
+              "Carried forward, not re-read: CCR-11 — proposal.pdf" in html, html)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 # ------------------------------------------ 13. a large render survives a read
 def test_render_fits_one_read():
     """The rendered dashboard has to be readable before it can be handed to show_widget.
@@ -1011,9 +1160,10 @@ def main():
         test_sniff()
         test_sheets()
         test_po_line()
+        test_carried_attachments()
     else:
         print("  SKIP  node not on PATH - extractor, page budget, gate states, "
-              "sniff, sheets and poLine not run")
+              "sniff, sheets, poLine and carried attachments not run")
     test_cco_demotion()
     test_commitment_kind()
     test_custom_tool_subtype()
@@ -1022,6 +1172,7 @@ def main():
     test_template_version()
     test_step0_write_states()
     test_login_states()
+    test_netsuite_multifile_carry()
     test_dashboard_view()
     test_po_identity_rules()
     print()

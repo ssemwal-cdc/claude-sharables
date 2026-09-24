@@ -1,9 +1,9 @@
 ---
 name: procore-open-items-review
-description: v32 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still waiting on their response. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged, skipped or tied verdict per item. This skill is read-only: it never clicks Respond, Approve, Reject or Revise and Resubmit, every Procore call it makes is a GET, and the dashboard it publishes carries no response controls. Every verdict is a recommendation, and the response itself stays yours to make in Procore.
+description: v33 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still waiting on their response. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged, skipped or tied verdict per item. This skill is read-only: it never clicks Respond, Approve, Reject or Revise and Resubmit, every Procore call it makes is a GET, and the dashboard it publishes carries no response controls. Every verdict is a recommendation, and the response itself stays yours to make in Procore.
 ---
 # Procore Open Items Review
-**Skill version 32 — 2026-09-23.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
+**Skill version 33 — 2026-09-24.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
 
 Review every Procore item **waiting on the user's workflow response**. Verify each item's figures against its attached support. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget. Chat gets one headline line.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
@@ -75,11 +75,11 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 2. **Read, then Write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/` and write it over the workspace copy byte for byte. Never retype, trim or tidy. Then prove the copy landed: the template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and `python3 -m py_compile publish_dashboard.py` passes. This rung is designed, not yet observed. Say so in the run report if it also fails.
 3. **Use the existing workspace copies and say so once.** One line near the headline, naming the modification date from `ls -l`: "dashboard code is from the last successful sync, \<date\>". Do not stop the run. The procedure ships in this file, so the verdicts stay current when the widget's wording does not. **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, stop before Step 7 and say exactly that. Inventing a template is forbidden by the Absolute rules.
 
-**This plugin ships layout template `v17`. Confirm the sync landed by reading it back:**
+**This plugin ships layout template `v18`. Confirm the sync landed by reading it back:**
 ```bash
 head -n 8 "<workspace>/Procore Open Items/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
-If that does not say `v17`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
+If that does not say `v18`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
 
 Then read `Procore Open Items/_procore_review_log.json`. A file already carrying a `config` block finishes this step, apart from the two back-fills below. Go to Step 1. Otherwise run setup once.
 
@@ -320,6 +320,19 @@ window.__sheets = function(ab, from){
 - Parsing happens in the pdf.js tab, which carries no Procore session, and the output is data, never executed. `cdn.sheetjs.com` serves a current build and **fetches** fine. Whether `script-src` permits executing it is untested, so settle that before moving.
 - **Images and scanned pages: look at them.** The attachment's carrier tab already sits on the presigned URL. Read it visually there, never in the fetch tab. That read counts as parsed text for the tie-outs.
 - **The visual read is `computer`, and it is the only tool that gives one.** **None of the text extractors will ever return anything for a scan.**
+
+<!--__SHARED:skill-first-page-read__-->
+- **Open every attachment, and read at least its first page.** That much is mandatory.
+- **Whether to read further pages is a judgement, not a promise.** Base it on what page 1 shows, for example a cover email that points to pricing inside. Do not promise a route to a later page the skill lacks. If a further page is needed and cannot be reached, say so.
+- **A file counts as fully read only when every page was read.** Define a partial read as any page left unread. A gap in the middle counts too, not only a stop at the end.
+- **A partial read is neither a read nor a genuine absence.** Keep a successful read, a genuine absence and a failure as three named states. A partial read can never support a claim that a figure is absent from the file. It can never produce a `clear` verdict either. Name it as the cause, in words such as `support partly read: pages 1 of 17`.
+- **Every attachment a run reads is opened to at least its first page.** The carry rules decide which ones a run reads.
+<!--__END_SHARED:skill-first-page-read__-->
+- **In `supportRead`, write a partial read as `'<file> (pages <list> of <N>)'`**, for example `'CCR-20 scope.pdf (pages 1, 2 of 17)'`.
+- **A long `scanned` PDF or multi-page `image` may need a fresh link mid-read.** Treat it as any other expired link (D27, retry only an expired link).
+- **After two failed retries mid-read, the item is `skipped`, naming the cause `support partly read: pages <list> of <N>`.** The link expiry is the reason the read stopped.
+- **A partial read can never produce `tied` either.** `tied` also asserts that the figures agree. The item is `skipped`, naming the partial read as the cause.
+
 - `get_page_text` and `read_page` extract text, and `find` locates text. The console and network tools read logs, and `upload_image` and `file_upload` are inputs.
 
 **The pdf.js tab is an XML document, and that breaks `document.createElement`.** `document.contentType` reports `application/xml`, and `createElement('canvas').getContext` is not a function there. The bucket listing is used because it returns XML, which is what makes it attachable, so this is permanent. It bites the moment a `scanned` PDF needs rasterising. Two ways round it, both namespace-independent:
@@ -444,7 +457,7 @@ Five outcomes.
 - **skipped** means that the item is not ready for review. **It is not approved, not rejected, and not a criticism.**
 - A `skipped` covers no attachment, support that could not be read, or a record missing the needed figures. For a commitment that is fields the payload never held. For a change risk it is a blank or unmapped accepted cost. This is a deliberate third state. An item with nothing to check against must not be given a verdict. Where check 7 ties, a blank accepted cost gives `tied` rather than `skipped`.
 - **A skip must name which of the Step 4 outcomes caused it**, in the words that outcome uses.
-- Use "support is a scanned image, text not extractable". Or use "support is a .xlsx and the workbook reader was unavailable". Or use "the attachment link expired twice".
+- Use "support is a scanned image, text not extractable". Or use "support is a .xlsx and the workbook reader was unavailable". Or use "the attachment link expired twice". Or use "support partly read: pages 1 of 17".
 - "Unreadable" on its own reads identically for a scan, a spreadsheet and a timed-out link. A skip that cannot name its cause is a defect in Step 4.
 - **ungated** means that the arithmetic was checked but Procore would not confirm the user is a responder. Its frequency is `unmeasured`.
 - Three cases reach it: no resolvable `holder.id`, several commitment change orders, or no resolvable `wfType`.
@@ -462,14 +475,15 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
   "lastCompletedRun": "2026-08-11", "lastRunTime": "2026-08-11 16:20", "suppressed": 41,
   "items": { "<item_type>:<item_id>": {
       "itemId": "<item id>", "projectId": "<project id>", "commitmentId": "<commitment id>",
-      "supportRead": ["one entry per file actually opened and parsed, e.g. 'PCI 42 — proposal.pdf'"],
+      "supportRead": ["one entry per file the run that set this verdict opened and parsed, e.g. 'PCI 42 — proposal.pdf' - a partial read lists its page list instead of the whole file, comma-space separated, e.g. 'CCR-20 scope.pdf (pages 1, 2 of 17)'"],
+      "supportCarried": ["one entry per file read on an earlier run and not reopened this run, same filenames as supportRead"],
       "wfId": "CCOs only - the commitment change order id from line_items[].holder.id",
       "wfType": "commitments only - the queue's item_type verbatim, always",
       "kind": "inv", "subtype": "GenericToolItem rows only - the queue's item_subtype verbatim",
       "type": "Invoice", "docNo": "#2 · INV-0002 (PR-02)", "amount": 500000, "dueDate": "2026-08-02",
       "project": "Campus A - Building 1", "counterparty": "Example Contractor LLC",
       "step": "FA Review", "responses": ["Approve", "Revise and Resubmit"],
-      "verdict": "clear|flagged|skipped|ungated", "reviewedOn": "2026-08-11", "lastSeenPending": "2026-08-11",
+      "verdict": "clear|flagged|skipped|ungated|tied", "reviewedOn": "2026-08-11", "lastSeenPending": "2026-08-11",
       "head": "one line, the verdict in plain terms",
       "facts": ["two or three skim lines carrying the specific figures"],
       "context": "Commitment <id> · 6.08% complete · balance to finish $9,400,000.00",
@@ -479,8 +493,12 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
       "text": "the comment actually submitted - the user's words, or 'Approved by Claude'",
       "result": "confirmed step advanced|skipped: already actioned|failed: <why>"} ] }
 ```
-- **`supportRead` names every file this run actually opened and parsed for the item**, one entry each. It renders inside Show detail.
-- It is the only field that evidences a verdict rather than asserting it. An empty list beside a `clear` verdict is a contradiction. Leave `supportRead` empty when nothing was readable.
+- **`supportRead` names the files the run that set this verdict opened and parsed**, one entry each. It renders inside Show detail.
+- It is the only field that evidences a verdict rather than asserting it. An empty list beside a `clear` or `tied` verdict is a contradiction. Leave `supportRead` empty when nothing was readable.
+- **On a whole-entry carry, `clear` or `tied` unchanged, `supportRead` is left untouched.** It still names whatever the run that set the verdict read. Nothing was re-evaluated, so nothing changed.
+- **`supportCarried` is used only by the `skipped` shortcut below.** It names files read on an earlier run and not reopened this run, one entry each. Same filename strings as `supportRead`. It renders inside Show detail too, labelled `carried forward, not re-read`.
+- **A partial read never counts as read.** An entry ending `(pages <list> of <N>)` marks a file only partly parsed. Match that exact suffix. Such an entry never joins the known-read set. The file is read again next run.
+- **The known-read set for a `skipped` item is its last run's `supportRead` plus its `supportCarried`.** Drop any partial-read entry, and any name no longer among the item's current attachments. Compare by the label's filename part. Strip a prefix such as `PCI 42 — `. Carry what is left forward as the next run's starting point.
 - **`config.focus.emphasis`, when set, decides what leads `head`, `facts`, `context` and `detail`, and nothing else.** It may reorder and reword. It may never change a `verdict`, drop a finding, or edit a figure.
 - `kind` is one of `icr`, `inv`, `cco` or `com`. It decides the record URL and the workflow type.
 - **Two of the four cannot decide it on their own.** `com` needs `wfType` and `icr` needs `subtype`.
@@ -490,11 +508,18 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
 - `project` must keep Procore's full `"<Campus> - <Building>"` form, because the script splits it on the outer campus axis.
 
 On each run:
-- Previously **clear** with an unchanged amount carries the entry forward, with no attachment re-read.
+- Previously **clear** or **tied**, with an unchanged amount and every checked field unchanged, carries the entry forward untouched. No attachment is re-read. `supportRead` stays as the verdict-setting run left it.
+- **A new attachment ends the carry.** One not already in `supportRead` forces the same full re-check as a changed checked field. Compare it as below, instance by instance. PCI 43 adding its own `proposal.pdf` to an item that already lists PCI 42's `proposal.pdf` is a new attachment. A `tied` carry covers only the attachments its tie was read from.
+- **A checked field is a field a Step 5 check reads**, including the field blank in a `tied` item. Filling that blank field forces the same full re-check as a changed amount.
 - **Mark the row `carried forward, not re-read` on the dashboard.**
 - Previously **flagged** is re-checked in full, because the attachment may have been swapped. A changed amount is treated as new.
-- Previously **skipped** is re-checked in full every run, because support gets added later.
-- Previously **tied** is re-checked in full every run, like `skipped`, because the blank field may later be filled.
+- Previously **skipped**, with an unchanged amount and every checked field unchanged, does a new-files-only re-read. It opens only the attachments outside the known-read set. A new attachment is still read in full, because support gets added later.
+- **Identify an attachment by its filename**, the filename part of the `supportRead` label. This skill never reads an attachment id off the record, only `attachments[i].url` for the redirect. **A file replaced under the same name is not detected as new.**
+- **Two attachments sharing a name are two instances, not one.** Read both. A name already checked off once does not clear the second.
+- **The known-read set is the previous run's `supportRead` plus its `supportCarried`.** Drop any partial-read entry, and any name no longer among the item's current attachments. Compare by the label's filename part. Strip a prefix such as `PCI 42 — `. A file left in the set is not reopened. Everything else is new, and gets the full Step 4 read.
+- **The shortcut only ever keeps `skipped`.** A carried read may confirm the item stays `skipped`. It never promotes one. Before any move to `clear`, `tied` or `flagged`, re-open every attachment and re-check in full.
+- **A change to any checked field forces that same full re-check**, not only a changed amount.
+- **On the new-files-only re-read, a file already in the known-read set is not read this run.** Step 4's first-page rule does not reopen it. The full re-check above still opens every file, first page included.
 - **No longer in the queue is dropped.** **Count the departed items and name the count in the chat line.**
 - There is no actioned bin. A lingering entry would show as an apparently-pending row.
 

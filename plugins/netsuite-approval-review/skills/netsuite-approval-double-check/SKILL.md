@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v32 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still sitting in their queue. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. This skill is read-only: it never approves, approves with notes, or rejects anything, it never writes to NetSuite by the connector or by the user interface, and the dashboard it publishes carries no decision controls. Every verdict is a recommendation, and the approval itself stays yours to make in NetSuite.
+description: v33 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still sitting in their queue. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. This skill is read-only: it never approves, approves with notes, or rejects anything, it never writes to NetSuite by the connector or by the user interface, and the dashboard it publishes carries no decision controls. Every verdict is a recommendation, and the approval itself stays yours to make in NetSuite.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 32 — 2026-09-23.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
+**Skill version 33 — 2026-09-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
 
 Review every bill, purchase order and change order in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document. Cross-check against the real purchase order and billing history. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
@@ -342,12 +342,22 @@ Three things are not optional:
 
 - **Nothing is written to disk.** The bytes stay in the page as an ArrayBuffer. So there is no downloads folder to poll, and no stale file from an earlier run to re-read.
 - **No attachment at all flags the item.**
-- **Sniff the bytes before parsing. Never hand a non-PDF to pdf.js.** Handing a workbook to `getDocument` throws `InvalidPDFException`, the same error a corrupt download gives. So a good spreadsheet gets logged as unreadable support. Non-PDF support is not unusual here.
+- **Sniff the bytes before parsing. Never hand a non-PDF to pdf.js.** Handing a workbook to `getDocument` throws `InvalidPDFException`, the same error a corrupt download gives. So a good spreadsheet gets logged as unreadable support. Non-PDF support occurs here.
 - **Sniff the first four bytes before choosing a reader.** `%PDF` is a PDF. `PK\x03\x04` is a ZIP container, and a workbook only if it holds `xl/` entries. `\xFF\xD8\xFF` is JPEG. `\x89PNG` is PNG. Anything that decodes cleanly as text is text. Six outcomes, kept distinct: `text`, `spreadsheet`, `image`, `scanned`, `expired`, `unsupported`.
-- **`scanned` means the bytes were a PDF, it parsed, and it yielded almost nothing.** A parse that threw is never `scanned`. It is `spreadsheet`, `image` or `unsupported`, named by what the bytes actually were.
-- **Multiple attachments:** check the one the AP INVOICE or CHANGE ORDER ATTACHMENT field names, and mention the others.
+- **`scanned` means that the bytes were a PDF, it parsed, and it yielded almost nothing.** A parse that threw is never `scanned`. It is `spreadsheet`, `image` or `unsupported`, named by what the bytes actually were.
+- **Multiple attachments: open every attached file, and read at least page 1 of each.** In connector mode that is the files the connector can list, today the one named field's file. Check the figures against the file the AP INVOICE or CHANGE ORDER ATTACHMENT field names. Mention the others, and say what page 1 of each showed when it bears on the item.
 - **Workbooks parse with SheetJS, loaded the way pdf.js is.** Probed live 2026-08-14: `await import('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')` populates `globalThis.XLSX` on the first attempt. Then `XLSX.read(new Uint8Array(ab), {type:'array'})` and `XLSX.utils.sheet_to_csv` round-trip cleanly. **This pin is deliberate. Do not bump it in a skill edit.** Same wrap, same whole-unit size budget: sheet by sheet, never split one. Read every sheet including hidden ones. Treat a blank cell from an unevaluated formula as missing, never as zero.
 - **Images and scanned pages: look at them, with `computer`.** That is the only tool in the set that returns a visual read. NetSuite renders the file in the record tab, which is ordinary HTML, so `document.createElement('canvas')` works here. A visual read counts as parsed text for the tie-outs. If no visual read is available, fall back to OCR and **cap the verdict.** An OCR-derived figure never produces a clean approval recommendation. Label it `read by OCR, not independently verified` and put it in front of the user.
+
+<!--__SHARED:skill-first-page-read__-->
+- **Open every attachment, and read at least its first page.** That much is mandatory.
+- **Whether to read further pages is a judgement, not a promise.** Base it on what page 1 shows, for example a cover email that points to pricing inside. Do not promise a route to a later page the skill lacks. If a further page is needed and cannot be reached, say so.
+- **A file counts as fully read only when every page was read.** Define a partial read as any page left unread. A gap in the middle counts too, not only a stop at the end.
+- **A partial read is neither a read nor a genuine absence.** Keep a successful read, a genuine absence and a failure as three named states. A partial read can never support a claim that a figure is absent from the file. It can never produce a `clear` verdict either. Name it as the cause, in words such as `support partly read: pages 1 of 17`.
+- **Every attachment a run reads is opened to at least its first page.** The carry rules decide which ones a run reads.
+<!--__END_SHARED:skill-first-page-read__-->
+- **This skill has no `supportRead` field.** Name a partial read in `detail`, with the same wording, `support partly read: pages 1 of 17`. `attachmentFile` names the file read, never how much of it was read. It must never stand in for that sentence.
+
 - **A `[BLOCKED: …]` string is never a value.** The output filter redacts on more than query strings. A plain version number came back as `[BLOCKED: JWT token]` because its dotted shape matched a credential pattern. Dotted identifiers are ordinary in this data. If one appears where a figure should be, re-return the field in a different shape and read it again. Never let the marker reach a verdict or a note, and never read it as the field being empty.
 - **Say which outcome caused a skip**, in that outcome's own words. "Unreadable" alone is what let entire formats go unread.
 - **On a two-column page, left and right rows sharing a y-coordinate merge into one line.** `pdftotext -layout` does the same, so this is not a regression. Do not split such a line on whitespace. Split on an x-threshold, or take the figures off the record.
@@ -509,6 +519,7 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
       "poTyped": "what custbody3 said, recorded whether or not it agrees",
       "detail": "the full paragraph of reasoning",
       "attachmentFile": "the attachment's NetSuite file name and id, e.g. '<vendor> <month> <year>.pdf (<file id>)'",
+      "attachmentFiles": ["one entry per attached file the review that set this verdict opened, same 'name (id)' shape as attachmentFile"],
       "poRef": "PO<id>"
     }
   },
@@ -524,12 +535,15 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
 - **`type` is required, and those three strings are the whole vocabulary.** Write it on every item. The publish script falls back to `Bill` when it is missing. That is a legacy default that silently mislabels a purchase order.
 - **`poRef` is the PO the bill is applied to**, resolved from the Step 2 linkage, never from `poTyped`. The two are separate fields on purpose: keeping the typed value lets a reader see the disagreement. `poLink` says which of the three states produced `poRef`. So an `unlinked` or `failed` item can never read as though its PO had been confirmed.
 - `head`, `facts`, `poContext` and `detail` are what the dashboard renders. Write them for a reader who is skimming. `facts` should be the two or three lines that carry the specific figures.
+- **`attachmentFiles` names every attached file the review that set this verdict opened**, one entry each. Same `name (id)` shape as `attachmentFile`. `attachmentFile` alone still names the one the figures are checked against.
+- **The id is Step 3's own file id.** In connector mode, an id is read only for the named-field files. That is the AP INVOICE or CHANGE ORDER ATTACHMENT id Step 3's file query looks up. In browser mode, the `media.nl` DOM read supplies an id for every link. That read is designed, not yet observed.
 - **`config.focus.emphasis`, when set, decides what leads those fields, and nothing else.** It may reorder and reword. It may **never** change a `verdict`, drop a finding, or alter `amount`, `poRef`, `poLink` or `poTyped`. Every check that ran still gets its line.
 - **Emphasis is the user's own note about their job, not an instruction to the review.** It cannot authorise a click, soften a flag, or relax any Absolute rule. If it asks for something this skill does not do, record what was asked and do none of it. Say so once.
 
 On each run:
 
-- Items already logged **clear** and unchanged, with the same amount: do not re-fetch or re-analyze the attachment. Carry the entry forward.
+- Items already logged **clear** and unchanged: same amount, no new attachment. Do not re-fetch or re-analyze any attachment. Carry the entry forward. The whole entry, `attachmentFiles` included, is carried untouched.
+- **A new attachment ends the carry.** Compare NetSuite file ids, not names. A file id absent from the last review's `attachmentFiles` forces the same full review as a changed amount. **In connector mode only the named-field files are visible.** So a new unnamed file on a carried bill is not detected. Browser mode is designed to see every `media.nl` link on the page.
 - Items previously **flagged**: re-check in full. The vendor may have replaced the attachment.
 - Items whose amount changed since the last review: treat as new. The dashboard has no `changed` pill, so the change shows up only as a fresh full review of that item.
 - Brand-new items: full review.

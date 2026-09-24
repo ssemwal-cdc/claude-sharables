@@ -111,7 +111,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F76 | `folderless-run-works` | Folderless run works | observed | 2026-08-26 | A teammate with no workspace folder can still review their queue. |
 | F77 | `folderless-scheduled-run-works` | Folderless scheduled run works | observed | 2026-08-26 | A teammate schedules a run without first choosing a folder. |
 | F78 | `marketplace-add-tests-published-tree` | marketplace add tests the release | observed | 2026-08-26 | A pre-push check answers the question a maintainer asked it. |
-| F79 | `netsuite-visual-read-thin` | NetSuite visual read prose thin | settled | 2026-08-26 | Procedure gets written from an observation, not from symmetry. |
+| F79 | `netsuite-visual-read-thin` | NetSuite visual read prose thin | settled | 2026-08-26 | A rule for reading an image or a scan reaches both skills in the same change. |
 | F80 | `parity-audit-two-false` | Two audit findings were wrong | observed | 2026-08-26 | A parity audit is read as evidence, not as a diff of vocabularies. |
 | F81 | `plugin-dir-loads-working-tree` | plugin-dir loads the working tree | observed | 2026-08-26 | A maintainer can prove a change installs before pushing it. |
 | F82 | `widget-iframe-does-not-scroll` | The widget frame never scrolls | observed | 2026-08-26 | No version is spent fixing a defect this host cannot produce. |

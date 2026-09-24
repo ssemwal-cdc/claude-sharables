@@ -29,12 +29,19 @@ def _skill_md(repo, plugin, skill, version, body="body"):
                  + "".join(f"line {i}\n" for i in range(20)))
 
 
+def _asset(repo, skill_dir, text):
+    os.makedirs(os.path.join(repo, skill_dir, "assets"), exist_ok=True)
+    with open(os.path.join(repo, skill_dir, "assets", "a.txt"), "w", encoding="utf-8") as fh:
+        fh.write(text + "\n" + "".join(f"asset {i}\n" for i in range(20)))
+
+
 def _case(feature):
     """Base: plugin p, skill s at version 3. Apply feature(repo) on a branch, run the check."""
     repo = tempfile.mkdtemp()
     try:
         _sh(repo, "init", "-q", "-b", "main")
         _skill_md(repo, "p", "s", 3)
+        _asset(repo, "plugins/p/skills/s", "base")
         _sh(repo, "add", "-A")
         _sh(repo, "commit", "-q", "-m", "base")
         _sh(repo, "checkout", "-q", "-b", "feat")
@@ -75,22 +82,36 @@ def in_place(version):
     return lambda repo: _skill_md(repo, "p", "s", version, body="changed")
 
 
+def rename_plugin_asset_only(repo):
+    _mv(repo, "plugins/p", "plugins/p2")  # SKILL.md moves as R100
+    _asset(repo, "plugins/p2/skills/s", "changed")
+
+
+def delete_skill(repo):
+    _sh(repo, "rm", "-q", "-r", "plugins/p/skills/s")
+
+
+# want_problem: False, True, or a substring the problems must contain
 CASES = [
-    ("a skill dir renamed + changed, no bump", rename_skill(3), True),
+    ("a skill dir renamed + changed, no bump", rename_skill(3), "p/s -> p/s2 changed"),
     ("b skill dir renamed + changed, bumped", rename_skill(4), False),
     ("c plugin dir renamed + changed, no bump", rename_plugin(3), True),
     ("c' plugin dir renamed + changed, bumped", rename_plugin(4), False),
     ("d new skill at v1", new_skill(1), False),
-    ("e new skill at v2", new_skill(2), True),
+    ("e new skill at v2", new_skill(2), "rename git could not detect"),
     ("f in-place change, no bump", in_place(3), True),
     ("f in-place change, bumped", in_place(4), False),
+    ("g R100 plugin rename, only an asset changed, no bump", rename_plugin_asset_only, "p/s -> p2/s"),
+    ("h skill deleted", delete_skill, False),
 ]
 
 if __name__ == "__main__":
     failed = []
     for name, feature, want_problem in CASES:
         problems = _case(feature)
-        if bool(problems) != want_problem:
+        ok = bool(problems) == bool(want_problem) and (
+            not isinstance(want_problem, str) or want_problem in " ".join(problems))
+        if not ok:
             failed.append(f"{name}: want problem={want_problem}, got {problems}")
     if failed:
         print(f"FAILED ({len(failed)}):")

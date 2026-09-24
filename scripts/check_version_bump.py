@@ -96,17 +96,23 @@ def run(base_ref=None):
         new = _version_at(None, skill_md)
         if new is None:
             continue  # validate.py's own frontmatter check already fails this
-        old = _version_at(merge_base.stdout.strip(), renamed_from.get(skill_md, skill_md))
+        base_md = renamed_from.get(skill_md, skill_md)
+        old = _version_at(merge_base.stdout.strip(), base_md)
         if old is None:
             if new != 1:  # new skill - D43, "A new skill starts at version 1."
                 problems.append(
                     f"{plugin}/{skill} is new but carries skill version {new} - a new "
-                    f"skill starts at version 1. See D43, four synced version sites."
+                    f"skill starts at version 1. If this is a rename git could not detect "
+                    f"(SKILL.md rewritten over 50%), land the rename in its own PR first. "
+                    f"See D43, four synced version sites."
                 )
             continue
         if new <= old:
+            name = f"{plugin}/{skill}"
+            if base_md != skill_md:
+                name = "{}/{} -> {}".format(*SKILL_PATH_RE.match(base_md).groups(), name)
             problems.append(
-                f"{plugin}/{skill} changed ({len(paths)} file(s), e.g. {paths[0]}) but "
+                f"{name} changed ({len(paths)} file(s), e.g. {paths[0]}) but "
                 f"the skill version stayed at {old} - bump it past {old} in this commit. "
                 f"See D43, four synced version sites."
             )

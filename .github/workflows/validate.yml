@@ -9,7 +9,10 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
+      # Full history, so check_version_bump.py finds origin/main and a merge-base.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:

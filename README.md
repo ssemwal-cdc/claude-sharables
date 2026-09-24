@@ -90,8 +90,9 @@ supporting files travel with the plugin. They resolve through
 These plugins install and run in Cowork the same way. The install and the
 `assets/` were verified against both plugins on 2026-08-11. See F2, Cowork
 runs installed plugins. The widget was
-reported drawing inside Cowork, seen directly. Its position and behaviour at
-real scale remain unobserved. See G12, dashboard unseen in widget host.
+reported drawing inside Cowork, seen directly. Its position and behaviour in
+the widget host are now confirmed. See F‹dashboard-widget-host-confirmed›,
+dashboard bar confirmed in widget host.
 
 A cloud session against a repository is different. Declare the plugin in that
 repo's `.claude/settings.json` under `enabledPlugins`. It then installs at

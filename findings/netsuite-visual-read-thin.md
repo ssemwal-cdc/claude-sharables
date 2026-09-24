@@ -26,8 +26,8 @@ Do not fix it from symmetry.
 **Evidence.** Mention counts are a snapshot from the command in Checks below, not a durable fact.
 No script holds them current, so re-run the command before citing a figure.
 Measured 2026-08-26: Procore `image` 11 times, `scanned` 10 times, NetSuite `image` 2 times, `scanned` 3 times.
-Re-measured 2026-09-17: Procore `image` 11 times, `scanned` 9 times, NetSuite `image` 2 times, `scanned` 4 times.
-The `scanned` counts had already drifted by one mention on each side.
+Re-measured 2026-09-23: Procore `image` 11 times, `scanned` 10 times, NetSuite `image` 2 times, `scanned` 4 times.
+The `scanned` counts drift on a wording change alone, not on a run.
 G6, two branches still unfired, carries the unfired branches.
 D65, write a pack from a role document, carries the rule invoked here.
 

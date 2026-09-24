@@ -57,6 +57,10 @@ Covered:
  15. `tied` verdict     - the fifth verdict survives publish, obeys the same
                            demotions as every other verdict, and is not folded
                            into widget.html's display-only rows.
+ 16. Carried attachments - `supportCarried` (files read on an earlier run, not
+                           reopened this run) survives publish as its own field,
+                           and never merges into `supportRead`, whose contract is
+                           only what this run itself opened and parsed.
 
 Usage:  python3 scripts/test_skill_code.py
 Needs node on PATH for 1-3; those are skipped with a notice if it is missing.
@@ -899,6 +903,56 @@ def test_tied_verdict():
         shutil.rmtree(d, ignore_errors=True)
 
 
+# ------------------------------------------ 16. carried-forward attachments
+def test_carried_attachments():
+    """`supportCarried` (files read on an earlier run, not reopened this run) must stay a
+    field of its own, distinct from `supportRead` (this run's own reads), all the way
+    through publish and into the template's render. Folding the two together is exactly
+    the defect this field exists to avoid: `supportRead` would then no longer mean "this
+    run actually opened it," which is the property Step 6's `tied` checks rely on.
+    """
+    d = tempfile.mkdtemp()
+    try:
+        assets = os.path.join(PC, "assets")
+        for f in ("publish_dashboard.py", "dashboard_template.html"):
+            shutil.copy(os.path.join(assets, f), d)
+        log = {
+            "lastCompletedRun": "2026-09-24", "lastRunTime": "2026-09-24 09:00",
+            "suppressed": 0, "config": {"company": "0", "icrToolId": "0"},
+            "items": {
+                "carried": {"itemId": "777", "projectId": "9", "commitmentId": "8",
+                            "kind": "icr", "type": "Internal Change Risk", "docNo": "#ICR-7",
+                            "project": "A - B", "counterparty": "X", "amount": 3000,
+                            "step": "Cost Gate", "responses": ["Yes", "Reject"],
+                            "verdict": "skipped", "head": "h", "facts": ["f"], "detail": "d",
+                            "supportRead": ["CCR-20 — new-invoice.pdf"],
+                            "supportCarried": ["CCR-11 — proposal.pdf"]},
+            },
+        }
+        json.dump(log, open(os.path.join(d, "_procore_review_log.json"), "w"))
+        out_html = os.path.join(d, "index.html")
+        r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
+                            out_html], capture_output=True, text=True, timeout=60)
+        if r.returncode != 0:
+            check("carried: publish script runs", False,
+                  (r.stderr or r.stdout).strip().splitlines()[-1:] or "")
+            return
+        blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/",
+                         open(out_html, encoding="utf-8").read(), re.S).group(1)
+        items = {i["doc"]: i for i in json.loads(blob)["items"]}
+        it = items["#ICR-7"]
+        check("carried: supportRead stays this-run-only",
+              it.get("att") == "CCR-20 — new-invoice.pdf", it.get("att"))
+        check("carried: supportCarried lands in its own field, not merged into att",
+              it.get("carried") == "CCR-11 — proposal.pdf", it.get("carried"))
+
+        page = open(out_html, encoding="utf-8").read()
+        check("carried: the template renders a carried-forward field in Show detail",
+              "it.carried" in page and "Carried forward, not re-read" in page)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 # ------------------------------------------ 13. a large render survives a read
 def test_render_fits_one_read():
     """The rendered dashboard has to be readable before it can be handed to show_widget.
@@ -1018,6 +1072,7 @@ def main():
     test_commitment_kind()
     test_custom_tool_subtype()
     test_tied_verdict()
+    test_carried_attachments()
     test_render_fits_one_read()
     test_template_version()
     test_step0_write_states()

@@ -1,9 +1,9 @@
 ---
 name: procore-open-items-review
-description: v32 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still waiting on their response. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged, skipped or tied verdict per item. This skill is read-only: it never clicks Respond, Approve, Reject or Revise and Resubmit, every Procore call it makes is a GET, and the dashboard it publishes carries no response controls. Every verdict is a recommendation, and the response itself stays yours to make in Procore.
+description: v33 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still waiting on their response. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged, skipped or tied verdict per item. This skill is read-only: it never clicks Respond, Approve, Reject or Revise and Resubmit, every Procore call it makes is a GET, and the dashboard it publishes carries no response controls. Every verdict is a recommendation, and the response itself stays yours to make in Procore.
 ---
 # Procore Open Items Review
-**Skill version 32 — 2026-09-23.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
+**Skill version 33 — 2026-09-24.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
 
 Review every Procore item **waiting on the user's workflow response**. Verify each item's figures against its attached support. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget. Chat gets one headline line.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
@@ -75,11 +75,11 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 2. **Read, then Write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/` and write it over the workspace copy byte for byte. Never retype, trim or tidy. Then prove the copy landed: the template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and `python3 -m py_compile publish_dashboard.py` passes. This rung is designed, not yet observed. Say so in the run report if it also fails.
 3. **Use the existing workspace copies and say so once.** One line near the headline, naming the modification date from `ls -l`: "dashboard code is from the last successful sync, \<date\>". Do not stop the run. The procedure ships in this file, so the verdicts stay current when the widget's wording does not. **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, stop before Step 7 and say exactly that. Inventing a template is forbidden by the Absolute rules.
 
-**This plugin ships layout template `v17`. Confirm the sync landed by reading it back:**
+**This plugin ships layout template `v18`. Confirm the sync landed by reading it back:**
 ```bash
 head -n 8 "<workspace>/Procore Open Items/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
-If that does not say `v17`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
+If that does not say `v18`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
 
 Then read `Procore Open Items/_procore_review_log.json`. A file already carrying a `config` block finishes this step, apart from the two back-fills below. Go to Step 1. Otherwise run setup once.
 
@@ -463,6 +463,7 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
   "items": { "<item_type>:<item_id>": {
       "itemId": "<item id>", "projectId": "<project id>", "commitmentId": "<commitment id>",
       "supportRead": ["one entry per file actually opened and parsed, e.g. 'PCI 42 — proposal.pdf'"],
+      "supportCarried": ["one entry per file read on an earlier run and not reopened this run, same filenames as supportRead"],
       "wfId": "CCOs only - the commitment change order id from line_items[].holder.id",
       "wfType": "commitments only - the queue's item_type verbatim, always",
       "kind": "inv", "subtype": "GenericToolItem rows only - the queue's item_subtype verbatim",
@@ -481,6 +482,9 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
 ```
 - **`supportRead` names every file this run actually opened and parsed for the item**, one entry each. It renders inside Show detail.
 - It is the only field that evidences a verdict rather than asserting it. An empty list beside a `clear` verdict is a contradiction. Leave `supportRead` empty when nothing was readable.
+- **`supportCarried` names every file read on an earlier run and not reopened this run**, one entry each. It uses the same filename strings as `supportRead`. It renders inside Show detail too, labelled `carried forward, not re-read`.
+- **Never put a carried file in `supportRead`.** `supportRead` keeps its own meaning: only what this run actually opened and parsed. A file this run did not touch belongs in `supportCarried` alone.
+- **The known-read set for the next run is this run's `supportRead` plus its `supportCarried`.** Carry that union forward. A file read two runs ago and only carried since is still not treated as new on the third run.
 - **`config.focus.emphasis`, when set, decides what leads `head`, `facts`, `context` and `detail`, and nothing else.** It may reorder and reword. It may never change a `verdict`, drop a finding, or edit a figure.
 - `kind` is one of `icr`, `inv`, `cco` or `com`. It decides the record URL and the workflow type.
 - **Two of the four cannot decide it on their own.** `com` needs `wfType` and `icr` needs `subtype`.
@@ -493,8 +497,11 @@ On each run:
 - Previously **clear** with an unchanged amount carries the entry forward, with no attachment re-read.
 - **Mark the row `carried forward, not re-read` on the dashboard.**
 - Previously **flagged** is re-checked in full, because the attachment may have been swapped. A changed amount is treated as new.
-- Previously **skipped** is re-checked in full every run, because support gets added later.
-- Previously **tied** is re-checked in full every run, like `skipped`, because the blank field may later be filled.
+- Previously **skipped** or **tied**, with an unchanged amount, re-reads only the attachments not read on an earlier run. A new attachment is still read in full, because support gets added later.
+- **Identify an attachment by its filename.** That is the same string `supportRead` and `supportCarried` already carry. This skill never reads an attachment id off the record. It only reads `attachments[i].url`, for the redirect. **A file replaced under the same name is not detected as new.** Name that ceiling if it is ever hit.
+- **The known-read set is the previous run's `supportRead` plus its `supportCarried`.** A file in that set is not reopened. Everything else is new, and gets the full Step 4 read.
+- **Mark each carried file `carried forward, not re-read` in Show detail**, beside whatever `supportRead` lists as read this run.
+- A changed amount on a **skipped** or **tied** item is still treated as new. Full re-check, every attachment re-read, the same as `flagged`.
 - **No longer in the queue is dropped.** **Count the departed items and name the count in the chat line.**
 - There is no actioned bin. A lingering entry would show as an apparently-pending row.
 

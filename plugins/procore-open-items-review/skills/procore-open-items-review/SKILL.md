@@ -557,7 +557,7 @@ cd "<workspace>/Procore Open Items" && python3 -B publish_dashboard.py
 - If the script aborts because the sentinels are missing, **restore the template from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/`.** **Do not rebuild the template from memory.** Keep the sentinels intact.
 - A design change goes in the plugin repo, not the workspace copy, which Step 0 overwrites on every run.
 
-Step 8 runs first, and the headline follows it. **Report in chat with one line only**, in the shape `32 awaiting you · 0 flagged · 3 tie out · 22 skipped · dashboard updated`. Add a second line only if something blocked the run, a subtype was new, or an item type was unbuilt. Fold every such notice into that one second line. Never put verdicts in chat.
+Step 8 runs first, and the headline follows it. **Report in chat with one line only**, in the shape `32 awaiting you · 0 flagged · 3 tie out · 22 skipped · dashboard updated`. Add a second line only if something blocked the run, a subtype was new, or an item type was unbuilt. Fold every such notice into that one second line, joined with ` · `, for example: `New Procore tool <tool id> ("<subtype>") — this skill was not built for it. Send Shivam Semwal: tool id <tool id>, subtype <subtype>, field labels seen <field labels>, cost fields mapped <mapped cost fields>, cost fields unmapped <unmapped cost fields>. · New Procore item type <item_type> ("<title>") — this skill was not built for it. Send Shivam Semwal: item type <item_type>, fields seen <field labels>.` Never put verdicts in chat.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
 ## Step 8 — Close down
 

@@ -90,9 +90,10 @@ The dashboard is a read-only page. It shows the row, the details and the
 verdict pill per item. It does not carry buttons or send anything to Procore.
 You act on an item in Procore itself.
 
-The controls and the floating header were measured in a browser. Nobody has
-seen them in the widget host. See F‹dashboard-widget-host-confirmed›, widget
-host bar confirmed.
+The floating bar was measured in a browser. The maintainer reports it pinned
+at the top in the widget host too, carrying the item count and Filters. See
+F‹dashboard-widget-host-confirmed›, widget host bar confirmed. Its behaviour
+at real queue scale stays unmeasured.
 
 ## Requirements
 

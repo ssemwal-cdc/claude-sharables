@@ -36,7 +36,6 @@ A metric is not appearance. A person still has to look at typography, spacing an
 - Widths covered by a repeatable command: three. Schemes: two. Screens: three.
 - The first run is `Fdevice-shots-first-run`, 18 captures and no overflow.
 - The onboarding sheet was measured once before, on 2026-08-28. F89, measured at three widths in both schemes, is that one-off.
-- F‹dashboard-widget-host-confirmed›, fixtures never committed, is why a one-off measurement
-  was not enough.
+- F128, fixtures never committed, is why a one-off measurement was not enough.
 
 **Checks.** `NODE_PATH=$(npm root -g) node scripts/measure_float.js --shots .claude/shots`, by hand or in the `shots` CI job. The default run without `--shots` prints the float measurements only. `check_device_shots()` in `scripts/check_records.py` reads `.claude/shots/summary.txt`. It fails the build on any capture with an overflow, or on fewer than 18 captures. It is silent, not failing, when the file is absent. `device_shots_note()` prints that absence as a note.

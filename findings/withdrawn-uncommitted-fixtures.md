@@ -21,7 +21,6 @@ The sniff reads four bytes and cannot see inside the container.
 SheetJS yielding no sheets is the real signal, and that is what the rule says.
 
 **Evidence.** Pass dated 2026-08-24, immediately after the audit.
-F‹dashboard-widget-host-confirmed›, the uncommitted 2026-08-20 fixtures, carries the withdrawn
-certification.
+The uncommitted 2026-08-20 fixtures carry the withdrawn certification.
 
 **Checks.** none.

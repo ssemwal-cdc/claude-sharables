@@ -157,4 +157,9 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F151 | `browser-assumed-absent-in-cloud` | A session assumed no browser | observed | 2026-09-23 | A capability is measured before a run claims it cannot run. |
 | F152 | `invalid-font-shorthand-dropped` | An invalid shorthand was dropped | observed | 2026-09-23 | A control renders in the font the template authored for it. |
 | F153 | `toolbar-select-overflow` | Long option text overflows toolbar | observed | 2026-09-23 | A reader on a narrow panel is not made to scroll sideways. |
+| pending | `end-to-end-runs-routine` | End-to-end runs confirmed routine | observed | 2026-09-24 | A reviewer's verdicts come from a path somebody has watched work. |
+| pending | `execute-button-blocked-state-confirmed` | Execute button blocked state confirmed | observed | 2026-09-24 | A blocked execute button reads as blocked, not as broken. |
+| pending | `netsuite-browser-mode` | NetSuite browser mode confirmed | observed | 2026-09-24 | A teammate with no connector still gets a complete review. |
 | F154 | `plugin-skill-switch-off` | One plugin skill can be switched off | observed | 2026-09-24 | A teammate can switch off the work they cannot run, and keeps the work they can. |
+| pending | `po-execute-route-confirmed` | Purchase order route reported working | observed | 2026-09-24 | A reviewed purchase order can be actioned, and only as the reviewer instructed. |
+| pending | `scheduled-runs-builtin-browser` | Scheduled runs drive the built-in browser | observed | 2026-09-24 | A scheduled run reaches the teammate's own signed-in session, not a separate, unsigned-in browser. |

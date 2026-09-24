@@ -31,6 +31,6 @@ It cannot cover this gap, because this gap is about a real system.
 Tested live 2026-08-13 against bill 2532506, before any file was changed.
 Checked against `pdftotext -layout` on a 3-page utility invoice.
 That check gave the same three columns and the same figures.
-G4, no watched run, is the wider gap this sits inside.
+F‹end-to-end-runs-routine›, watched runs now happen routinely, but this pdf.js branch stays unwatched inside them.
 
 **Checks.** `scripts/test_skill_code.py`, which reads the extractor out of `SKILL.md`.

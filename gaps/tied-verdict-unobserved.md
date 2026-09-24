@@ -19,7 +19,7 @@ Confirm it lands as `tied`, not `skipped`.
 Its `supportRead` must name the file actually read.
 The reviewer must confirm the blank field really is blank in Procore, not misread.
 
-This gap sits inside G4, no end-to-end run.
+F‹end-to-end-runs-routine›, watched runs now happen routinely, but this tied-verdict branch stays unwatched inside them.
 
 **Evidence.** This claim is guessed, not proven.
 It is tested against mocks or fixtures only.

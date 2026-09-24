@@ -64,6 +64,13 @@ Covered:
                            parsed. Also renders under its own label, proven by
                            actually executing the template's itemRow(), not by
                            grepping its source for the field name.
+ 17. NetSuite multi-file  - a clear bill's carry is decided by every attached
+     carry                 file's id (`attachmentFiles`), not by the single
+                           `attachmentFile` the figures are checked against. A
+                           whole-entry carry keeps `attachmentFiles` as the
+                           verdict-setting review left it, never this run's own
+                           (empty) opens. Connector mode's blind spot - it only
+                           ever sees the named-field file - is named, not fixed.
 
 Usage:  python3 scripts/test_skill_code.py
 Needs node on PATH for 1-3 and 16; those are skipped with a notice if it is missing.
@@ -650,6 +657,44 @@ def test_login_states():
           "hard constraint" in step1)
 
 
+# ------------------------------------------------ 17. NetSuite multi-file carry
+def test_netsuite_multifile_carry():
+    """A bill with an invoice plus a backup schedule saw the schedule as new on every
+    run, because the old rule tested only the single `attachmentFile` for "new
+    attachment" - so a second file that was always there never stopped looking new,
+    and the carry never applied to a multi-file bill (reported by the maintainer).
+
+    The first fix defined `attachmentFiles` as "every attached file THIS RUN opened" -
+    which a carry run opens none of, so the field would go empty and break the carry
+    on the very next run. Fixed to "opened by the review that set this verdict", the
+    same phrasing Procore already uses for its own whole-entry carry, and the clear
+    bullet now says explicitly that the whole entry, `attachmentFiles` included, is
+    carried untouched.
+
+    This is also where the bandaid lives, named rather than hidden: connector mode
+    only ever sees the one named-field file, so a new *unnamed* file on a connector-
+    mode bill still is not detected. Browser mode's `media.nl` DOM read sees every
+    attachment. Building a connector query to list every file is out of scope here;
+    the gap is recorded as a gap, not silently left implied by the prose.
+    """
+    txt = open(os.path.join(NS, "SKILL.md"), encoding="utf-8").read()
+    on_each_run = txt.split("On each run:")[1].split("## Step 7")[0] if \
+        "On each run:" in txt else ""
+    check("netsuite: On each run is where the carry rule sits", bool(on_each_run))
+
+    check("netsuite: attachmentFiles is a documented log field", "attachmentFiles" in txt)
+    check("netsuite: the field is the verdict-setting review's own opens, not this run's",
+          "every attached file the review that set this verdict opened" in txt)
+    check("netsuite: the new-attachment test compares file ids, not the single "
+          "attachmentFile", "Compare NetSuite file ids, not names" in on_each_run)
+    check("netsuite: the test is against the whole attachmentFiles list",
+          "absent from the last review's `attachmentFiles`" in on_each_run)
+    check("netsuite: a whole-entry carry keeps attachmentFiles untouched, not reset",
+          "The whole entry, `attachmentFiles` included, is carried untouched" in on_each_run)
+    check("netsuite: the connector-mode limit is named, not left implicit",
+          "In connector mode only the named-field files are visible" in on_each_run)
+
+
 # ------------------------------------------------------- 8. PO identity rules
 def test_dashboard_view():
     """The toolbar had no coverage at all, and the default sort is the one setting every
@@ -1127,6 +1172,7 @@ def main():
     test_template_version()
     test_step0_write_states()
     test_login_states()
+    test_netsuite_multifile_carry()
     test_dashboard_view()
     test_po_identity_rules()
     print()

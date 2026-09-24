@@ -213,7 +213,9 @@ def main():
             "detail": it.get("detail", ""),
             # The one field that evidences the verdict rather than asserting it. A list
             # here rather than NetSuite's single name: one Procore item can carry several
-            # PCIs, each with its own attachment.
+            # PCIs, each with its own attachment. On a clear or tied whole-entry carry,
+            # this is the verdict-setting run's own supportRead, not necessarily this
+            # run's - SKILL.md's "On each run" section is the source of truth for that.
             "att": ", ".join(it.get("supportRead") or []),
             # supportCarried is the skipped shortcut's own bookkeeping: files read on an
             # earlier run and not reopened this one. Kept apart from "att" so a carried

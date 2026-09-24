@@ -354,6 +354,7 @@ Three things are not optional:
 - **Whether to read further pages is a judgement, not a promise.** Base it on what page 1 shows, for example a cover email that points to pricing inside. Do not promise a route to a later page the skill lacks. If a further page is needed and cannot be reached, say so.
 - **A file counts as fully read only when every page was read.** Define a partial read as any page left unread. A gap in the middle counts too, not only a stop at the end.
 - **A partial read is neither a read nor a genuine absence.** Keep a successful read, a genuine absence and a failure as three named states. A partial read can never support a claim that a figure is absent from the file. It can never produce a `clear` verdict either. Name it as the cause, in words such as `support partly read: pages 1 of 17`.
+- **Every attachment a run reads is opened to at least its first page.** The carry rules decide which ones a run reads.
 <!--__END_SHARED:skill-first-page-read__-->
 - **This skill has no `supportRead` field.** Name a partial read in `detail`, with the same wording, `support partly read: pages 1 of 17`. `attachmentFile` names the file read, never how much of it was read. It must never stand in for that sentence.
 
@@ -538,7 +539,8 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
 
 On each run:
 
-- Items already logged **clear** and unchanged, with the same amount: do not re-fetch or re-analyze the attachment. Carry the entry forward.
+- Items already logged **clear** and unchanged: same amount, no new attachment. Do not re-fetch or re-analyze the attachment. Carry the entry forward.
+- **A new attachment ends the carry.** One not already logged as `attachmentFile` forces the same full review as a changed amount.
 - Items previously **flagged**: re-check in full. The vendor may have replaced the attachment.
 - Items whose amount changed since the last review: treat as new. The dashboard has no `changed` pill, so the change shows up only as a fresh full review of that item.
 - Brand-new items: full review.

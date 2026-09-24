@@ -75,11 +75,11 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 2. **Read, then Write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/` and write it over the workspace copy byte for byte. Never retype, trim or tidy. Then prove the copy landed: the template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and `python3 -m py_compile publish_dashboard.py` passes. This rung is designed, not yet observed. Say so in the run report if it also fails.
 3. **Use the existing workspace copies and say so once.** One line near the headline, naming the modification date from `ls -l`: "dashboard code is from the last successful sync, \<date\>". Do not stop the run. The procedure ships in this file, so the verdicts stay current when the widget's wording does not. **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, stop before Step 7 and say exactly that. Inventing a template is forbidden by the Absolute rules.
 
-**This plugin ships layout template `v17`. Confirm the sync landed by reading it back:**
+**This plugin ships layout template `v18`. Confirm the sync landed by reading it back:**
 ```bash
 head -n 8 "<workspace>/Procore Open Items/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
-If that does not say `v17`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
+If that does not say `v18`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
 
 Then read `Procore Open Items/_procore_review_log.json`. A file already carrying a `config` block finishes this step, apart from the two back-fills below. Go to Step 1. Otherwise run setup once.
 
@@ -474,14 +474,15 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
   "lastCompletedRun": "2026-08-11", "lastRunTime": "2026-08-11 16:20", "suppressed": 41,
   "items": { "<item_type>:<item_id>": {
       "itemId": "<item id>", "projectId": "<project id>", "commitmentId": "<commitment id>",
-      "supportRead": ["every file this run actually opened and parsed, e.g. 'PCI 42 — proposal.pdf' - a partial read lists its page list instead of the whole file, comma-space separated, e.g. 'CCR-20 scope.pdf (pages 1, 2 of 17)'"],
+      "supportRead": ["one entry per file the run that set this verdict opened and parsed, e.g. 'PCI 42 — proposal.pdf' - a partial read lists its page list instead of the whole file, comma-space separated, e.g. 'CCR-20 scope.pdf (pages 1, 2 of 17)'"],
+      "supportCarried": ["one entry per file read on an earlier run and not reopened this run, same filenames as supportRead"],
       "wfId": "CCOs only - the commitment change order id from line_items[].holder.id",
       "wfType": "commitments only - the queue's item_type verbatim, always",
       "kind": "inv", "subtype": "GenericToolItem rows only - the queue's item_subtype verbatim",
       "type": "Invoice", "docNo": "#2 · INV-0002 (PR-02)", "amount": 500000, "dueDate": "2026-08-02",
       "project": "Campus A - Building 1", "counterparty": "Example Contractor LLC",
       "step": "FA Review", "responses": ["Approve", "Revise and Resubmit"],
-      "verdict": "clear|flagged|skipped|ungated", "reviewedOn": "2026-08-11", "lastSeenPending": "2026-08-11",
+      "verdict": "clear|flagged|skipped|ungated|tied", "reviewedOn": "2026-08-11", "lastSeenPending": "2026-08-11",
       "head": "one line, the verdict in plain terms",
       "facts": ["two or three skim lines carrying the specific figures"],
       "context": "Commitment <id> · 6.08% complete · balance to finish $9,400,000.00",
@@ -491,8 +492,12 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
       "text": "the comment actually submitted - the user's words, or 'Approved by Claude'",
       "result": "confirmed step advanced|skipped: already actioned|failed: <why>"} ] }
 ```
-- **`supportRead` names every file this run actually opened and parsed for the item**, one entry each. It renders inside Show detail.
-- It is the only field that evidences a verdict rather than asserting it. An empty list beside a `clear` verdict is a contradiction. Leave `supportRead` empty when nothing was readable.
+- **`supportRead` names the files the run that set this verdict opened and parsed**, one entry each. It renders inside Show detail.
+- It is the only field that evidences a verdict rather than asserting it. An empty list beside a `clear` or `tied` verdict is a contradiction. Leave `supportRead` empty when nothing was readable.
+- **On a whole-entry carry, `clear` or `tied` unchanged, `supportRead` is left untouched.** It still names whatever the run that set the verdict read. Nothing was re-evaluated, so nothing changed.
+- **`supportCarried` is used only by the `skipped` shortcut below.** It names files read on an earlier run and not reopened this run, one entry each. Same filename strings as `supportRead`. It renders inside Show detail too, labelled `carried forward, not re-read`.
+- **A partial read never counts as read.** An entry ending `(pages <list> of <N>)` marks a file only partly parsed. Match that exact suffix. Such an entry never joins the known-read set. The file is read again next run.
+- **The known-read set for a `skipped` item is its last run's `supportRead` plus its `supportCarried`.** Drop any partial-read entry, and any name no longer among the item's current attachments. Carry what is left forward as the next run's starting point.
 - **`config.focus.emphasis`, when set, decides what leads `head`, `facts`, `context` and `detail`, and nothing else.** It may reorder and reword. It may never change a `verdict`, drop a finding, or edit a figure.
 - `kind` is one of `icr`, `inv`, `cco` or `com`. It decides the record URL and the workflow type.
 - **Two of the four cannot decide it on their own.** `com` needs `wfType` and `icr` needs `subtype`.
@@ -502,11 +507,17 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
 - `project` must keep Procore's full `"<Campus> - <Building>"` form, because the script splits it on the outer campus axis.
 
 On each run:
-- Previously **clear** with an unchanged amount carries the entry forward, with no attachment re-read.
+- Previously **clear** or **tied**, with an unchanged amount and every checked field unchanged, carries the entry forward untouched. No attachment is re-read. `supportRead` stays as the verdict-setting run left it.
+- **A checked field is a field a Step 6 check reads**, including the field blank in a `tied` item. Filling that blank field forces the same full re-check as a changed amount.
 - **Mark the row `carried forward, not re-read` on the dashboard.**
 - Previously **flagged** is re-checked in full, because the attachment may have been swapped. A changed amount is treated as new.
-- Previously **skipped** is re-checked in full every run, because support gets added later.
-- Previously **tied** is re-checked in full every run, like `skipped`, because the blank field may later be filled.
+- Previously **skipped**, with an unchanged amount and every checked field unchanged, does a new-files-only re-read. It opens only the attachments outside the known-read set. A new attachment is still read in full, because support gets added later.
+- **Identify an attachment by its filename**, the same string `supportRead` and `supportCarried` carry. This skill never reads an attachment id off the record, only `attachments[i].url` for the redirect. **A file replaced under the same name is not detected as new.**
+- **Two attachments sharing a name are two instances, not one.** Read both. A name already checked off once does not clear the second.
+- **The known-read set is the previous run's `supportRead` plus its `supportCarried`.** Drop any partial-read entry, and any name no longer among the item's current attachments. A file left in the set is not reopened. Everything else is new, and gets the full Step 4 read.
+- **The shortcut only ever keeps `skipped`.** A carried read may confirm the item stays `skipped`. It never promotes one. Before any move to `clear`, `tied` or `flagged`, re-open every attachment and re-check in full.
+- **A change to any checked field forces that same full re-check**, not only a changed amount.
+- **A carried entry, or any file already in the known-read set, is not read this run.** The sibling first-page rule does not reopen it either.
 - **No longer in the queue is dropped.** **Count the departed items and name the count in the chat line.**
 - There is no actioned bin. A lingering entry would show as an apparently-pending row.
 

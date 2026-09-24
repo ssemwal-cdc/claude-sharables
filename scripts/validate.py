@@ -178,7 +178,7 @@ for name, src in registered.items():
             fail(f"[{name}/{skill}] frontmatter has no description")
 
         # Human-readable skill version line. An installed skill is a snapshot,
-        # and the desktop app shows no commit SHA anywhere — opening the skill
+        # and the desktop app shows its commit only deep in a menu — opening the skill
         # shows SKILL.md, so the file itself is the only place a version can be
         # read on that surface. This is NOT the banned machine 'version' field:
         # it affects nothing about install resolution. It must sit at the top

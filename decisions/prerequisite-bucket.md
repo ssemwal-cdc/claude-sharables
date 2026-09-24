@@ -39,7 +39,7 @@ Adding a skill to an existing plugin does not touch `marketplace.json`. The `ski
 
 - Recorded 2026-08-24. Both plugins hold one skill today. That is an accident of porting two skills with two prerequisites.
 - Amended 2026-09-24. The old argument said a single plugin skill cannot be silenced. F154, one plugin skill can be switched off, measured that false, so the rule became a default. The outcome is unchanged.
-- The documented standard layout allows several skills in one plugin. `scripts/validate.py` blocks it today. See G17, multi-skill plugin unbuilt.
+- The documented standard layout allows several skills in one plugin. `scripts/validate.py` accepts it since 2026-09-24, with one version tail per skill. G17, bundle plugins are unbuilt, now covers only the bundle.
 - Past 4 plugins, publish a dependency-only bundle plugin with bare string dependencies. Do not build it at 2 plugins.
 - Auto sync does not install a new plugin. It keeps installed plugins current. So each new plugin costs one announcement and one install per teammate.
 - Both slash forms resolve to the plugin skill. See F8, both slash forms resolve.

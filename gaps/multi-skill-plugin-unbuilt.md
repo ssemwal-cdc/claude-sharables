@@ -5,27 +5,24 @@ kind: gap
 status: unobserved
 date: 2026-09-15
 ---
-# Multi-skill plugins are unbuilt
+# Bundle plugins are unbuilt
 
 **Outcome protected.** Nobody follows a documented standard that the build then rejects.
 
 **Argument.**
 
-D56, a plugin is a prerequisite bucket, tells a maintainer where to put a second skill. That is inside an existing plugin, when the prerequisites match.
+D56, plugins are prerequisite buckets, names two layouts the build used to reject. The first is several skills in one plugin. The second is a dependency-only bundle plugin.
 
-`scripts/validate.py` blocks that today. Its per-skill check asserts that the `plugin.json` description ends with `Skill version N — DATE.`.
+The first wall fell on 2026-09-24. `scripts/validate.py` now reads one version tail per skill in a multi-skill `plugin.json`. See D43, four synced version sites.
 
-A string can end with one tail only. So two skills at different versions can never both pass. The failure message in the script says as much.
+The bundle wall stands. A dependency-only manifest has no `skills/` folder, and `scripts/validate.py` requires a non-empty one. The bundle case needs a carve-out for a `dependencies` key.
 
-The same file blocks the bundle plugin from the same decision. Its check requires a non-empty `skills/` folder, and a dependency-only manifest has neither a folder nor an entry.
-
-So the check needs widening before either instruction can be followed. The bundle case needs a carve-out for a `dependencies` key.
-
-Nobody has tried it. The failure would land on whoever tries, not on whoever wrote the advice.
+D56, plugins are prerequisite buckets, defers the bundle until past 4 plugins. So this gap stays open on purpose.
 
 **Evidence.**
 
-- Never observed. No plugin in this repo holds a second skill, and no bundle plugin exists.
-- Both walls are read from `scripts/validate.py` as of 2026-09-15. Neither has been triggered, so the exact failure text is `unmeasured`.
+- Never observed. No bundle plugin exists.
+- The bundle wall is read from `scripts/validate.py` as of 2026-09-24. It has not been triggered, so the exact failure text is `unmeasured`.
+- The multi-skill wall was measured before it fell. A two-skill fixture failed the old check and passes the new one. `scripts/test_validate_versions.py` holds that proof.
 
-**Checks.** none. Widening `scripts/validate.py` is the work this gap names.
+**Checks.** `scripts/test_validate_versions.py` for the fallen wall. none for the bundle wall.

@@ -3,7 +3,7 @@
 // about your session: the cloud image ships Chromium at /opt/pw-browsers and playwright
 // in $(npm root -g). Probe before you claim this cannot run, because a read that never
 // ran is unknown, never absent. Run it by hand after touching
-// dash-band-track, dash-float-css, dash-header-mirror or anything about the page's height:
+// dash-band-track, dash-float-css or anything about the page's height:
 //
 //   NODE_PATH=$(npm root -g) node scripts/measure_float.js
 //   CHROME_PATH=/path/to/chrome NODE_PATH=... node scripts/measure_float.js   # if the

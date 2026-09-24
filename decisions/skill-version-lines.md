@@ -13,9 +13,9 @@ date: 2026-08-21
 
 **Argument.**
 
-An installed skill is a snapshot. The desktop app shows no commit SHA anywhere.
+An installed skill is a snapshot. The desktop app shows its commit only deep in a menu, as Synced commit. See F48, app installs update in-app. No surface that shows a skill shows a commit.
 
-So the version lives in four sites, one per surface that shows it. The start of the skill frontmatter description carries `vN`. The end of the `plugin.json` description carries `Skill version N — date.`. The `SKILL.md` body line carries the same. The README table carries `vN`.
+So the version lives in four sites, one per surface that shows it. The start of the skill frontmatter description carries `vN`. The end of the `plugin.json` description carries `Skill version N — date.`. A plugin with several skills ends it with one `<skill> skill version N — date.` per skill, in skill-folder order. Its README cell carries `<skill> vN` per skill. The `SKILL.md` body line carries the same. The README table carries `vN`.
 
 The body line reads `**Skill version N — YYYY-MM-DD.**` as the first line under the title.
 

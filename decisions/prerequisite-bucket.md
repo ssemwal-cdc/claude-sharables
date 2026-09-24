@@ -7,23 +7,25 @@ date: 2026-08-24
 ---
 # Plugins are prerequisite buckets
 
-**Rule.** Put a new skill in an existing plugin only when its external prerequisites match that plugin exactly.
+**Rule.** By default, put a new skill in an existing plugin only when its external prerequisites match that plugin exactly.
 
 **Outcome protected.** A teammate can switch off the work they cannot run, and keeps the work they can.
 
 **Argument.**
 
-A plugin is the unit a teammate can switch off. A skill is not. Every enable, disable, uninstall and scope control takes a plugin name.
+A teammate can switch off one skill inside a plugin. See F154, one plugin skill can be switched off. That switch now protects the outcome.
 
-The one setting that can silence a single skill does not apply to plugin skills. So everyone who installs a plugin takes all of it.
+So the prerequisite boundary is a default, not a wall. It keeps each install line, update line and README to one system.
 
-That makes the boundary a prerequisite boundary. List the external prerequisites of the new skill. These are MCP connectors, browser-authenticated sites, CLI binaries, credentials and tenant access.
+List the external prerequisites of the new skill. These are MCP connectors, browser-authenticated sites, CLI binaries, credentials and tenant access.
 
-Compare that set to each existing plugin, exactly. An identical set joins that plugin. Any difference at all means a new plugin.
+Compare that set to each existing plugin, exactly. An identical set joins that plugin. A different set gets a new plugin by default.
 
-Always a new plugin when the skill ships `.mcp.json`, `hooks/`, `bin/`, `monitors/` or `.lsp.json`. Also a new plugin when it ships a root `settings.json` that must not apply to the other skills. Those activate on plugin enable, not on skill invocation.
+A different set may join an existing plugin when grouping helps the teammates who install it. Say why in the commit.
 
-Also a new plugin when a different subset of the team should have it. Audience counts on its own.
+Always a new plugin when the skill ships `.mcp.json`, `hooks/`, `bin/`, `monitors/` or `.lsp.json`. Also a new plugin when it ships a root `settings.json` that must not apply to the other skills. Those activate on plugin enable, not on skill invocation. A skill switch cannot stop them.
+
+A different audience also points to a new plugin by default.
 
 Four reasons to split are rejected. A different topic, a different department, a different data domain and a different dashboard. So is a feeling of being unrelated. So is a plugin then holding more than one skill. So is folder tidiness.
 
@@ -36,7 +38,8 @@ Adding a skill to an existing plugin does not touch `marketplace.json`. The `ski
 **Evidence.**
 
 - Recorded 2026-08-24. Both plugins hold one skill today. That is an accident of porting two skills with two prerequisites.
-- The documented standard layout allows several skills in one plugin. `scripts/validate.py` blocks it today. See G17, multi-skill plugin unbuilt.
+- Amended 2026-09-24. The old argument said a single plugin skill cannot be silenced. F154, one plugin skill can be switched off, measured that false, so the rule became a default. The outcome is unchanged.
+- The documented standard layout allows several skills in one plugin. `scripts/validate.py` accepts it since 2026-09-24, with one version tail per skill. G17, bundle plugins are unbuilt, now covers only the bundle.
 - Past 4 plugins, publish a dependency-only bundle plugin with bare string dependencies. Do not build it at 2 plugins.
 - Auto sync does not install a new plugin. It keeps installed plugins current. So each new plugin costs one announcement and one install per teammate.
 - Both slash forms resolve to the plugin skill. See F8, both slash forms resolve.

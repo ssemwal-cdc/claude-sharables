@@ -7,6 +7,9 @@ date: 2026-08-26
 ---
 # Scheduled run identity unconfirmed
 
+**Moot** since F165, the built-in-browser regression, on
+2026-09-24. The maintainer turned scheduling off. When scheduling returns, this reopens.
+
 **Outcome protected.** A review shows the queue of the person who owns it.
 
 **Argument.** Step 0 must report the name it finds and ask the user to confirm it.

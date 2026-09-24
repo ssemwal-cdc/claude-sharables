@@ -90,8 +90,9 @@ supporting files travel with the plugin. They resolve through
 These plugins install and run in Cowork the same way. The install and the
 `assets/` were verified against both plugins on 2026-08-11. See F2, Cowork
 runs installed plugins. The widget was
-reported drawing inside Cowork, seen directly. Its position and behaviour at
-real scale remain unobserved. See G12, dashboard unseen in widget host.
+reported drawing inside Cowork, seen directly. Its position and behaviour in
+the widget host are now confirmed. See F157,
+dashboard bar confirmed in widget host.
 
 A cloud session against a repository is different. Declare the plugin in that
 repo's `.claude/settings.json` under `enabledPlugins`. It then installs at
@@ -102,7 +103,7 @@ session start.
 | Plugin | Version | What it does | Needs |
 |---|---|---|---|
 | `netsuite-approval-review` | v33 | Reviews the bills, purchase orders and change orders in your NetSuite approval queue. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to NetSuite. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. The NetSuite MCP connector is optional. It adds bulk queries and the PO cross-check. |
-| `procore-open-items-review` | v33 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
+| `procore-open-items-review` | v34 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
 
 Purchase orders are reviewed. Execute mode was retired on 2026-09-18. Its
 prose and code sit in `actionable-retired/` at the repo root.

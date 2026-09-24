@@ -30,8 +30,8 @@ These rulings are that interview.
 | 4 | Skill size | Move Step 8 and the lens sections to `references/`. Step 8 gets a mandatory read |
 | 5 | PO cross-check unobserved, formerly a gap | Closed. Moved to F146, PO cross-check run confirmed. A full connector-mode run pulled the order and the history, and both checks ran. Still depends on ruling 7 |
 | 6 | Notes page unseen, formerly a gap | Closed. Moved to F144, the note read on the record |
-| 7 | `G4`, no end-to-end run | Stays open, unobserved. One slice reports: the maintainer's name showed as approver on the URL-recovery record, and the item moved on. The ordinary approval path and the Procore execute walk stay unwalked |
-| 8 | `G12`, widget host unseen | Stays open, unobserved. One slice reports: the dashboard drew inside Cowork, seen directly. Its position and behaviour at real queue scale stay unobserved |
+| 7 | F158, end-to-end runs confirmed | Closed 2026-09-24. The maintainer reports thousands of end-to-end runs. The ordinary approval path and the Procore execute walk are moot since D91, review-only plugins |
+| 8 | F157, widget host bar confirmed | Closed 2026-09-24. The maintainer reports a thin bar with the item count and Filters stays pinned at the top on a real dashboard |
 | 9 | Procore scheduled prompt unfired, formerly a gap | Closed. Moved to F147, missed window ran nothing later |
 | 10 | procore `README.md:15` | Drop the two figures. Describe the narrowing without numbers |
 | 11 | `F40`, the NetSuite toolbar port, with `F52`, amber was the real finding, `F62`, nothing runs without Chrome, and `F64`, two plugin commands exist | Keep the observed status. Write the reported observation into each Evidence line |

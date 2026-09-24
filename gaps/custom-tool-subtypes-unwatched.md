@@ -26,6 +26,8 @@ The file sizes were reproduced here against a fixture.
 - **The reconciliation has never run.** Step 1 subtracts the config's keys from the queue's subtypes.
   Setting up a new tool mid-run and naming it in the run report is designed and fixture-tested.
   No run has done it.
+  On 2026-09-24 the report line changed to name Shivam Semwal with the field mapping.
+  That shape has not been seen live either.
 - **The second tool's cost field names.** `ROM Cost` and `Approved Customer Cost` are names off a
   rendered record, mapped by label by that run.
   They are almost certainly right and are not confirmed against a payload.

@@ -23,7 +23,7 @@ A typed mismatch is demoted to a data-entry note.
 What is now reported: a full connector-mode run happened.
 Both the duplicate check and the over-commitment check ran.
 Step 5 runs only in connector mode.
-The broader end-to-end gap, G4, no end-to-end run, stays open.
+The broader end-to-end gap is closed. See F158, end-to-end runs confirmed.
 
 **Evidence.** Corrected from guessed to proven, 2026-08-20.
 Confirmed against production on five of five bills.

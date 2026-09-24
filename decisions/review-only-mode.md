@@ -50,7 +50,7 @@ The superseded records below return to `settled` in that same pull request.
 7. In `scripts/shared_blocks.py`, move `check_execute_type_coverage` and `check_execute_prompt_purity` into `actionable-retired/scripts/`. Remove their two calls from `scripts/validate.py`. Add `actionable-retired/` to the validator's skip list. Keep the verdict checks.
 8. In `scripts/test_skill_code.py`, move `test_gate_states` and the bar and mirror assertions of `test_dashboard_view` into `actionable-retired/scripts/`. Add one assertion that neither template contains `onclick="mark(` or an element with id `bar`. Break it once and watch it go red.
 9. Run the float measurement by hand on both renders. D70, measure position in a browser. Record the queue rows visible in the first 700px as a finding.
-10. Mark eleven decisions `superseded`, each citing this record. They are D14, never pre-write an action, through D78, an unmapped subtype keeps buttons, and the list sits under Evidence. Close G7, execute button blocked state unseen, and G16, purchase order route unfired, as moot. Regenerate the indexes.
+10. Mark eleven decisions `superseded`, each citing this record. They are D14, never pre-write an action, through D78, an unmapped subtype keeps buttons, and the list sits under Evidence. Close F159, execute button blocked state, and F163, purchase order route, as moot. Regenerate the indexes.
 11. Rewrite the marketplace descriptions, the READMEs, `CLAUDE.md` and the onboarding sheet. No line may say the dashboard approves or responds. D33, the page is the file. Add a `CLAUDE.md` line naming `actionable-retired/` as read-only reference.
 12. Bump the four version sites in one commit. D43, four synced version sites.
 13. Open one pull request. The maintainer claims ids in the last commit and merges. The merge sha goes into this record under Evidence.
@@ -61,7 +61,9 @@ The superseded records below return to `settled` in that same pull request.
 
 - Surveyed 2026-09-18. Step 8 is one section plus one reference file per plugin. The controls sit in one row renderer, one bar element and one shared block per template.
 - Eleven decisions describe execute behaviour only. D14, never pre-write an action. D18, never batch the click checks. D20, default the approval comment. D28, Approve With Notes stays primary. D37, render the execute bar always. D45, keep reference text out. D46, the bar ignores filters. D48, the message authorises only. D75, gate the two type lists. D76, purchase orders take bill route. D78, an unmapped subtype keeps buttons.
-- Two gaps do. G7, execute button blocked state unseen. G16, purchase order route unfired.
+- No gap does now. Both closed 2026-09-24. See F159, the
+  amber state seen, and F163, the maintainer's report that the route
+  worked.
 - Built on branch 2026-09-18. The retired folder holds 21 files. Two shared blocks, the measurement script and the float header were not in the plan. The retired README names each. Merged 2026-09-18 as 4b0dff1. Reinstate with `git revert -m 1 4b0dff1`.
 
 **Checks.** `python3 scripts/validate.py`, `python3 scripts/test_skill_code.py`, and `scripts/measure_float.js` by hand.

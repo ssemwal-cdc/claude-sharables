@@ -30,6 +30,7 @@ That is the existing frozen-tab fallback rule reused, not a new invention.
 **Evidence.**
 
 - The fields were confirmed live 2026-09-01 on a pending purchase order.
-- The button set is `unmeasured`. See G16, the purchase order route is unfired.
+- The button set is `unmeasured`. See F163, the maintainer's report
+  that the route worked.
 
 **Checks.** `check_execute_type_coverage()` in `scripts/shared_blocks.py`.

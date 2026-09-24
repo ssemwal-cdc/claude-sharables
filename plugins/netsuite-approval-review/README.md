@@ -45,7 +45,7 @@ files survive between runs.
 Invoice tables keep their column alignment. The text is rebuilt from the PDF's
 own geometry rather than flattened into a single line. That alignment is what
 the quantity x rate and line-tie checks read. Verified against fixtures and one
-live bill. See G1, PDF geometry fixture-verified.
+live bill. See F162, PDF geometry line math confirmed.
 
 Support that is not a PDF is handled as what it is. It is not forced through
 the PDF reader. Spreadsheets are read sheet by sheet, hidden sheets included.
@@ -86,6 +86,9 @@ went unreviewed and nobody noticed.
   your real browser session. A scheduled run needs the computer awake, Chrome
   running, and you still signed in. A missed window does not queue up and run
   later. That is why the schedule is worth more than one fire time.
+- **Scheduled runs are paused for now.** A scheduled run opens Claude's
+  built-in browser, not your Claude in Chrome session, so it cannot reach
+  NetSuite. Run a review by hand until this is fixed.
 
 ## First run
 

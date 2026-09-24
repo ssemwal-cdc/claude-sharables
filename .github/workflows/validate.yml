@@ -21,6 +21,9 @@ jobs:
       - name: Validate marketplace, plugins and docs
         run: python3 scripts/validate.py
 
+      - name: Test the plugin.json tail and README row rules
+        run: python3 scripts/test_validate_versions.py
+
       # Runs the executable code the skills carry, extracted from SKILL.md itself. Was a
       # manual gate until 2026-08-24 while README.md told contributors it ran here, so the
       # three-state fan-out, sniff-table, CCO-demotion and renderBar assertions were habit.

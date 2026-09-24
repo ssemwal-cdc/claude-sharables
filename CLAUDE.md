@@ -8,7 +8,7 @@ Its only job is to be a catalog that `/plugin marketplace add` resolves and `/pl
 4. Register it in `.claude-plugin/marketplace.json` as below.
 5. Update `README.md` and this file. Add a table row with the prerequisite and the skill version.
 6. Run the checks below. Then run `claude --plugin-dir plugins/<name> -p "quote the skill version line verbatim"`.
-7. Commit and push to `main`. The push is the release.
+7. Open a pull request to `main`, and merge it once CI is green. The merge is the release. D‹main-only-by-pr›, main moves only by pull request.
 
 ```
 plugins/<plugin-name>/

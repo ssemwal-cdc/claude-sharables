@@ -1,0 +1,6 @@
+- **Open every attachment, and read at least its first page.** That much is mandatory.
+- **Whether to read further pages is a judgement, not a promise.** Base it on what page 1 shows, for example a cover email that points to pricing inside. Do not promise a route to a later page the skill lacks. If a further page is needed and cannot be reached, say so.
+- **A file counts as fully read only when every page was read.** Define a partial read as any page left unread. A gap in the middle counts too, not only a stop at the end.
+- **A partial read is neither a read nor a genuine absence.** Keep a successful read, a genuine absence and a failure as three named states. A partial read can never support a claim that a figure is absent from the file. It can never produce a `clear` verdict either. Name it as the cause, in words such as `support partly read: pages 1 of 17`.
+- **In `supportRead`, write a partial read as `'<file> (pages <list> of <N>)'`**, for example `'CCR-20 scope.pdf (pages 1, 2 of 17)'`.
+- **A long `scanned` PDF or multi-page `image` may need a fresh link mid-read.** Treat it as any other expired link (D27, retry only an expired link).

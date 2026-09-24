@@ -45,7 +45,7 @@ files survive between runs.
 Invoice tables keep their column alignment. The text is rebuilt from the PDF's
 own geometry rather than flattened into a single line. That alignment is what
 the quantity x rate and line-tie checks read. Verified against fixtures and one
-live bill. See G1, PDF geometry fixture-verified.
+live bill. See F‹pdf-geometry-line-math-confirmed›, PDF geometry line math confirmed.
 
 Support that is not a PDF is handled as what it is. It is not forced through
 the PDF reader. Spreadsheets are read sheet by sheet, hidden sheets included.

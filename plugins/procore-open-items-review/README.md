@@ -90,9 +90,10 @@ The dashboard is a read-only page. It shows the row, the details and the
 verdict pill per item. It does not carry buttons or send anything to Procore.
 You act on an item in Procore itself.
 
-The controls and the floating header were measured in a browser. Nobody has
-seen them in the widget host. See G12, widget host
-unseen.
+The floating bar was measured in a browser. The maintainer reports it pinned
+at the top in the widget host too, carrying the item count and Filters. See
+F‹dashboard-widget-host-confirmed›, widget host bar confirmed. Its behaviour
+at real queue scale stays unmeasured.
 
 ## Requirements
 
@@ -153,11 +154,11 @@ adding one. See D9, no version field.
   underlying commitment change order rather than to the package. That record
   has its own id, carried on the package payload at `line_items[].holder.id`.
   Change orders therefore gate and respond like anything else. It only means
-  the package is fetched before the gate runs rather than after it. Observed
+  that the package is fetched before the gate runs rather than after it. Observed
   2026-08-14 against 5 packages. See F18, CCO holder id
   route.
-- **The gate fan-out has not been observed against real Procore.** See
-  G9, gate fan-out unobserved.
+- **The gate fan-out was confirmed solid against real Procore.** See
+  F‹procore-gate-fanout›, procore gate fan-out confirmed solid.
 - If the change order id cannot be resolved, the item is shown with its
   arithmetic verified. Its step and due date are unknown. It gets a button
   to go resolve the gate. The same applies when the package spans several change

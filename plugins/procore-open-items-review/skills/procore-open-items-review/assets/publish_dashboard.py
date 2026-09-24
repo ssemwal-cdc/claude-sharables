@@ -215,9 +215,9 @@ def main():
             # here rather than NetSuite's single name: one Procore item can carry several
             # PCIs, each with its own attachment.
             "att": ", ".join(it.get("supportRead") or []),
-            # Files read on an earlier run and not reopened this run. Kept apart from "att"
-            # so supportRead can stay true to its own contract - only what this run actually
-            # opened and parsed - while Show detail can still say which files were not.
+            # supportCarried is the skipped shortcut's own bookkeeping: files read on an
+            # earlier run and not reopened this one. Kept apart from "att" so a carried
+            # file never reads as this run's own work, on a skipped item or anywhere else.
             "carried": ", ".join(it.get("supportCarried") or []),
         })
 

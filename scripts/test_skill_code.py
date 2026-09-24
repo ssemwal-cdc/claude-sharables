@@ -104,6 +104,47 @@ def run_node(script):
         os.unlink(p)
 
 
+def extract_fn(src, name):
+    """Pull one top-level `function NAME(...) { ... }` out of a template's inline
+    <script>, by brace balancing rather than a line range, so the extraction survives
+    the function moving. Used to render a real row with real functions, instead of
+    grepping the template's source text for the strings a render is supposed to use."""
+    m = re.search(r"function\s+" + re.escape(name) + r"\s*\(", src)
+    if not m:
+        sys.exit("ABORT: no function %r in the template - fix this test if it moved "
+                  "or was renamed." % name)
+    i = src.index("{", m.start())
+    depth = 0
+    for j in range(i, len(src)):
+        if src[j] == "{":
+            depth += 1
+        elif src[j] == "}":
+            depth -= 1
+            if depth == 0:
+                return src[m.start():j + 1]
+    sys.exit("ABORT: unbalanced braces extracting %r" % name)
+
+
+def render_item_row(tpl_path, item):
+    """Render one dashboard row with the template's own itemRow() and its real
+    dependencies (esc, money, daysSince, dueText, recUrl), executed by node. Returns
+    the HTML string itemRow() actually produced - not a guess from the source text."""
+    src = open(tpl_path, encoding="utf-8").read()
+    fns = "\n".join(extract_fn(src, n)
+                     for n in ("esc", "money", "daysSince", "dueText", "recUrl", "itemRow"))
+    harness = ("""
+var REVIEW = {config:{company:"0", icrToolId:"0"}};
+var CO=(REVIEW.config&&REVIEW.config.company)||"";
+var ICR_TOOL=(REVIEW.config&&REVIEW.config.icrToolId)||"";
+""" + fns + """
+console.log(itemRow(""" + json.dumps(item) + """));
+""")
+    rc, out, err = run_node(harness)
+    if rc != 0:
+        sys.exit("ABORT: itemRow() render failed: %s" % (err or out))
+    return out
+
+
 # ---------------------------------------------------------------- 1. extractor
 def test_extractor():
     body = js_block(os.path.join(NS, "SKILL.md"), "__page")
@@ -946,9 +987,14 @@ def test_carried_attachments():
         check("carried: supportCarried lands in its own field, not merged into att",
               it.get("carried") == "CCR-11 — proposal.pdf", it.get("carried"))
 
-        page = open(out_html, encoding="utf-8").read()
-        check("carried: the template renders a carried-forward field in Show detail",
-              "it.carried" in page and "Carried forward, not re-read" in page)
+        # Render the row for real, with the template's own itemRow() and its real
+        # helpers - not a grep for the field name in the template's source text, which
+        # would stay green even if the label rendered the wrong field's value.
+        html = render_item_row(os.path.join(d, "dashboard_template.html"), it)
+        check("carried: Show detail reads 'Read: CCR-20 — new-invoice.pdf'",
+              "Read: CCR-20 — new-invoice.pdf" in html, html)
+        check("carried: the carried label carries the carried value, not supportRead's",
+              "Carried forward, not re-read: CCR-11 — proposal.pdf" in html, html)
     finally:
         shutil.rmtree(d, ignore_errors=True)
 

@@ -470,7 +470,7 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
       "type": "Invoice", "docNo": "#2 · INV-0002 (PR-02)", "amount": 500000, "dueDate": "2026-08-02",
       "project": "Campus A - Building 1", "counterparty": "Example Contractor LLC",
       "step": "FA Review", "responses": ["Approve", "Revise and Resubmit"],
-      "verdict": "clear|flagged|skipped|ungated", "reviewedOn": "2026-08-11", "lastSeenPending": "2026-08-11",
+      "verdict": "clear|flagged|skipped|ungated|tied", "reviewedOn": "2026-08-11", "lastSeenPending": "2026-08-11",
       "head": "one line, the verdict in plain terms",
       "facts": ["two or three skim lines carrying the specific figures"],
       "context": "Commitment <id> · 6.08% complete · balance to finish $9,400,000.00",
@@ -480,11 +480,12 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
       "text": "the comment actually submitted - the user's words, or 'Approved by Claude'",
       "result": "confirmed step advanced|skipped: already actioned|failed: <why>"} ] }
 ```
-- **`supportRead` names every file this run actually opened and parsed for the item**, one entry each. It renders inside Show detail.
-- It is the only field that evidences a verdict rather than asserting it. An empty list beside a `clear` verdict is a contradiction. Leave `supportRead` empty when nothing was readable.
-- **`supportCarried` names every file read on an earlier run and not reopened this run**, one entry each. It uses the same filename strings as `supportRead`. It renders inside Show detail too, labelled `carried forward, not re-read`.
-- **Never put a carried file in `supportRead`.** `supportRead` keeps its own meaning: only what this run actually opened and parsed. A file this run did not touch belongs in `supportCarried` alone.
-- **The known-read set for the next run is this run's `supportRead` plus its `supportCarried`.** Carry that union forward. A file read two runs ago and only carried since is still not treated as new on the third run.
+- **`supportRead` names the files the run that set this verdict opened and parsed**, one entry each. It renders inside Show detail.
+- It is the only field that evidences a verdict rather than asserting it. An empty list beside a `clear` or `tied` verdict is a contradiction. Leave `supportRead` empty when nothing was readable.
+- **On a whole-entry carry, `clear` or `tied` unchanged, `supportRead` is left untouched.** It still names whatever the run that set the verdict read. Nothing was re-evaluated, so nothing changed.
+- **`supportCarried` is used only by the `skipped` shortcut below.** It names files read on an earlier run and not reopened this run, one entry each. Same filename strings as `supportRead`. It renders inside Show detail too, labelled `carried forward, not re-read`.
+- **A partial read never counts as read.** An entry ending `(pages <list> of <N>)` marks a file only partly parsed. Match that exact suffix. Such an entry never joins the known-read set. The file is read again next run.
+- **The known-read set for a `skipped` item is its last run's `supportRead` plus its `supportCarried`, minus any partial-read entry.** Carry that set forward as the next run's starting point.
 - **`config.focus.emphasis`, when set, decides what leads `head`, `facts`, `context` and `detail`, and nothing else.** It may reorder and reword. It may never change a `verdict`, drop a finding, or edit a figure.
 - `kind` is one of `icr`, `inv`, `cco` or `com`. It decides the record URL and the workflow type.
 - **Two of the four cannot decide it on their own.** `com` needs `wfType` and `icr` needs `subtype`.
@@ -494,14 +495,16 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
 - `project` must keep Procore's full `"<Campus> - <Building>"` form, because the script splits it on the outer campus axis.
 
 On each run:
-- Previously **clear** with an unchanged amount carries the entry forward, with no attachment re-read.
+- Previously **clear**, or **tied** with an unchanged amount and every checked field unchanged, carries the entry forward untouched. No attachment is re-read. `supportRead` stays as the verdict-setting run left it.
 - **Mark the row `carried forward, not re-read` on the dashboard.**
 - Previously **flagged** is re-checked in full, because the attachment may have been swapped. A changed amount is treated as new.
-- Previously **skipped** or **tied**, with an unchanged amount, re-reads only the attachments not read on an earlier run. A new attachment is still read in full, because support gets added later.
-- **Identify an attachment by its filename.** That is the same string `supportRead` and `supportCarried` already carry. This skill never reads an attachment id off the record. It only reads `attachments[i].url`, for the redirect. **A file replaced under the same name is not detected as new.** Name that ceiling if it is ever hit.
-- **The known-read set is the previous run's `supportRead` plus its `supportCarried`.** A file in that set is not reopened. Everything else is new, and gets the full Step 4 read.
-- **Mark each carried file `carried forward, not re-read` in Show detail**, beside whatever `supportRead` lists as read this run.
-- A changed amount on a **skipped** or **tied** item is still treated as new. Full re-check, every attachment re-read, the same as `flagged`.
+- Previously **skipped**, with an unchanged amount and every checked field unchanged, does a partial re-read. It opens only the attachments not read on an earlier run. A new attachment is still read in full, because support gets added later.
+- **Identify an attachment by its filename**, the same string `supportRead` and `supportCarried` carry. This skill never reads an attachment id off the record, only `attachments[i].url` for the redirect. **A file replaced under the same name is not detected as new.**
+- **Two attachments sharing a name are two instances, not one.** Read both. A name already checked off once does not clear the second.
+- **The known-read set is the previous run's `supportRead` plus its `supportCarried`, minus any partial-read entry.** A file in that set is not reopened. Everything else is new, and gets the full Step 4 read.
+- **Drop a stale carried entry.** A `supportCarried` name no longer among the item's current attachments is dropped, not carried again.
+- **The shortcut only ever keeps `skipped`.** A carried read may confirm the item stays `skipped`. It never promotes one. Before any move to `clear`, `tied` or `flagged`, re-open every attachment and re-check in full.
+- **A change to any checked record field forces that same full re-check**, not only a changed amount.
 - **No longer in the queue is dropped.** **Count the departed items and name the count in the chat line.**
 - There is no actioned bin. A lingering entry would show as an apparently-pending row.
 

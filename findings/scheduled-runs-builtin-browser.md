@@ -22,5 +22,8 @@ Every fire since kept opening the built-in browser instead of Claude in Chrome.
 Changing the default-browser setting to Claude in Chrome did not change that on a scheduled fire.
 The maintainer stopped scheduling on 2026-09-24 because of this.
 The cause is `unmeasured`.
+On 2026-09-24 both skills gained a first-call Claude in Chrome check, `skill-chrome-first-call`.
+The block copies the shape of a working scheduled skill's own first-call check.
+Whether this fixes scheduled runs is `unmeasured`, until one scheduled run is watched.
 
 **Checks.** none.

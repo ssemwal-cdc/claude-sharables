@@ -9,8 +9,10 @@ and the version line on each stayed exactly where it was.
 This compares the current tree against a base ref (the branch's merge-base with
 main, or the ref VALIDATE_BASE_REF names). For every skill whose files changed
 since that base, the version number on HEAD must be higher than the version on the
-base. A skill absent from the base is new and is exempt - D43 already requires a new
-skill to start at version 1.
+base. A skill whose SKILL.md git sees as renamed (its skill or plugin folder moved)
+is compared against its old path on the base, so a move does not escape the rule. A
+skill absent from the base, and not the target of a rename, is new: it must carry
+version 1 (D43, "A new skill starts at version 1.").
 
 Run standalone:
 
@@ -71,15 +73,19 @@ def run(base_ref=None):
         return [], f"no merge-base with {base} - bump check skipped"
     range_spec = f"{merge_base.stdout.strip()}..HEAD"
 
-    diff = _git("diff", "--name-only", range_spec)
+    diff = _git("diff", "--name-status", "--find-renames", range_spec)
     if diff.returncode != 0:
         return [], f"'git diff {range_spec}' failed - bump check skipped"
-    changed = diff.stdout.splitlines()
+    changed = [line.split("\t") for line in diff.stdout.splitlines()]
     if not changed:
         return [], "no commits ahead of %s - bump check skipped" % base
 
     touched_skills = {}
-    for path in changed:
+    renamed_from = {}  # new path -> its path at the merge base
+    for status, *paths in changed:
+        path = paths[-1]
+        if status.startswith("R"):
+            renamed_from[path] = paths[0]
         m = SKILL_PATH_RE.match(path)
         if m:
             touched_skills.setdefault((m.group(1), m.group(2)), []).append(path)
@@ -87,15 +93,27 @@ def run(base_ref=None):
     problems = []
     for (plugin, skill), paths in sorted(touched_skills.items()):
         skill_md = f"plugins/{plugin}/skills/{skill}/SKILL.md"
-        old = _version_at(merge_base.stdout.strip(), skill_md)
-        if old is None:
-            continue  # new skill - D43 already requires it to start at version 1
         new = _version_at(None, skill_md)
         if new is None:
             continue  # validate.py's own frontmatter check already fails this
+        base_md = renamed_from.get(skill_md, skill_md)
+        old = _version_at(merge_base.stdout.strip(), base_md)
+        if old is None:
+            if new != 1:  # new skill - D43, "A new skill starts at version 1."
+                problems.append(
+                    f"{plugin}/{skill} is new but carries skill version {new} - a new "
+                    f"skill starts at version 1. If this is a rename git could not detect "
+                    f"(SKILL.md rewritten over 50%), land the rename in its own PR first. "
+                    f"See D43, four synced version sites."
+                )
+            continue
         if new <= old:
+            name = f"{plugin}/{skill}"
+            if base_md != skill_md:
+                m = SKILL_PATH_RE.match(base_md)  # None when moved in from outside plugins/
+                name = f"{'/'.join(m.groups()) if m else base_md} -> {name}"
             problems.append(
-                f"{plugin}/{skill} changed ({len(paths)} file(s), e.g. {paths[0]}) but "
+                f"{name} changed ({len(paths)} file(s), e.g. {paths[0]}) but "
                 f"the skill version stayed at {old} - bump it past {old} in this commit. "
                 f"See D43, four synced version sites."
             )

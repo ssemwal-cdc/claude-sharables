@@ -15,6 +15,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from version_tails import plugin_tail_problems, readme_row_problems
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MARKETPLACE = os.path.join(REPO, ".claude-plugin", "marketplace.json")
@@ -158,6 +159,7 @@ for name, src in registered.items():
     if not skills:
         fail(f"[{name}] skills/ is empty")
 
+    tails = []  # (skill, n, date) in sorted skill order, for the plugin.json tail
     for skill in skills:
         sp = os.path.join(skills_dir, skill, "SKILL.md")
         if not os.path.isfile(sp):
@@ -176,7 +178,7 @@ for name, src in registered.items():
             fail(f"[{name}/{skill}] frontmatter has no description")
 
         # Human-readable skill version line. An installed skill is a snapshot,
-        # and the desktop app shows no commit SHA anywhere — opening the skill
+        # and the desktop app shows its commit only deep in a menu — opening the skill
         # shows SKILL.md, so the file itself is the only place a version can be
         # read on that surface. This is NOT the banned machine 'version' field:
         # it affects nothing about install resolution. It must sit at the top
@@ -197,6 +199,7 @@ for name, src in registered.items():
                 )
             n, vdate = int(vm.group(1)), vm.group(2)
             skill_versions[(name, skill)] = n
+            tails.append((skill, n, vdate))
 
             # The desktop app's Settings -> Plugins screen renders plugin.json's
             # description in full and the skill's frontmatter description truncated
@@ -208,13 +211,6 @@ for name, src in registered.items():
                     f"[{name}/{skill}] frontmatter description must start with "
                     f"'v{n} — ' to match the skill version line — bump both in the "
                     f"same commit"
-                )
-            tail = "Skill version %d — %s." % (n, vdate)
-            if not pj.get("description", "").rstrip().endswith(tail):
-                fail(
-                    f"[{name}] plugin.json description must end with {tail!r} to match "
-                    f"{skill}/SKILL.md — bump both in the same commit. (One skill per "
-                    f"plugin today; if this plugin now holds several, revisit this rule.)"
                 )
 
         # Assets must be referenced through ${CLAUDE_PLUGIN_ROOT} and must exist.
@@ -238,6 +234,12 @@ for name, src in registered.items():
                 f"[{name}/{skill}] SKILL.md uses bare path {bad!r}. Asset paths must be "
                 f"${{CLAUDE_PLUGIN_ROOT}}/skills/{skill}/{bad} or they break once installed."
             )
+
+    # A skill with a bad version line has already failed above; check the tail
+    # only when every skill gave one, so the single/multi form is the true one.
+    if tails and len(tails) == len(skills):
+        for p in plugin_tail_problems(pj.get("description", ""), tails):
+            fail(f"[{name}] {p}")
 
 # ------------------------------------------------------------------- orphans
 for d in on_disk:
@@ -271,15 +273,14 @@ for doc in ("README.md", "CLAUDE.md"):
     # The README's plugin table must agree with each SKILL.md's version line.
     # validate.py can enforce the match, not the bump — bumping is the habit.
     if doc == "README.md":
-        for (pname, skill), n in sorted(skill_versions.items()):
+        for pname in sorted({p for p, _ in skill_versions}):
             rows = [l for l in body.splitlines() if f"`{pname}`" in l and "|" in l]
             if not rows:
                 fail(f"README.md has no table row for {pname!r} to carry its skill version")
-            elif not any(f"v{n}" in l for l in rows):
-                fail(
-                    f"README.md's row for {pname!r} does not say v{n}, but "
-                    f"{skill}/SKILL.md says skill version {n} — bump both in the same commit"
-                )
+                continue
+            versions = sorted((s, n) for (p, s), n in skill_versions.items() if p == pname)
+            for p in readme_row_problems(rows, versions):
+                fail(f"README.md's row for {pname!r} {p}")
 
     # The docs must not instruct anyone to do what the rules above reject.
     # Quoted failure examples are fine; instructions are not.

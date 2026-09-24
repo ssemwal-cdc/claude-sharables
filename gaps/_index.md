@@ -19,7 +19,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | G15 | `custom-tool-subtypes-unwatched` | Custom tool subtypes unwatched | unobserved | 2026-09-01 | A check reads the right field on the right custom tool. |
 | G16 | `po-execute-route-unfired` | Purchase order route unfired | unobserved | 2026-09-01 | A reviewed purchase order can be actioned, and only as the reviewer instructed. |
 | G18 | `dashboard-empty-context-strip` | Empty context strip unobserved | unobserved | 2026-09-15 | A reviewer sees no blank grey block on a dashboard row. |
-| G17 | `multi-skill-plugin-unbuilt` | Multi-skill plugins are unbuilt | unobserved | 2026-09-15 | Nobody follows a documented standard that the build then rejects. |
+| G17 | `multi-skill-plugin-unbuilt` | Bundle plugins are unbuilt | unobserved | 2026-09-15 | Nobody follows a documented standard that the build then rejects. |
 | G7 | `execute-button-blocked-state-unseen` | Execute button blocked state unseen | unobserved | 2026-09-16 | A blocked execute button reads as blocked, not as broken. |
 | G10 | `no-guard-on-render-fallback` | No guard on the render fallback | unobserved | 2026-09-23 | A verdict the allowlist accepts always reaches its own branch on the dashboard, never the `clear` default. |
 | G19 | `tied-verdict-unobserved` | Tied verdict unobserved live | unobserved | 2026-09-23 | A `tied` row on the dashboard is never cited as proven until a real run produced it. |

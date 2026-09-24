@@ -60,10 +60,13 @@ Covered:
  16. Carried attachments - `supportCarried` (files read on an earlier run, not
                            reopened this run) survives publish as its own field,
                            and never merges into `supportRead`, whose contract is
-                           only what this run itself opened and parsed.
+                           the files the run that set the verdict opened and
+                           parsed. Also renders under its own label, proven by
+                           actually executing the template's itemRow(), not by
+                           grepping its source for the field name.
 
 Usage:  python3 scripts/test_skill_code.py
-Needs node on PATH for 1-3; those are skipped with a notice if it is missing.
+Needs node on PATH for 1-3 and 16; those are skipped with a notice if it is missing.
 """
 import json, os, re, shutil, subprocess, sys, tempfile
 
@@ -947,10 +950,11 @@ def test_tied_verdict():
 # ------------------------------------------ 16. carried-forward attachments
 def test_carried_attachments():
     """`supportCarried` (files read on an earlier run, not reopened this run) must stay a
-    field of its own, distinct from `supportRead` (this run's own reads), all the way
-    through publish and into the template's render. Folding the two together is exactly
-    the defect this field exists to avoid: `supportRead` would then no longer mean "this
-    run actually opened it," which is the property Step 6's `tied` checks rely on.
+    field of its own, distinct from `supportRead`, all the way through publish and into
+    the template's render. Folding the two together is exactly the defect this field
+    exists to avoid: `supportRead` names the files the run that set the verdict opened
+    and parsed, and a carried file merged into it would make that no longer true, on the
+    very carry the field exists to describe.
     """
     d = tempfile.mkdtemp()
     try:
@@ -1111,14 +1115,14 @@ def main():
         test_sniff()
         test_sheets()
         test_po_line()
+        test_carried_attachments()
     else:
         print("  SKIP  node not on PATH - extractor, page budget, gate states, "
-              "sniff, sheets and poLine not run")
+              "sniff, sheets, poLine and carried attachments not run")
     test_cco_demotion()
     test_commitment_kind()
     test_custom_tool_subtype()
     test_tied_verdict()
-    test_carried_attachments()
     test_render_fits_one_read()
     test_template_version()
     test_step0_write_states()

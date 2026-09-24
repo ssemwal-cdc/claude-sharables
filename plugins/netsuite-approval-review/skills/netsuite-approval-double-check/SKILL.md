@@ -543,7 +543,7 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
 On each run:
 
 - Items already logged **clear** and unchanged: same amount, no new attachment. Do not re-fetch or re-analyze any attachment. Carry the entry forward. The whole entry, `attachmentFiles` included, is carried untouched.
-- **A new attachment ends the carry.** Compare NetSuite file ids, not names. A file id absent from the last review's `attachmentFiles` forces the same full review as a changed amount. **In connector mode only the named-field files are visible.** So a new unnamed file on a carried bill is not detected. Browser mode sees every file.
+- **A new attachment ends the carry.** Compare NetSuite file ids, not names. A file id absent from the last review's `attachmentFiles` forces the same full review as a changed amount. **In connector mode only the named-field files are visible.** So a new unnamed file on a carried bill is not detected. Browser mode is designed to see every `media.nl` link on the page.
 - Items previously **flagged**: re-check in full. The vendor may have replaced the attachment.
 - Items whose amount changed since the last review: treat as new. The dashboard has no `changed` pill, so the change shows up only as a fresh full review of that item.
 - Brand-new items: full review.

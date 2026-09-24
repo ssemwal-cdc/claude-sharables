@@ -1,9 +1,9 @@
 ---
 name: procore-open-items-review
-description: v34 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still waiting on their response. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged, skipped or tied verdict per item. This skill is read-only: it never clicks Respond, Approve, Reject or Revise and Resubmit, every Procore call it makes is a GET, and the dashboard it publishes carries no response controls. Every verdict is a recommendation, and the response itself stays yours to make in Procore.
+description: v35 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still waiting on their response. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged, skipped or tied verdict per item. This skill is read-only: it never clicks Respond, Approve, Reject or Revise and Resubmit, every Procore call it makes is a GET, and the dashboard it publishes carries no response controls. Every verdict is a recommendation, and the response itself stays yours to make in Procore.
 ---
 # Procore Open Items Review
-**Skill version 34 — 2026-09-24.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
+**Skill version 35 — 2026-09-24.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
 
 Review every Procore item **waiting on the user's workflow response**. Verify each item's figures against its attached support. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget. Chat gets one headline line.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
@@ -81,6 +81,13 @@ head -n 8 "<workspace>/Procore Open Items/dashboard_template.html" | grep -o 'la
 ```
 If that does not say `v18`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
 
+<!--__SHARED:skill-chrome-first-call__-->
+- **Call `tabs_context_mcp` once, before any browser action, on every run.** This is the Claude in Chrome tool. Do this first, even in a scheduled run where nobody is watching.
+- **Do every browser step through Claude in Chrome, in the user's own signed-in Chrome.** Never use the Claude app's built-in browser. Not as a first try, and never as a fallback.
+- **If the extension is unreachable, retry once.** A second failure means stop. Never keep calling failing browser tools.
+- **On a second failure, stop and say so in the run report.** State plainly that Claude in Chrome was unreachable. Never continue the run in the built-in browser or any other browser.
+<!--__END_SHARED:skill-chrome-first-call__-->
+
 Then read `Procore Open Items/_procore_review_log.json`. A file already carrying a `config` block finishes this step, apart from the two back-fills below. Go to Step 1. Otherwise run setup once.
 
 **Back-fill, for a `config` written before focus existed.** A `config` with no `focus` key gets setup question 6, once. Write the answer and never ask again. Store a decline as `{"lenses": [], "emphasis": ""}`. **Absent and empty are different states.** Absent means never asked. Empty means asked and declined.
@@ -91,7 +98,8 @@ Then read `Procore Open Items/_procore_review_log.json`. A file already carrying
                  { "toolId": "<the old icrToolId>", "costFields": { <the old costFields> } } }
 ```
 **Name the placeholder key in the run report. Retire it when Step 1 resolves the real subtype.** Leave `icrToolId` where it is, because `publish_dashboard.py` reads it as the link floor for rows logged before subtypes. Drop `icrSubtype`, which is now the key. A declared field no step reads is worse than no field, because it reads as coverage.
-1. **Confirm Claude in Chrome is connected and Procore is authenticated.** Warn the user about the site-access prompt before navigating. Claude in Chrome asks whether to allow access to a site, the first time it acts on one. It offers a once-only option and an always option. **Tell them to pick the always option.** Once for Procore, and again for the S3 host when Step 4 first reads an attachment. On once-only they are re-prompted on effectively every action. Then navigate to the company Open Items tool.
+
+1. **Step 0 already confirmed Claude in Chrome with `tabs_context_mcp`. Now confirm Procore is authenticated.** Warn the user about the site-access prompt before navigating. The first time Claude in Chrome acts on a site, it asks whether to allow access. It offers a once-only option and an always option. **Tell them to pick the always option.** Once for Procore, and again for the S3 host, at the point Step 4 first reads an attachment. On once-only they are re-prompted on effectively every action. Then navigate to the company Open Items tool.
 
    **Authentication has three outcomes. Say which one is on screen.** Decide on what is on screen, never on what a rule sounds like it implies.
 

@@ -96,4 +96,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D90 | `published-facts-reader` | Published facts reader | settled | 2026-09-18 | A published number or path in `CLAUDE.md` or a README has a reader. |
 | D91 | `review-only-mode` | Review-only plugins | settled | 2026-09-18 | A reviewer gets a dashboard with no decision controls. |
 | D92 | `tied-verdict-for-verified-blanks` | Add a fifth verdict for a verified blank | settled | 2026-09-23 | An item whose figures were verified reaches the reviewer. |
-| pending | `main-only-by-pr` | Main moves only by pull request | settled | 2026-09-24 | Every release passes the whole build gate, the version-bump check included. |
+| D93 | `main-only-by-pr` | Main moves only by pull request | settled | 2026-09-24 | Every release passes the whole build gate, the version-bump check included. |

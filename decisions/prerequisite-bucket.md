@@ -13,7 +13,7 @@ date: 2026-08-24
 
 **Argument.**
 
-A teammate can switch off one skill inside a plugin. See F‹plugin-skill-switch-off›, one plugin skill can be switched off. That switch now protects the outcome.
+A teammate can switch off one skill inside a plugin. See F154, one plugin skill can be switched off. That switch now protects the outcome.
 
 So the prerequisite boundary is a default, not a wall. It keeps each install line, update line and README to one system.
 
@@ -38,7 +38,7 @@ Adding a skill to an existing plugin does not touch `marketplace.json`. The `ski
 **Evidence.**
 
 - Recorded 2026-08-24. Both plugins hold one skill today. That is an accident of porting two skills with two prerequisites.
-- Amended 2026-09-24. The old argument said a single plugin skill cannot be silenced. F‹plugin-skill-switch-off›, one plugin skill can be switched off, measured that false, so the rule became a default. The outcome is unchanged.
+- Amended 2026-09-24. The old argument said a single plugin skill cannot be silenced. F154, one plugin skill can be switched off, measured that false, so the rule became a default. The outcome is unchanged.
 - The documented standard layout allows several skills in one plugin. `scripts/validate.py` blocks it today. See G17, multi-skill plugin unbuilt.
 - Past 4 plugins, publish a dependency-only bundle plugin with bare string dependencies. Do not build it at 2 plugins.
 - Auto sync does not install a new plugin. It keeps installed plugins current. So each new plugin costs one announcement and one install per teammate.

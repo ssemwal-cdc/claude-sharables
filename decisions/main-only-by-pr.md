@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D93
 slug: main-only-by-pr
 kind: decision
 status: settled

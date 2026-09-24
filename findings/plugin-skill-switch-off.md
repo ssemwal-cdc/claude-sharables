@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F154
 slug: plugin-skill-switch-off
 kind: finding
 status: observed

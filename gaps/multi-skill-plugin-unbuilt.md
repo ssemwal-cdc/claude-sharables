@@ -24,6 +24,6 @@ D56, plugins are prerequisite buckets, defers the bundle until past 4 plugins. S
 - Never observed. No bundle plugin exists.
 - The bundle wall is read from `scripts/validate.py` as of 2026-09-24. It has not been triggered, so the exact failure text is `unmeasured`.
 - The multi-skill wall was measured before it fell. A two-skill fixture failed the old check and passes the new one. `scripts/test_validate_versions.py` holds that proof.
-- Deferred 2026-09-24 by the maintainer. Revisit G17 after the current gap work lands. Start from the maintainer's second marketplace, `ssemwal-cdc/glen-tools`, which copies this repo's scripts.
+- Deferred 2026-09-24 by the maintainer. Revisit this gap after the current gap work lands. Start from the maintainer's second marketplace, `ssemwal-cdc/glen-tools`, which copies this repo's scripts.
 
 **Checks.** `scripts/test_validate_versions.py` for the fallen wall. none for the bundle wall.

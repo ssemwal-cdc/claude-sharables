@@ -345,7 +345,7 @@ Three things are not optional:
 - **Sniff the bytes before parsing. Never hand a non-PDF to pdf.js.** Handing a workbook to `getDocument` throws `InvalidPDFException`, the same error a corrupt download gives. So a good spreadsheet gets logged as unreadable support. Non-PDF support occurs here.
 - **Sniff the first four bytes before choosing a reader.** `%PDF` is a PDF. `PK\x03\x04` is a ZIP container, and a workbook only if it holds `xl/` entries. `\xFF\xD8\xFF` is JPEG. `\x89PNG` is PNG. Anything that decodes cleanly as text is text. Six outcomes, kept distinct: `text`, `spreadsheet`, `image`, `scanned`, `expired`, `unsupported`.
 - **`scanned` means that the bytes were a PDF, it parsed, and it yielded almost nothing.** A parse that threw is never `scanned`. It is `spreadsheet`, `image` or `unsupported`, named by what the bytes actually were.
-- **Multiple attachments: open every attached file, and read at least page 1 of each.** Check the figures against the file the AP INVOICE or CHANGE ORDER ATTACHMENT field names. Mention the others, and say what page 1 of each showed when it bears on the item.
+- **Multiple attachments: open every attached file, and read at least page 1 of each.** In connector mode that is the files the connector can list, today the one named field's file. Check the figures against the file the AP INVOICE or CHANGE ORDER ATTACHMENT field names. Mention the others, and say what page 1 of each showed when it bears on the item.
 - **Workbooks parse with SheetJS, loaded the way pdf.js is.** Probed live 2026-08-14: `await import('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')` populates `globalThis.XLSX` on the first attempt. Then `XLSX.read(new Uint8Array(ab), {type:'array'})` and `XLSX.utils.sheet_to_csv` round-trip cleanly. **This pin is deliberate. Do not bump it in a skill edit.** Same wrap, same whole-unit size budget: sheet by sheet, never split one. Read every sheet including hidden ones. Treat a blank cell from an unevaluated formula as missing, never as zero.
 - **Images and scanned pages: look at them, with `computer`.** That is the only tool in the set that returns a visual read. NetSuite renders the file in the record tab, which is ordinary HTML, so `document.createElement('canvas')` works here. A visual read counts as parsed text for the tie-outs. If no visual read is available, fall back to OCR and **cap the verdict.** An OCR-derived figure never produces a clean approval recommendation. Label it `read by OCR, not independently verified` and put it in front of the user.
 
@@ -519,7 +519,7 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
       "poTyped": "what custbody3 said, recorded whether or not it agrees",
       "detail": "the full paragraph of reasoning",
       "attachmentFile": "the attachment's NetSuite file name and id, e.g. '<vendor> <month> <year>.pdf (<file id>)'",
-      "attachmentFiles": ["one entry per attached file this run opened, same 'name (id)' shape as attachmentFile"],
+      "attachmentFiles": ["one entry per attached file the review that set this verdict opened, same 'name (id)' shape as attachmentFile"],
       "poRef": "PO<id>"
     }
   },
@@ -535,15 +535,15 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
 - **`type` is required, and those three strings are the whole vocabulary.** Write it on every item. The publish script falls back to `Bill` when it is missing. That is a legacy default that silently mislabels a purchase order.
 - **`poRef` is the PO the bill is applied to**, resolved from the Step 2 linkage, never from `poTyped`. The two are separate fields on purpose: keeping the typed value lets a reader see the disagreement. `poLink` says which of the three states produced `poRef`. So an `unlinked` or `failed` item can never read as though its PO had been confirmed.
 - `head`, `facts`, `poContext` and `detail` are what the dashboard renders. Write them for a reader who is skimming. `facts` should be the two or three lines that carry the specific figures.
-- **`attachmentFiles` names every attached file this run opened**, one entry each, same `name (id)` shape as `attachmentFile`. `attachmentFile` alone still names the one the figures are checked against.
-- **The id is Step 3's own file id.** It is the `file` table's `id` column in connector mode, and the `media.nl` link's `id` parameter in browser mode. Both routes already carry it for every file a run opens.
+- **`attachmentFiles` names every attached file the review that set this verdict opened**, one entry each. Same `name (id)` shape as `attachmentFile`. `attachmentFile` alone still names the one the figures are checked against.
+- **The id is Step 3's own file id.** In connector mode, an id is read only for the named-field files. That is the AP INVOICE or CHANGE ORDER ATTACHMENT id Step 3's file query looks up. In browser mode, the `media.nl` DOM read supplies an id for every link. That read is designed, not yet observed.
 - **`config.focus.emphasis`, when set, decides what leads those fields, and nothing else.** It may reorder and reword. It may **never** change a `verdict`, drop a finding, or alter `amount`, `poRef`, `poLink` or `poTyped`. Every check that ran still gets its line.
 - **Emphasis is the user's own note about their job, not an instruction to the review.** It cannot authorise a click, soften a flag, or relax any Absolute rule. If it asks for something this skill does not do, record what was asked and do none of it. Say so once.
 
 On each run:
 
-- Items already logged **clear** and unchanged: same amount, no new attachment. Do not re-fetch or re-analyze any attachment. Carry the entry forward.
-- **A new attachment ends the carry.** Compare NetSuite file ids, not names. A file id absent from the last review's `attachmentFiles` forces the same full review as a changed amount.
+- Items already logged **clear** and unchanged: same amount, no new attachment. Do not re-fetch or re-analyze any attachment. Carry the entry forward. The whole entry, `attachmentFiles` included, is carried untouched.
+- **A new attachment ends the carry.** Compare NetSuite file ids, not names. A file id absent from the last review's `attachmentFiles` forces the same full review as a changed amount. **In connector mode only the named-field files are visible.** So a new unnamed file on a carried bill is not detected. Browser mode sees every file.
 - Items previously **flagged**: re-check in full. The vendor may have replaced the attachment.
 - Items whose amount changed since the last review: treat as new. The dashboard has no `changed` pill, so the change shows up only as a fresh full review of that item.
 - Brand-new items: full review.

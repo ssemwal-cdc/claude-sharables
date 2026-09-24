@@ -498,7 +498,7 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
 - **On a whole-entry carry, `clear` or `tied` unchanged, `supportRead` is left untouched.** It still names whatever the run that set the verdict read. Nothing was re-evaluated, so nothing changed.
 - **`supportCarried` is used only by the `skipped` shortcut below.** It names files read on an earlier run and not reopened this run, one entry each. Same filename strings as `supportRead`. It renders inside Show detail too, labelled `carried forward, not re-read`.
 - **A partial read never counts as read.** An entry ending `(pages <list> of <N>)` marks a file only partly parsed. Match that exact suffix. Such an entry never joins the known-read set. The file is read again next run.
-- **The known-read set for a `skipped` item is its last run's `supportRead` plus its `supportCarried`.** Drop any partial-read entry, and any name no longer among the item's current attachments. Compare by the label's filename part. Strip a prefix such as `PCI 42 — ` and any `(pages … of N)` suffix. Carry what is left forward as the next run's starting point.
+- **The known-read set for a `skipped` item is its last run's `supportRead` plus its `supportCarried`.** Drop any partial-read entry, and any name no longer among the item's current attachments. Compare by the label's filename part. Strip a prefix such as `PCI 42 — `. Carry what is left forward as the next run's starting point.
 - **`config.focus.emphasis`, when set, decides what leads `head`, `facts`, `context` and `detail`, and nothing else.** It may reorder and reword. It may never change a `verdict`, drop a finding, or edit a figure.
 - `kind` is one of `icr`, `inv`, `cco` or `com`. It decides the record URL and the workflow type.
 - **Two of the four cannot decide it on their own.** `com` needs `wfType` and `icr` needs `subtype`.
@@ -509,14 +509,14 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
 
 On each run:
 - Previously **clear** or **tied**, with an unchanged amount and every checked field unchanged, carries the entry forward untouched. No attachment is re-read. `supportRead` stays as the verdict-setting run left it.
-- **A new attachment ends the carry.** One not already named in `supportRead` forces the same full re-check as a changed checked field. The tied ruling covers only an attachment already matched to the numbers.
+- **A new attachment ends the carry.** One not already in `supportRead` forces the same full re-check as a changed checked field. Compare it as below, instance by instance. PCI 43 adding its own `proposal.pdf` to an item that already lists PCI 42's `proposal.pdf` is a new attachment. A `tied` carry covers only the attachments its tie was read from.
 - **A checked field is a field a Step 5 check reads**, including the field blank in a `tied` item. Filling that blank field forces the same full re-check as a changed amount.
 - **Mark the row `carried forward, not re-read` on the dashboard.**
 - Previously **flagged** is re-checked in full, because the attachment may have been swapped. A changed amount is treated as new.
 - Previously **skipped**, with an unchanged amount and every checked field unchanged, does a new-files-only re-read. It opens only the attachments outside the known-read set. A new attachment is still read in full, because support gets added later.
-- **Identify an attachment by its filename**, the same string `supportRead` and `supportCarried` carry. This skill never reads an attachment id off the record, only `attachments[i].url` for the redirect. **A file replaced under the same name is not detected as new.**
+- **Identify an attachment by its filename**, the filename part of the `supportRead` label. This skill never reads an attachment id off the record, only `attachments[i].url` for the redirect. **A file replaced under the same name is not detected as new.**
 - **Two attachments sharing a name are two instances, not one.** Read both. A name already checked off once does not clear the second.
-- **The known-read set is the previous run's `supportRead` plus its `supportCarried`.** Drop any partial-read entry, and any name no longer among the item's current attachments. Compare by the label's filename part. Strip a prefix such as `PCI 42 — ` and any `(pages … of N)` suffix. A file left in the set is not reopened. Everything else is new, and gets the full Step 4 read.
+- **The known-read set is the previous run's `supportRead` plus its `supportCarried`.** Drop any partial-read entry, and any name no longer among the item's current attachments. Compare by the label's filename part. Strip a prefix such as `PCI 42 — `. A file left in the set is not reopened. Everything else is new, and gets the full Step 4 read.
 - **The shortcut only ever keeps `skipped`.** A carried read may confirm the item stays `skipped`. It never promotes one. Before any move to `clear`, `tied` or `flagged`, re-open every attachment and re-check in full.
 - **A change to any checked field forces that same full re-check**, not only a changed amount.
 - **On the new-files-only re-read, a file already in the known-read set is not read this run.** Step 4's first-page rule does not reopen it. The full re-check above still opens every file, first page included.

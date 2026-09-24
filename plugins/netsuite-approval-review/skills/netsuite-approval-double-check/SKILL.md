@@ -519,6 +519,7 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
       "poTyped": "what custbody3 said, recorded whether or not it agrees",
       "detail": "the full paragraph of reasoning",
       "attachmentFile": "the attachment's NetSuite file name and id, e.g. '<vendor> <month> <year>.pdf (<file id>)'",
+      "attachmentFiles": ["one entry per attached file this run opened, same 'name (id)' shape as attachmentFile"],
       "poRef": "PO<id>"
     }
   },
@@ -534,13 +535,15 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
 - **`type` is required, and those three strings are the whole vocabulary.** Write it on every item. The publish script falls back to `Bill` when it is missing. That is a legacy default that silently mislabels a purchase order.
 - **`poRef` is the PO the bill is applied to**, resolved from the Step 2 linkage, never from `poTyped`. The two are separate fields on purpose: keeping the typed value lets a reader see the disagreement. `poLink` says which of the three states produced `poRef`. So an `unlinked` or `failed` item can never read as though its PO had been confirmed.
 - `head`, `facts`, `poContext` and `detail` are what the dashboard renders. Write them for a reader who is skimming. `facts` should be the two or three lines that carry the specific figures.
+- **`attachmentFiles` names every attached file this run opened**, one entry each, same `name (id)` shape as `attachmentFile`. `attachmentFile` alone still names the one the figures are checked against.
+- **The id is Step 3's own file id.** It is the `file` table's `id` column in connector mode, and the `media.nl` link's `id` parameter in browser mode. Both routes already carry it for every file a run opens.
 - **`config.focus.emphasis`, when set, decides what leads those fields, and nothing else.** It may reorder and reword. It may **never** change a `verdict`, drop a finding, or alter `amount`, `poRef`, `poLink` or `poTyped`. Every check that ran still gets its line.
 - **Emphasis is the user's own note about their job, not an instruction to the review.** It cannot authorise a click, soften a flag, or relax any Absolute rule. If it asks for something this skill does not do, record what was asked and do none of it. Say so once.
 
 On each run:
 
-- Items already logged **clear** and unchanged: same amount, no new attachment. Do not re-fetch or re-analyze the attachment. Carry the entry forward.
-- **A new attachment ends the carry.** One not already logged as `attachmentFile` forces the same full review as a changed amount.
+- Items already logged **clear** and unchanged: same amount, no new attachment. Do not re-fetch or re-analyze any attachment. Carry the entry forward.
+- **A new attachment ends the carry.** Compare NetSuite file ids, not names. A file id absent from the last review's `attachmentFiles` forces the same full review as a changed amount.
 - Items previously **flagged**: re-check in full. The vendor may have replaced the attachment.
 - Items whose amount changed since the last review: treat as new. The dashboard has no `changed` pill, so the change shows up only as a fresh full review of that item.
 - Brand-new items: full review.

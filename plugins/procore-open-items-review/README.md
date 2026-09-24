@@ -109,6 +109,9 @@ unseen.
   queue up and run later. A maintainer report confirmed this
   (F147, missed window confirmed). That is why
   the schedule is worth more than one fire time.
+- **Scheduled runs are paused for now.** A scheduled run opens Claude's
+  built-in browser, not your Claude in Chrome session, so it cannot reach
+  Procore. Run a review by hand until this is fixed.
 
 ## First run
 

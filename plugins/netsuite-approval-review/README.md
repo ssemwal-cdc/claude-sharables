@@ -86,6 +86,9 @@ went unreviewed and nobody noticed.
   your real browser session. A scheduled run needs the computer awake, Chrome
   running, and you still signed in. A missed window does not queue up and run
   later. That is why the schedule is worth more than one fire time.
+- **Scheduled runs are paused for now.** A scheduled run opens Claude's
+  built-in browser, not your Claude in Chrome session, so it cannot reach
+  NetSuite. Run a review by hand until this is fixed.
 
 ## First run
 

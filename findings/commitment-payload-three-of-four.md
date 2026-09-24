@@ -32,7 +32,7 @@ A substantive checklist comes from asking the maintainer, never from inventing o
 **Evidence.**
 
 - Confirmed 2026-08-28 against a real purchase order contract.
-- The work order contract payload is still unread. See F‹commitment-payload-unread›, the
+- The work order contract payload is still unread. See F155, the
   commitment payload reported closed.
 
 **Checks.** none

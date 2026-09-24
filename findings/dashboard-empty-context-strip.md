@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F156
 slug: dashboard-empty-context-strip
 kind: finding
 status: observed

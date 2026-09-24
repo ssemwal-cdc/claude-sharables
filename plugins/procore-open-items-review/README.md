@@ -92,7 +92,7 @@ You act on an item in Procore itself.
 
 The floating bar was measured in a browser. The maintainer reports it pinned
 at the top in the widget host too, carrying the item count and Filters. See
-F‹dashboard-widget-host-confirmed›, widget host bar confirmed. Its behaviour
+F157, widget host bar confirmed. Its behaviour
 at real queue scale stays unmeasured.
 
 ## Requirements
@@ -158,7 +158,7 @@ adding one. See D9, no version field.
   2026-08-14 against 5 packages. See F18, CCO holder id
   route.
 - **The gate fan-out was confirmed solid against real Procore.** See
-  F‹procore-gate-fanout›, procore gate fan-out confirmed solid.
+  F164, procore gate fan-out confirmed solid.
 - If the change order id cannot be resolved, the item is shown with its
   arithmetic verified. Its step and due date are unknown. It gets a button
   to go resolve the gate. The same applies when the package spans several change

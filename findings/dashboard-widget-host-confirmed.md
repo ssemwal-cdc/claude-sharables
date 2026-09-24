@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F157
 slug: dashboard-widget-host-confirmed
 kind: finding
 status: observed

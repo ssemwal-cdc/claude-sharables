@@ -7,7 +7,7 @@ date: 2026-08-26
 ---
 # Scheduled run identity unconfirmed
 
-**Moot** since F‹scheduled-runs-builtin-browser›, the built-in-browser regression, on
+**Moot** since F165, the built-in-browser regression, on
 2026-09-24. The maintainer turned scheduling off. When scheduling returns, this reopens.
 
 **Outcome protected.** A review shows the queue of the person who owns it.

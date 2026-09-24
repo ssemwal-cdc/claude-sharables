@@ -25,6 +25,7 @@ The other option was to diff a direct push against the commit before it. The mai
 
 - Decided 2026-09-24 by the maintainer.
 - A local simulation of a push to `main` skipped the bump check with "no commits ahead of origin/main".
-- Branch protection is a GitHub setting, outside this repo. Whether it is on is `unmeasured` here.
+- Branch protection is a GitHub setting, outside this repo.
+- The maintainer reported the `main` ruleset set on 2026-09-24. No read from this repo confirms it.
 
 **Checks.** `.github/workflows/validate.yml` runs `scripts/validate.py` on every pull request. Branch protection on GitHub enforces the rule itself.

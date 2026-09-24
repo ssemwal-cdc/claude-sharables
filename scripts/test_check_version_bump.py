@@ -35,13 +35,16 @@ def _asset(repo, skill_dir, text):
         fh.write(text + "\n" + "".join(f"asset {i}\n" for i in range(20)))
 
 
-def _case(feature):
-    """Base: plugin p, skill s at version 3. Apply feature(repo) on a branch, run the check."""
+def _case(feature, base=None):
+    """Base: plugin p, skill s at version 3, plus base(repo). Apply feature(repo) on a
+    branch, run the check."""
     repo = tempfile.mkdtemp()
     try:
         _sh(repo, "init", "-q", "-b", "main")
         _skill_md(repo, "p", "s", 3)
         _asset(repo, "plugins/p/skills/s", "base")
+        if base:
+            base(repo)
         _sh(repo, "add", "-A")
         _sh(repo, "commit", "-q", "-m", "base")
         _sh(repo, "checkout", "-q", "-b", "feat")
@@ -91,6 +94,15 @@ def delete_skill(repo):
     _sh(repo, "rm", "-q", "-r", "plugins/p/skills/s")
 
 
+def retired_skill(repo):  # base: a skill outside plugins/*/skills/*
+    _skill_md(repo, "p", "r", 3)
+    os.rename(os.path.join(repo, "plugins/p/skills/r"), os.path.join(repo, "actionable-retired"))
+
+
+def move_in_retired(repo):
+    _mv(repo, "actionable-retired", "plugins/p/skills/r")
+
+
 # want_problem: False, True, or a substring the problems must contain
 CASES = [
     ("a skill dir renamed + changed, no bump", rename_skill(3), "p/s -> p/s2 changed"),
@@ -103,12 +115,18 @@ CASES = [
     ("f in-place change, bumped", in_place(4), False),
     ("g R100 plugin rename, only an asset changed, no bump", rename_plugin_asset_only, "p/s -> p2/s"),
     ("h skill deleted", delete_skill, False),
+    ("i skill moved in from outside plugins/*/skills/*, no bump", move_in_retired,
+     "actionable-retired/SKILL.md -> p/r changed", retired_skill),
 ]
 
 if __name__ == "__main__":
     failed = []
-    for name, feature, want_problem in CASES:
-        problems = _case(feature)
+    for name, feature, want_problem, *base in CASES:
+        try:
+            problems = _case(feature, *base)
+        except Exception as e:  # a crash in run() is a failed case, not a traceback
+            failed.append(f"{name}: raised {e!r}")
+            continue
         ok = bool(problems) == bool(want_problem) and (
             not isinstance(want_problem, str) or want_problem in " ".join(problems))
         if not ok:

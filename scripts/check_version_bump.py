@@ -110,7 +110,8 @@ def run(base_ref=None):
         if new <= old:
             name = f"{plugin}/{skill}"
             if base_md != skill_md:
-                name = "{}/{} -> {}".format(*SKILL_PATH_RE.match(base_md).groups(), name)
+                m = SKILL_PATH_RE.match(base_md)  # None when moved in from outside plugins/
+                name = f"{'/'.join(m.groups()) if m else base_md} -> {name}"
             problems.append(
                 f"{name} changed ({len(paths)} file(s), e.g. {paths[0]}) but "
                 f"the skill version stayed at {old} - bump it past {old} in this commit. "

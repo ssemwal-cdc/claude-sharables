@@ -1,0 +1,7 @@
+**Offer this only right after a first run that finished Step 7.** Skip it on every later run.
+
+- **Where nobody is watching, in a scheduled window, do not ask anything.** Put one line in the report instead. Name the scheduled-prompt path below, and say a schedule can be set up on the next attended run.
+- **Otherwise, check whether a scheduling tool is present in this session.**
+- **If one is present, offer a daily schedule.** Ask three things. Ask the first time of day. Ask the retries after it and their times. Ask weekdays only or every day.
+- **Create the task with this skill's own scheduled prompt, verbatim.** Never summarise, reword or restate a rule from it.
+- **If no scheduling tool is present, do not offer a schedule.** Say where the user can set one up. Name the file path below, so they can paste it in later.

@@ -1,9 +1,9 @@
 ---
 name: procore-open-items-review
-description: v35 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still waiting on their response. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged, skipped or tied verdict per item. This skill is read-only: it never clicks Respond, Approve, Reject or Revise and Resubmit, every Procore call it makes is a GET, and the dashboard it publishes carries no response controls. Every verdict is a recommendation, and the response itself stays yours to make in Procore.
+description: v36 — Review of the Procore open items actually awaiting your workflow response — internal change risks, subcontractor invoices, commitment change orders and the purchase order and work order contracts themselves — published to a live dashboard widget in chat. Trigger whenever the user asks to "run my Procore review," "check my open items," "review my Procore queue," "double check my ICRs," "run the daily Procore check," or mentions their Procore open items dashboard or items waiting on their response. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still waiting on their response. Filters the queue to items they can actually action, verifies the cost figures and pay-application math against the attached support, and publishes a clear, flagged, skipped or tied verdict per item. This skill is read-only: it never clicks Respond, Approve, Reject or Revise and Resubmit, every Procore call it makes is a GET, and the dashboard it publishes carries no response controls. Every verdict is a recommendation, and the response itself stays yours to make in Procore.
 ---
 # Procore Open Items Review
-**Skill version 35 — 2026-09-24.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
+**Skill version 36 — 2026-09-25.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
 
 Review every Procore item **waiting on the user's workflow response**. Verify each item's figures against its attached support. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget. Chat gets one headline line.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
@@ -58,6 +58,15 @@ Never echo a URL back in a result. Return parsed values only.
 - **A refused write costs wasted work, not a broken review.** The next run repeats first-run setup and re-reads every attachment. Say the one line and move on. **That sentence is true of `refused` only.**
 
 <!--__END_SHARED:skill-step0-preamble__-->
+
+<!--__SHARED:skill-first-run-onboarding__-->
+**A run with no state file yet is a first run.** Test that before anything else, on every run.
+
+- **Check that the Claude in Chrome tools are present.** Call `tabs_context_mcp`. If it is missing, stop here. Tell the user to install Claude in Chrome and sign in, then stop the run. Do not sync assets and do not read a queue first.
+- **On a first run that passes that check, give short setup advice once.** State that the newest Opus model, medium to high effort, and Cowork with Downloads connected work best. Name only the item or items this run can see are off. The model name is readable from the session. Chat versus Cowork is readable from the tools present. Effort is not readable, so state it as advice, never as an observed fact.
+- **This advice runs once, on a first run only.** A run that finds a state file already skips both bullets above.
+<!--__END_SHARED:skill-first-run-onboarding__-->
+
 ```bash
 mkdir -p "<workspace>/Procore Open Items"
 cp "${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/dashboard_template.html" "<workspace>/Procore Open Items/"
@@ -577,3 +586,17 @@ Step 8 runs first, and the headline follows it. **Report in chat with one line o
 <!--__END_SHARED:skill-close-down__-->
 
 The tabs this skill opens are the fetch tab, the carrier tabs and the pdf.js tab. Step 2 also opens the record tabs.
+
+## Step 9 — Schedule offer, first run only
+
+<!--__SHARED:skill-schedule-offer__-->
+**Offer this only right after a first run that finished Step 7.** Skip it on every later run.
+
+- **Where nobody is watching, in a scheduled window, do not ask anything.** Put one line in the report instead. Name the scheduled-prompt path below, and say a schedule can be set up on the next attended run.
+- **Otherwise, check whether a scheduling tool is present in this session.**
+- **If one is present, offer a daily schedule.** Ask three things. Ask the first time of day. Ask the retries after it and their times. Ask weekdays only or every day.
+- **Create the task with this skill's own scheduled prompt, verbatim.** Never summarise, reword or restate a rule from it.
+- **If no scheduling tool is present, do not offer a schedule.** Say where the user can set one up. Name the file path below, so they can paste it in later.
+<!--__END_SHARED:skill-schedule-offer__-->
+
+The scheduled prompt is `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/scheduled_prompt.md`. Resolve it the same way Step 0 resolves the other assets.

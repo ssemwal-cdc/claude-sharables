@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v34 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still sitting in their queue. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. This skill is read-only: it never approves, approves with notes, or rejects anything, it never writes to NetSuite by the connector or by the user interface, and the dashboard it publishes carries no decision controls. Every verdict is a recommendation, and the approval itself stays yours to make in NetSuite.
+description: v35 — Financial double-check of the NetSuite bills, purchase orders and change orders sitting in your approval queue, published to a live dashboard widget in chat. Trigger whenever the user asks to "run my approval check," "check my NetSuite queue," "double check my bills," "review my change orders to approve," "run the daily approval review," or mentions their NetSuite approval dashboard or bills, purchase orders and change orders pending their approval. Also trigger when the user presses the re-run button on that dashboard, or asks for a fresh snapshot of what is still sitting in their queue. Reads each attachment in the page without downloading it, verifies the math and the adequacy of support, cross-checks the real purchase order and billing history, and publishes a clear or flagged verdict per item. This skill is read-only: it never approves, approves with notes, or rejects anything, it never writes to NetSuite by the connector or by the user interface, and the dashboard it publishes carries no decision controls. Every verdict is a recommendation, and the approval itself stays yours to make in NetSuite.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 34 — 2026-09-24.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
+**Skill version 35 — 2026-09-25.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
 
 Review every bill, purchase order and change order in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document. Cross-check against the real purchase order and billing history. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
@@ -51,6 +51,15 @@ The user is one approver among several, and not the accountant of record. An app
 - **A refused write costs wasted work, not a broken review.** The next run repeats first-run setup and re-reads every attachment. Say the one line and move on. **That sentence is true of `refused` only.**
 
 <!--__END_SHARED:skill-step0-preamble__-->
+
+<!--__SHARED:skill-first-run-onboarding__-->
+**A run with no state file yet is a first run.** Test that before anything else, on every run.
+
+- **Check that the Claude in Chrome tools are present.** Call `tabs_context_mcp`. If it is missing, stop here. Tell the user to install Claude in Chrome and sign in, then stop the run. Do not sync assets and do not read a queue first.
+- **On a first run that passes that check, give short setup advice once.** State that the newest Opus model, medium to high effort, and Cowork with Downloads connected work best. Name only the item or items this run can see are off. The model name is readable from the session. Chat versus Cowork is readable from the tools present. Effort is not readable, so state it as advice, never as an observed fact.
+- **This advice runs once, on a first run only.** A run that finds a state file already skips both bullets above.
+<!--__END_SHARED:skill-first-run-onboarding__-->
+
 ```bash
 mkdir -p "<workspace>/NetSuite Approval Checks"
 cp "${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/dashboard_template.html" "<workspace>/NetSuite Approval Checks/"
@@ -616,3 +625,17 @@ Add a second line only if something blocked the run. That includes a login redir
 - **A tab this run opened that is still open after this step is a defect of this run.** It is not a convenience for the user. The dashboard card is the route to a record.
 - **Do not open a tab in this step.**
 <!--__END_SHARED:skill-close-down__-->
+
+## Step 9 — Schedule offer, first run only
+
+<!--__SHARED:skill-schedule-offer__-->
+**Offer this only right after a first run that finished Step 7.** Skip it on every later run.
+
+- **Where nobody is watching, in a scheduled window, do not ask anything.** Put one line in the report instead. Name the scheduled-prompt path below, and say a schedule can be set up on the next attended run.
+- **Otherwise, check whether a scheduling tool is present in this session.**
+- **If one is present, offer a daily schedule.** Ask three things. Ask the first time of day. Ask the retries after it and their times. Ask weekdays only or every day.
+- **Create the task with this skill's own scheduled prompt, verbatim.** Never summarise, reword or restate a rule from it.
+- **If no scheduling tool is present, do not offer a schedule.** Say where the user can set one up. Name the file path below, so they can paste it in later.
+<!--__END_SHARED:skill-schedule-offer__-->
+
+The scheduled prompt is `${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/scheduled_prompt.md`. Resolve it the same way Step 0 resolves the other assets.

@@ -1,0 +1,5 @@
+**A run with no state file yet is a first run.** Test that before anything else, on every run.
+
+- **Check that the Claude in Chrome tools are present.** Call `tabs_context_mcp`. If it is missing, stop here. Tell the user to install Claude in Chrome and sign in, then stop the run. Do not sync assets and do not read a queue first.
+- **On a first run that passes that check, give short setup advice once.** State that the newest Opus model, medium to high effort, and Cowork with Downloads connected work best. Name only the item or items this run can see are off. The model name is readable from the session. Chat versus Cowork is readable from the tools present. Effort is not readable, so state it as advice, never as an observed fact.
+- **This advice runs once, on a first run only.** A run that finds a state file already skips both bullets above.

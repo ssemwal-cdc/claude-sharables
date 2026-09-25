@@ -119,10 +119,12 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand, not in the g
 - Ship a new view default under a new view key, and migrate the old one. `D39`, a new default needs key.
 - Never rename a per-item marks key. `D38`, never rename a marks key.
 ### The teammate sheet
-- Edit `docs/onboarding.html` and push. `D33`, the page is the file.
-- Put nothing sensitive in the docs folder. `D31`, the docs folder is public.
-- Keep a plain colour-scheme media query in the sheet. `D32`, no theme attribute on Pages.
-- Keep terminal commands out of the sheet. `D59`, no terminal commands in sheet.
+`docs/onboarding.html` is now a short stub. Setup advice and the schedule offer
+live in the skill. See in-skill-onboarding, onboarding lives in the skill.
+- Edit `docs/onboarding.html` and push. `D33`, the page is the file. Superseded, see in-skill-onboarding above.
+- Put nothing sensitive in the docs folder. `D31`, the docs folder is public. Still applies.
+- Keep a plain colour-scheme media query in the sheet. `D32`, no theme attribute on Pages. Still applies, while the stub exists.
+- Keep terminal commands out of the sheet. `D59`, no terminal commands in sheet. Superseded, see in-skill-onboarding above.
 ## Do not
 - Do not add a `version` field anywhere. `D9`, no version field anywhere.
 - Do not set `metadata.pluginRoot`. `D7`, never use metadata.pluginRoot.

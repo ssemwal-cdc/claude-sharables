@@ -97,3 +97,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D91 | `review-only-mode` | Review-only plugins | settled | 2026-09-18 | A reviewer gets a dashboard with no decision controls. |
 | D92 | `tied-verdict-for-verified-blanks` | Add a fifth verdict for a verified blank | settled | 2026-09-23 | An item whose figures were verified reaches the reviewer. |
 | D93 | `main-only-by-pr` | Main moves only by pull request | settled | 2026-09-24 | Every release passes the whole build gate, the version-bump check included. |
+| pending | `in-skill-onboarding` | Onboarding lives in the skill | settled | 2026-09-25 | A new user who only installs the plugin reaches a working review and a working schedule without reading anything else. |

@@ -31,8 +31,12 @@ SKILL_PATH_RE = re.compile(r"^plugins/([^/]+)/skills/([^/]+)/")
 
 
 def _git(*args):
+    # encoding is pinned to UTF-8: the default locale encoding on Windows is not
+    # UTF-8, and `git show` on a file with an em dash then decodes to a
+    # replacement character, which VERSION_RE never matches.
     return subprocess.run(
-        ["git", *args], cwd=REPO, capture_output=True, text=True, check=False
+        ["git", *args], cwd=REPO, capture_output=True, text=True,
+        encoding="utf-8", check=False
     )
 
 

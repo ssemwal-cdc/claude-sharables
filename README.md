@@ -4,10 +4,10 @@ Internal marketplace of Claude plugins for Compass Datacenters.
 
 ## For teammates: installing
 
-Start with [`docs/onboarding.html`](docs/onboarding.html). It is the
-start-to-finish setup sheet. It covers the browser, the connector, the install,
-the first run and scheduling. Every step ends in a "done when" check. It is
-written for someone who has never touched any of this.
+Start with [`docs/onboarding.html`](docs/onboarding.html). It is a short stub:
+install the plugin, then ask for a review. Setup advice and the daily
+schedule offer now come from the skill itself, on its first run. See
+in-skill-onboarding, onboarding lives in the skill.
 
 Send teammates this link:
 
@@ -102,8 +102,8 @@ session start.
 
 | Plugin | Version | What it does | Needs |
 |---|---|---|---|
-| `netsuite-approval-review` | v34 | Reviews the bills, purchase orders and change orders in your NetSuite approval queue. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to NetSuite. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. The NetSuite MCP connector is optional. It adds bulk queries and the PO cross-check. |
-| `procore-open-items-review` | v35 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
+| `netsuite-approval-review` | v35 | Reviews the bills, purchase orders and change orders in your NetSuite approval queue. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to NetSuite. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. The NetSuite MCP connector is optional. It adds bulk queries and the PO cross-check. |
+| `procore-open-items-review` | v36 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
 
 Purchase orders are reviewed. Execute mode was retired on 2026-09-18. Its
 prose and code sit in `actionable-retired/` at the repo root.
@@ -151,8 +151,7 @@ Those terminal commands update terminal installs only. Plugins installed
 through the desktop app live in a separate account-synced store. Force-update
 those in the app: **Settings → Plugins → Browse → Personal →
 `claude-sharables` → ⋯ → Check for updates**. That menu's **Synced commit**
-should match the tip of `main`. The onboarding sheet walks teammates through
-it.
+should match the tip of `main`.
 
 If **Check for updates** does not move the synced commit, restart the computer.
 Restarting the computer is the observed workaround. An app restart is not

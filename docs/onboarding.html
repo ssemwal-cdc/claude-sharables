@@ -319,18 +319,9 @@ continue.
 Otherwise, invoke the `netsuite-approval-double-check` skill and follow it end to
 end. The skill owns the whole procedure — the queue queries, how attachments are
 read, the math and support-adequacy checks, the cross-checks, the state file, and
-how the dashboard is published. Follow what the skill says, not what this task
-remembers.
-
-Hard constraints, restated because a scheduled run has nobody watching it:
-- This is a REVIEW run. The plugin is read-only. Never click Approve, Approve
-  With Notes, or Reject on a NetSuite record.
-- Never call ns_createRecord or ns_updateRecord. The connector is read-only.
-- Review every item in the queue regardless of dollar amount.
-- Leave open any record tab the run actually needed, but do not open a tab per
-  queue row — every card on the dashboard links to its own record.
-- If NetSuite is not authenticated, stop and report that the session expired.
-  Never attempt to log in.
+how the dashboard is published, what to do when the connector or a session is
+unavailable, and which tabs to close. This prompt restates none of its rules on
+purpose. Where anything here seems to disagree with the skill, the skill wins.
 
 On success, update the state file per the skill's schema, including today's date as
 `lastCompletedRun` and the run time as `lastRunTime`.
@@ -341,7 +332,8 @@ Add a second line only if something blocked the run. Do not put per-item verdict
 in chat.
 
 If the run fails partway, do NOT set `lastCompletedRun` — leave it so the next
-fallback window retries. Report what blocked it.</pre>
+fallback window retries, unless the skill says the blocker will not clear on its
+own. Report what blocked it.</pre>
   </details>
 
   <details class="paste">
@@ -364,16 +356,9 @@ the file is missing or unreadable, treat that as "no run today" and continue.
 Otherwise, invoke the `procore-open-items-review` skill and follow it end to end. The
 skill owns the whole procedure — the queue query, the actionability gate, how
 attachments are read, the cost and pay-application checks, the state file, and how
-the dashboard is published. Follow what the skill says, not what this task remembers.
-
-Hard constraints, restated because a scheduled run has nobody watching it:
-- This is a REVIEW run. The plugin is read-only. Never click Respond, Approve,
-  Reject, Revise and Resubmit, or Edit on a Procore item.
-- Every Procore API call is a GET. Never POST, PUT, PATCH or DELETE.
-- Review every item I can actually action, regardless of dollar amount.
-- Leave each reviewed record's tab open so I can act on it. Close scratch tabs.
-- If Procore is not authenticated, stop and report that the session expired. Never
-  attempt to log in.
+the dashboard is published, what to do when the session is unavailable, and which
+tabs to close. This prompt restates none of its rules on purpose. Where anything
+here seems to disagree with the skill, the skill wins.
 
 On success, update the state file per the skill's schema, including today's date as
 `lastCompletedRun` and the run time as `lastRunTime`.
@@ -384,7 +369,8 @@ Add a second line only if something blocked the run. Do not put per-item verdict
 in chat.
 
 If the run fails partway, do NOT set `lastCompletedRun` — leave it so the next
-fallback window retries. Report what blocked it.</pre>
+fallback window retries, unless the skill says the blocker will not clear on its
+own. Report what blocked it.</pre>
   </details>
 
   <p>Claude asks about timing, then gives you an <strong>Add to schedule</strong> button. Click it. <strong>Do this once per plugin you installed</strong>, and only after you have done step 4 for that plugin — a schedule on a plugin whose first run never happened will stop to ask you setup questions with nobody watching. <strong>Both plugins?</strong> Do it twice — one block, add its schedule, then the other.</p>

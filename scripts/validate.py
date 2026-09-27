@@ -147,6 +147,11 @@ for name, src in registered.items():
         )
     if not pj.get("description"):
         fail(f"[{name}] plugin.json has no description")
+    elif len(pj["description"]) > 500:
+        fail(
+            f"[{name}] plugin.json description is {len(pj['description'])} chars; "
+            f"the installer rejects anything over 500"
+        )
 
     skills_dir = os.path.join(root, "skills")
     if not os.path.isdir(skills_dir):
@@ -176,6 +181,11 @@ for name, src in registered.items():
             )
         if not keys.get("description"):
             fail(f"[{name}/{skill}] frontmatter has no description")
+        elif len(keys["description"]) > 1024:
+            fail(
+                f"[{name}/{skill}] SKILL.md description is {len(keys['description'])} "
+                f"chars; the installer rejects anything over 1024"
+            )
 
         # Human-readable skill version line. An installed skill is a snapshot,
         # and the desktop app shows its commit only deep in a menu — opening the skill

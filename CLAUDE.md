@@ -80,7 +80,7 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand, not in the g
 - Check the install, then the workspace template, then the render date. `D47`, diagnose stale copies in order.
 - Never delete the workspace folder or its asset copies. `D52`, never delete the workspace folder.
 ### House conventions
-- Give a skill frontmatter a name and a description only, and never trim it. `D3`, frontmatter is name and description.
+- Give a skill frontmatter a name and a description only. Never drop a trigger phrase, and keep within the installer limits, 1024 chars skill / 500 plugin. `D3`, frontmatter is name and description.
 - Ship a template and a publish script, copy them into the workspace, render through the widget. `D80`, publish through the widget.
 - Ask the setup questions once and store the answers. `D2`, first-run setup is per plugin.
 - Never approve or respond. A verdict is a recommendation. `D6`, never act without an instruction.

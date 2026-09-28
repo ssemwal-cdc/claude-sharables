@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v36 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
+description: v37 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 36 — 2026-09-27.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
+**Skill version 37 — 2026-09-27.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
 
 Review every bill, purchase order and change order in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document. Cross-check against the real purchase order and billing history. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
@@ -38,6 +38,7 @@ The user is one approver among several, and not the accountant of record. An app
 
 - **Do this on every run, before anything else.** The workspace copies of the template and the publish script are a cache of the plugin's assets. Refresh them every run, or a plugin update never reaches the dashboard.
 - **`<workspace>` is the workspace folder connected to this session.** Resolve it once, here, and use that same path below.
+- **With no workspace folder connected, run now.** Never ask and never wait. Skip every state-file read and write. Treat the run as a first run. Say once in the report that no folder was connected, so no log was saved.
 - **Attempt the write. Never put it to the user as a question.** Create the folder if it is absent, keep the state file in it, then **read it back**. A write is proven by reading it.
 - **Three write outcomes.** `kept` is written and read back. `refused` is attempted, and the surface returned an error. `not attempted` is nobody tried. Never report `not attempted` as either of the other two.
 - **The session-local fallback belongs to `refused` alone**, and **never infer the outcome from a property of** the folder. A cloud-synced, OneDrive-backed or network-share folder does not predict a refused write.
@@ -56,7 +57,7 @@ The user is one approver among several, and not the accountant of record. An app
 **A run with no state file yet is a first run.** Test that before anything else, on every run.
 
 - **Check that the Claude in Chrome tools are present.** Call `tabs_context_mcp`. If it is missing, stop here. Tell the user to install Claude in Chrome and sign in, then stop the run. Do not sync assets and do not read a queue first.
-- **On a first run that passes that check, give short setup advice once.** State that the newest Opus model, medium to high effort, and Cowork with Downloads connected work best. Name only the item or items this run can see are off. The model name is readable from the session. Chat versus Cowork is readable from the tools present. Effort is not readable, so state it as advice, never as an observed fact.
+- **On a first run that passes that check, give short setup advice once.** State that the newest Opus model, medium to high effort, and a session with the Downloads folder connected work best. Name only the item or items this run can see are off. The model name is readable from the session. Chat versus Cowork is readable from the tools present. Effort is not readable, so state it as advice, never as an observed fact.
 - **This advice runs once, on a first run only.** A run that finds a state file already skips both bullets above.
 <!--__END_SHARED:skill-first-run-onboarding__-->
 

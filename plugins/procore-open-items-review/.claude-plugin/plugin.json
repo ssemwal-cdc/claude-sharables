@@ -1,6 +1,6 @@
 {
   "name": "procore-open-items-review",
-  "description": "Reviews the Procore items awaiting your workflow response: change risks, subcontractor invoices, commitment change orders, and purchase order and work order contracts. Filters out items you are only on distribution for. Re-derives pay-application AIA math and foots a commitment's schedule of values to its contract total. Reads attached support without downloading it. Publishes findings to a read-only dashboard. Skill version 37 — 2026-09-27.",
+  "description": "Reviews the Procore items awaiting your workflow response: change risks, subcontractor invoices, commitment change orders, and purchase order and work order contracts. Filters out items you are only on distribution for. Re-derives pay-application AIA math and foots a commitment's schedule of values to its contract total. Reads attached support without downloading it. Publishes findings to a read-only dashboard. Skill version 38 — 2026-09-27.",
   "author": {
     "name": "Shivam Semwal"
   },

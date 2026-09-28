@@ -31,8 +31,8 @@ Two things follow:
 The rest of this section is the short version for people who only need the
 commands.
 
-Register the marketplace once. Use the Claude desktop app or the Claude Code
-CLI. In the desktop app, open profile at the bottom left. Go to
+Register the marketplace once. Use the Claude app, on the web or desktop, or
+the Claude Code CLI. Open profile at the bottom left. Go to
 **Settings → Plugins → Add → Add marketplace**. Enter
 `ssemwal-cdc/claude-sharables`. Tick auto sync in the Add dialog. Updates
 arrive only while it is on.
@@ -102,8 +102,8 @@ session start.
 
 | Plugin | Version | What it does | Needs |
 |---|---|---|---|
-| `netsuite-approval-review` | v36 | Reviews the bills, purchase orders and change orders in your NetSuite approval queue. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to NetSuite. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. The NetSuite MCP connector is optional. It adds bulk queries and the PO cross-check. |
-| `procore-open-items-review` | v37 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
+| `netsuite-approval-review` | v37 | Reviews the bills, purchase orders and change orders in your NetSuite approval queue. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to NetSuite. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. The NetSuite MCP connector is optional. It adds bulk queries and the PO cross-check. |
+| `procore-open-items-review` | v38 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
 
 Purchase orders are reviewed. Execute mode was retired on 2026-09-18. Its
 prose and code sit in `actionable-retired/` at the repo root.
@@ -148,7 +148,7 @@ claude plugin update procore-open-items-review@compass-claude-plugins
 ```
 
 Those terminal commands update terminal installs only. Plugins installed
-through the desktop app live in a separate account-synced store. Force-update
+through the app live in a separate account-synced store. Force-update
 those in the app: **Settings → Plugins → Browse → Personal →
 `claude-sharables` → ⋯ → Check for updates**. That menu's **Synced commit**
 should match the tip of `main`.

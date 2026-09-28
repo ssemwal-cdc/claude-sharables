@@ -14,6 +14,7 @@ date: 2026-09-25
 3. **Schedule offer.** After a successful first run, where a scheduling tool is present, offer a daily schedule. Ask for the first time, the retries and weekdays or all days. Create the task with the prompt in `assets/scheduled_prompt.md`, verbatim. Where no scheduling tool is present, say where to set one up and show the prompt path.
 4. **One home for the prompt.** Each plugin ships `skills/<skill>/assets/scheduled_prompt.md`. It is the only copy. The prompt restates no skill rule.
 5. **Sheet.** `docs/onboarding.html` becomes a short stub: install the plugin, then ask for a review. It carries no setup steps and no prompt.
+6. **No folder.** With no workspace folder connected, the run goes ahead without a log and says so once. The owner ruled this on 2026-09-27.
 
 **Outcome protected.** A new user who only installs the plugin reaches a working review and a working schedule without reading anything else. A scheduled task never runs a prompt that drifted from the skill.
 

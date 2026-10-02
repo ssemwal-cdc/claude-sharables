@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G4
 slug: scan-raster-in-carrier
 kind: gap
 status: unobserved
@@ -20,6 +20,6 @@ This gap closes the moment a real scanned attachment goes through the route and 
 **Evidence.**
 
 - Measured live 2026-10-02: `OffscreenCanvas` and pdf.js probed on a public PDF tab only.
-- Same pass as F‹carrier-tab-reads-s3›, the carrier-tab reads.
+- Same pass as F166, the carrier-tab reads.
 
 **Checks.** none

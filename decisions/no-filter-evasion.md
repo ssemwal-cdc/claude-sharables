@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D95
 slug: no-filter-evasion
 kind: decision
 status: settled
@@ -27,8 +27,8 @@ The fix is not a cleverer evasion. Write the call the way it always had to run: 
 
 **Evidence.**
 
-- See F‹charcode-fetch-refused›, the safety check refused both the char-code and the blanked-value fetch.
-- See F‹chrome-filter-per-field›, the filter is narrower than assumed, which removed the reason to route around it.
+- See F167, the safety check refused both the char-code and the blanked-value fetch.
+- See F168, the filter is narrower than assumed, which removed the reason to route around it.
 - Git: the char-code sentence was entered at commit `892b664` on 2026-08-11, with no decision record.
 - PR #16, on 2026-09-16, only re-wrapped that sentence. It never reconsidered it.
 

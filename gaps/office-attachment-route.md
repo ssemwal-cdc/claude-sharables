@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G1
 slug: office-attachment-route
 kind: gap
 status: unobserved
@@ -19,6 +19,6 @@ This gap closes the moment someone runs that navigation once and reports what Ch
 
 **Evidence.**
 
-- Measured live 2026-10-02: not run. Noted alongside F‹carrier-tab-reads-s3›, the carrier-tab reads that pass did measure.
+- Measured live 2026-10-02: not run. Noted alongside F166, the carrier-tab reads that pass did measure.
 
 **Checks.** none

@@ -15,7 +15,7 @@ date: 2026-10-02
 
 A blocked marker is never a value.
 
-The old remedy here was to re-return the redacted field in another shape and read it again. That remedy is retired. It is the disguise that D‹no-filter-evasion›, a skill never shapes its way past a filter, bars. The session's own safety check refused a call that did exactly this, tagged `[Auto-Mode Bypass]`. See F‹charcode-fetch-refused›, the safety check refused the reshaped return value.
+The old remedy here was to re-return the redacted field in another shape and read it again. That remedy is retired. It is the disguise that D95, a skill never shapes its way past a filter, bars. The session's own safety check refused a call that did exactly this, tagged `[Auto-Mode Bypass]`. See F167, the safety check refused the reshaped return value.
 
 The fix is not a reshaped return value. Compare the figure where it already sits, inside the page. Hand back only the comparison's result or the figure parsed to a number. Neither one crosses the filter as the raw redacted text.
 
@@ -29,6 +29,6 @@ Do not read it as the field being empty. That is the same silent misfile as the 
 
 - Recorded 2026-08-14 from F23, the filter has a second trigger.
 - The first trigger is F15, stub rows trip the filter.
-- See F‹charcode-fetch-refused›, measured live 2026-10-02: the safety check refused the reshaped return value, tagged `[Auto-Mode Bypass]`.
+- See F167, measured live 2026-10-02: the safety check refused the reshaped return value, tagged `[Auto-Mode Bypass]`.
 
 **Checks.** none

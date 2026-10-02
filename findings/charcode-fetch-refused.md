@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F167
 slug: charcode-fetch-refused
 kind: finding
 status: observed
@@ -24,6 +24,6 @@ The same fetch, written plainly with `URLSearchParams`, returned HTTP 200 with 5
 - Measured live 2026-10-02, Claude in Chrome, Claude Code auto mode.
 - Git: the char-code sentence was entered at commit `892b664` on 2026-08-11. No decision record governed it.
 - PR #16, on 2026-09-16, only re-wrapped that sentence. It never reconsidered it.
-- See D‹no-filter-evasion›, the rule this finding established.
+- See D95, the rule this finding established.
 
 **Checks.** none

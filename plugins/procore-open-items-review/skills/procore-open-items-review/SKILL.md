@@ -35,7 +35,7 @@ Review every Procore item **waiting on the user's workflow response**. Verify ea
 ## The output filter, measured 2026-10-02
 The output filter blanks only the one result field whose value holds a URL query string, as `[BLOCKED: Cookie/query string data]`. Sibling fields survive. The JavaScript source you send is never echoed. That holds on success and on a thrown error alike. A dotted string, such as a version number or `app.procore.com`, comes back `[BLOCKED: JWT token]`, again per field.
 
-A char-code recipe once stood here to get a query string past this filter. The session's safety check refused it, tagged `[Auto-Mode Bypass]`. It passed the same fetch written plainly (`F‹charcode-fetch-refused›`, char codes refused, plain passed). Build every query string plainly, with `URLSearchParams`. Never return a URL in a result. Return parsed values only.
+A char-code recipe once stood here to get a query string past this filter. The session's safety check refused it, tagged `[Auto-Mode Bypass]`. It passed the same fetch written plainly (`F167`, char codes refused, plain passed). Build every query string plainly, with `URLSearchParams`. Never return a URL in a result. Return parsed values only.
 
 <!--__SHARED:skill-no-filter-evasion__-->
 **Never shape code or output so a filter or safety check misses it.** That bars char codes. It bars splitting, spacing out, encoding or rewording a value to slip past one. Build every query string plainly, with the platform's own query-string builder. Keep each URL inside the page that holds it. Return parsed values out of a page, never a URL or a piece of one. Never move bytes, a URL or page state between tabs. Never design a route around a safety-check refusal. When one refuses a step, say so and stop. Never retry it reshaped.
@@ -241,7 +241,7 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 ## Step 4 — Read the attached support without downloading it
 Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-second presigned S3 link**. `storage.procore.com` blocks cross-origin reads, and Chrome's PDF viewer exposes no text layer. This route avoids both and leaves **no files in the downloads folder**.
 
-**Measured live 2026-10-02 (`F‹carrier-tab-reads-s3›`, carrier-tab reads of real S3 attachments).** Two claims once written here were wrong. `javascript_tool` does attach to a PDF tab — `document.contentType` reads `application/pdf` there. A presigned `s3.amazonaws.com` link is not readable in a `tabs_context_mcp` or `navigate` result, though. Its `X-Amz-*` signature parameters come back `REDACTED` (`X-Amz-Expires=60` survives). Inside the page, `location.href` stays intact. So the read happens in the tab the redirect landed in. It is never passed to a second tab, never read off a tool result.
+**Measured live 2026-10-02 (`F166`, carrier-tab reads of real S3 attachments).** Two claims once written here were wrong. `javascript_tool` does attach to a PDF tab — `document.contentType` reads `application/pdf` there. A presigned `s3.amazonaws.com` link is not readable in a `tabs_context_mcp` or `navigate` result, though. Its `X-Amz-*` signature parameters come back `REDACTED` (`X-Amz-Expires=60` survives). Inside the page, `location.href` stays intact. So the read happens in the tab the redirect landed in. It is never passed to a second tab, never read off a tool result.
 
 **One carrier tab, per attachment.** Never the fetch tab.
 1. Open **a carrier tab** on `app.procore.com`. In it, fetch the record JSON, then schedule the navigation so the call returns before the tab unloads:
@@ -253,13 +253,13 @@ Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-sec
    ```
 2. The next call in that same tab, inside the 60-second window:
    - Check `location.host.endsWith('amazonaws.com')` — a boolean, never the URL itself.
-   - `fetch(location.href)`, then read `byteLength` off the `ArrayBuffer` **before** parsing. `getDocument` detaches the buffer (`F‹carrier-tab-reads-s3›`, read byte length first).
+   - `fetch(location.href)`, then read `byteLength` off the `ArrayBuffer` **before** parsing. `getDocument` detaches the buffer (`F166`, read byte length first).
    - Sniff the bytes (`__sniff`, unchanged, below).
    - For `pdf`, load pdf.js in that same carrier tab. Same pin, worker fetched as text into a blob URL.
    - Return `kind`, `byteLength`, `pages` and the text. **Never the URL, and never a piece of one.**
 3. For an image, the visual read happens **in that carrier tab** too, with `computer`. Close the tab once the read is done.
 
-**Only navigate a carrier tab for a viewable type**: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.tif`, `.tiff`, `.webp`. Every other extension goes straight to the download fallback below. A navigation to any other type is `unobserved` (`G‹office-attachment-route›`, no route built for it yet).
+**Only navigate a carrier tab for a viewable type**: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.tif`, `.tiff`, `.webp`. Every other extension goes straight to the download fallback below. A navigation to any other type is `unobserved` (`G1`, no route built for it yet).
 
 **Batch it.** Navigate 4 to 6 carrier tabs at once. Then run their read calls, one per tab, in a single `browser_batch`. The margin inside the 60 seconds was measured once, live: an 18-page, 4.8 MB PDF extracted in 853 ms.
 
@@ -347,7 +347,7 @@ The worker must be fetched as text and turned into a blob URL. Pointing `workerS
 const c = new OffscreenCanvas(v.width, v.height);
 await page.render({canvasContext: c.getContext('2d'), viewport: v}).promise;
 ```
-This is **probed on a public file only** (`G‹scan-raster-in-carrier›`, not yet against a real S3 attachment). Treat it as unconfirmed until one runs on a real scan. **If no visual read is available, fall back to OCR, and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. **An OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties. Report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. This cap is deliberate. If it feels too noisy, get the visual read working. Do not relax the cap.
+This is **probed on a public file only** (`G4`, not yet against a real S3 attachment). Treat it as unconfirmed until one runs on a real scan. **If no visual read is available, fall back to OCR, and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. **An OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties. Report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. This cap is deliberate. If it feels too noisy, get the visual read working. Do not relax the cap.
 - Do not pass a presigned URL to a sandbox web fetcher, which exceeds the URL length limit.
 - **Check the extension too, but trust the bytes.** A `.pdf` that sniffs as `zip` is mislabelled, not a PDF.
 - **A `[BLOCKED: …]` string is never a value.** A second filter rewrites dotted-numeric values as `[BLOCKED: JWT token]`.
@@ -405,7 +405,7 @@ def __read_workbook(path, start=0):
 **Name the actual cause when a read is blocked.** Say what was observed, never a guess. Examples: "the session's safety check refused `<action>` [`<tag>`]". "The presigned URL came back redacted." "The output filter blanked `<field>`." "The link expired twice." "`<type>` is not viewable in the browser." Never write "blocked by the browser's safety check" or any cause this run did not observe.
 <!--__END_SHARED:skill-name-blocked-cause__-->
 
-**Proven on a real queue, 2026-10-02** (`F‹charcode-fetch-refused›`, plain-fetch queue read). Plain `URLSearchParams` fetches: the queue, the gate, the record reads. Also proven (`F‹carrier-tab-reads-s3›`, carrier-tab reads): the carrier-tab PDF read. The carrier-tab image read. The `byteLength`-before-parsing requirement. **Probed on a public file only:** `OffscreenCanvas` and pdf.js inside a PDF tab. **Unit-tested only:** `__sniff`. **Unobserved:** a real `.xlsx` or `.docx` through any route. A carrier navigation to a non-viewable type (`G‹office-attachment-route›`, unobserved so far). A scanned PDF rasterised in a carrier tab. The download fallback end to end.
+**Proven on a real queue, 2026-10-02** (`F167`, plain-fetch queue read). Plain `URLSearchParams` fetches: the queue, the gate, the record reads. Also proven (`F166`, carrier-tab reads): the carrier-tab PDF read. The carrier-tab image read. The `byteLength`-before-parsing requirement. **Probed on a public file only:** `OffscreenCanvas` and pdf.js inside a PDF tab. **Unit-tested only:** `__sniff`. **Unobserved:** a real `.xlsx` or `.docx` through any route. A carrier navigation to a non-viewable type (`G1`, unobserved so far). A scanned PDF rasterised in a carrier tab. The download fallback end to end.
 
 ## Step 5 — Verify
 ### Check registry

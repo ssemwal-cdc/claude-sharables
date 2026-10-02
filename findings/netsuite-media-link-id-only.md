@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F169
 slug: netsuite-media-link-id-only
 kind: finding
 status: observed

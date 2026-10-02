@@ -88,7 +88,7 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand, not in the g
 - Use placeholders in every shipped worked example. `D60`, shipped examples use placeholders.
 - Cite the record id and date in a defect finding. `D57`, provenance may cite ids.
 ### Running a review
-- Never shape code or output to slip past a filter or safety check. `D‹no-filter-evasion›`, a skill never shapes its way past a filter.
+- Never shape code or output to slip past a filter or safety check. `D95`, a skill never shapes its way past a filter.
 - Keep a successful read, a genuine absence and a failure as three named states. `D41`, three states never a boolean.
 - When a connector call is not a result set, switch to the browser route. `D34`, a failed call is unknown.
 - When the connector is absent, skip the connector checks in silence. `D69`, silence on an absent connector.

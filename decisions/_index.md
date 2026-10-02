@@ -98,4 +98,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D93 | `main-only-by-pr` | Main moves only by pull request | settled | 2026-09-24 | Every release passes the whole build gate, the version-bump check included. |
 | D94 | `in-skill-onboarding` | Onboarding lives in the skill | settled | 2026-09-25 | A new user who only installs the plugin reaches a working review and a working schedule without reading anything else. |
 | D21 | `blocked-marker-never-a-value` | Never trust a blocked marker | settled | 2026-10-02 | A redacted figure is read again instead of read as empty. |
-| pending | `no-filter-evasion` | A skill never shapes its way past a filter | settled | 2026-10-02 | A run passes the safety check honestly, and never hides data from it. |
+| D95 | `no-filter-evasion` | A skill never shapes its way past a filter | settled | 2026-10-02 | A run passes the safety check honestly, and never hides data from it. |

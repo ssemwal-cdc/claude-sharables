@@ -24,7 +24,6 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D18 | `never-batch-click-checks` | Never batch the click checks | superseded | 2026-08-13 | A wrong record state stops the batch before the next click lands. |
 | D19 | `return-rows-not-residuals` | Return the rows, flattened | settled | 2026-08-13 | A review still catches the defect nobody specified a check for. |
 | D20 | `approved-by-claude-comment` | Default the approval comment | superseded | 2026-08-14 | An authorised batch runs without stopping to ask what to type in a comment field. |
-| D21 | `blocked-marker-never-a-value` | Never trust a blocked marker | settled | 2026-08-14 | A redacted figure is read again instead of read as empty. |
 | D22 | `cco-multiple-holders-ungated` | Several holders stay ungated | settled | 2026-08-14 | No live change order is logged as done because the wrong workflow was chosen. |
 | D23 | `cco-read-before-gate` | Read a CCO before gating | settled | 2026-08-14 | A change order is gated at all, instead of rendering ungated for everyone. |
 | D24 | `no-batch-across-presigned-window` | Do not overrun the window | settled | 2026-08-14 | A live invoice is never recorded as a scanned image. |
@@ -98,4 +97,5 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D92 | `tied-verdict-for-verified-blanks` | Add a fifth verdict for a verified blank | settled | 2026-09-23 | An item whose figures were verified reaches the reviewer. |
 | D93 | `main-only-by-pr` | Main moves only by pull request | settled | 2026-09-24 | Every release passes the whole build gate, the version-bump check included. |
 | D94 | `in-skill-onboarding` | Onboarding lives in the skill | settled | 2026-09-25 | A new user who only installs the plugin reaches a working review and a working schedule without reading anything else. |
+| D21 | `blocked-marker-never-a-value` | Never trust a blocked marker | settled | 2026-10-02 | A redacted figure is read again instead of read as empty. |
 | pending | `no-filter-evasion` | A skill never shapes its way past a filter | settled | 2026-10-02 | A run passes the safety check honestly, and never hides data from it. |

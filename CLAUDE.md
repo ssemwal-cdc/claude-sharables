@@ -105,7 +105,7 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand, not in the g
 - Batch attachment reads inside one presigned window only. `D24`, do not overrun the window.
 - Retry an expired link at most twice, and name the outcome of every skip. `D27`, retry only an expired link.
 - Look at an image, and never let an OCR figure clear an item. `D25`, an OCR figure never clears.
-- Re-return a redacted field in another shape. `D21`, never trust a blocked marker.
+- Compare a blocked field inside the page, or report it unreadable. `D21`, never trust a blocked marker.
 - Run both plugins in auto permission mode. `D29`, auto mode, never skip-all.
 - Close every tab a run opened before the report, and never a tab the user opened. `D87`, a run closes its tabs.
 ### Recording

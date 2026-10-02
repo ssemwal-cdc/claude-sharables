@@ -351,8 +351,8 @@ This is **probed on a public file only** (`G‹scan-raster-in-carrier›`, not y
 - Do not pass a presigned URL to a sandbox web fetcher, which exceeds the URL length limit.
 - **Check the extension too, but trust the bytes.** A `.pdf` that sniffs as `zip` is mislabelled, not a PDF.
 - **A `[BLOCKED: …]` string is never a value.** A second filter rewrites dotted-numeric values as `[BLOCKED: JWT token]`.
-- Dotted identifiers are ordinary in construction, such as spec section `09.21.16`, phase codes and revisions. Re-return a blocked field in a different shape, spaced out or split across keys, and read it again.
-- Never let the marker reach a verdict, a comment or the dashboard. Never read it as an empty field either.
+- Dotted identifiers are ordinary in construction, such as spec section `09.21.16`, phase codes and revisions. The API already gave the figure; search for it inside the page instead of re-returning the blocked field. Return only the match, as true or false.
+- Never let the marker reach a verdict, a comment or the dashboard. Never read it as an empty field either. A field still blocked after the in-page search is unreadable. Report it by name as a failure.
 
 ### When no automated route is permitted: the download fallback
 

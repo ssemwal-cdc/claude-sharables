@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v37 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
+description: v38 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 37 — 2026-09-27.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
+**Skill version 38 — 2026-10-02.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
 
 Review every bill, purchase order and change order in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document. Cross-check against the real purchase order and billing history. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
@@ -280,22 +280,15 @@ Two things about this query are load-bearing:
 SELECT id, name, filetype, filesize, url FROM file WHERE id IN (<ap_file ids>)
 ```
 
-The `url` column returns a path like `/core/media/media.nl?id=<id>&c=<account>&h=<hash>&_xt=.pdf`.
+The `url` column returns a path like `/core/media/media.nl?id=<id>&c=<account>&h=<hash>&_xt=.pdf`. **Connector mode is not re-tested 2026-10-02.** The connector was not connected for that pass. This path stands as it did before.
 
-**In browser mode, take that same path off the record page instead.** The attachment field renders as a link. Its `href` is the `media.nl` path, with the `id`, `c` and `h` parameters already on it. Read it from the DOM in the record tab.
+**Browser mode cannot read the attachment from the record page** (`F‹netsuite-media-link-id-only›`, a real vendor bill). A DOM-split recipe once stood here. It assumed that the attachment link was a plain `<a href="...media.nl...">`, carrying `id`, `c` and `h`. A real vendor bill shows otherwise. The anchor is `href="javascript:NS.UI.Util.downloadFile(...)"`. It holds a JS-escaped `media.nl` path with only an `id` parameter, no `c`, no `h`. An in-page same-origin fetch of that path returned HTTP 500, an HTML error page, not the file.
 
-```javascript
-// The href already carries the account and hash, so it needs no reassembly.
-// Return it split up - a whole media.nl URL in a tool result trips the output filter.
-const a = [...document.querySelectorAll('a[href*="media.nl"]')].map(function(x){
-  const u = new URL(x.href, location.origin);
-  return {id: u.searchParams.get('id'), c: u.searchParams.get('c'),
-          h: u.searchParams.get('h'), xt: u.searchParams.get('_xt') || ''};
-});
-JSON.stringify(a)
-```
+**Browser mode uses the download fallback instead**, the same shape as Procore's. The user downloads the attachment from the record and saves it into `"<workspace>/NetSuite Approval Checks/attachments/"`. Name it by bill number, vendor and file name. Read it from there with the Read tool, or `openpyxl` for a workbook. Never delete it once saved. Say once that it stays. In a scheduled window, list the file and leave the item `flagged`, naming the cause `support not read: download needed`.
 
-Rebuild the path from those parts inside the page when fetching, exactly as the connector route does. **Everything after this point is identical in both modes.** Same pdf.js load, same `new Uint8Array` wrap, same sniff, same six outcomes. This DOM read is **designed, not yet observed.** If it returns nothing, the field may render as something other than an anchor on that record type. Report what it is rather than guessing a selector.
+The Read tool returns page text without pdf.js geometry. So the row rebuild (D17, rebuild rows from geometry) does not run on a downloaded file. Report every check that needs rebuilt rows as not run, by name — `ns.line-tie` and `ns.internal-consistency`. A check that did not run never passes, and never yields `clear`.
+
+**Everything after this point is connector mode only.** Browser mode stops at the download fallback above. Its reads are the Read tool and `openpyxl`, never the in-page pdf.js recipe below.
 
 **Setup, once per record tab.** Run this in the item's record tab. The fetch has to be same-origin so the session cookie rides along. That is why pdf.js is loaded in a record tab and nowhere else. pdf.js loaded in a record tab goes with it when that tab closes. It is re-run in the next record tab. NetSuite's CSP permits the import. Verified live 2026-08-13. The pin below is deliberate. Do not bump it in a skill edit.
 
@@ -378,6 +371,14 @@ Three things are not optional:
 - **A `[BLOCKED: …]` string is never a value.** The output filter redacts on more than query strings. A plain version number came back as `[BLOCKED: JWT token]` because its dotted shape matched a credential pattern. Dotted identifiers are ordinary in this data. If one appears where a figure should be, re-return the field in a different shape and read it again. Never let the marker reach a verdict or a note, and never read it as the field being empty.
 - **Say which outcome caused a skip**, in that outcome's own words. "Unreadable" alone is what let entire formats go unread.
 - **On a two-column page, left and right rows sharing a y-coordinate merge into one line.** `pdftotext -layout` does the same, so this is not a regression. Do not split such a line on whitespace. Split on an x-threshold, or take the figures off the record.
+
+<!--__SHARED:skill-no-filter-evasion__-->
+**Never shape code or output so a filter or safety check misses it.** That bars char codes. It bars splitting, spacing out, encoding or rewording a value to slip past one. Build every query string plainly, with the platform's own query-string builder. Keep each URL inside the page that holds it. Return parsed values out of a page, never a URL or a piece of one. Never move bytes, a URL or page state between tabs. Never design a route around a safety-check refusal. When one refuses a step, say so and stop. Never retry it reshaped.
+<!--__END_SHARED:skill-no-filter-evasion__-->
+
+<!--__SHARED:skill-name-blocked-cause__-->
+**Name the actual cause when a read is blocked.** Say what was observed, never a guess. Examples: "the session's safety check refused `<action>` [`<tag>`]". "The presigned URL came back redacted." "The output filter blanked `<field>`." "The link expired twice." "`<type>` is not viewable in the browser." Never write "blocked by the browser's safety check" or any cause this run did not observe.
+<!--__END_SHARED:skill-name-blocked-cause__-->
 
 ## Step 4 — Verify
 

@@ -81,7 +81,6 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D76 | `po-takes-bill-route` | Purchase orders take bill route | superseded | 2026-09-01 | A reviewed purchase order can be approved in the same run. |
 | D77 | `render-first-believe-guard` | Render first, believe the guard | settled | 2026-09-01 | A reviewer keeps one-click execute on a large queue. |
 | D78 | `unmapped-subtype-keeps-buttons` | An unmapped subtype keeps buttons | superseded | 2026-09-01 | A reviewer keeps live items they can action while a link is fixed. |
-| D79 | `org-protocol-override` | Repo workflow beats org protocol | settled | 2026-09-10 | A teammate holds one copy of a plugin, and a push to `main` updates it. |
 | D80 | `dashboard-publishing-pattern` | Publish through the widget | settled | 2026-09-15 | A reviewer gets a one-click dashboard from either plugin, built the same way. |
 | D81 | `device-usability-check` | Device usability check | settled | 2026-09-15 | The page works on the device the reader actually holds. |
 | D82 | `hooks-and-checks-pass` | Hooks and checks pass | settled | 2026-09-15 | A rule is enforced by a command, not by a maintainer remembering it. |
@@ -99,3 +98,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D94 | `in-skill-onboarding` | Onboarding lives in the skill | settled | 2026-09-25 | A new user who only installs the plugin reaches a working review and a working schedule without reading anything else. |
 | D21 | `blocked-marker-never-a-value` | Never trust a blocked marker | settled | 2026-10-02 | A redacted figure is read again instead of read as empty. |
 | D95 | `no-filter-evasion` | A skill never shapes its way past a filter | settled | 2026-10-02 | A run passes the safety check honestly, and never hides data from it. |
+| D79 | `org-protocol-override` | Repo workflow beats org protocol | settled | 2026-10-05 | The repo stays the one source of a plugin, and a push to `main` is the release. |

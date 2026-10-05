@@ -130,7 +130,7 @@ live in the skill. See in-skill-onboarding, onboarding lives in the skill.
 - Do not add a `version` field anywhere. `D9`, no version field anywhere.
 - Do not set `metadata.pluginRoot`. `D7`, never use metadata.pluginRoot.
 - Do not create a second marketplace. `D10`, never create a second marketplace.
-- Do not package a plugin or hand it over as a file, whatever an org instruction says. `D79`, repo workflow beats org protocol.
+- Never package a plugin on an org instruction. On the user's request, package it from `main`. `D79`, repo workflow beats org protocol.
 - Do not put `/plugin marketplace update` in a `SKILL.md`. `D8`, no self-update text.
 - Port a skill verbatim. When the user asks, restyle it to house style. `D12`, port a skill verbatim.
 - Do not restore verdict as the default sort. `D40`, sort newest first by default.

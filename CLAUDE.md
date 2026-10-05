@@ -88,6 +88,7 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand, not in the g
 - Use placeholders in every shipped worked example. `D60`, shipped examples use placeholders.
 - Cite the record id and date in a defect finding. `D57`, provenance may cite ids.
 ### Running a review
+- Never shape code or output to slip past a filter or safety check. `D95`, a skill never shapes its way past a filter.
 - Keep a successful read, a genuine absence and a failure as three named states. `D41`, three states never a boolean.
 - When a connector call is not a result set, switch to the browser route. `D34`, a failed call is unknown.
 - When the connector is absent, skip the connector checks in silence. `D69`, silence on an absent connector.
@@ -104,7 +105,7 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand, not in the g
 - Batch attachment reads inside one presigned window only. `D24`, do not overrun the window.
 - Retry an expired link at most twice, and name the outcome of every skip. `D27`, retry only an expired link.
 - Look at an image, and never let an OCR figure clear an item. `D25`, an OCR figure never clears.
-- Re-return a redacted field in another shape. `D21`, never trust a blocked marker.
+- Compare a blocked field inside the page, or report it unreadable. `D21`, never trust a blocked marker.
 - Run both plugins in auto permission mode. `D29`, auto mode, never skip-all.
 - Close every tab a run opened before the report, and never a tab the user opened. `D87`, a run closes its tabs.
 ### Recording

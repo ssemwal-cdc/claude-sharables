@@ -14,3 +14,5 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | G17 | `multi-skill-plugin-unbuilt` | Bundle plugins are unbuilt | unobserved | 2026-09-15 | Nobody follows a documented standard that the build then rejects. |
 | G19 | `tied-verdict-unobserved` | Tied verdict unobserved live | unobserved | 2026-09-23 | A `tied` row on the dashboard is never cited as proven until a real run produced it. |
 | G20 | `netsuite-connector-extra-files` | NetSuite connector misses extra files | unobserved | 2026-09-24 | A new file on a bill that was already reviewed gets read before the verdict carries forward. |
+| G21 | `office-attachment-route` | A carrier navigation to an office file is unobserved | unobserved | 2026-10-02 | A run names an office-document type as unobserved instead of assuming Chrome handles it safely. |
+| G22 | `scan-raster-in-carrier` | Rasterising a scan in the carrier tab is probed, not proven | unobserved | 2026-10-02 | A scanned-PDF read is trusted only as far as it was actually run. |

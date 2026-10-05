@@ -354,12 +354,33 @@ This is **probed on a public file only** (`G22`, not yet against a real S3 attac
 - Dotted identifiers are ordinary in construction, such as spec section `09.21.16`, phase codes and revisions. The API already gave the figure; search for it inside the page instead of re-returning the blocked field. Return only the match, as true or false.
 - Never let the marker reach a verdict, a comment or the dashboard. Never read it as an empty field either. A field still blocked after the in-page search is unreadable. Report it by name as a failure.
 
+### Word files: the run downloads them
+
+A `.docx` or `.doc` attachment gets its own route. It is not viewable in the browser. The user opted in for Word files only, 2026-10-05 (D‹run-downloads-word-files›, a run downloads Word files itself). Spreadsheets stay on the download fallback below.
+
+1. Open **a carrier tab** on `app.procore.com`, never the fetch tab. Fetch the record JSON there. Then schedule the navigation. The fetch call returns first:
+   ```javascript
+   fetch('/rest/v1.0/generic_tool_items/' + id + '?' + new URLSearchParams({project_id: pid}))
+     .then(r => r.json())
+     .then(rec => { setTimeout(() => { location.href = rec.attachments[i].url; }, 50); });
+   ```
+2. Chrome saves a `.docx` or `.doc`. It does not show one. The tab stays on `app.procore.com`. Close it (`D87`, a run closes its tabs).
+3. **Look once** in the connected workspace folder (Downloads, D64, the workspace folder is Downloads). Look for that exact file name, or the newest copy with Chrome's `" (n)"` suffix, modified after the navigation. **Never wait or loop for it.** One look, immediately.
+4. If it is there, read it with `__read_docx` through the shell.
+5. If it is not there, name the cause: `"Chrome did not save <file> into the workspace folder"`. Send the attachment to the manual fallback list below.
+6. **Never touch a Chrome save dialog**, if one appears. Name it as the cause instead. The file goes to the manual list.
+7. With no workspace folder connected, skip this route. The run cannot read Downloads. The file goes to the manual list, cause `"no workspace folder connected"`.
+
+This is a named step, so D72, no stray files in workspace, permits the files this route puts in Downloads. **The downloaded files stay in place.** Say so once in the report, same as the manual fallback below.
+
+**Unobserved end to end.** Whether Chrome saves the file silently, or asks where to save it, stays `unmeasured` until a real run tries it. The same holds for the rest of this route.
+
 ### When no automated route is permitted: the download fallback
 
 Four triggers send an attachment here instead of the carrier-tab route above.
 1. The session's safety check refused a step.
 2. A needed value came back redacted or blanked.
-3. The file's type is not viewable in the browser. That is every workbook, and anything outside the pdf and image extensions above.
+3. The file's type is not viewable in the browser. That is every workbook, and anything outside the pdf and image extensions above. A `.docx` or `.doc` tries the Word download route above first. It lands here only when that route could not find the file.
 4. Two expired-link retries both failed.
 
 **Name the files, do not fetch them.** The run report lists each one as project, item number, and the file name exactly as Procore shows it. The user downloads them from Procore and saves them into `"<workspace>/Procore Open Items/attachments/"`. That folder is named here, so D72, no stray files in workspace, permits it. This is the only route that puts files in the workspace, and the user opts in by downloading them.
@@ -397,6 +418,41 @@ def __read_workbook(path, start=0):
 - Keep the 4000-character whole-sheet budget, and the long-digit row filter. Call it again with `next` until it returns `None`, exactly like the old browser reader and the NetSuite page reader. Never split one sheet across two returns.
 - Apply the same first-bytes sniff and the same six outcomes to a downloaded file as to a fetched one. `expired` does not apply — the file is already local.
 
+**`openpyxl` reads workbooks. A `.docx` or `.doc` reads with `__read_docx`, stdlib only.** It mirrors the same approach: a ZIP, with the text pulled out of its XML.
+```python
+# __read_docx: stdlib-only Word reader - paragraphs and table-cell text, in document order
+import zipfile
+import xml.etree.ElementTree as ET
+
+def __read_docx(path):
+    try:
+        try:
+            with zipfile.ZipFile(path) as z:
+                try:
+                    xml_bytes = z.read("word/document.xml")
+                except KeyError:
+                    return {"state": "unsupported", "type": "zip without word/document.xml"}
+        except zipfile.BadZipFile:
+            with open(path, "rb") as f:
+                head = f.read(4)
+            if head == b"\xd0\xcf\x11\xe0":
+                return {"state": "unsupported", "type": "legacy .doc (OLE2)"}
+            return {"state": "unsupported", "type": "not a zip"}
+        try:
+            root = ET.fromstring(xml_bytes)
+        except ET.ParseError:
+            return {"state": "unsupported", "type": "unreadable document.xml"}
+        ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+        lines = []
+        for p in root.iter(ns + "p"):                      # document order - table cells included
+            text = "".join(t.text or "" for t in p.iter(ns + "t"))
+            if text:
+                lines.append(text)
+        return {"text": "\n".join(lines), "paragraphs": len(lines)}
+    except Exception as e:                                  # never raise - an unreadable file is unsupported
+        return {"state": "unsupported", "type": type(e).__name__}
+```
+
 **Never delete the downloaded files.** Say once, in the run report, that they stay in the folder.
 
 **In a scheduled window**, nobody is there to download anything. List the triggered files in the report and leave the item `skipped`, naming the cause `support not read: download needed`.
@@ -405,7 +461,7 @@ def __read_workbook(path, start=0):
 **Name the actual cause when a read is blocked.** Say what was observed, never a guess. Examples: "the session's safety check refused `<action>` [`<tag>`]". "The presigned URL came back redacted." "The output filter blanked `<field>`." "The link expired twice." "`<type>` is not viewable in the browser." Never write "blocked by the browser's safety check" or any cause this run did not observe.
 <!--__END_SHARED:skill-name-blocked-cause__-->
 
-**Proven on a real queue, 2026-10-02** (`F167`, plain-fetch queue read). Plain `URLSearchParams` fetches: the queue, the gate, the record reads. Also proven (`F166`, carrier-tab reads): the carrier-tab PDF read. The carrier-tab image read. The `byteLength`-before-parsing requirement. **Probed on a public file only:** `OffscreenCanvas` and pdf.js inside a PDF tab. **Unit-tested only:** `__sniff`. **Unobserved:** a real `.xlsx` or `.docx` through any route. A carrier navigation to a non-viewable type (`G21`, unobserved so far). A scanned PDF rasterised in a carrier tab. The download fallback end to end.
+**Proven on a real queue, 2026-10-02** (`F167`, plain-fetch queue read). Plain `URLSearchParams` fetches: the queue, the gate, the record reads. Also proven (`F166`, carrier-tab reads): the carrier-tab PDF read. The carrier-tab image read. The `byteLength`-before-parsing requirement. **Probed on a public file only:** `OffscreenCanvas` and pdf.js inside a PDF tab. **Unit-tested only:** `__sniff`, `__read_docx`. **Unobserved:** a real `.xlsx` through any route. The Word download route end to end, including whether Chrome saves silently or asks. A carrier navigation to a non-viewable type (`G21`, unobserved so far). A scanned PDF rasterised in a carrier tab. The download fallback end to end.
 
 ## Step 5 — Verify
 ### Check registry

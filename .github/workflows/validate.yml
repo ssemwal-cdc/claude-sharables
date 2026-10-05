@@ -30,6 +30,9 @@ jobs:
       - name: Test the version-bump check
         run: python3 scripts/test_check_version_bump.py
 
+      - name: Test the record id claim
+        run: python3 scripts/test_check_records.py
+
       # Pinned to the version proven locally (3.1.5); needed by the skill's own
       # workbook reader test below.
       - name: Install openpyxl

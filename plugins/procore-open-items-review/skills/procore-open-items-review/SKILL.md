@@ -259,7 +259,7 @@ Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-sec
    - Return `kind`, `byteLength`, `pages` and the text. **Never the URL, and never a piece of one.**
 3. For an image, the visual read happens **in that carrier tab** too, with `computer`. Close the tab once the read is done.
 
-**Only navigate a carrier tab for a viewable type**: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.tif`, `.tiff`, `.webp`. Every other extension goes straight to the download fallback below. A navigation to any other type is `unobserved` (`G1`, no route built for it yet).
+**Only navigate a carrier tab for a viewable type**: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.tif`, `.tiff`, `.webp`. Every other extension goes straight to the download fallback below. A navigation to any other type is `unobserved` (`G21`, no route built for it yet).
 
 **Batch it.** Navigate 4 to 6 carrier tabs at once. Then run their read calls, one per tab, in a single `browser_batch`. The margin inside the 60 seconds was measured once, live: an 18-page, 4.8 MB PDF extracted in 853 ms.
 
@@ -347,7 +347,7 @@ The worker must be fetched as text and turned into a blob URL. Pointing `workerS
 const c = new OffscreenCanvas(v.width, v.height);
 await page.render({canvasContext: c.getContext('2d'), viewport: v}).promise;
 ```
-This is **probed on a public file only** (`G4`, not yet against a real S3 attachment). Treat it as unconfirmed until one runs on a real scan. **If no visual read is available, fall back to OCR, and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. **An OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties. Report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. This cap is deliberate. If it feels too noisy, get the visual read working. Do not relax the cap.
+This is **probed on a public file only** (`G22`, not yet against a real S3 attachment). Treat it as unconfirmed until one runs on a real scan. **If no visual read is available, fall back to OCR, and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. **An OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties. Report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. This cap is deliberate. If it feels too noisy, get the visual read working. Do not relax the cap.
 - Do not pass a presigned URL to a sandbox web fetcher, which exceeds the URL length limit.
 - **Check the extension too, but trust the bytes.** A `.pdf` that sniffs as `zip` is mislabelled, not a PDF.
 - **A `[BLOCKED: …]` string is never a value.** A second filter rewrites dotted-numeric values as `[BLOCKED: JWT token]`.
@@ -405,7 +405,7 @@ def __read_workbook(path, start=0):
 **Name the actual cause when a read is blocked.** Say what was observed, never a guess. Examples: "the session's safety check refused `<action>` [`<tag>`]". "The presigned URL came back redacted." "The output filter blanked `<field>`." "The link expired twice." "`<type>` is not viewable in the browser." Never write "blocked by the browser's safety check" or any cause this run did not observe.
 <!--__END_SHARED:skill-name-blocked-cause__-->
 
-**Proven on a real queue, 2026-10-02** (`F167`, plain-fetch queue read). Plain `URLSearchParams` fetches: the queue, the gate, the record reads. Also proven (`F166`, carrier-tab reads): the carrier-tab PDF read. The carrier-tab image read. The `byteLength`-before-parsing requirement. **Probed on a public file only:** `OffscreenCanvas` and pdf.js inside a PDF tab. **Unit-tested only:** `__sniff`. **Unobserved:** a real `.xlsx` or `.docx` through any route. A carrier navigation to a non-viewable type (`G1`, unobserved so far). A scanned PDF rasterised in a carrier tab. The download fallback end to end.
+**Proven on a real queue, 2026-10-02** (`F167`, plain-fetch queue read). Plain `URLSearchParams` fetches: the queue, the gate, the record reads. Also proven (`F166`, carrier-tab reads): the carrier-tab PDF read. The carrier-tab image read. The `byteLength`-before-parsing requirement. **Probed on a public file only:** `OffscreenCanvas` and pdf.js inside a PDF tab. **Unit-tested only:** `__sniff`. **Unobserved:** a real `.xlsx` or `.docx` through any route. A carrier navigation to a non-viewable type (`G21`, unobserved so far). A scanned PDF rasterised in a carrier tab. The download fallback end to end.
 
 ## Step 5 — Verify
 ### Check registry

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D96
 slug: run-downloads-word-files
 kind: decision
 status: settled

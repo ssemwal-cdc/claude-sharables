@@ -23,6 +23,8 @@ import collections
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -688,6 +690,31 @@ def check_waiter_loops():
     return problems
 
 
+def _highest_ids_ever():
+    """Highest id number ever held per letter, scanned from git history.
+
+    An id is permanent once claimed (G1/G4 reuse on PR 36 broke cite-by-id).
+    So the next id must clear every id a kind has ever held, not just the ids
+    still on disk. Exits non-zero rather than silently falling back to the
+    lowest free id when git or its history can't answer that."""
+    if not shutil.which("git"):
+        sys.exit("claim_ids: git is not on PATH; cannot find ids ever held.")
+    def _git(*args):
+        try:
+            return subprocess.run(
+                ["git", *args], cwd=REPO, capture_output=True, text=True, check=True,
+            ).stdout
+        except subprocess.CalledProcessError as exc:
+            sys.exit("claim_ids: %s failed: %s" % (" ".join(args), exc.stderr.strip()))
+    if _git("rev-parse", "--is-shallow-repository").strip() == "true":
+        sys.exit("claim_ids: shallow checkout; fetch full history before claiming ids.")
+    log = _git("log", "-p", "--", "decisions", "findings", "gaps")
+    highest = collections.defaultdict(int)
+    for letter, n in re.findall(r"^[+-]id:\s*([DFG])([0-9]+)\s*$", log, re.M):
+        highest[letter] = max(highest[letter], int(n))
+    return highest
+
+
 # ------------------------------------------------------------------- claim ids
 def claim_ids(dry_run=True):
     """Number every pending record, rewrite its slug citations, refresh the indexes.
@@ -708,9 +735,10 @@ def claim_ids(dry_run=True):
         log.append("no record has id: pending. Nothing to claim.")
         return log
 
+    highest_ever = _highest_ids_ever()
     assigned = {}  # (letter, slug) -> new id
     for rec in pending:
-        n = 1
+        n = highest_ever[rec.letter] + 1
         while n in taken[rec.letter]:
             n += 1
         taken[rec.letter].add(n)

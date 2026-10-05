@@ -30,6 +30,11 @@ jobs:
       - name: Test the version-bump check
         run: python3 scripts/test_check_version_bump.py
 
+      # Pinned to the version proven locally (3.1.5); needed by the skill's own
+      # workbook reader test below.
+      - name: Install openpyxl
+        run: pip install openpyxl==3.1.5
+
       # Runs the executable code the skills carry, extracted from SKILL.md itself. Was a
       # manual gate until 2026-08-24 while README.md told contributors it ran here, so the
       # three-state fan-out, sniff-table, CCO-demotion and renderBar assertions were habit.

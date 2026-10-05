@@ -23,9 +23,10 @@ Covered:
                            workbook or an image must never sniff as `pdf`, and an
                            expired S3 body must be its own state - folding those
                            together is what left whole formats unread.
-  6. Procore  `__sheets` - workbook reads are budgeted by whole sheets, include
-                           hidden sheets, and drop long-digit rows without taking
-                           the real row beside them.
+  6. Procore  `__read_workbook` - the openpyxl download-fallback reader: workbook reads
+                           are budgeted by whole sheets, include hidden sheets, drop
+                           long-digit rows without taking the real row beside them, and
+                           read an unevaluated formula as blank, never 0.
   7. template version   - each publish script's TEMPLATE_VERSION matches the marker
                            in its sibling template, and a mismatch warns without
                            stopping the run.
@@ -103,6 +104,17 @@ def js_block(path, needle):
     blocks = [b for b in re.findall(r"```javascript\n(.*?)```", src, re.S) if needle in b]
     if not blocks:
         sys.exit("ABORT: no javascript block containing %r in %s. The test "
+                 "extracts from SKILL.md on purpose - if the block moved or was "
+                 "renamed, fix this test rather than duplicating the code." % (needle, path))
+    return blocks[0]
+
+
+def py_block(path, needle):
+    """Pull the ```python block containing `needle` out of a SKILL.md."""
+    src = open(path, encoding="utf-8").read()
+    blocks = [b for b in re.findall(r"```python\n(.*?)```", src, re.S) if needle in b]
+    if not blocks:
+        sys.exit("ABORT: no python block containing %r in %s. The test "
                  "extracts from SKILL.md on purpose - if the block moved or was "
                  "renamed, fix this test rather than duplicating the code." % (needle, path))
     return blocks[0]
@@ -259,9 +271,9 @@ def test_gate_states():
     harness = r"""
 var window = {};
 """ + body + r"""
-const EQ = String.fromCharCode(61), AMP = String.fromCharCode(38);
 global.fetch = async function(u){
-  const id = u.split('object_id]'+EQ)[1].split(AMP)[0];
+  // URLSearchParams percent-encodes the brackets, so parse rather than split on a literal.
+  const id = new URLSearchParams(u.split('?')[1]).get('filters[workflowable_object_id]');
   if (id === '2') return {ok:false, status:429};          // rate limited
   if (id === '3') return {ok:true, json: async()=>[]};    // genuinely no instance
   if (id === '4') throw new Error('network down');
@@ -346,55 +358,65 @@ console.log(JSON.stringify({
 
 # ---------------------------------------------------------- 6. workbook reading
 def test_sheets():
-    body = js_block(os.path.join(PC, "SKILL.md"), "__sheets")
-    # drop the CDN loader line - not runnable outside a browser, and node would
-    # try to resolve the URL as a module specifier. XLSX is stubbed below instead.
-    body = "\n".join(l for l in body.split("\n") if not l.startswith("await import("))
-    harness = r"""
-var window = {};
-const SHEETS = {
-  'Summary':   'Description,Amount\nElectrical labour,10849586\n,\nTotal,10849586\n',
-  'Detail':    'Line,Value\n' + Array.from({length:400},(_,i)=>'L'+i+','+(i*1000)).join('\n') + '\n',
-  'Hidden WS': 'Note,Val\nbarcode,000000000000000000000123456789012345\nReal,42\n'
-};
-global.XLSX = {
-  read: () => ({SheetNames: Object.keys(SHEETS), Sheets: SHEETS}),
-  utils: {sheet_to_csv: ws => ws}
-};
-""" + body + r"""
-let n = 0, calls = 0, all = '', split = false;
-do {
-  const r = window.__sheets(new ArrayBuffer(8), n);
-  calls++;
-  // a call carrying part of a sheet without its header would mean a split
-  if ((r.text.match(/--- sheet /g) || []).length === 0) split = true;
-  all += r.text + '\n';
-  n = r.next;
-} while (n !== null && calls < 10);
-console.log(JSON.stringify({
-  calls: calls,
-  neverSplit: !split,
-  hiddenIncluded: /--- sheet 3: Hidden WS ---/.test(all),
-  longDigitDropped: !/000000000000000000000123456789012345/.test(all),
-  realRowKept: /Real,42/.test(all),
-  blankRowDropped: !/\n,\n/.test(all),
-  figuresIntact: /Electrical labour,10849586/.test(all),
-}));
-"""
-    rc, out, err = run_node(harness)
-    if rc != 0:
-        check("sheets runs", False, err.splitlines()[0] if err else "non-zero exit")
+    """Spreadsheets moved out of the browser (download fallback, D53/no-filter-evasion
+    cleanup). `__read_workbook` now runs in Python with openpyxl, so this test builds a
+    real .xlsx with hidden sheets and an unevaluated formula, and runs the function
+    extracted straight from SKILL.md against it."""
+    try:
+        import openpyxl  # noqa: F401
+    except ImportError:
+        check("sheets runs", False, "openpyxl not installed - skipping")
         return
-    r = json.loads(out)
-    check("sheets: terminates", r["calls"] < 10, "ran %s calls" % r["calls"])
-    check("sheets: budgets whole sheets, never splits one", r["neverSplit"])
+    from openpyxl import Workbook
+
+    body = py_block(os.path.join(PC, "SKILL.md"), "__read_workbook")
+
+    with tempfile.TemporaryDirectory() as td:
+        xlsx_path = os.path.join(td, "test.xlsx")
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Summary"
+        ws.append(["Description", "Amount"])
+        ws.append(["Electrical labour", 10849586])
+        ws.append([None, None])                       # blank row, dropped
+        ws.append(["Unevaluated", "=1+1"])             # formula never opened in Excel -> None
+        ws2 = wb.create_sheet("Detail")
+        for i in range(400):
+            ws2.append(["L%d" % i, i * 1000])
+        ws3 = wb.create_sheet("Hidden WS")
+        ws3.sheet_state = "hidden"
+        ws3.append(["Note", "Val"])
+        ws3.append(["barcode", "000000000000000000000123456789012345"])
+        ws3.append(["Real", 42])
+        wb.save(xlsx_path)
+
+        ns = {}
+        exec(body, ns)  # noqa: S102 - trusted, repo-local SKILL.md
+        read_workbook = ns["__read_workbook"]
+
+        calls, all_text, n, split = 0, "", 0, False
+        while True:
+            r = read_workbook(xlsx_path, n)
+            calls += 1
+            if "--- sheet " not in r["text"]:
+                split = True
+            all_text += r["text"] + "\n"
+            n = r["next"]
+            if n is None or calls >= 10:
+                break
+
+    check("sheets: terminates", calls < 10, "ran %s calls" % calls)
+    check("sheets: budgets whole sheets, never splits one", not split)
     # A superseded figure is exactly the thing that gets hidden rather than deleted,
     # so taking sheet 1 and stopping would miss the case this check exists for.
-    check("sheets: hidden sheets are read", r["hiddenIncluded"])
-    check("sheets: long-digit row dropped", r["longDigitDropped"])
-    check("sheets: the real row beside it survives", r["realRowKept"])
-    check("sheets: blank rows dropped", r["blankRowDropped"])
-    check("sheets: figures intact", r["figuresIntact"])
+    check("sheets: hidden sheets are read", "--- sheet 3: Hidden WS ---" in all_text)
+    check("sheets: long-digit row dropped",
+          "000000000000000000000123456789012345" not in all_text)
+    check("sheets: the real row beside it survives", "Real,42" in all_text)
+    check("sheets: blank rows dropped", "\n,\n" not in all_text)
+    check("sheets: figures intact", "Electrical labour,10849586" in all_text)
+    check("sheets: unevaluated formula reads blank, never 0",
+          "Unevaluated," in all_text and "Unevaluated,0" not in all_text)
 
 
 # ------------------------------------------------------ 4. CCO ungated demotion

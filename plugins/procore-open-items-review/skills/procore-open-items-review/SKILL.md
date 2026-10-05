@@ -1,9 +1,9 @@
 ---
 name: procore-open-items-review
-description: v39 — Review of the Procore open items actually awaiting your workflow response. Covers internal change risks, subcontractor invoices, commitment change orders, and the purchase order and work order contracts. Published to a live dashboard widget in chat. Trigger on "run my Procore review," "check my open items," or "review my Procore queue". Also trigger on "double check my ICRs", "run the daily Procore check", or any mention of the Procore open items dashboard, items waiting on your response, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Filters the queue to items you can actually action. Verifies the cost figures and pay-application math against the attached support. Publishes a clear, flagged, skipped, or tied verdict per item. Read-only: no clicking Respond, Approve, Reject, or Revise and Resubmit. Every Procore call is a GET. No response controls on the dashboard. Every verdict is a recommendation. The response stays yours to make in Procore.
+description: v40 — Review of the Procore open items actually awaiting your workflow response. Covers internal change risks, subcontractor invoices, commitment change orders, and the purchase order and work order contracts. Published to a live dashboard widget in chat. Trigger on "run my Procore review," "check my open items," or "review my Procore queue". Also trigger on "double check my ICRs", "run the daily Procore check", or any mention of the Procore open items dashboard, items waiting on your response, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Filters the queue to items you can actually action. Verifies the cost figures and pay-application math against the attached support. Publishes a clear, flagged, skipped, or tied verdict per item. Read-only: no clicking Respond, Approve, Reject, or Revise and Resubmit. Every Procore call is a GET. No response controls on the dashboard. Every verdict is a recommendation. The response stays yours to make in Procore.
 ---
 # Procore Open Items Review
-**Skill version 39 — 2026-09-29.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
+**Skill version 40 — 2026-10-02.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
 
 Review every Procore item **waiting on the user's workflow response**. Verify each item's figures against its attached support. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget. Chat gets one headline line.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
@@ -32,13 +32,14 @@ Review every Procore item **waiting on the user's workflow response**. Verify ea
 - The user is one reviewer among several, and not the accountant of record.
 - A response advances a workflow step. It clears no accounting or legal obligation.
 - Do not stall an authorised batch over the amounts, the item count, or a later audit reading.
-## The query-string output filter
-Tool output containing a URL query string is replaced with `[BLOCKED: Cookie/query string data]`. That includes the JavaScript source you send. Build every query string from character codes.
-```javascript
-const E=String.fromCharCode(61), Q=String.fromCharCode(63), A=String.fromCharCode(38);
-// '/rest/v1.0/generic_tool_items/'+id+Q+'project'+'_id'+E+pid
-```
-Never echo a URL back in a result. Return parsed values only.
+## The output filter, measured 2026-10-02
+The output filter blanks only the one result field whose value holds a URL query string, as `[BLOCKED: Cookie/query string data]`. Sibling fields survive. The JavaScript source you send is never echoed. That holds on success and on a thrown error alike. A dotted string, such as a version number or `app.procore.com`, comes back `[BLOCKED: JWT token]`, again per field.
+
+A char-code recipe once stood here to get a query string past this filter. The session's safety check refused it, tagged `[Auto-Mode Bypass]`. It passed the same fetch written plainly (`F167`, char codes refused, plain passed). Build every query string plainly, with `URLSearchParams`. Never return a URL in a result. Return parsed values only.
+
+<!--__SHARED:skill-no-filter-evasion__-->
+**Never shape code or output so a filter or safety check misses it.** That bars char codes. It bars splitting, spacing out, encoding or rewording a value to slip past one. Build every query string plainly, with the platform's own query-string builder. Keep each URL inside the page that holds it. Return parsed values out of a page, never a URL or a piece of one. Never move bytes, a URL or page state between tabs. Never design a route around a safety-check refusal. When one refuses a step, say so and stop. Never retry it reshaped.
+<!--__END_SHARED:skill-no-filter-evasion__-->
 
 <!--__SHARED:skill-step0-preamble__-->
 ## Step 0 — Sync assets, then first-run setup
@@ -176,18 +177,18 @@ This is what makes the review worth reading. Most of the queue is distribution-o
 
 **Run the whole gate as one in-page fan-out, not one tool call per item.** Serial gating spends most of the run learning what to ignore. `unmeasured`. The largest queue observed is 62 items. Run it in the fetch tab, on `app.procore.com`, where the session cookie already applies.
 ```javascript
-// Query strings are built from char codes - see "The query-string output filter".
-const E=String.fromCharCode(61), Q=String.fromCharCode(63), A=String.fromCharCode(38);
 window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}]
   const out=[], q=rows.slice();
   await Promise.all(Array.from({length: Math.min(cap||8, q.length)}, async function(){
     while(q.length){
       const r=q.shift();
-      const u='/rest/v1.0/projects/'+r.pid+'/workflows/instances'+
-              Q+'filters[workflowable_object_id]'+E+r.id+
-              A+'filters[workflowable_object_type]'+E+r.type+
-              A+'page'+E+'1'+A+'per_page'+E+'100'+     // per_page is load-bearing - see above
-              A+'view'+E+'action_card';
+      const qs = new URLSearchParams({
+        'filters[workflowable_object_id]': r.id,
+        'filters[workflowable_object_type]': r.type,
+        page: '1', per_page: '100',     // per_page is load-bearing - see above
+        view: 'action_card'
+      });
+      const u='/rest/v1.0/projects/'+r.pid+'/workflows/instances?'+qs;
       try{
         const res=await fetch(u,{headers:{Accept:'application/json'}});
         if(!res.ok){ out.push({key:r.key, state:'failed', code:res.status}); continue; }
@@ -203,7 +204,7 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 };
 ```
 - **Cap concurrency at 8 to 10.** A 429 from rate limiting is a `failed`, not an `empty`.
-- **The three states are the safety property. They are not interchangeable.** `ok` gates on `can`, exactly as above. `empty` means the API genuinely returned no instance.
+- **The three states are the safety property. They are not interchangeable.** `ok` gates on `can`, exactly as above. `empty` means that the API genuinely returned no instance.
 - `failed` is **reported by name and excluded from the run.** Never count it as suppressed, never treat it as actionable, never let it reach the dashboard.
 - If more than a couple fail, stop and report rather than publishing a partial queue as complete. The full `action_card` payload is not needed.
 - **Commitments gate on the queue's own `item_type`, verbatim, and the record's own id.** No second id and no translation.
@@ -216,7 +217,7 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 - **That id is on the package payload, at `line_items[].holder.id`**, confirmed against five packages. `holder` is per line, so **dedupe it across `line_items[]`**.
 - **This inverts the order for CCOs, and only for CCOs**, because the read is what produces the lookup id. Fetch the packages ahead of the gate, then fan out over the whole queue.
 - **Exactly one distinct `holder.id`** is the `wfId`. Record it in the log.
-- **More than one** means a package spanning several commitment change orders. Mark that item `ungated`, name the ids, and leave it to the user. **Do not pick one.**
+- **More than one** means that a package spans several commitment change orders. Mark that item `ungated`, name the ids, and leave it to the user. **Do not pick one.**
 - **None, or no `holder` on the payload**, falls back to opening the package record. That record redirects to the change order. That id is never the package id.
 - **If you cannot resolve the id, mark the item `ungated`**, and say so on the item. **Never fall back to querying with the package id.**
 - A wrong *type* returns a loud **400** response. A right type with the wrong *id* returns **200 with zero rows**, which reads as no instance at all.
@@ -238,22 +239,29 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 - `grand_total`, `line_items` and `retainage_percent` are confirmed present on a real purchase order contract. **`WorkOrderContract` is still unobserved.** On the first one of a run, return the payload's top-level key names with the values. Say it once in the run report, and correct this paragraph.
 - **A field this step names that the payload does not carry makes every check needing it *not run*.** That happens by name. It is never a silent pass and never a `clear`.
 ## Step 4 — Read the attached support without downloading it
-Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-second presigned S3 link**. Four routes are dead. `storage.procore.com` blocks cross-origin reads, and Chrome's PDF viewer exposes no text layer. `javascript_tool` cannot attach to a PDF tab, and clicking the link produces nothing. This recipe routes around all of it and leaves **no files in the downloads folder**.
+Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-second presigned S3 link**. `storage.procore.com` blocks cross-origin reads, and Chrome's PDF viewer exposes no text layer. This route avoids both and leaves **no files in the downloads folder**.
 
-**Setup, once per run.** Open **the pdf.js tab** on the S3 bucket root and load pdf.js there. Close it once the last attachment of the run has been read.
-```javascript
-// tab: https://s3.amazonaws.com/pro-core.com/   (returns XML — attachable, unlike a PDF)
-const m = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
-window.__pj = m;
-const wt = await (await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs')).text();
-m.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([wt], {type:'text/javascript'}));
-```
-The worker must be fetched as text and turned into a blob URL. Pointing `workerSrc` at the CDN directly fails. **The pdf.js pin is deliberate. Do not bump it in a skill edit.**
+**Measured live 2026-10-02 (`F166`, carrier-tab reads of real S3 attachments).** Two claims once written here were wrong. `javascript_tool` does attach to a PDF tab — `document.contentType` reads `application/pdf` there. A presigned `s3.amazonaws.com` link is not readable in a `tabs_context_mcp` or `navigate` result, though. Its `X-Amz-*` signature parameters come back `REDACTED` (`X-Amz-Expires=60` survives). Inside the page, `location.href` stays intact. So the read happens in the tab the redirect landed in. It is never passed to a second tab, never read off a tool result.
 
-**Per attachment, three moves:**
-1. Open **a carrier tab**: a separate Procore tab on `app.procore.com`, opened for the redirect, never the fetch tab. In it, fetch the record JSON and navigate that tab to the file: `location.href = record.attachments[i].url`.
-2. Call `tabs_context_mcp`. That tab's URL is now the presigned `s3.amazonaws.com` link, and it **is** readable in the tool result. Close the carrier tab after move 3's sniff. That is on capture for a text kind, or after the visual read for an image or scan.
-3. In the pdf.js tab, same origin and no CORS wall, fetch that URL and extract text.
+**One carrier tab, per attachment.** Never the fetch tab.
+1. Open **a carrier tab** on `app.procore.com`. In it, fetch the record JSON, then schedule the navigation so the call returns before the tab unloads:
+   ```javascript
+   // id, pid: the item's generic_tool_items id and project id. i: this attachment's index in the item.
+   fetch('/rest/v1.0/generic_tool_items/' + id + '?' + new URLSearchParams({project_id: pid}))
+     .then(r => r.json())
+     .then(rec => { setTimeout(() => { location.href = rec.attachments[i].url; }, 50); });
+   ```
+2. The next call in that same tab, inside the 60-second window:
+   - Check `location.host.endsWith('amazonaws.com')` — a boolean, never the URL itself.
+   - `fetch(location.href)`, then read `byteLength` off the `ArrayBuffer` **before** parsing. `getDocument` detaches the buffer (`F166`, read byte length first).
+   - Sniff the bytes (`__sniff`, unchanged, below).
+   - For `pdf`, load pdf.js in that same carrier tab. Same pin, worker fetched as text into a blob URL.
+   - Return `kind`, `byteLength`, `pages` and the text. **Never the URL, and never a piece of one.**
+3. For an image, the visual read happens **in that carrier tab** too, with `computer`. Close the tab once the read is done.
+
+**Only navigate a carrier tab for a viewable type**: `.pdf`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.tif`, `.tiff`, `.webp`. Every other extension goes straight to the download fallback below. A navigation to any other type is `unobserved` (`G21`, no route built for it yet).
+
+**Batch it.** Navigate 4 to 6 carrier tabs at once. Then run their read calls, one per tab, in a single `browser_batch`. The margin inside the 60 seconds was measured once, live: an 18-page, 4.8 MB PDF extracted in 853 ms.
 
 **Sniff the bytes before choosing a reader.** Handing pdf.js a non-PDF throws `InvalidPDFException`, which is also what a corrupt download gives. The first four bytes settle it.
 ```javascript
@@ -277,14 +285,18 @@ window.__sniff = function(ab){
   return (pr / s.length > 0.95) ? 'text' : 'unknown';
 };
 ```
-Then dispatch on the result. Only the `pdf` branch is the recipe that was already here.
+Then dispatch on the result, in the same call.
 ```javascript
-const r = await fetch(u);                          // u rebuilt from char codes
+const r = await fetch(location.href);
 const b = await r.arrayBuffer();
+const byteLength = b.byteLength;                   // read BEFORE parsing - getDocument detaches it
 const kind = window.__sniff(b);
 if (kind === 'pdf') {
+  const m = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
+  const wt = await (await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs')).text();
+  m.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([wt], {type:'text/javascript'}));
   // new Uint8Array is REQUIRED - a raw ArrayBuffer throws InvalidPDFException on valid bytes
-  const d = await window.__pj.getDocument({data:new Uint8Array(b)}).promise;
+  const d = await m.getDocument({data:new Uint8Array(b)}).promise;
   // Flattening the page with join(' ') is deliberate HERE and must not be ported to NetSuite, which
   // rebuilds rows from pdf.js geometry instead. The difference is what the text is for: every figure
   // Procore checks comes from the API, and the PDF is only searched for those figures verbatim, so
@@ -292,54 +304,28 @@ if (kind === 'pdf') {
   // the columns destroys the quantity x rate and line-tie checks.
   let t=''; for(let i=1;i<=d.numPages;i++){const p=await d.getPage(i);const c=await p.getTextContent();t+=' '+c.items.map(z=>z.str).join(' ');}
   // a PDF that parsed but yielded almost nothing is the ONLY thing that means "scanned"
-  return {state: t.trim().length > 40 ? 'text' : 'scanned', text: t};
+  return {state: t.trim().length > 40 ? 'text' : 'scanned', text: t, byteLength, pages: d.numPages};
 }
-return {state: kind};                              // never guess; the caller branches
+return {state: kind, byteLength};                  // never guess; the caller branches
 ```
-Return the byte length and `kind` alongside, never the URL. Moves 2 and 3 must land inside the 60-second window, one tool call each, nothing batched between. **The window is per window, not per file, so batch inside it.** Navigate several carrier tabs at once, and take all their presigned URLs from a **single** `tabs_context_mcp`. Then extract and sniff them all in one pdf.js-tab call with `Promise.all`. Then close each carrier tab. Do that at once for a text kind, or after the visual read for an image or scan. Keep batches to 4 to 6 files. The margin left in the 60 seconds is `unmeasured`.
+The worker must be fetched as text and turned into a blob URL. Pointing `workerSrc` at the CDN directly fails. **The pdf.js pin is deliberate. Do not bump it in a skill edit.**
 
 **Six outcomes per attachment, and they are not interchangeable.** **Never collapse these back into readable and not readable.**
 
 | Outcome | What it means | What to do |
 |---|---|---|
 | `text` | parsed to characters | review it normally |
-| `spreadsheet` | `zip` with `xl/` entries, or `ole2` | read it as a workbook with SheetJS |
-| `image` | PNG, JPEG, GIF, TIFF or WEBP | visual read with `computer` |
+| `spreadsheet` | `zip` with `xl/` entries, or `ole2` | not read here — see the download fallback below |
+| `image` | PNG, JPEG, GIF, TIFF or WEBP | visual read with `computer`, in the carrier tab |
 | `scanned` | **was a PDF**, parsed, almost no characters | rasterise, then visual read — if that fails, say "support is a scanned image, text not extractable" |
-| `expired` | `s3error`, or the fetch itself threw | open a new carrier tab and navigate it for a fresh URL, then retry, **at most twice**, then report it unreachable |
+| `expired` | `s3error`, or the fetch itself threw | navigate a fresh carrier tab for a new URL, then retry, **at most twice**, then report it unreachable |
 | `unsupported` | a real file of a type with no reader | name the actual type. Never call it scanned, never call it expired |
 
-**A retry is only ever legitimate for `expired`.** Bound it at two attempts. Re-fetch only when the bytes said `s3error` or the fetch threw. A file that parsed as the wrong type will parse as the wrong type again.
+**A retry is only ever legitimate for `expired`.** Bound it at two attempts, each a fresh carrier-tab navigation. Re-fetch only when the bytes said `s3error` or the fetch threw. A file that parsed as the wrong type will parse as the wrong type again.
 
-**Reading a workbook.** A plain dynamic `import()` of the cdnjs UMD build loads SheetJS and populates `globalThis.XLSX` on the first attempt. Four fallback loaders were probed behind it and **none was reached**, so none of them is known to work. Do not restore one as a fallback.
-```javascript
-// once per run, beside the pdf.js setup
-await import('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+**Spreadsheets no longer reach the browser.** A workbook attachment goes to the download fallback below, and `openpyxl` reads it there. No library loads in a carrier tab for this.
 
-// per workbook. Same Uint8Array wrap the PDF path needs, and the same whole-unit
-// size budget as the NetSuite page reader - never split a sheet across returns.
-window.__sheets = function(ab, from){
-  const wb = XLSX.read(new Uint8Array(ab), {type:'array'});
-  let out = '', n = from || 0;
-  for (; n < wb.SheetNames.length; n++){
-    const nm = wb.SheetNames[n];
-    const rows = XLSX.utils.sheet_to_csv(wb.Sheets[nm], {blankrows:false})
-      .split('\n')
-      .filter(r => r.replace(/,/g,'').trim() && !/\d{20,}/.test(r))
-      .join('\n');
-    const block = '--- sheet ' + (n+1) + ': ' + nm + ' ---\n' + rows;
-    if (out && out.length + block.length > 4000) break;
-    out += (out ? '\n\n' : '') + block;
-  }
-  return {text: out, next: n >= wb.SheetNames.length ? null : n, sheets: wb.SheetNames.length};
-};
-```
-- Call it again with `next` until it returns `null`, exactly like the NetSuite page reader. **Read every sheet, including hidden ones.** `SheetNames` lists hidden sheets. Never take sheet 1 and stop.
-- **`sheet_to_csv` returns the cached computed value, not the formula.** A cell whose formula Excel never evaluated comes back **blank**. Report that as a blank, never as zero.
-- **Keep the long-digit row filter.** One barcode-like row turns the whole result into `[BLOCKED: …]`. **A `text` sniff, such as CSV or plain text, needs no library.** Return it directly.
-- **cdnjs pins xlsx 0.18.5, which predates SheetJS's prototype-pollution and ReDoS fixes.** **This pin is deliberate. Do not bump it in a skill edit.**
-- Parsing happens in the pdf.js tab, which carries no Procore session, and the output is data, never executed. `cdn.sheetjs.com` serves a current build and **fetches** fine. Whether `script-src` permits executing it is untested, so settle that before moving.
-- **Images and scanned pages: look at them.** The attachment's carrier tab already sits on the presigned URL. Read it visually there, never in the fetch tab. That read counts as parsed text for the tie-outs.
+- **Images and scanned pages: look at them.** The attachment's carrier tab already sits on the presigned URL. Read it visually there. That read counts as parsed text for the tie-outs.
 - **The visual read is `computer`, and it is the only tool that gives one.** **None of the text extractors will ever return anything for a scan.**
 
 <!--__SHARED:skill-first-page-read__-->
@@ -356,21 +342,71 @@ window.__sheets = function(ab, from){
 
 - `get_page_text` and `read_page` extract text, and `find` locates text. The console and network tools read logs, and `upload_image` and `file_upload` are inputs.
 
-**The pdf.js tab is an XML document, and that breaks `document.createElement`.** `document.contentType` reports `application/xml`, and `createElement('canvas').getContext` is not a function there. The bucket listing is used because it returns XML, which is what makes it attachable, so this is permanent. It bites the moment a `scanned` PDF needs rasterising. Two ways round it, both namespace-independent:
+**A `scanned` PDF rasterises in the carrier tab** with `OffscreenCanvas` — no DOM element needed:
 ```javascript
-const c = new OffscreenCanvas(v.width, v.height);              // preferred - no DOM at all
-// or, if a real element is needed:
-// document.createElementNS('http://www.w3.org/1999/xhtml','canvas')
+const c = new OffscreenCanvas(v.width, v.height);
 await page.render({canvasContext: c.getContext('2d'), viewport: v}).promise;
 ```
-**Do not "fix" this by moving the pdf.js tab to an HTML page.** The tab has to be same-origin with the presigned S3 link, or the fetch hits the CORS wall. NetSuite runs pdf.js in its own record tab, which is ordinary HTML. Do not normalise the two. **If no visual read is available, fall back to OCR, and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. **An OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties. Report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. This cap is deliberate. If it feels too noisy, get the visual read working. Do not relax the cap.
+This is **probed on a public file only** (`G22`, not yet against a real S3 attachment). Treat it as unconfirmed until one runs on a real scan. **If no visual read is available, fall back to OCR, and mark every figure it produces.** Load Tesseract from the same CDN the pdf.js recipe uses. **An OCR-derived figure can never produce a `clear` verdict**, even when the arithmetic ties. Report the figures, label them `read by OCR, not independently verified`, and leave the item `flagged` so it reaches a human. This cap is deliberate. If it feels too noisy, get the visual read working. Do not relax the cap.
 - Do not pass a presigned URL to a sandbox web fetcher, which exceeds the URL length limit.
 - **Check the extension too, but trust the bytes.** A `.pdf` that sniffs as `zip` is mislabelled, not a PDF.
-- **Proven in production:** the `pdf` path and the `new Uint8Array` requirement. **Probed live, never run on a real queue:** SheetJS from cdnjs, a workbook round trip, `OffscreenCanvas`, `computer`.
-- **Unit-tested only:** `__sniff` and `__sheets`, whose 13 magic-number cases all pass. **Still unobserved:** a real `.xlsx` and a real image attachment. Correct that line once each of those two is confirmed against a real attachment.
 - **A `[BLOCKED: …]` string is never a value.** A second filter rewrites dotted-numeric values as `[BLOCKED: JWT token]`.
-- Dotted identifiers are ordinary in construction, such as spec section `09.21.16`, phase codes and revisions. Re-return a blocked field in a different shape, spaced out or split across keys, and read it again.
-- Never let the marker reach a verdict, a comment or the dashboard. Never read it as an empty field either.
+- Dotted identifiers are ordinary in construction, such as spec section `09.21.16`, phase codes and revisions. The API already gave the figure; search for it inside the page instead of re-returning the blocked field. Return only the match, as true or false.
+- Never let the marker reach a verdict, a comment or the dashboard. Never read it as an empty field either. A field still blocked after the in-page search is unreadable. Report it by name as a failure.
+
+### When no automated route is permitted: the download fallback
+
+Four triggers send an attachment here instead of the carrier-tab route above.
+1. The session's safety check refused a step.
+2. A needed value came back redacted or blanked.
+3. The file's type is not viewable in the browser. That is every workbook, and anything outside the pdf and image extensions above.
+4. Two expired-link retries both failed.
+
+**Name the files, do not fetch them.** The run report lists each one as project, item number, and the file name exactly as Procore shows it. The user downloads them from Procore and saves them into `"<workspace>/Procore Open Items/attachments/"`. That folder is named here, so D72, no stray files in workspace, permits it. This is the only route that puts files in the workspace, and the user opts in by downloading them.
+
+**Read from that folder once the files are there.** The Read tool reads PDFs and images. `openpyxl` reads a workbook, sheet by sheet, under the same whole-unit budget the old in-browser reader kept:
+```python
+# __read_workbook: every sheet including hidden ones, cached values only, never split one sheet
+import re
+from openpyxl import load_workbook
+
+def __read_workbook(path, start=0):
+    wb = load_workbook(path, data_only=True, read_only=True)
+    try:
+        names = wb.sheetnames                   # lists hidden sheets too
+        out, n = "", start
+        while n < len(names):
+            ws = wb[names[n]]
+            rows = []
+            for row in ws.iter_rows(values_only=True):
+                # cached value only - a formula Excel never evaluated stays None, never 0
+                cells = ["" if v is None else str(v) for v in row]
+                line = ",".join(cells)
+                if line.replace(",", "").strip() and not re.search(r"\d{20,}", line):
+                    rows.append(line)
+            block = "--- sheet %d: %s ---\n%s" % (n + 1, names[n], "\n".join(rows))
+            if out and len(out) + len(block) > 4000:
+                break
+            out += ("\n\n" if out else "") + block
+            n += 1
+        return {"text": out, "next": None if n >= len(names) else n, "sheets": len(names)}
+    finally:
+        wb.close()                               # read_only keeps the zip open otherwise
+```
+- Read every sheet, hidden ones included. `data_only=True` returns the cached value a formula last computed. An unevaluated cell is `None`. Read that as blank, never as zero.
+- Keep the 4000-character whole-sheet budget, and the long-digit row filter. Call it again with `next` until it returns `None`, exactly like the old browser reader and the NetSuite page reader. Never split one sheet across two returns.
+- Apply the same first-bytes sniff and the same six outcomes to a downloaded file as to a fetched one. `expired` does not apply — the file is already local.
+
+**Never delete the downloaded files.** Say once, in the run report, that they stay in the folder.
+
+**In a scheduled window**, nobody is there to download anything. List the triggered files in the report and leave the item `skipped`, naming the cause `support not read: download needed`.
+
+<!--__SHARED:skill-name-blocked-cause__-->
+**Name the actual cause when a read is blocked.** Say what was observed, never a guess. Examples: "the session's safety check refused `<action>` [`<tag>`]". "The presigned URL came back redacted." "The output filter blanked `<field>`." "The link expired twice." "`<type>` is not viewable in the browser." Never write "blocked by the browser's safety check" or any cause this run did not observe.
+<!--__END_SHARED:skill-name-blocked-cause__-->
+
+**Proven on a real queue, 2026-10-02** (`F167`, plain-fetch queue read). Plain `URLSearchParams` fetches: the queue, the gate, the record reads. Also proven (`F166`, carrier-tab reads): the carrier-tab PDF read. The carrier-tab image read. The `byteLength`-before-parsing requirement. **Probed on a public file only:** `OffscreenCanvas` and pdf.js inside a PDF tab. **Unit-tested only:** `__sniff`. **Unobserved:** a real `.xlsx` or `.docx` through any route. A carrier navigation to a non-viewable type (`G21`, unobserved so far). A scanned PDF rasterised in a carrier tab. The download fallback end to end.
+
 ## Step 5 — Verify
 ### Check registry
 Every check below carries an **id**, the **lens** it serves, and the **capability** it needs. **`core` always runs and is never a choice.** `delivery` and `design` run only when `config.focus.lenses` names them. **A lens adds checks. It never removes, relaxes or overrides one.** It never touches a verdict's meaning. **Capabilities**, each already a condition this step honours in prose:
@@ -587,7 +623,7 @@ Step 8 runs first, and the headline follows it. **Report in chat with one line o
 - **Do not open a tab in this step.**
 <!--__END_SHARED:skill-close-down__-->
 
-The tabs this skill opens are the fetch tab, the carrier tabs and the pdf.js tab. Step 2 also opens the record tabs.
+The tabs this skill opens are the fetch tab and the carrier tabs. Step 2 also opens the record tabs.
 
 ## Step 9 — Schedule offer, first run only
 

@@ -20,4 +20,4 @@ Chrome cannot display a `.docx`. A Procore attachment record carries only an id,
 - Checked live 2026-10-05: a `.docx` attachment record holds the keys `id`, `name` and `url`, and nothing else.
 - Whether Chrome saves the file silently or asks where to save it is `unmeasured`. The first run that tries it measures that.
 
-**Checks.** none yet. Built in a later change, test first.
+**Checks.** `test_read_docx` in `scripts/test_skill_code.py` runs the Word reader.

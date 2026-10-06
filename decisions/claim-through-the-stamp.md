@@ -24,6 +24,7 @@ The CI `records` job refuses a number a branch adds without a `Record-claim` tra
 **Evidence.**
 
 - The owner ruled it on 2026-10-06, in the claude-settings deferred record `sharables-adopts-the-stamp`.
-- All main merges are merge commits. Main has no branch protection. The slowest job takes about 2 minutes.
+- Every main merge since PR #21 is a merge commit. Main has no branch protection. The slowest job takes about 2 minutes.
+- `scripts/test_check_records.py` is removed. The stamp's own tests (`test_stamp.mjs`, claude-settings) now cover claim behaviour.
 
 **Checks.** The `records` job in `.github/workflows/validate.yml`, and `check_no_pending_on_main` in `scripts/check_records.py`.

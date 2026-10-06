@@ -175,7 +175,6 @@ branch `claude/eloquent-mccarthy-ji1fp1`. No lane writes an `_index.md`. Lane 3 
   outside the checked files.
 - Provenance ids in findings stay. Shipped examples keep placeholders. The rule is unchanged.
 - Number claim at merge is `merge <pr>`, through the stamp. CI on `main`
-  fails while any record is pending, so a missed claim goes red at once. A duplicate number is
-  possible with two concurrent merges. One maintainer merges, so the risk is accepted.
+  fails while any record is pending, so a missed claim goes red at once.
 - The README STE rewrite changes teammate-facing text. Verify each install command against
   the live Add dialog before landing lane 2.

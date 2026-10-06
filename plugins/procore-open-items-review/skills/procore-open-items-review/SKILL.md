@@ -120,12 +120,12 @@ Then read `Procore Open Items/_procore_review_log.json`. A file already carrying
    | `email-only` | an email field and a **Continue** button, and no password box | `find` the email field, set it to `config.loginEmail` with `form_input`, click **Continue**, stop, then re-read the page and re-enter this table |
    | `wall` | a password box, an MFA prompt, or a CAPTCHA | hand off, as below. Type into none of them and retry nothing. |
    - The `email-only` step types no secret. **This step is permitted, not an exception.** This is an idle session, not a sign-out. Procore is only asking which account to resume.
-   - **The address is `config.loginEmail`, the user's own stored answer.** When it is absent, ask the user once for the work email they sign in to Procore with. Store it as `config.loginEmail`, then type it. Never take the address from the session context. With nobody to answer in a scheduled window, an absent `config.loginEmail` is a hand-off that names the missing address.
+   - **The address is `config.loginEmail`, the user's own stored answer.** When it is absent, ask the user once for the work email they sign in to Procore with. Store it as `config.loginEmail`, then type it. On a first run, hold it until setup step 5 writes the `config`. Never take the address from the session context.
    - A password box decides `wall`, **whether or not an email field sits beside it**.
    - **A hand-off is an action, not the end of the run.** Say in chat that Procore is showing a sign-in screen, and name the field that made it a `wall`.
    - Ask the user to sign in to Procore in that Chrome profile. When they have, ask them to say so. Then re-read the page and carry on in the same run.
-   - The `email-only` step runs the same way in a scheduled window. Only a `wall` ends a scheduled run.
-   - In **a scheduled window**, a `wall` hand-off goes in the report and ends the run there.
+   - The `email-only` step runs the same way in a scheduled window. Only a `wall`, or an absent `config.loginEmail`, ends a scheduled run.
+   - In **a scheduled window**, a `wall` hand-off goes in the report and ends the run there. An absent `config.loginEmail` does the same, and the report names the missing address.
    - Leave `lastCompletedRun` unchanged, because nothing was reviewed. An expired session **does not heal on its own**, so **never report that a later window will retry it**.
    - The teammate sheet promises this skill **never types your password**. That promise covers the password only, and is not a prohibition on the `email-only` step.
    - Never cite a **hard constraint** that this file does not state. NetSuite's skill has no login procedure and needs none.

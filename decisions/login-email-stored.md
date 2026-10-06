@@ -9,7 +9,7 @@ date: 2026-10-06
 
 **Rule.** On Procore's email-only screen, a run types `config.loginEmail`. When it is absent, the run asks the user once and stores the answer. A run never takes the address from the session context.
 
-**Outcome protected.** An idle Procore session resumes without a hand-off.
+**Outcome protected.** Once the address is stored, an idle Procore session resumes without a hand-off.
 
 **Argument.**
 

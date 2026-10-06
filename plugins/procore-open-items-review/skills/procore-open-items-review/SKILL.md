@@ -356,7 +356,7 @@ This is **probed on a public file only** (`G22`, not yet against a real S3 attac
 
 ### Word files: the run downloads them
 
-A `.docx` or `.doc` attachment gets its own route. It is not viewable in the browser. The user opted in for Word files only, 2026-10-05 (D‹run-downloads-word-files›, a run downloads Word files itself). Spreadsheets stay on the download fallback below.
+A `.docx` or `.doc` attachment gets its own route. It is not viewable in the browser. The user opted in for Word files only, 2026-10-05 (D96, a run downloads Word files itself). Spreadsheets stay on the download fallback below.
 
 1. Open **a carrier tab** on `app.procore.com`, never the fetch tab. Fetch the record JSON there. Then schedule the navigation. The fetch call returns first:
    ```javascript

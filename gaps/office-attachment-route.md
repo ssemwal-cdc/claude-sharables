@@ -11,14 +11,15 @@ date: 2026-10-02
 
 **Argument.** The carrier-tab route is only ever navigated for a viewable type: pdf, png, jpg, jpeg, gif, tif, tiff, webp.
 
-What a carrier navigation to `.xlsx`, `.docx`, `.csv` or `.msg` does was never run. Chrome may download it straight into the Downloads folder, which this skill's workspace rules do not expect or permit.
+A `.docx` or `.doc` now has a route. Decision D96, a run downloads Word files itself, allows it. A run navigates a carrier tab to the attachment URL on purpose. Chrome then saves the file into Downloads. The run reads it there with `__read_docx`. That route is still unobserved end to end. Whether Chrome saves the file silently, or asks where to save it, is unmeasured. No real run has tried it yet.
 
-So every non-viewable type goes to the download fallback instead, named by the user, never navigated to directly.
+A workbook, a `.csv`, or a `.msg` still has no route beyond the download fallback. What a carrier navigation to one of those does was never run. None is planned. They stay named by the user, never navigated to directly.
 
-This gap closes the moment someone runs that navigation once and reports what Chrome actually did.
+This gap closes for Word files once a real run tries that route and reports what Chrome actually did. For the other types, it closes only if a route is built for them.
 
 **Evidence.**
 
 - Measured live 2026-10-02: not run. Noted alongside F166, the carrier-tab reads that pass did measure.
+- 2026-10-05: the user opted in to the Word route (D96, a run downloads Word files itself). Still unmeasured live.
 
 **Checks.** none

@@ -77,6 +77,11 @@ Covered:
                            never the bare `else`/ternary fallback that renders
                            `clear`. Closes `no-guard-on-render-fallback`, a
                            dropped verdict branch defaulting silently to clear.
+ 19. Procore `__read_docx` - the stdlib-only Word attachment reader: paragraph
+                           and table-cell text extracted in document order, and
+                           a non-ZIP, a ZIP with no word/document.xml, and a
+                           legacy OLE2 .doc all come back `unsupported` rather
+                           than raising.
 
 Usage:  python3 scripts/test_skill_code.py
 Needs node on PATH for 1-3, 16 and 18; those are skipped with a notice if it is missing.
@@ -417,6 +422,63 @@ def test_sheets():
     check("sheets: figures intact", "Electrical labour,10849586" in all_text)
     check("sheets: unevaluated formula reads blank, never 0",
           "Unevaluated," in all_text and "Unevaluated,0" not in all_text)
+
+
+# -------------------------------------------------------- 19. docx reading
+def test_read_docx():
+    """`__read_docx` lets a Procore run read a Word attachment it downloaded itself
+    into the workspace folder, since Chrome cannot display .docx (ruled 2026-10-05).
+    Stdlib only - zipfile plus an XML parser - mirroring `__read_workbook`'s own
+    extraction. Contract: `text` (paragraphs, table cells included, joined by
+    newlines) and `paragraphs` on a real docx; `{"state": "unsupported", ...}` -
+    never a raised exception - for anything that is not one, including a legacy
+    OLE2 .doc (D0 CF 11 E0) and a ZIP with no word/document.xml."""
+    import zipfile
+
+    body = py_block(os.path.join(PC, "SKILL.md"), "__read_docx")
+    ns = {}
+    exec(body, ns)  # noqa: S102 - trusted, repo-local SKILL.md
+    read_docx = ns["__read_docx"]
+
+    with tempfile.TemporaryDirectory() as td:
+        # 1. a minimal real docx: two paragraphs + one table cell
+        docx_path = os.path.join(td, "test.docx")
+        document_xml = (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+            '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+            '<w:body>'
+            '<w:p><w:r><w:t>First paragraph</w:t></w:r></w:p>'
+            '<w:p><w:r><w:t>Second paragraph</w:t></w:r></w:p>'
+            '<w:tbl><w:tr><w:tc><w:p><w:r><w:t>Table cell text</w:t></w:r></w:p></w:tc></w:tr></w:tbl>'
+            '</w:body></w:document>'
+        )
+        with zipfile.ZipFile(docx_path, "w") as z:
+            z.writestr("word/document.xml", document_xml)
+        r = read_docx(docx_path)
+        text = r.get("text", "")
+        i1 = text.find("First paragraph")
+        i2 = text.find("Second paragraph")
+        i3 = text.find("Table cell text")
+        check("docx: all three strings are present",
+              i1 != -1 and i2 != -1 and i3 != -1, text)
+        check("docx: paragraphs then the table cell, in document order", i1 < i2 < i3)
+        check("docx: paragraph count is at least 2", r.get("paragraphs", 0) >= 2,
+              "got %r" % r.get("paragraphs"))
+
+        # 2. a legacy .doc (OLE2 magic number) is unsupported, never raises
+        doc_path = os.path.join(td, "legacy.doc")
+        with open(doc_path, "wb") as f:
+            f.write(bytes([0xD0, 0xCF, 0x11, 0xE0]) + b"\x00" * 60)
+        r = read_docx(doc_path)
+        check("docx: a legacy OLE2 .doc is `unsupported`", r.get("state") == "unsupported", r)
+
+        # 3. a ZIP with no word/document.xml (e.g. an xlsx) is unsupported
+        other_zip = os.path.join(td, "notword.zip")
+        with zipfile.ZipFile(other_zip, "w") as z:
+            z.writestr("xl/workbook.xml", "<workbook/>")
+        r = read_docx(other_zip)
+        check("docx: a ZIP without word/document.xml is `unsupported`",
+              r.get("state") == "unsupported", r)
 
 
 # ------------------------------------------------------ 4. CCO ungated demotion
@@ -1285,6 +1347,7 @@ def main():
     test_netsuite_multifile_carry()
     test_dashboard_view()
     test_po_identity_rules()
+    test_read_docx()
     print()
     if failures:
         print("FAILED: " + "; ".join(failures))

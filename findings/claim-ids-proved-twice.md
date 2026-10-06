@@ -21,4 +21,4 @@ No existing id moved.
 **Evidence.** Measured on 2026-09-15, on this branch over `3a63144`, using a
 scratch copy for the two-pending-record case.
 
-**Checks.** `python3 scripts/check_records.py --claim-ids --apply`.
+**Checks.** `merge <pr>`, which runs the stamp (`.github/stamp.json`).

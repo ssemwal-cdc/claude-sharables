@@ -174,7 +174,7 @@ branch `claude/eloquent-mccarthy-ji1fp1`. No lane writes an `_index.md`. Lane 3 
   unregistered one. The index satisfies this. Records may name retired plugins. They live
   outside the checked files.
 - Provenance ids in findings stay. Shipped examples keep placeholders. The rule is unchanged.
-- Number claim at merge is one command, `check_records.py --claim-ids --apply`. CI on `main`
+- Number claim at merge is `merge <pr>`, through the stamp. CI on `main`
   fails while any record is pending, so a missed claim goes red at once. A duplicate number is
   possible with two concurrent merges. One maintainer merges, so the risk is accepted.
 - The README STE rewrite changes teammate-facing text. Verify each install command against

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D98
 slug: claim-through-the-stamp
 kind: decision
 status: settled

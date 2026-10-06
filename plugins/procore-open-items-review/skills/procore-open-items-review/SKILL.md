@@ -1,9 +1,9 @@
 ---
 name: procore-open-items-review
-description: v41 — Review of the Procore open items actually awaiting your workflow response. Covers internal change risks, subcontractor invoices, commitment change orders, and the purchase order and work order contracts. Published to a live dashboard widget in chat. Trigger on "run my Procore review," "check my open items," or "review my Procore queue". Also trigger on "double check my ICRs", "run the daily Procore check", or any mention of the Procore open items dashboard, items waiting on your response, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Filters the queue to items you can actually action. Verifies the cost figures and pay-application math against the attached support. Publishes a clear, flagged, skipped, or tied verdict per item. Read-only: no clicking Respond, Approve, Reject, or Revise and Resubmit. Every Procore call is a GET. No response controls on the dashboard. Every verdict is a recommendation. The response stays yours to make in Procore.
+description: v42 — Review of the Procore open items actually awaiting your workflow response. Covers internal change risks, subcontractor invoices, commitment change orders, and the purchase order and work order contracts. Published to a live dashboard widget in chat. Trigger on "run my Procore review," "check my open items," or "review my Procore queue". Also trigger on "double check my ICRs", "run the daily Procore check", or any mention of the Procore open items dashboard, items waiting on your response, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Filters the queue to items you can actually action. Verifies the cost figures and pay-application math against the attached support. Publishes a clear, flagged, skipped, or tied verdict per item. Read-only: no clicking Respond, Approve, Reject, or Revise and Resubmit. Every Procore call is a GET. No response controls on the dashboard. Every verdict is a recommendation. The response stays yours to make in Procore.
 ---
 # Procore Open Items Review
-**Skill version 41 — 2026-10-05.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
+**Skill version 42 — 2026-10-06.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
 
 Review every Procore item **waiting on the user's workflow response**. Verify each item's figures against its attached support. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget. Chat gets one headline line.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
@@ -117,9 +117,10 @@ Then read `Procore Open Items/_procore_review_log.json`. A file already carrying
    | Outcome | On screen | What to do |
    |---|---|---|
    | `authenticated` | the Open Items tool loaded | touch no login form. Carry on to rung 2. |
-   | `email-only` | an email field and a **Continue** button, and no password box | `find` the email field, set it with `form_input`, click **Continue**, stop, then re-read the page and re-enter this table |
+   | `email-only` | an email field and a **Continue** button, and no password box | `find` the email field, set it to `config.loginEmail` with `form_input`, click **Continue**, stop, then re-read the page and re-enter this table |
    | `wall` | a password box, an MFA prompt, or a CAPTCHA | hand off, as below. Type into none of them and retry nothing. |
    - The `email-only` step types no secret. **This step is permitted, not an exception.** This is an idle session, not a sign-out. Procore is only asking which account to resume.
+   - **The address is `config.loginEmail`, the user's own stored answer.** When it is absent, ask the user once for the work email they sign in to Procore with. Store it as `config.loginEmail`, then type it. Never take the address from the session context. With nobody to answer in a scheduled window, an absent `config.loginEmail` is a hand-off that names the missing address.
    - A password box decides `wall`, **whether or not an email field sits beside it**.
    - **A hand-off is an action, not the end of the run.** Say in chat that Procore is showing a sign-in screen, and name the field that made it a `wall`.
    - Ask the user to sign in to Procore in that Chrome profile. When they have, ask them to say so. Then re-read the page and carry on in the same run.
@@ -133,7 +134,7 @@ Then read `Procore Open Items/_procore_review_log.json`. A file already carrying
 4. **Map the cost custom fields by label, not by id, and per tool.** `get_page_text` on a record of that subtype renders the fields with their human labels. The API returns them as `custom_field_<id>`. Match them up and record the mapping under that subtype. At Compass, Internal Change Risk carries Cost: Vendor Proposed, Cost: Compass Accepted and Change Reason. Customer Change Request carries ROM Cost and Approved Customer Cost instead. **When an id looks familiar, map by label anyway, every time.** A mapping belongs to one tool and travels to no other. One company's `custom_field_522888` is Duration in Weeks on one tool and money on another.
 5. **Write the config.** Each `customTools` key is the queue's `item_subtype`, character for character. A tool with no accepted-cost field is a real case, not a half-finished mapping.
    ```json
-   { "config": { "company": "<company id>", "companyName": "<company name>",
+   { "config": { "company": "<company id>", "companyName": "<company name>", "loginEmail": "<work email>",
        "queueSource": {"url": "", "described": ""},
        "customTools": {
          "Internal Change Risk (<tool id>)": {"toolId": "<tool id>", "costFields": {"vendorProposed": "custom_field_<id>", "compassAccepted": "custom_field_<id>", "changeReason": "custom_field_<id>"}},

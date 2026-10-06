@@ -11,10 +11,9 @@ module and calls each one, the same way it calls shared_blocks.
   check_index_size()       CLAUDE.md stays an index and names both plugins
   check_sentence_length()  no sentence in the prose exceeds 30 words
 
-Two maintainer commands write instead of checking:
+One maintainer command writes instead of checking:
 
     python3 scripts/check_records.py --write-index          regenerate the 3 indexes
-    python3 scripts/check_records.py --claim-ids [--apply]  number the pending records
 
 Run with no argument to print every problem the five checks find.
 """
@@ -23,8 +22,6 @@ import collections
 import json
 import os
 import re
-import shutil
-import subprocess
 import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -690,108 +687,6 @@ def check_waiter_loops():
     return problems
 
 
-def _highest_ids_ever():
-    """Highest id number ever held per letter, scanned from git history.
-
-    An id is permanent once claimed (G1/G4 reuse on PR 36 broke cite-by-id).
-    So the next id must clear every id a kind has ever held, not just the ids
-    still on disk. Exits non-zero rather than silently falling back to the
-    lowest free id when git or its history can't answer that."""
-    if not shutil.which("git"):
-        sys.exit("claim_ids: git is not on PATH; cannot find ids ever held.")
-    def _git(*args):
-        try:
-            return subprocess.run(
-                ["git", *args], cwd=REPO, capture_output=True, text=True, check=True,
-            ).stdout
-        except subprocess.CalledProcessError as exc:
-            sys.exit("claim_ids: %s failed: %s" % (" ".join(args), exc.stderr.strip()))
-    if _git("rev-parse", "--is-shallow-repository").strip() == "true":
-        sys.exit("claim_ids: shallow checkout; fetch full history before claiming ids.")
-    log = _git("log", "-p", "--", "decisions", "findings", "gaps")
-    highest = collections.defaultdict(int)
-    for letter, n in re.findall(r"^[+-]id:\s*([DFG])([0-9]+)\s*$", log, re.M):
-        highest[letter] = max(highest[letter], int(n))
-    return highest
-
-
-# ------------------------------------------------------------------- claim ids
-def claim_ids(dry_run=True):
-    """Number every pending record, rewrite its slug citations, refresh the indexes.
-
-    An existing id is never renumbered. Returns the lines of what was, or would be,
-    done.
-    """
-    log = []
-    records = load_records()
-    taken = collections.defaultdict(set)
-    for rec in records:
-        if rec.keys and re.match(r"^[DFG][0-9]+$", rec.keys.get("id", "")):
-            taken[rec.letter].add(int(rec.keys["id"][1:]))
-
-    pending = [r for r in records if r.keys and r.keys.get("id") == "pending"]
-    pending.sort(key=lambda r: (r.keys.get("date", ""), r.keys.get("slug", "")))
-    if not pending:
-        log.append("no record has id: pending. Nothing to claim.")
-        return log
-
-    highest_ever = _highest_ids_ever()
-    assigned = {}  # (letter, slug) -> new id
-    for rec in pending:
-        n = highest_ever[rec.letter] + 1
-        while n in taken[rec.letter]:
-            n += 1
-        taken[rec.letter].add(n)
-        new_id = "%s%d" % (rec.letter, n)
-        assigned[(rec.letter, rec.keys["slug"])] = new_id
-        log.append("%s takes id %s" % (rec.rel, new_id))
-        text = re.sub(r"^id:\s*pending\s*$", "id: " + new_id, rec.text, count=1, flags=re.M)
-        if not dry_run:
-            with open(rec.path, "w", encoding="utf-8") as fh:
-                fh.write(text)
-
-    slug_to_id = {slug: rid for (_letter, slug), rid in assigned.items()}
-
-    for path in scanned_prose():
-        rel = _rel(path)
-        text = _read(path)
-        out_lines = []
-        changed = 0
-        for line in text.splitlines(True):
-            if _is_notation(rel, line):
-                out_lines.append(line)
-                continue
-
-            def swap(m, _line=line):
-                letter, slug = m.group(1), m.group(2)
-                new = assigned.get((letter, slug))
-                if not new:
-                    return m.group(0)
-                return m.group(0).replace(letter + "‹" + slug + "›", new)
-
-            new_line, count = SLUG_CITATION.subn(swap, line)
-            # supersedes: takes an id once the number exists
-            sm = re.match(r"^(supersedes:\s*)([a-z0-9-]+)\s*$", new_line)
-            if sm and sm.group(2) in slug_to_id:
-                new_line = "%s%s\n" % (sm.group(1), slug_to_id[sm.group(2)])
-                count += 1
-            if count:
-                changed += count
-            out_lines.append(new_line)
-        if changed:
-            log.append("%s: %d citation(s) rewritten" % (rel, changed))
-            if not dry_run:
-                with open(path, "w", encoding="utf-8") as fh:
-                    fh.write("".join(out_lines))
-
-    if dry_run:
-        log.append("dry run. Pass --apply to write, which also refreshes the indexes.")
-    else:
-        for name in write_indexes():
-            log.append("%s regenerated" % name)
-    return log
-
-
 # -------------------------------------------------------- check 7, device shots
 # D81, device usability check, asks for every screen at three widths and in both
 # themes. `scripts/measure_float.js --shots` writes the captures and this file.
@@ -849,8 +744,8 @@ def check_no_pending_on_main():
     for rec in load_records():
         if rec.keys and rec.keys.get("id") == "pending":
             problems.append(
-                "%s has id: pending on main. Claim ids before merge: "
-                "python3 scripts/check_records.py --claim-ids --apply" % rec.rel)
+                "%s has id: pending on main. Claim before merge: `merge <pr> --confirm` "
+                "runs the stamp (.github/stamp.json)" % rec.rel)
     return problems
 
 
@@ -866,7 +761,7 @@ def pending_records_note():
 
 
 def check_claim_dry_run():
-    """A dry run of claim_ids(): fail if a slug citation would stay unresolved
+    """A local dry run of the stamp claim (`merge <pr>`): fail if a slug citation would stay unresolved
     after every pending record is numbered. Runs on every ref, so a branch whose
     citations cannot resolve fails before merge, not after."""
     problems = []
@@ -896,7 +791,7 @@ def check_claim_dry_run():
                 if (letter, slug) not in assigned:
                     problems.append(
                         "%s:%d cites %s‹%s›, which would stay unresolved after "
-                        "claim_ids runs — no pending record holds that slug"
+                        "the stamp claims — no pending record holds that slug"
                         % (rel, n, letter, slug))
     return problems
 
@@ -986,10 +881,6 @@ def main(argv):
         for name in write_indexes():
             print("wrote %s" % name)
         return 0
-    if "--claim-ids" in argv:
-        for line in claim_ids(dry_run="--apply" not in argv):
-            print(line)
-        return 0
     if "--check-claim" in argv:
         problems = check_claim_dry_run()
         for p in problems:
@@ -997,7 +888,7 @@ def main(argv):
         if problems:
             print("FAILED (%d)" % len(problems))
             return 1
-        print("OK: every slug citation would resolve after claim_ids runs")
+        print("OK: every slug citation would resolve after the stamp claims")
         return 0
     for note in (device_shots_note(), pending_records_note()):
         if note:

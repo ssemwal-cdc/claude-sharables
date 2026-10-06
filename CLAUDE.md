@@ -8,7 +8,7 @@ Its only job is to be a catalog that `/plugin marketplace add` resolves and `/pl
 4. Register it in `.claude-plugin/marketplace.json` as below.
 5. Update `README.md` and this file. Add a table row with the prerequisite and the skill version.
 6. Run the checks below. Then run `claude --plugin-dir plugins/<name> -p "quote the skill version line verbatim"`.
-7. Open a pull request to `main`, and merge it once CI is green. The merge is the release. D93, main moves only by pull request.
+7. Open a pull request to `main`, and merge it with `merge <pr> --confirm` once CI is green. The merge is the release. D93, main moves only by pull request.
 
 ```
 plugins/<plugin-name>/
@@ -44,7 +44,7 @@ python3 scripts/validate.py                  # the build gate. Runs the shared-b
 python3 scripts/test_skill_code.py           # runs the code the skills carry. Needs node.
 python3 scripts/test_validate_versions.py    # the per-skill version tail checks
 python3 scripts/test_check_version_bump.py   # the bump gate, on throwaway repos
-python3 scripts/check_records.py --write-index   # by hand. Also --claim-ids [--apply], at merge
+python3 scripts/check_records.py --write-index   # by hand. The claim is `merge <pr> --confirm`, through the stamp
 python3 scripts/shared_blocks.py --sync      # push plugins/_shared into every marked site
 python3 scripts/shared_blocks.py --check     # what validate.py runs
 NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand, not in the gate. The cloud image has Chromium.
@@ -140,5 +140,5 @@ live in the skill. See in-skill-onboarding, onboarding lives in the skill.
 - `gaps/_index.md` lists every unobserved claim and unfired branch, in the same six columns. Read it before citing anything recent as established.
 - A citation is an id plus a short gloss, never a bare id and never a path.
 - A record on a branch has `id: pending` and is cited by slug. Nobody allocates a number on a branch.
-- The maintainer runs `python3 scripts/check_records.py --claim-ids --apply` in the last commit before merge. CI on `main` fails while any record still carries `id: pending`.
+- A branch writes `id: pending`. `merge <pr> --confirm` claims through the stamp (`.github/stamp.json`) before the merge. CI's `records` job refuses a number a branch adds without a `Record-claim` trailer, and any pending record on main. `D98`, claim through the stamp.
 - The record and prose checks run inside `python3 scripts/validate.py`. The Bash hook in `.claude/settings.json` refuses the shared-tree commands. `D82`, hooks and checks pass.

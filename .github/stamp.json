@@ -1,0 +1,22 @@
+{
+  "defaultBranch": "main",
+  "regenerate": "python3 scripts/check_records.py --write-index",
+  "kinds": [
+    { "id": "decision", "folder": "decisions", "excludeFiles": ["_index.md"], "prefix": "D",
+      "idTemplate": "{prefix}{n}", "pendingRegex": "^id:[ \t]*pending[ \t]*$", "order": "date" },
+    { "id": "finding", "folder": "findings", "excludeFiles": ["_index.md"], "prefix": "F",
+      "idTemplate": "{prefix}{n}", "pendingRegex": "^id:[ \t]*pending[ \t]*$", "order": "date" },
+    { "id": "gap", "folder": "gaps", "excludeFiles": ["_index.md"], "prefix": "G",
+      "idTemplate": "{prefix}{n}", "pendingRegex": "^id:[ \t]*pending[ \t]*$", "order": "date" }
+  ],
+  "cite": {
+    "pattern": "([DFG])‹([a-z0-9-]+)›",
+    "prefixGroup": 1,
+    "slugGroup": 2,
+    "template": "{id}",
+    "scanGlobs": ["CLAUDE.md", "README.md", "plugins/*/README.md", "plugins/*/skills/*/SKILL.md",
+                  "plugins/*/skills/*/references/*.md", "decisions/*.md", "findings/*.md", "gaps/*.md"],
+    "excludeGlobs": ["plugins/_*/**", "decisions/prose-compliance-plan.md"]
+  },
+  "merge": { "method": "merge", "deadlineMinutes": 10, "requiredChecks": ["validate", "shots", "records"], "deleteBranch": false }
+}

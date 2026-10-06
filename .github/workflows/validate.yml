@@ -30,9 +30,6 @@ jobs:
       - name: Test the version-bump check
         run: python3 scripts/test_check_version_bump.py
 
-      - name: Test the record id claim
-        run: python3 scripts/test_check_records.py
-
       # Pinned to the version proven locally (3.1.5); needed by the skill's own
       # workbook reader test below.
       - name: Install openpyxl
@@ -84,3 +81,21 @@ jobs:
           name: device-shots
           path: .claude/shots/
           retention-days: 7
+
+  # The record claim runs through the stamp (`merge <pr>`). This job refuses a number
+  # a branch adds without a Record-claim trailer, and any pending record on main.
+  records:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: shivinate7/claude-settings/actions/stamp@9228e614a1261f745c7f4ff0e6a73d7d4d70cec8
+        with:
+          mode: check
+          config: .github/stamp.json

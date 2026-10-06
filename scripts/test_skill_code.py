@@ -752,6 +752,11 @@ def test_login_states():
     check("procore: the defect is recorded where the running skill can see it",
           "hard constraint" in step1)
 
+    # The email step named no value, so a run weighed the session email against its own
+    # privacy rule and handed off (reported 2026-10-06). The value is the user's stored answer.
+    check("procore: the email step types the stored `config.loginEmail`",
+          "`config.loginEmail`" in step1)
+
 
 # ------------------------------------------------ 17. NetSuite multi-file carry
 def test_netsuite_multifile_carry():

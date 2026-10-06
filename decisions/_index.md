@@ -100,3 +100,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D95 | `no-filter-evasion` | A skill never shapes its way past a filter | settled | 2026-10-02 | A run passes the safety check honestly, and never hides data from it. |
 | D79 | `org-protocol-override` | Repo workflow beats org protocol | settled | 2026-10-05 | The repo stays the one source of a plugin, and a push to `main` is the release. |
 | D96 | `run-downloads-word-files` | A run downloads Word files itself | settled | 2026-10-05 | Word support gets read without the user downloading files by hand. |
+| D97 | `login-email-stored` | The sign-in email comes from config | settled | 2026-10-06 | Once the address is stored, an idle Procore session resumes without a hand-off. |

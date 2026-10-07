@@ -26,6 +26,7 @@ D6, never act without an instruction, sets the new verdict's name. It states the
 **Evidence.**
 
 - Extended 2026-10-07 in place. Customer Change Risk never fills Cost Impact. It read null on all 37 items of one run. A Cost Impact that is blank gives `tied` when the accepted cost ties to the signed support.
+- Related: `Dvendor-tied-verdict`, a sixth verdict where only the vendor's proposed cost ties.
 - Added 2026-09-23. The folded verdict is F115, the actioned bin never rendered, a related case where one verdict hid two meanings.
 
 **Checks.** `check_verdict_vocabulary()` and `check_capability_verdicts()` in `scripts/shared_blocks.py`. `scripts/test_skill_code.py`, the tied-verdict cases.

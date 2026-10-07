@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v19"
+TEMPLATE_VERSION = "v20"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -102,7 +102,7 @@ def strip_comments(tpl):
 #__END_SHARED:pub-strip-comments__
 
 
-VERDICTS = ("clear", "flagged", "skipped", "ungated", "tied")
+VERDICTS = ("clear", "flagged", "skipped", "ungated", "tied", "vendor-tied")
 # The type the workflows/instances endpoint wants, which is NOT always the queue's item_type.
 # A CCO's workflow hangs off the underlying commitment change order, not the package, and that
 # object has its own id - carried per item as wfId. See Step 2 of SKILL.md.
@@ -206,7 +206,7 @@ def main():
                        else floor)
             if not tool_id:
                 unmapped.append("%s (%s)" % (key, subtype or "no subtype recorded"))
-                if verdict in ("clear", "tied"):
+                if verdict in ("clear", "tied", "vendor-tied"):
                     verdict = "skipped"
         items.append({
             "key": key,
@@ -335,13 +335,14 @@ def main():
     n = len(items)
     flagged = sum(1 for i in items if i["verdict"] == "flagged")
     tied = sum(1 for i in items if i["verdict"] == "tied")
+    vtied = sum(1 for i in items if i["verdict"] == "vendor-tied")
     skipped = sum(1 for i in items if i["verdict"] == "skipped")
     ungated = sum(1 for i in items if i["verdict"] == "ungated")
     print("wrote %s" % OUT)
-    print("%d items (%d flagged, %d tied, %d skipped, %d ungated) as of %s"
-          % (n, flagged, tied, skipped, ungated, payload["lastRun"]))
-    print("headline: %d awaiting you · %d flagged · %d tie out · %d skipped · dashboard updated"
-          % (n, flagged, tied, skipped))
+    print("%d items (%d flagged, %d tied, %d vendor tied, %d skipped, %d ungated) as of %s"
+          % (n, flagged, tied, vtied, skipped, ungated, payload["lastRun"]))
+    print("headline: %d awaiting you · %d flagged · %d tie out · %d vendor tied · %d skipped · dashboard updated"
+          % (n, flagged, tied, vtied, skipped))
     print("suppressed (cannot respond): %s" % payload["suppressed"])
 
 

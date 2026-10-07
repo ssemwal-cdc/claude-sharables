@@ -239,7 +239,7 @@ VERDICT_ALLOWLIST = re.compile(r'^VERDICTS = \((.*?)\)', re.M | re.S)
 # Matches ==, ===, != and !== alike. The inequality form matters: Procore carried
 # `verdict !== "gone"` for a while, which is a filter that can never exclude anything, and a
 # regex that only looked for equality reported the file clean.
-VERDICT_TEST = re.compile(r'verdict\s*[!=]==?\s*"([a-z]+)"')
+VERDICT_TEST = re.compile(r'verdict\s*[!=]==?\s*"([a-z-]+)"')
 
 
 def check_verdict_vocabulary():
@@ -272,7 +272,7 @@ def check_verdict_vocabulary():
                 m = VERDICT_ALLOWLIST.search(fh.read())
             if not m:
                 continue
-            allowed = set(re.findall(r'"([a-z]+)"', m.group(1)))
+            allowed = set(re.findall(r'"([a-z-]+)"', m.group(1)))
             with open(tpl, encoding="utf-8") as fh:
                 tested = set(VERDICT_TEST.findall(fh.read()))
             for bad in sorted(tested - allowed):
@@ -311,16 +311,16 @@ def check_capability_verdicts():
             m = VERDICT_ALLOWLIST.search(open(script, encoding="utf-8").read())
             if not m:
                 continue
-            allowed = set(re.findall(r'"([a-z]+)"', m.group(1)))
+            allowed = set(re.findall(r'"([a-z-]+)"', m.group(1)))
             text = open(md, encoding="utf-8").read()
             # Only the capability table's absence-behaviour column, which is where a run is
             # told what to do when a capability is missing.
             for row in re.findall(r"^\|\s*`(?:core|connector|attachment|record|queue)`\s*\|"
-                                  r"[^|]*\|([^|]*)\|\s*$", text, re.M):
-                for verdict in re.findall(r"`([a-z]+)`", row):
+                                  r"[^|]*\|([^|]*)\|", text, re.M):
+                for verdict in re.findall(r"`([a-z-]+)`", row):
                     if verdict in ("core", "connector", "attachment", "record", "queue"):
                         continue
-                    if verdict in ("clear", "flagged", "skipped", "ungated", "tied") and verdict not in allowed:
+                    if verdict in ("clear", "flagged", "skipped", "ungated", "tied", "vendor-tied") and verdict not in allowed:
                         problems.append(
                             "%s/%s: the capability table tells a run to mark an item `%s`, "
                             "which is not in that plugin's VERDICTS (%s) - publish_dashboard.py "

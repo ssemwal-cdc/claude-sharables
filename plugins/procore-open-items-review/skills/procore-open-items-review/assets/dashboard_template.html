@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Procore open items queue</title>
-<!-- layout template v19 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v20 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -32,6 +32,7 @@ button.primary:hover{background:var(--ink-hi);border-color:var(--ink-hi)}
 .row.vskip{border-left-color:var(--warn-fg)}
 .row.vgate{border-left-color:var(--acc-fg)}
 .row.vtied{border-left-color:var(--acc-line)}
+.row.vvtied{border-left-color:var(--acc-line)}
 .rh{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
 .doc{font-size:15px;font-weight:600;flex:1;min-width:150px}
 .amt{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
@@ -165,6 +166,7 @@ document.addEventListener("DOMContentLoaded",function(){
 <!-- retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode -->
 <div id="rows"></div>
 <div id="tiedwrap"></div>
+<div id="vtiedwrap"></div>
 <div id="ungatedwrap"></div>
 <div id="skipwrap"></div>
 
@@ -393,6 +395,7 @@ function render(){
   var all=REVIEW.items;   // no filter: "gone" is not in VERDICTS, so nothing can ever be excluded
   var ready=all.filter(function(i){return i.verdict==="clear"||i.verdict==="flagged"});
   var tied=all.filter(function(i){return i.verdict==="tied"});
+  var vtied=all.filter(function(i){return i.verdict==="vendor-tied"});
   var ungated=all.filter(function(i){return i.verdict==="ungated"});
   var skipped=all.filter(function(i){return i.verdict==="skipped"});
 
@@ -416,8 +419,8 @@ function render(){
 
   fillFilters(all);
 
-  var vReady=applyView(ready), vTied=applyView(tied), vUngated=applyView(ungated), vSkipped=applyView(skipped);
-  var shown=vReady.length+vTied.length+vUngated.length+vSkipped.length, hidden=all.length-shown;
+  var vReady=applyView(ready), vTied=applyView(tied), vVtied=applyView(vtied), vUngated=applyView(ungated), vSkipped=applyView(skipped);
+  var shown=vReady.length+vTied.length+vVtied.length+vUngated.length+vSkipped.length, hidden=all.length-shown;
   function cnt(v,t){return ofTotal(v.length,t.length)}
 
   // The "Awaiting you" tile went with the freshness card: it restated the subtitle
@@ -436,6 +439,7 @@ function render(){
     cd("Clear",ofTotal(vClear,clear),"var(--ok-fg)")+
     cd("Flagged",ofTotal(vFlagged,flagged),"var(--bad-fg)")+
     cd("Ties out",cnt(vTied,tied),"var(--acc-fg)")+
+    cd("Vendor tied",cnt(vVtied,vtied),"var(--acc-fg)")+
     cd("Gate unknown",cnt(vUngated,ungated),"var(--acc-fg)")+
     cd("Skipped",cnt(vSkipped,skipped),"var(--warn-fg)")+
     cd("Decidable",ofTotal(compactMoney(vValue),compactMoney(value)));
@@ -452,6 +456,12 @@ function render(){
     ? '<h2>Ties out — one field blank in Procore ('+cnt(vTied,tied)+')</h2>'+
       '<p class="seclead">Support was read and the figures tie. One field is still blank in Procore. Not an approval — the response is still yours to make.</p>'+
       vTied.map(function(i){return itemRow(i)}).join("")
+    : "";
+
+  document.getElementById("vtiedwrap").innerHTML = vVtied.length
+    ? '<h2>Vendor tied — accepted cost and Cost Impact blank ('+cnt(vVtied,vtied)+')</h2>'+
+      '<p class="seclead">Vendor Proposed matches the attached proposal total. The accepted cost and Cost Impact are blank, so no approved figure was checked. Not an approval — the response is still yours to make.</p>'+
+      vVtied.map(function(i){return itemRow(i)}).join("")
     : "";
 
   document.getElementById("ungatedwrap").innerHTML = vUngated.length
@@ -487,6 +497,7 @@ function itemRow(it){
   else if(it.verdict==="skipped"){vcls="vskip";vtxt="Skipped";vcol="var(--warn-fg)"}
   else if(it.verdict==="ungated"){vcls="vgate";vtxt="Gate unknown";vcol="var(--acc-fg)"}
   else if(it.verdict==="tied"){vcls="vtied";vtxt="Ties out";vcol="var(--acc-fg)"}
+  else if(it.verdict==="vendor-tied"){vcls="vvtied";vtxt="Vendor tied";vcol="var(--acc-fg)"}
   else{vcls="vclear";vtxt="Clear";vcol="var(--ok-fg)"}
   var vlab='<span class="vlab" style="color:'+vcol+'">'+vtxt+'</span> · ';
 

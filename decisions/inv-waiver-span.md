@@ -21,7 +21,7 @@ A named pay app outside the queue gives a warning naming it.
 
 **Evidence.**
 
-- Owner ruling, 2026-10-07, from the field run on company 2866.
+- Owner ruling, 2026-10-07, from the 2026-10-07 field run.
 - Registered under D66, declare checks in a registry.
 
 **Checks.** `check_check_registry()` in `scripts/shared_blocks.py`.

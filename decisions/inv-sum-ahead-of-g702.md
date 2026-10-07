@@ -19,6 +19,6 @@ A gap that no named change order explains has no such reason.
 
 **Evidence.**
 
-- Owner ruling, 2026-10-07, from the field run on company 2866.
+- Owner ruling, 2026-10-07, from the 2026-10-07 field run.
 
 **Checks.** none yet. The rule lives in the skill prose.

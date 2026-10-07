@@ -21,6 +21,6 @@ The same fail-closed rule covers a missing workflow id. See D30, demote a missin
 
 **Evidence.**
 
-- Owner ruling, 2026-10-07, from the field run on company 2866.
+- Owner ruling, 2026-10-07, from the 2026-10-07 field run.
 
 **Checks.** `test_field_run` in `scripts/test_skill_code.py`.

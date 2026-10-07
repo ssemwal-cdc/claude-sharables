@@ -15,7 +15,7 @@ date: 2026-10-07
 
 A skipped row is one line and a head. Nobody acts on its facts or detail.
 
-The field run on company 2866 had 67 items. Skipped rows still carried full text, and the comments rode along.
+The 2026-10-07 field run had 67 items. Skipped rows still carried full text, and the comments rode along.
 
 The slim copy saved little. See F123, the slim build is no fallback.
 

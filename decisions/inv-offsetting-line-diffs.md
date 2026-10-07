@@ -7,7 +7,7 @@ date: 2026-10-07
 ---
 # Offsetting line differences warn only at zero net
 
-**Rule.** Offsetting whole-dollar differences on lines other than payment due give a warning naming the lines. That holds only when payment due ties exactly and the differences net to $0. Otherwise FLAG.
+**Rule.** Offsetting whole-dollar differences on lines other than payment due give a warning naming the lines. Three conditions must hold. Each differing line is off by at most $1. Payment due ties exactly. The differences net to $0. Anything larger is a FLAG.
 
 **Outcome protected.** A rounding wash does not bury a real error among flags.
 
@@ -19,6 +19,6 @@ A difference that does not cancel moves money. It is a flag.
 
 **Evidence.**
 
-- Owner ruling, 2026-10-07, from the field run on company 2866.
+- Owner ruling, 2026-10-07, from the 2026-10-07 field run.
 
 **Checks.** none yet. The rule lives in the skill prose.

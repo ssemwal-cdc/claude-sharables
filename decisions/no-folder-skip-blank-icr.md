@@ -21,6 +21,6 @@ The head says `support not read: no folder connected, nothing to tie`. Check 3 i
 
 **Evidence.**
 
-- Owner ruling, 2026-10-07, from the field run on company 2866.
+- Owner ruling, 2026-10-07, from the 2026-10-07 field run.
 
 **Checks.** none yet. The rule lives in the skill prose.

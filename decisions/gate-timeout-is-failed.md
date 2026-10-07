@@ -21,6 +21,6 @@ D34, a failed call is unknown, made the same argument for NetSuite.
 
 **Evidence.**
 
-- Owner ruling, 2026-10-07, from the field run on company 2866.
+- Owner ruling, 2026-10-07, from the 2026-10-07 field run.
 
 **Checks.** none. The gate code runs in a live browser tab only.

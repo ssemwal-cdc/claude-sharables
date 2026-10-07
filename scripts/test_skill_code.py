@@ -1097,6 +1097,187 @@ def test_tied_verdict():
         shutil.rmtree(d, ignore_errors=True)
 
 
+# --------------------------------------------- 15b. the `vendor-tied` verdict
+# Owner ruling 2026-10-07: a sixth Procore verdict, ranked below `tied` and above `skipped`.
+# Accepted cost blank AND Cost Impact blank, Vendor Proposed ties verbatim to the proposal
+# total. Template, VERDICTS and SKILL.md change together (D63, gate verdicts against publish).
+def _render_page(index_html):
+    """Run the published page's own render() in node against a stub DOM. Returns
+    ({element id: innerHTML}, [wrapper ids in markup order])."""
+    text = open(index_html, encoding="utf-8").read()
+    script = re.findall(r"<script>(.*?)</script>", text, re.S)[-1]
+    order = re.findall(r'<div id="(rows|\w+wrap)"', text)
+    harness = """
+var out = {};
+function el(id){ var e = {style:{}, classList:{add(){},remove(){},toggle(){}}, value:"", options:[],
+  children:[], parentNode:null, textContent:"", className:"", scrollHeight:0, clientHeight:0,
+  appendChild(){}, insertBefore(){}, removeChild(){}, setAttribute(){}, focus(){}, select(){},
+  setSelectionRange(){}, addEventListener(){}, querySelector(){return el("q")},
+  querySelectorAll(){return []}, getBoundingClientRect(){return {top:0,height:0}}};
+  Object.defineProperty(e, "innerHTML", {get(){return out[id]||""}, set(v){out[id]=v}});
+  return e; }
+var cache = {};
+var document = {getElementById(id){return cache[id]||(cache[id]=el(id))}, body: el("body"),
+  addEventListener(){}, querySelector(){return el("q")}, querySelectorAll(){return []},
+  createElement(){return el("c")}};
+var window = {}; var setInterval = function(){return 0}; var setTimeout = function(){return 0};
+var localStorage = {getItem(){return null}, setItem(){}};
+""" + script + """
+console.log(JSON.stringify(out));
+"""
+    rc, o, err = run_node(harness)
+    if rc != 0:
+        sys.exit("ABORT: page render failed: %s" % (err or o))
+    return json.loads(o.splitlines()[-1]), order
+
+
+def _items_of(path):
+    return {i["doc"]: i for i in json.loads(
+        re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/",
+                  open(path, encoding="utf-8").read(), re.S).group(1))["items"]}
+
+
+def test_vendor_tied_verdict():
+    d = tempfile.mkdtemp()
+    try:
+        r, out = _publish_log(d, {
+            "vt": _base(itemId="601", docNo="#VT", verdict="vendor-tied", head="vh",
+                        facts=["vf"], detail="vd", context="vpo", warning="vw"),
+            "tie": _base(itemId="602", docNo="#TIE", verdict="tied"),
+            "skp": _base(itemId="603", docNo="#SKP", verdict="skipped"),
+            "clr": _base(itemId="604", docNo="#CLR")})
+        log = r.stdout + r.stderr
+        # 1. accepted by publish, counted in the headline between tie out and skipped
+        check("vendor-tied: publish accepts the verdict (no abort as unknown)",
+              r.returncode == 0, log.strip()[-200:])
+        if r.returncode != 0:
+            return
+        check("vendor-tied: headline counts it between tie out and skipped",
+              re.search(r"1 tie out · 1 vendor[- ]tied · 1 skipped", log) is not None, log)
+        # 2. full row fields, not compacted like skipped
+        it = _items_of(out)["#VT"]
+        check("vendor-tied: verdict survives publish", it["verdict"] == "vendor-tied",
+              it["verdict"])
+        check("vendor-tied: keeps facts, detail, po and poWarn (not a compact row)",
+              (it.get("facts"), it.get("detail"), it.get("po"), it.get("poWarn"))
+              == (["vf"], "vd", "vpo", "vw"), sorted(it))
+        # 3. rendered page: own section after tied, before skipped; not Clear
+        secs, order = _render_page(out)
+        host = [k for k, v in secs.items() if "#VT" in v]
+        check("vendor-tied: its row renders in exactly one section, not the clear list",
+              len(host) == 1 and host[0] not in ("rows", "tiedwrap", "skipwrap"), host)
+        if len(host) == 1:
+            h = host[0]
+            check("vendor-tied: section sits after tied and before skipped",
+                  h in order and "tiedwrap" in order and "skipwrap" in order
+                  and order.index("tiedwrap") < order.index(h) < order.index("skipwrap"),
+                  order)
+            check("vendor-tied: row is not rendered as Clear (G10 final-else trap)",
+                  "vclear" not in secs[h], secs[h][:200])
+        check("vendor-tied: the tiles carry its own counter",
+              re.search(r"vendor[- ]tied", secs.get("cards", ""), re.I) is not None,
+              secs.get("cards", "")[:300])
+        # 4a. an unmapped subtype demotes it to skipped, as for clear and tied
+        json.dump({"lastCompletedRun": "2026-10-07", "lastRunTime": "2026-10-07 09:00",
+                   "suppressed": 0,
+                   "config": {"company": "0", "customTools": {
+                       "Internal Change Risk (88)": {"toolId": "88", "costFields": {}}}},
+                   "items": {"u": _base(itemId="701", docNo="#U", verdict="vendor-tied",
+                                        subtype="Some Other Tool (99)"),
+                             "m": _base(itemId="702", docNo="#M", verdict="vendor-tied",
+                                        subtype="Internal Change Risk (88)")}},
+                  open(os.path.join(d, "_procore_review_log.json"), "w"))
+        r2 = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
+                             out], capture_output=True, text=True, timeout=60)
+        if r2.returncode == 0:
+            i2 = _items_of(out)
+            check("vendor-tied: an unmapped subtype demotes it to skipped",
+                  i2["#U"]["verdict"] == "skipped", i2["#U"]["verdict"])
+            check("vendor-tied: a mapped subtype leaves it vendor-tied",
+                  i2["#M"]["verdict"] == "vendor-tied", i2["#M"]["verdict"])
+        else:
+            check("vendor-tied: unmapped-subtype publish runs", False, r2.stderr[-200:])
+        # 4b. an unresolved gate makes it ungated
+        r3, out3 = _publish_log(d, {
+            "cco": _base(itemId="801", docNo="#CCO", kind="cco", wfId="",
+                         verdict="vendor-tied"),
+            "com": _base(itemId="802", docNo="#COM", kind="com", wfType="",
+                         verdict="vendor-tied")})
+        if r3.returncode == 0:
+            i3 = _items_of(out3)
+            check("vendor-tied: a CCO with no wfId becomes ungated",
+                  i3["#CCO"]["verdict"] == "ungated", i3["#CCO"]["verdict"])
+            check("vendor-tied: a commitment with no wfType becomes ungated",
+                  i3["#COM"]["verdict"] == "ungated", i3["#COM"]["verdict"])
+        else:
+            check("vendor-tied: gate-demotion publish runs", False, r3.stderr[-200:])
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_vendor_tied_icr_only():
+    """vendor-tied is ICR only: an inv, cco or com item logged with it is demoted to
+    skipped by publish, never shown as a vendor-tied row."""
+    d = tempfile.mkdtemp()
+    try:
+        r, out = _publish_log(d, {
+            "inv": _base(itemId="901", docNo="#INV", kind="inv", verdict="vendor-tied"),
+            "cco": _base(itemId="902", docNo="#CCO", kind="cco", wfId="5",
+                         verdict="vendor-tied"),
+            "com": _base(itemId="903", docNo="#COM", kind="com",
+                         wfType="PurchaseOrderContract", verdict="vendor-tied"),
+            "icr": _base(itemId="904", docNo="#ICR", verdict="vendor-tied")})
+        check("vendor-tied icr-only: publish runs", r.returncode == 0,
+              (r.stderr or r.stdout).strip()[-200:])
+        if r.returncode != 0:
+            return
+        v = {k: i["verdict"] for k, i in _items_of(out).items()}
+        for doc in ("#INV", "#CCO", "#COM"):
+            check("vendor-tied icr-only: %s is demoted to skipped" % doc,
+                  v[doc] == "skipped", v[doc])
+        check("vendor-tied icr-only: an ICR keeps it", v["#ICR"] == "vendor-tied", v["#ICR"])
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_vendor_tied_vocabulary_checks():
+    """shared_blocks' verdict checks read verdicts with `[a-z]+`, which cannot match the
+    hyphen in `vendor-tied`: a template branch on it is never compared to VERDICTS, and a
+    capability-table row naming it is never compared either. Drive both checks on a
+    fixture plugin: a branch or row naming `vendor-tied` with the verdict missing from
+    VERDICTS must be reported; with it present the checks must be silent."""
+    sys.path.insert(0, os.path.join(REPO, "scripts"))
+    import shared_blocks as sb
+    d = tempfile.mkdtemp()
+    old = sb.PLUGINS
+    try:
+        sk = os.path.join(d, "p", "skills", "s")
+        os.makedirs(os.path.join(sk, "assets"))
+        pub = os.path.join(sk, "assets", "publish_dashboard.py")
+        tpl = os.path.join(sk, "assets", "dashboard_template.html")
+        md = os.path.join(sk, "SKILL.md")
+        open(pub, "w", encoding="utf-8").write(
+            'VERDICTS = ("clear", "flagged", "skipped", "ungated", "tied")\n')
+        open(tpl, "w", encoding="utf-8").write(
+            '<script>if(it.verdict==="vendor-tied"){}</script>\n')
+        open(md, "w", encoding="utf-8").write(
+            "| `attachment` | Proposal | `vendor-tied` when Vendor Proposed ties |\n")
+        sb.PLUGINS = d
+        p1, p2 = sb.check_verdict_vocabulary(), sb.check_capability_verdicts()
+        check("vendor-tied: vocabulary check flags a template branch the allowlist lacks",
+              any("vendor-tied" in x for x in p1), p1)
+        check("vendor-tied: capability check flags a table row the allowlist lacks",
+              any("vendor-tied" in x for x in p2), p2)
+        open(pub, "w", encoding="utf-8").write(
+            'VERDICTS = ("clear", "flagged", "skipped", "ungated", "tied", "vendor-tied")\n')
+        p3, p4 = sb.check_verdict_vocabulary(), sb.check_capability_verdicts()
+        check("vendor-tied: both checks are silent once the allowlist carries it",
+              p3 == [] and p4 == [], (p3, p4))
+    finally:
+        sb.PLUGINS = old
+        shutil.rmtree(d, ignore_errors=True)
+
+
 # ------------------------------------------ 16. carried-forward attachments
 def test_carried_attachments():
     """`supportCarried` (files read on an earlier run, not reopened this run) must stay a
@@ -1177,7 +1358,7 @@ def test_verdict_render_guard():
     clear's row class instead of its own.
     """
     procore_markers = {"flagged": "vflag", "skipped": "vskip", "ungated": "vgate",
-                        "tied": "vtied", "clear": "vclear"}
+                        "tied": "vtied", "vendor-tied": "vvtied", "clear": "vclear"}
 
     def procore_item(v):
         return {"id": "1", "pid": "9", "cid": "8", "kind": "icr", "wf": "GenericToolItem",
@@ -1614,6 +1795,10 @@ def main():
     test_commitment_kind()
     test_custom_tool_subtype()
     test_tied_verdict()
+    if shutil.which("node"):
+        test_vendor_tied_verdict()
+        test_vendor_tied_icr_only()
+    test_vendor_tied_vocabulary_checks()
     test_field_run()
     if shutil.which("node"):
         test_stripped_js_parses()

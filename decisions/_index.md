@@ -110,3 +110,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D104 | `inv-waiver-span` | A waiver spanning pay apps is context or a warning | settled | 2026-10-07 | A valid multi-period waiver does not read as a defect. |
 | D105 | `no-folder-skip-blank-icr` | No folder, no reads where nothing can tie | settled | 2026-10-07 | A folderless run does not spend its time re-reading files that cannot tie. |
 | D106 | `skipped-rows-compact` | A skipped row publishes compact | settled | 2026-10-07 | The render fits one read, so the reviewer sees every row. |
+| D107 | `vendor-tied-verdict` | A sixth verdict where only the vendor's proposal ties | settled | 2026-10-07 | An item whose only checkable figure was verified reaches the reviewer. |

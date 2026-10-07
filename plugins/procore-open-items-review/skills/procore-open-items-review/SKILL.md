@@ -1,9 +1,9 @@
 ---
 name: procore-open-items-review
-description: v43 — Review of the Procore open items actually awaiting your workflow response. Covers internal change risks, subcontractor invoices, commitment change orders, and the purchase order and work order contracts. Published to a live dashboard widget in chat. Trigger on "run my Procore review," "check my open items," or "review my Procore queue". Also trigger on "double check my ICRs", "run the daily Procore check", or any mention of the Procore open items dashboard, items waiting on your response, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Filters the queue to items you can actually action. Verifies the cost figures and pay-application math against the attached support. Publishes a clear, flagged, skipped, or tied verdict per item. Read-only: no clicking Respond, Approve, Reject, or Revise and Resubmit. Every Procore call is a GET. No response controls on the dashboard. Every verdict is a recommendation. The response stays yours to make in Procore.
+description: v44 — Review of the Procore open items actually awaiting your workflow response. Covers internal change risks, subcontractor invoices, commitment change orders, and the purchase order and work order contracts. Published to a live dashboard widget in chat. Trigger on "run my Procore review," "check my open items," or "review my Procore queue". Also trigger on "double check my ICRs", "run the daily Procore check", or any mention of the Procore open items dashboard, items waiting on your response, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Filters the queue to items you can actually action. Verifies the cost figures and pay-application math against the attached support. Publishes a clear, flagged, skipped, tied, or vendor-tied verdict per item. Read-only: no clicking Respond, Approve, Reject, or Revise and Resubmit. Every Procore call is a GET. No response controls on the dashboard. Every verdict is a recommendation. The response stays yours to make in Procore.
 ---
 # Procore Open Items Review
-**Skill version 43 — 2026-10-07.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
+**Skill version 44 — 2026-10-07.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
 
 Review every Procore item **waiting on the user's workflow response**. Verify each item's figures against its attached support. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget. Chat gets one headline line.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
@@ -87,11 +87,11 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 2. **Read, then Write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/` and write it over the workspace copy byte for byte. Never retype, trim or tidy. Then prove the copy landed: the template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and `python3 -m py_compile publish_dashboard.py` passes. This rung is designed, not yet observed. Say so in the run report if it also fails.
 3. **Use the existing workspace copies and say so once.** One line near the headline, naming the modification date from `ls -l`: "dashboard code is from the last successful sync, \<date\>". Do not stop the run. The procedure ships in this file, so the verdicts stay current when the widget's wording does not. **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, stop before Step 7 and say exactly that. Inventing a template is forbidden by the Absolute rules.
 
-**This plugin ships layout template `v19`. Confirm the sync landed by reading it back:**
+**This plugin ships layout template `v20`. Confirm the sync landed by reading it back:**
 ```bash
 head -n 8 "<workspace>/Procore Open Items/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
-If that does not say `v19`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
+If that does not say `v20`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
 
 <!--__SHARED:skill-chrome-first-call__-->
 - **Call `tabs_context_mcp` once, before any browser action, on every run.** This is the Claude in Chrome tool. Do this first, even in a scheduled run where nobody is watching.
@@ -249,7 +249,7 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 - `grand_total`, `line_items` and `retainage_percent` are confirmed present on a real purchase order contract. **`WorkOrderContract` is still unobserved.** On the first one of a run, return the payload's top-level key names with the values. Say it once in the run report, and correct this paragraph.
 - **A field this step names that the payload does not carry makes every check needing it *not run*.** That happens by name. It is never a silent pass and never a `clear`.
 ## Step 4 — Read the attached support without downloading it
-**With no workspace folder connected, skip attachment reads on one kind of `icr` item.** That is an item with a blank accepted cost and a blank Cost Impact. There is nothing to tie. The verdict stays `skipped`. Its `head` says `support not read: no folder connected, nothing to tie`. Name check 3 as not run. This rule lives here because a folderless run skips the state-file reads. It decides which files this step opens. See `D105`, no folder, no reads where nothing can tie.
+**With no workspace folder connected, skip attachment reads on one kind of `icr` item.** That is an item with a blank accepted cost and a blank Cost Impact. Vendor Proposed must also be blank, absent or not mapped. There is nothing to tie. The verdict stays `skipped`. Its `head` says `support not read: no folder connected, nothing to tie`. Name check 3 as not run. **When Vendor Proposed is populated, read the attachments.** A `vendor-tied` can be found. This rule lives here because a folderless run skips the state-file reads. It decides which files this step opens. See `D105`, no folder, no reads where nothing can tie.
 
 Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-second presigned S3 link**. `storage.procore.com` blocks cross-origin reads, and Chrome's PDF viewer exposes no text layer. This route avoids both and leaves **no files in the downloads folder**.
 
@@ -494,6 +494,7 @@ Every check below carries an **id**, the **lens** it serves, and the **capabilit
 | `pc.icr-proposed-delta` | core | `record` | ICR 4 — report both figures, flag only if accepted exceeds proposed |
 | `pc.icr-placeholder` | core | `record` | ICR 5 — `yes_known` carrying a placeholder value |
 | `pc.icr-impact-support-tie` | core | `attachment` | ICR 7 — where the accepted cost is blank, Cost Impact against the proposal total |
+| `pc.icr-vendor-proposed-tie` | core | `attachment` | ICR 8 — where the accepted cost and Cost Impact are blank, Vendor Proposed against the proposal total |
 | `pc.inv-g702` | core | `record` | Invoice — the six G702 identities, re-derived |
 | `pc.inv-support-tie` | core | `attachment` | Invoice — each headline figure located in the pay application |
 | `pc.inv-sequence` | core | `record` | Invoice — sequence integrity against previous certificates |
@@ -525,6 +526,7 @@ Every check below carries an **id**, the **lens** it serves, and the **capabilit
 5. **A `yes_known` status carrying a placeholder value**, such as `$0.01`, is a FLAG. It passes a naive has-a-value check but is not a cost.
 6. **Narrative fields blank**, such as Entitlement, Need v. Want, 5 Whys or Options to Mitigate, is **not a flag**. Mention it only when a blank field prevents judging the cost.
 7. **Where the accepted cost is blank, tie Cost Impact to the proposal total instead.** Check 2 needs an accepted cost and cannot run without one. This check runs only then, and it compares Cost Impact directly to the proposal's total. A match makes the item `tied`. The figures agree, and only the accepted-cost field is missing. A mismatch is still a FLAG.
+8. **Where the accepted cost and Cost Impact are both blank, tie Vendor Proposed to the proposal total.** This check runs only then. A match, with checks 3 and 5 run and passed, makes the item `vendor-tied`. A populated Vendor Proposed that does not match the total leaves the item `skipped`. The row names the mismatch. That is **not a FLAG**, because proposed is not the approved figure. Where Cost Impact is present, check 7 decides as before and `vendor-tied` never applies.
 
 **Three states for a cost field, and only *mapped and populated* lets these checks run.** On that state the check runs normally.
 - **Mapped and blank:** the check does **not** run. The item is `skipped` naming the field, in words such as "Approved Customer Cost is blank on the record". That is a property of the record and the fix is in Procore. A whole subtype blank is one pattern, not a finding per item. Where check 7 ties Cost Impact to the proposal total, the item is `tied` rather than `skipped`.
@@ -567,10 +569,12 @@ Then:
 
 If `config.focus.lenses` names `delivery` or `design`, read `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/references/lenses-delivery-design.md` now, in full, before Step 5 continues. Absent both, Step 5 ends above.
 ## Step 6 — Verdicts
-Five outcomes.
+Six outcomes.
 - **clear** means that the figures tie and the support is adequate.
 - **flagged** means that a specific number is wrong or unsupported. Say which, with figures.
 - **tied** means that every core check that could run agreed, and exactly one named field is blank in Procore. The name states the evidence, never the action. It is not an approval.
+- **vendor-tied** means that the accepted cost and Cost Impact are blank. Vendor Proposed is found verbatim as the attached proposal's total. The name states the evidence, never the action. No approved figure was checked. It is not an approval. It ranks below `tied` and above `skipped`. **It applies to an `icr` only.** Any other kind logged `vendor-tied` is published as `skipped`.
+- An item is `vendor-tied` when all hold. The accepted cost is blank. Cost Impact is blank. Vendor Proposed, the tool's mapped proposed-cost field, is populated and found verbatim as the proposal's total. Checks 3 and 5 ran and passed. The support outcome was `text` or `spreadsheet`. `supportRead` is not empty. **A partial read or a Step 4 failure never reaches it**, as for `tied`. `ungated` outranks it, and an unmapped subtype turns it into `skipped`.
 - An item is `tied` when all four hold.
   1. Exactly one named field is absent from the record. Blank or unmapped. Never a read failure.
   2. Every other core check for that kind ran, and every one passed. One FLAG makes the item `flagged`. One further check that could not run makes it `skipped`. A `not applicable` check counts as neither.
@@ -588,7 +592,7 @@ Five outcomes.
 | `inv` | `previous_requisition_id` absent while previous certificates are non-zero | `pc.inv-support-tie` |
 | `cco` | one line with no PCI, the rest tying | `pc.cco-pci-tie` |
 - **skipped** means that the item is not ready for review. **It is not approved, not rejected, and not a criticism.**
-- A `skipped` covers no attachment, support that could not be read, or a record missing the needed figures. For a commitment that is fields the payload never held. For a change risk it is a blank or unmapped accepted cost. This is a deliberate third state. An item with nothing to check against must not be given a verdict. Where check 7 ties, a blank accepted cost gives `tied` rather than `skipped`.
+- A `skipped` covers no attachment, support that could not be read, or a record missing the needed figures. For a commitment that is fields the payload never held. For a change risk it is a blank or unmapped accepted cost. This is a deliberate third state. An item with nothing to check against must not be given a verdict. Where check 7 ties, a blank accepted cost gives `tied` rather than `skipped`. Where check 8 ties, it gives `vendor-tied`.
 - **A skip must name which of the Step 4 outcomes caused it**, in the words that outcome uses.
 - Use "support is a scanned image, text not extractable". Or use "support is a .xlsx and the workbook reader was unavailable". Or use "the attachment link expired twice". Or use "support partly read: pages 1 of 17".
 - "Unreadable" on its own reads identically for a scan, a spreadsheet and a timed-out link. A skip that cannot name its cause is a defect in Step 4.
@@ -616,7 +620,7 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
       "type": "Invoice", "docNo": "#2 · INV-0002 (PR-02)", "amount": 500000, "dueDate": "2026-08-02",
       "project": "Campus A - Building 1", "counterparty": "Example Contractor LLC",
       "step": "FA Review", "responses": ["Approve", "Revise and Resubmit"],
-      "verdict": "clear|flagged|skipped|ungated|tied", "reviewedOn": "2026-08-11", "lastSeenPending": "2026-08-11",
+      "verdict": "clear|flagged|skipped|ungated|tied|vendor-tied", "reviewedOn": "2026-08-11", "lastSeenPending": "2026-08-11",
       "head": "one line, the verdict in plain terms",
       "facts": ["two or three skim lines carrying the specific figures"],
       "context": "Commitment <id> · 6.08% complete · balance to finish $9,400,000.00",
@@ -643,16 +647,16 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
 - `project` must keep Procore's full `"<Campus> - <Building>"` form, because the script splits it on the outer campus axis.
 
 On each run:
-- Previously **clear** or **tied**, with an unchanged amount and every checked field unchanged, carries the entry forward untouched. No attachment is re-read. `supportRead` stays as the verdict-setting run left it.
-- **A new attachment ends the carry.** One not already in `supportRead` forces the same full re-check as a changed checked field. Compare it as below, instance by instance. PCI 43 adding its own `proposal.pdf` to an item that already lists PCI 42's `proposal.pdf` is a new attachment. A `tied` carry covers only the attachments its tie was read from.
-- **A checked field is a field a Step 5 check reads**, including the field blank in a `tied` item. Filling that blank field forces the same full re-check as a changed amount.
+- Previously **clear**, **tied** or **vendor-tied**, with an unchanged amount and every checked field unchanged, carries the entry forward untouched. No attachment is re-read. `supportRead` stays as the verdict-setting run left it.
+- **A new attachment ends the carry.** One not already in `supportRead` forces the same full re-check as a changed checked field. Compare it as below, instance by instance. PCI 43 adding its own `proposal.pdf` to an item that already lists PCI 42's `proposal.pdf` is a new attachment. A `tied` or `vendor-tied` carry covers only the attachments its tie was read from.
+- **A checked field is a field a Step 5 check reads**, including the field blank in a `tied` item. Vendor Proposed on a `vendor-tied` item is one too. Filling that blank field forces the same full re-check as a changed amount.
 - **Mark the row `carried forward, not re-read` on the dashboard.**
 - Previously **flagged** is re-checked in full, because the attachment may have been swapped. A changed amount is treated as new.
 - Previously **skipped**, with an unchanged amount and every checked field unchanged, does a new-files-only re-read. It opens only the attachments outside the known-read set. A new attachment is still read in full, because support gets added later.
 - **Identify an attachment by its filename**, the filename part of the `supportRead` label. This skill never reads an attachment id off the record, only `attachments[i].url` for the redirect. **A file replaced under the same name is not detected as new.**
 - **Two attachments sharing a name are two instances, not one.** Read both. A name already checked off once does not clear the second.
 - **The known-read set is the previous run's `supportRead` plus its `supportCarried`.** Drop any partial-read entry, and any name no longer among the item's current attachments. Compare by the label's filename part. Strip a prefix such as `PCI 42 — `. A file left in the set is not reopened. Everything else is new, and gets the full Step 4 read.
-- **The shortcut only ever keeps `skipped`.** A carried read may confirm the item stays `skipped`. It never promotes one. Before any move to `clear`, `tied` or `flagged`, re-open every attachment and re-check in full.
+- **The shortcut only ever keeps `skipped`.** A carried read may confirm the item stays `skipped`. It never promotes one. Before any move to `clear`, `tied`, `vendor-tied` or `flagged`, re-open every attachment and re-check in full.
 - **A change to any checked field forces that same full re-check**, not only a changed amount.
 - **On the new-files-only re-read, a file already in the known-read set is not read this run.** Step 4's first-page rule does not reopen it. The full re-check above still opens every file, first page included.
 - **No folder: the Step 4 skip rule decides which `icr` items are read.** See `D105`, no folder, no reads where nothing can tie.
@@ -691,7 +695,7 @@ cd "<workspace>/Procore Open Items" && python3 -B publish_dashboard.py
 - If the script aborts because the sentinels are missing, **restore the template from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/`.** **Do not rebuild the template from memory.** Keep the sentinels intact.
 - A design change goes in the plugin repo, not the workspace copy, which Step 0 overwrites on every run.
 
-Step 8 runs first, and the headline follows it. **Report in chat with one line only**, in the shape `32 awaiting you · 0 flagged · 3 tie out · 22 skipped · dashboard updated`. Add a second line only if something blocked the run, a subtype was new, or an item type was unbuilt. Fold every such notice into that one second line, joined with ` · `, for example: `New Procore tool <tool id> ("<subtype>") — this skill was not built for it. Send Shivam Semwal: tool id <tool id>, subtype <subtype>, field labels seen <field labels>, cost fields mapped <mapped cost fields>, cost fields unmapped <unmapped cost fields>. · New Procore item type <item_type> ("<title>") — this skill was not built for it. Send Shivam Semwal: item type <item_type>, fields seen <field labels>.` Never put verdicts in chat.
+Step 8 runs first, and the headline follows it. **Report in chat with one line only**, in the shape `32 awaiting you · 0 flagged · 3 tie out · 2 vendor tied · 22 skipped · dashboard updated`. Add a second line only if something blocked the run, a subtype was new, or an item type was unbuilt. Fold every such notice into that one second line, joined with ` · `, for example: `New Procore tool <tool id> ("<subtype>") — this skill was not built for it. Send Shivam Semwal: tool id <tool id>, subtype <subtype>, field labels seen <field labels>, cost fields mapped <mapped cost fields>, cost fields unmapped <unmapped cost fields>. · New Procore item type <item_type> ("<title>") — this skill was not built for it. Send Shivam Semwal: item type <item_type>, fields seen <field labels>.` Never put verdicts in chat.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
 ## Step 8 — Close down
 

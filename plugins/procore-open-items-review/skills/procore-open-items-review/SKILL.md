@@ -249,7 +249,7 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 - `grand_total`, `line_items` and `retainage_percent` are confirmed present on a real purchase order contract. **`WorkOrderContract` is still unobserved.** On the first one of a run, return the payload's top-level key names with the values. Say it once in the run report, and correct this paragraph.
 - **A field this step names that the payload does not carry makes every check needing it *not run*.** That happens by name. It is never a silent pass and never a `clear`.
 ## Step 4 — Read the attached support without downloading it
-**With no workspace folder connected, skip attachment reads on one kind of `icr` item.** That is an item with a blank accepted cost and a blank Cost Impact. Vendor Proposed must also be blank, absent or not mapped. There is nothing to tie. The verdict stays `skipped`. **When Vendor Proposed is populated, read the attachments.** A `vendor-tied` can be found. Its `head` says `support not read: no folder connected, nothing to tie`. Name check 3 as not run. This rule lives here because a folderless run skips the state-file reads. It decides which files this step opens. See `D105`, no folder, no reads where nothing can tie.
+**With no workspace folder connected, skip attachment reads on one kind of `icr` item.** That is an item with a blank accepted cost and a blank Cost Impact. Vendor Proposed must also be blank, absent or not mapped. There is nothing to tie. The verdict stays `skipped`. Its `head` says `support not read: no folder connected, nothing to tie`. Name check 3 as not run. **When Vendor Proposed is populated, read the attachments.** A `vendor-tied` can be found. This rule lives here because a folderless run skips the state-file reads. It decides which files this step opens. See `D105`, no folder, no reads where nothing can tie.
 
 Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-second presigned S3 link**. `storage.procore.com` blocks cross-origin reads, and Chrome's PDF viewer exposes no text layer. This route avoids both and leaves **no files in the downloads folder**.
 
@@ -494,6 +494,7 @@ Every check below carries an **id**, the **lens** it serves, and the **capabilit
 | `pc.icr-proposed-delta` | core | `record` | ICR 4 — report both figures, flag only if accepted exceeds proposed |
 | `pc.icr-placeholder` | core | `record` | ICR 5 — `yes_known` carrying a placeholder value |
 | `pc.icr-impact-support-tie` | core | `attachment` | ICR 7 — where the accepted cost is blank, Cost Impact against the proposal total |
+| `pc.icr-vendor-proposed-tie` | core | `attachment` | ICR 8 — where the accepted cost and Cost Impact are blank, Vendor Proposed against the proposal total |
 | `pc.inv-g702` | core | `record` | Invoice — the six G702 identities, re-derived |
 | `pc.inv-support-tie` | core | `attachment` | Invoice — each headline figure located in the pay application |
 | `pc.inv-sequence` | core | `record` | Invoice — sequence integrity against previous certificates |
@@ -572,7 +573,7 @@ Six outcomes.
 - **clear** means that the figures tie and the support is adequate.
 - **flagged** means that a specific number is wrong or unsupported. Say which, with figures.
 - **tied** means that every core check that could run agreed, and exactly one named field is blank in Procore. The name states the evidence, never the action. It is not an approval.
-- **vendor-tied** means that the accepted cost and Cost Impact are blank. Vendor Proposed is found verbatim as the attached proposal's total. The name states the evidence, never the action. No approved figure was checked. It is not an approval. It ranks below `tied` and above `skipped`.
+- **vendor-tied** means that the accepted cost and Cost Impact are blank. Vendor Proposed is found verbatim as the attached proposal's total. The name states the evidence, never the action. No approved figure was checked. It is not an approval. It ranks below `tied` and above `skipped`. **It applies to an `icr` only.** Any other kind logged `vendor-tied` is published as `skipped`.
 - An item is `vendor-tied` when all hold. The accepted cost is blank. Cost Impact is blank. Vendor Proposed, the tool's mapped proposed-cost field, is populated and found verbatim as the proposal's total. Checks 3 and 5 ran and passed. The support outcome was `text` or `spreadsheet`. `supportRead` is not empty. **A partial read or a Step 4 failure never reaches it**, as for `tied`. `ungated` outranks it, and an unmapped subtype turns it into `skipped`.
 - An item is `tied` when all four hold.
   1. Exactly one named field is absent from the record. Blank or unmapped. Never a read failure.

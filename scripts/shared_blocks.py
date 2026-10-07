@@ -316,7 +316,7 @@ def check_capability_verdicts():
             # Only the capability table's absence-behaviour column, which is where a run is
             # told what to do when a capability is missing.
             for row in re.findall(r"^\|\s*`(?:core|connector|attachment|record|queue)`\s*\|"
-                                  r"[^|]*\|([^|]*)\|", text, re.M):
+                                  r"[^|]*\|([^|]*)\|\s*$", text, re.M):
                 for verdict in re.findall(r"`([a-z-]+)`", row):
                     if verdict in ("core", "connector", "attachment", "record", "queue"):
                         continue
@@ -391,6 +391,7 @@ REGISTRY_MANIFEST = {
     "procore-open-items-review": {
         "pc.icr-cost-impact", "pc.icr-proposal-tie", "pc.icr-phase-sum",
         "pc.icr-proposed-delta", "pc.icr-placeholder", "pc.icr-impact-support-tie",
+        "pc.icr-vendor-proposed-tie",
         "pc.inv-g702",
         "pc.inv-support-tie", "pc.inv-sequence", "pc.inv-duplicates",
         "pc.inv-retainage", "pc.inv-waiver-span",

@@ -208,6 +208,8 @@ def main():
                 unmapped.append("%s (%s)" % (key, subtype or "no subtype recorded"))
                 if verdict in ("clear", "tied", "vendor-tied"):
                     verdict = "skipped"
+        if verdict == "vendor-tied" and kind != "icr":
+            verdict = "skipped"
         items.append({
             "key": key,
             "id": str(it.get("itemId", "")),
@@ -236,7 +238,7 @@ def main():
             "detail": it.get("detail", ""),
             # The one field that evidences the verdict rather than asserting it. A list
             # here rather than NetSuite's single name: one Procore item can carry several
-            # PCIs, each with its own attachment. On a clear or tied whole-entry carry,
+            # PCIs, each with its own attachment. On a clear, tied or vendor-tied whole-entry carry,
             # this is the verdict-setting run's own supportRead, not necessarily this
             # run's - SKILL.md's "On each run" section is the source of truth for that.
             "att": ", ".join(it.get("supportRead") or []),

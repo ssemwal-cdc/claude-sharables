@@ -1326,6 +1326,92 @@ def _big_netsuite_log():
             "config": {"me": "0", "tool": "0", "account": "0"}, "items": items}
 
 
+# ======================================================================
+# NETSUITE RENDER PARITY - self-contained block (own helpers, prefix _nsrp).
+# Parallel Procore lane edits this file too; keep these cases together.
+# ======================================================================
+def _nsrp_publish(items, tpl_edit=None):
+    """Publish a NetSuite log in a temp copy of the assets; return (rc, out, err, html)."""
+    d = tempfile.mkdtemp()
+    try:
+        assets = os.path.join(NS, "assets")
+        for f in ("publish_dashboard.py", "dashboard_template.html"):
+            shutil.copy(os.path.join(assets, f), d)
+        if tpl_edit:
+            tp = os.path.join(d, "dashboard_template.html")
+            edited = tpl_edit(open(tp, encoding="utf-8").read())
+            open(tp, "w", encoding="utf-8").write(edited)
+        json.dump({"lastCompletedRun": "2026-08-20", "lastRunTime": "2026-08-20 09:00",
+                   "config": {"account": "1"}, "items": items},
+                  open(os.path.join(d, "_netsuite_review_log.json"), "w"))
+        out = os.path.join(d, "index.html")
+        r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
+                           capture_output=True, text=True, timeout=60)
+        html = open(out, encoding="utf-8").read() if os.path.exists(out) else ""
+        return r.returncode, r.stdout, r.stderr, html
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def _nsrp_bill(doc="BILL-1"):
+    return {"type": "Bill", "docNo": doc, "vendor": "V", "amount": 1, "trandate": "8/1/2026",
+            "verdict": "clear", "head": "h", "facts": ["f"], "detail": "d"}
+
+
+def test_netsuite_published_page_is_stripped():
+    """The published page ships no HTML comments and no whole-line `//` comments: they
+    are dead bytes in the widget payload that has to be read and reproduced whole."""
+    rc, out, err, html = _nsrp_publish({"7": _nsrp_bill()})
+    check("netsuite strip: publish runs", rc == 0, (err or out)[-200:])
+    check("netsuite strip: no HTML comments in the published page", "<!--" not in html,
+          "first at %d" % html.find("<!--"))
+    bad = [l.strip()[:60] for l in html.split("\n") if l.lstrip().startswith("//")]
+    check("netsuite strip: no line starts with //", not bad, "%d, e.g. %r" % (len(bad), bad[:1]))
+    blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/", html, re.S)
+    check("netsuite strip: data sentinels intact", blob is not None)
+    check("netsuite strip: injected item intact",
+          blob is not None and json.loads(blob.group(1))["items"][0]["doc"] == "BILL-1")
+    check("netsuite strip: __complete marker intact", 'id="__complete"' in html)
+    check("netsuite strip: integrity guard code intact",
+          'getElementById("__complete")' in html)
+    # The version check must read the SOURCE template (its marker is an HTML comment).
+    rc, out, err, html = _nsrp_publish(
+        {"7": _nsrp_bill()},
+        lambda t: re.sub(r"layout template v\d+", "layout template v0", t, count=1))
+    check("netsuite strip: stale template still warns (version read before stripping)",
+          "WARNING" in (out + err) and "v0" in (out + err), (out + err)[-200:])
+    check("netsuite strip: stale template still publishes", rc == 0 and bool(html))
+
+
+def test_netsuite_blank_id_no_link():
+    """A blank id must not build `...transaction.nl?id=` (a link to nothing) and the
+    publish step must say which item lost its link. Choice: WARNING, not abort - the same
+    pattern as a missing head/facts, which also leaves the verdict valid and the row thin."""
+    if shutil.which("node"):
+        fns = ("esc", "money", "recUrl", "parseNsDate", "ageDaysRaw", "ageDays",
+               "poLine", "classify", "itemRow")
+        tpl = os.path.join(NS, "assets/dashboard_template.html")
+        for label, idval in (("empty", ""), ("undefined", None)):
+            item = {"id": idval, "type": "Bill", "doc": "BILL-1", "vendor": "V", "amt": 100,
+                    "trandate": None, "verdict": "clear", "head": "h", "facts": ["f"],
+                    "po": "", "poWarn": "", "detail": "d", "att": "", "poLink": ""}
+            if idval is None:
+                del item["id"]
+            html = render_item_row(tpl, item, fn_names=fns,
+                                   call="itemRow(%s, classify(%s))" % (json.dumps(item),
+                                                                        json.dumps(item)))
+            check("netsuite blank id (%s): no ?id= link built" % label,
+                  "?id=" not in html and "id=undefined" not in html, html[-200:])
+            check("netsuite blank id (%s): no Open record anchor" % label,
+                  "Open record" not in html, html[-200:])
+    rc, out, err, html = _nsrp_publish({"": _nsrp_bill("BILL-NOID"), "8": _nsrp_bill("BILL-OK")})
+    check("netsuite blank id: publish does not crash", rc == 0, (err or out)[-200:])
+    check("netsuite blank id: WARNING names the item",
+          "WARNING" in (out + err) and "BILL-NOID" in (out + err), (out + err)[-200:])
+    check("netsuite blank id: the other item is not named in a warning",
+          "BILL-OK" not in "".join(l for l in (out + err).splitlines() if "WARNING" in l))
+
+
 def main():
     print("Skill code checks\n")
     if shutil.which("node"):
@@ -1347,6 +1433,8 @@ def main():
     test_tied_verdict()
     test_render_fits_one_read()
     test_template_version()
+    test_netsuite_published_page_is_stripped()
+    test_netsuite_blank_id_no_link()
     test_step0_write_states()
     test_login_states()
     test_netsuite_multifile_carry()

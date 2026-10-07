@@ -1215,6 +1215,31 @@ def test_vendor_tied_verdict():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_vendor_tied_icr_only():
+    """vendor-tied is ICR only: an inv, cco or com item logged with it is demoted to
+    skipped by publish, never shown as a vendor-tied row."""
+    d = tempfile.mkdtemp()
+    try:
+        r, out = _publish_log(d, {
+            "inv": _base(itemId="901", docNo="#INV", kind="inv", verdict="vendor-tied"),
+            "cco": _base(itemId="902", docNo="#CCO", kind="cco", wfId="5",
+                         verdict="vendor-tied"),
+            "com": _base(itemId="903", docNo="#COM", kind="com",
+                         wfType="PurchaseOrderContract", verdict="vendor-tied"),
+            "icr": _base(itemId="904", docNo="#ICR", verdict="vendor-tied")})
+        check("vendor-tied icr-only: publish runs", r.returncode == 0,
+              (r.stderr or r.stdout).strip()[-200:])
+        if r.returncode != 0:
+            return
+        v = {k: i["verdict"] for k, i in _items_of(out).items()}
+        for doc in ("#INV", "#CCO", "#COM"):
+            check("vendor-tied icr-only: %s is demoted to skipped" % doc,
+                  v[doc] == "skipped", v[doc])
+        check("vendor-tied icr-only: an ICR keeps it", v["#ICR"] == "vendor-tied", v["#ICR"])
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_vendor_tied_vocabulary_checks():
     """shared_blocks' verdict checks read verdicts with `[a-z]+`, which cannot match the
     hyphen in `vendor-tied`: a template branch on it is never compared to VERDICTS, and a
@@ -1236,7 +1261,7 @@ def test_vendor_tied_vocabulary_checks():
         open(tpl, "w", encoding="utf-8").write(
             '<script>if(it.verdict==="vendor-tied"){}</script>\n')
         open(md, "w", encoding="utf-8").write(
-            "| `attachment` | Proposal | `vendor-tied` when Vendor Proposed ties | n |\n")
+            "| `attachment` | Proposal | `vendor-tied` when Vendor Proposed ties |\n")
         sb.PLUGINS = d
         p1, p2 = sb.check_verdict_vocabulary(), sb.check_capability_verdicts()
         check("vendor-tied: vocabulary check flags a template branch the allowlist lacks",
@@ -1772,6 +1797,7 @@ def main():
     test_tied_verdict()
     if shutil.which("node"):
         test_vendor_tied_verdict()
+        test_vendor_tied_icr_only()
     test_vendor_tied_vocabulary_checks()
     test_field_run()
     if shutil.which("node"):

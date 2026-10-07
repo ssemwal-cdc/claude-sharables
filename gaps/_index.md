@@ -16,5 +16,5 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | G20 | `netsuite-connector-extra-files` | NetSuite connector misses extra files | unobserved | 2026-09-24 | A new file on a bill that was already reviewed gets read before the verdict carries forward. |
 | G21 | `office-attachment-route` | A carrier navigation to an office file is unobserved | unobserved | 2026-10-02 | A run names an office-document type as unobserved instead of assuming Chrome handles it safely. |
 | G22 | `scan-raster-in-carrier` | Rasterising a scan in the carrier tab is probed, not proven | unobserved | 2026-10-02 | A scanned-PDF read is trusted only as far as it was actually run. |
-| pending | `cco-url-work-order-unverified` | CCO link on a work order contract unverified | unobserved | 2026-10-07 | A CCO link opens the right record, whatever contract kind it hangs from. |
-| pending | `gate-resp-name-unconfirmed` | Response name key never seen | unobserved | 2026-10-07 | A response verb on a row is the real verb, never an object dump. |
+| G23 | `cco-url-work-order-unverified` | CCO link on a work order contract unverified | unobserved | 2026-10-07 | A CCO link opens the right record, whatever contract kind it hangs from. |
+| G24 | `gate-resp-name-unconfirmed` | Response name key never seen | unobserved | 2026-10-07 | A response verb on a row is the real verb, never an object dump. |

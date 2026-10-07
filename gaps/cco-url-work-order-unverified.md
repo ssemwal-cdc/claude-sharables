@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G23
 slug: cco-url-work-order-unverified
 kind: gap
 status: unobserved

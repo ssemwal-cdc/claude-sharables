@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D104
 slug: inv-waiver-span
 kind: decision
 status: settled

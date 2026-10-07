@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D105
 slug: no-folder-skip-blank-icr
 kind: decision
 status: settled

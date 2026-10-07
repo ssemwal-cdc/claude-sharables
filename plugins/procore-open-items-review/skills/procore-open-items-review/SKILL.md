@@ -212,7 +212,7 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 ```
 - **Cap concurrency at 8 to 10.** A 429 from rate limiting is a `failed`, not an `empty`.
 - **A timeout is `failed`, never `empty`.** The 20-second abort throws, and the `catch` records it.
-- **`resp` holds names.** The `.name` key on an `available_responses` entry is unconfirmed. See `G‹gate-resp-name-unconfirmed›`, the response name key was never seen. A bare string passes through as it is.
+- **`resp` holds names.** The `.name` key on an `available_responses` entry is unconfirmed. See `G24`, the response name key was never seen. A bare string passes through as it is.
 - **A CCO row enters `__gate` already translated.** Its `type` is `CommitmentChangeOrder` and its `id` is the `holder.id`. A raw `ChangeOrderPackage` row is never gated, so its 400 never happens.
 - **The three states are the safety property. They are not interchangeable.** `ok` gates on `can`, exactly as above. `empty` means that the API genuinely returned no instance.
 - `failed` is **reported by name and excluded from the run.** Never count it as suppressed, never treat it as actionable, never let it reach the dashboard.
@@ -249,7 +249,7 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 - `grand_total`, `line_items` and `retainage_percent` are confirmed present on a real purchase order contract. **`WorkOrderContract` is still unobserved.** On the first one of a run, return the payload's top-level key names with the values. Say it once in the run report, and correct this paragraph.
 - **A field this step names that the payload does not carry makes every check needing it *not run*.** That happens by name. It is never a silent pass and never a `clear`.
 ## Step 4 — Read the attached support without downloading it
-**With no workspace folder connected, skip attachment reads on one kind of `icr` item.** That is an item with a blank accepted cost and a blank Cost Impact. There is nothing to tie. The verdict stays `skipped`. Its `head` says `support not read: no folder connected, nothing to tie`. Name check 3 as not run. This rule lives here because a folderless run skips the state-file reads. It decides which files this step opens. See `D‹no-folder-skip-blank-icr›`, no folder, no reads where nothing can tie.
+**With no workspace folder connected, skip attachment reads on one kind of `icr` item.** That is an item with a blank accepted cost and a blank Cost Impact. There is nothing to tie. The verdict stays `skipped`. Its `head` says `support not read: no folder connected, nothing to tie`. Name check 3 as not run. This rule lives here because a folderless run skips the state-file reads. It decides which files this step opens. See `D105`, no folder, no reads where nothing can tie.
 
 Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-second presigned S3 link**. `storage.procore.com` blocks cross-origin reads, and Chrome's PDF viewer exposes no text layer. This route avoids both and leaves **no files in the downloads folder**.
 
@@ -547,9 +547,9 @@ Then:
 - **Sequence integrity.** `previous_requisition_id` must exist when previous certificates are non-zero, and prior invoices must foot to that figure. A missing intermediate application is a FLAG. **Duplicates:** same vendor and period, or the same invoice number twice.
 - **Retainage.** Confirm the withheld percent is consistent and matches the contract. A commitment withholding none is worth naming, not flagging.
 - **An original contract sum of $0**, with everything booked as change orders, is a setup pattern. It is not an error when the totals agree. Name it in the warning line.
-- **Offsetting whole-dollar differences on lines other than payment due.** Give a warning naming the lines. Three conditions must hold. Each differing line is off by at most $1. Payment due ties exactly. The differences net to $0. Anything larger is a FLAG. See `D‹inv-offsetting-line-diffs›`, offsetting line differences warn only when they net to zero.
-- **Procore `contract_sum_to_date` ahead of the G702.** Give a warning only when payment due ties. The gap must also equal named approved change orders not yet on the G702. Otherwise FLAG. See `D‹inv-sum-ahead-of-g702›`, a contract sum ahead of the G702 warns only when change orders explain it.
-- **A lien waiver that names several pay apps (`pc.inv-waiver-span`).** Compare it to the sum of those pay apps' payment due. All in this run and summing: write the context line `waiver covers B1 + B3 = $X, ties`. Not summing: a warning with both figures. A named pay app not in the queue: a warning naming it. **Never a flag and never a skip cause.** See `D‹inv-waiver-span›`, a waiver spanning pay apps is context or a warning.
+- **Offsetting whole-dollar differences on lines other than payment due.** Give a warning naming the lines. Three conditions must hold. Each differing line is off by at most $1. Payment due ties exactly. The differences net to $0. Anything larger is a FLAG. See `D102`, offsetting line differences warn only when they net to zero.
+- **Procore `contract_sum_to_date` ahead of the G702.** Give a warning only when payment due ties. The gap must also equal named approved change orders not yet on the G702. Otherwise FLAG. See `D103`, a contract sum ahead of the G702 warns only when change orders explain it.
+- **A lien waiver that names several pay apps (`pc.inv-waiver-span`).** Compare it to the sum of those pay apps' payment due. All in this run and summing: write the context line `waiver covers B1 + B3 = $X, ties`. Not summing: a warning with both figures. A named pay app not in the queue: a warning naming it. **Never a flag and never a skip cause.** See `D104`, a waiver spanning pay apps is context or a warning.
 ### CCO
 1. `line_items` sum to `grand_total`.
 2. Each attached PCI ties to a line item, and the PCI totals sum to `grand_total`. Name any line without support and any PCI without a line.
@@ -638,7 +638,7 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
 - `wfType` separates the two commitment collections, in the link and at the workflow endpoint.
 - `subtype` supplies the `tool_id` the link needs. The workflow type is `GenericToolItem` for every custom tool.
 - **Set `commitmentId` on every `inv`, `cco` and `com`.** An `inv` takes the requisition's `commitment_id`. A `cco` takes the package's `contract_id`. A `com` takes the item's own id, because the record *is* the commitment.
-- **A blank `commitmentId` on an `inv` or `cco` publishes a WARNING naming the key.** The row then shows no link. The CCO link hard-codes the purchase order collection. See `G‹cco-url-work-order-unverified›`, the CCO link on a work order contract is unverified.
+- **A blank `commitmentId` on an `inv` or `cco` publishes a WARNING naming the key.** The row then shows no link. The CCO link hard-codes the purchase order collection. See `G23`, the CCO link on a work order contract is unverified.
 - **A `skipped` row publishes compact.** It carries `head`, `att` and `carried`, and no `facts`, `detail`, `context` or response verbs. Put the cause in `head`.
 - `project` must keep Procore's full `"<Campus> - <Building>"` form, because the script splits it on the outer campus axis.
 
@@ -655,7 +655,7 @@ On each run:
 - **The shortcut only ever keeps `skipped`.** A carried read may confirm the item stays `skipped`. It never promotes one. Before any move to `clear`, `tied` or `flagged`, re-open every attachment and re-check in full.
 - **A change to any checked field forces that same full re-check**, not only a changed amount.
 - **On the new-files-only re-read, a file already in the known-read set is not read this run.** Step 4's first-page rule does not reopen it. The full re-check above still opens every file, first page included.
-- **No folder: the Step 4 skip rule decides which `icr` items are read.** See `D‹no-folder-skip-blank-icr›`, no folder, no reads where nothing can tie.
+- **No folder: the Step 4 skip rule decides which `icr` items are read.** See `D105`, no folder, no reads where nothing can tie.
 - **No longer in the queue is dropped.** **Count the departed items and name the count in the chat line.**
 - There is no actioned bin. A lingering entry would show as an apparently-pending row.
 

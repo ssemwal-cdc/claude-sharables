@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D106
 slug: skipped-rows-compact
 kind: decision
 status: settled

@@ -102,11 +102,11 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D96 | `run-downloads-word-files` | A run downloads Word files itself | settled | 2026-10-05 | Word support gets read without the user downloading files by hand. |
 | D98 | `claim-through-the-stamp` | Claim record ids through the stamp | settled | 2026-10-06 | A record id stays permanent and unique. |
 | D97 | `login-email-stored` | The sign-in email comes from config | settled | 2026-10-06 | Once the address is stored, an idle Procore session resumes without a hand-off. |
-| pending | `absent-field-not-applicable` | An absent field is not applicable | settled | 2026-10-07 | A verified item is not held back by a check that can never run. |
-| pending | `blank-cid-no-link` | A blank commitment id gives no link | settled | 2026-10-07 | No row links to the wrong page. |
-| pending | `gate-timeout-is-failed` | A gate timeout is failed | settled | 2026-10-07 | A hung call never reads as a queue with no live instance. |
-| pending | `inv-offsetting-line-diffs` | Offsetting line differences warn only at zero net | settled | 2026-10-07 | A rounding wash does not bury a real error among flags. |
-| pending | `inv-sum-ahead-of-g702` | A contract sum ahead of the G702 warns only when explained | settled | 2026-10-07 | A timing gap does not hide an unexplained one. |
-| pending | `inv-waiver-span` | A waiver spanning pay apps is context or a warning | settled | 2026-10-07 | A valid multi-period waiver does not read as a defect. |
-| pending | `no-folder-skip-blank-icr` | No folder, no reads where nothing can tie | settled | 2026-10-07 | A folderless run does not spend its time re-reading files that cannot tie. |
-| pending | `skipped-rows-compact` | A skipped row publishes compact | settled | 2026-10-07 | The render fits one read, so the reviewer sees every row. |
+| D99 | `absent-field-not-applicable` | An absent field is not applicable | settled | 2026-10-07 | A verified item is not held back by a check that can never run. |
+| D100 | `blank-cid-no-link` | A blank commitment id gives no link | settled | 2026-10-07 | No row links to the wrong page. |
+| D101 | `gate-timeout-is-failed` | A gate timeout is failed | settled | 2026-10-07 | A hung call never reads as a queue with no live instance. |
+| D102 | `inv-offsetting-line-diffs` | Offsetting line differences warn only at zero net | settled | 2026-10-07 | A rounding wash does not bury a real error among flags. |
+| D103 | `inv-sum-ahead-of-g702` | A contract sum ahead of the G702 warns only when explained | settled | 2026-10-07 | A timing gap does not hide an unexplained one. |
+| D104 | `inv-waiver-span` | A waiver spanning pay apps is context or a warning | settled | 2026-10-07 | A valid multi-period waiver does not read as a defect. |
+| D105 | `no-folder-skip-blank-icr` | No folder, no reads where nothing can tie | settled | 2026-10-07 | A folderless run does not spend its time re-reading files that cannot tie. |
+| D106 | `skipped-rows-compact` | A skipped row publishes compact | settled | 2026-10-07 | The render fits one read, so the reviewer sees every row. |

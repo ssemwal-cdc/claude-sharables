@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D103
 slug: inv-sum-ahead-of-g702
 kind: decision
 status: settled

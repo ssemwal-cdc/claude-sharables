@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G24
 slug: gate-resp-name-unconfirmed
 kind: gap
 status: unobserved

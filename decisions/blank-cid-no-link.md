@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D100
 slug: blank-cid-no-link
 kind: decision
 status: settled

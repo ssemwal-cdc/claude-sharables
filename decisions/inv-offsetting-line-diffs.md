@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D102
 slug: inv-offsetting-line-diffs
 kind: decision
 status: settled

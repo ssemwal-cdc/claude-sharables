@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D101
 slug: gate-timeout-is-failed
 kind: decision
 status: settled

@@ -1411,6 +1411,28 @@ def test_netsuite_blank_id_no_link():
     check("netsuite blank id: the other item is not named in a warning",
           "BILL-OK" not in "".join(l for l in (out + err).splitlines() if "WARNING" in l))
 
+    # Two blank-id items must not share a DOM key (det<key> / tog(<key>) would collide).
+    rc, out, err, html = _nsrp_publish({"": _nsrp_bill("BILL-A"), " ": _nsrp_bill("BILL-B")})
+    blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/", html, re.S)
+    its = json.loads(blob.group(1))["items"] if blob else []
+    keys = [x.get("key") for x in its]
+    check("netsuite blank id: two blank-id items get distinct payload keys",
+          len(keys) == 2 and None not in keys and keys[0] != keys[1], repr(keys))
+    if shutil.which("node") and len(keys) == 2 and None not in keys and keys[0] != keys[1]:
+        fns = ("esc", "money", "recUrl", "parseNsDate", "ageDaysRaw", "ageDays",
+               "poLine", "classify", "itemRow")
+        tpl = os.path.join(NS, "assets/dashboard_template.html")
+        rows = [render_item_row(tpl, x, fn_names=fns, call="itemRow(%s, classify(%s))"
+                                % (json.dumps(x), json.dumps(x))) for x in its]
+        d = [re.search(r'id="det([^"]*)"', r) for r in rows]
+        t = [re.search(r"tog\(([^,]*),", r) for r in rows]
+        check("netsuite blank id: rendered det/toggle ids differ",
+              all(d) and all(t) and d[0].group(1) != d[1].group(1)
+              and t[0].group(1) != t[1].group(1), repr([m and m.group(0) for m in d + t]))
+    else:
+        check("netsuite blank id: rendered det/toggle ids differ", False,
+              "no distinct keys to render" if shutil.which("node") else "node missing")
+
 
 def main():
     print("Skill code checks\n")

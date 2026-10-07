@@ -58,6 +58,7 @@ The user is one approver among several, and not the accountant of record. An app
 
 - **Check that the Claude in Chrome tools are present.** Call `tabs_context_mcp`. If it is missing, stop here. Tell the user to install Claude in Chrome and sign in, then stop the run. Do not sync assets and do not read a queue first.
 - **On a first run that passes that check, give short setup advice once.** State that the newest Opus model, medium to high effort, and a session with the Downloads folder connected work best. Name only the item or items this run can see are off. The model name is readable from the session. Whether a workspace folder is connected is readable from the session. Effort is not readable, so state it as advice, never as an observed fact.
+- **When no folder is connected, say what that costs.** Nothing persists without a folder. So every run re-reads every attachment and repeats setup. Say so in those words, and advise connecting the Downloads folder.
 - **This advice runs once, on a first run only.** A run that finds a state file already skips both bullets above.
 <!--__END_SHARED:skill-first-run-onboarding__-->
 

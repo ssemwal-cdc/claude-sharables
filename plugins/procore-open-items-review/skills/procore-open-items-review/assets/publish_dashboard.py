@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v18"
+TEMPLATE_VERSION = "v19"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -86,6 +86,22 @@ def serialise(payload):
     return "{" + ",".join(parts) + "}"
 #__END_SHARED:pub-payload-serialise__
 
+SKIPPED_KEYS = ("key", "id", "pid", "cid", "kind", "subtype", "toolId", "wf", "type", "doc",
+                "vendor", "projLabel", "amt", "due", "verdict", "head", "att", "carried")
+#__SHARED:pub-strip-comments__
+def strip_comments(tpl):
+    """Drop HTML comments and whole-line // comments from the published page.
+
+    The widget payload has to be read and reproduced whole, and comments are dead bytes in it
+    (Procore field run 2026-10-07: 101 KB render, ~45 KB template). The source template keeps
+    its comments. Run after the version check, which reads a marker held in a comment.
+    The data sentinels are /* */ comments, so they survive.
+    """
+    tpl = re.sub(r"<!--.*?-->[ \t]*\n?", "", tpl, flags=re.S)
+    return re.sub(r"^[ \t]*//[^\n]*\n", "", tpl, flags=re.M)
+#__END_SHARED:pub-strip-comments__
+
+
 VERDICTS = ("clear", "flagged", "skipped", "ungated", "tied")
 # The type the workflows/instances endpoint wants, which is NOT always the queue's item_type.
 # A CCO's workflow hangs off the underlying commitment change order, not the package, and that
@@ -120,6 +136,13 @@ def main():
     # Warns on a stale workspace copy; deliberately does not stop the run.
     check_template_version(tpl)
 
+    # The page is read once and handed to show_widget byte for byte, so every byte the reader
+    # does not need is render cost. Comments are for maintainers; strip them from the OUTPUT
+    # only. After the version check, because the version marker lives in a comment. Before
+    # injection, so the data block is never touched. The sentinels are /* */ and the
+    # __complete div is markup, so neither is a comment here.
+    tpl = strip_comments(tpl)
+
     if tpl.count(S) != 1 or tpl.count(E) != 1:
         sys.exit("ABORT: template sentinels missing or duplicated. Do not "
                  "regenerate the template - restore it from the plugin assets and retry.")
@@ -130,7 +153,7 @@ def main():
                  "Run the first-time setup before publishing." % os.path.basename(LOG))
 
     # A GenericToolItem belongs to a custom tool, and one queue can carry several of them -
-    # observed 2026-09-01: Internal Change Risk (88) and Customer Change Request (77), the
+    # observed 2026-09-01: Internal Change Risk and Customer Change Risk, the
     # second one 37 of 62 items and unknown to the config. config.customTools maps the queue's
     # item_subtype to that tool's id and its own cost-field mapping, because both differ per
     # tool. config.icrToolId is the floor for a config written before customTools existed,
@@ -249,12 +272,26 @@ def main():
               "each one's own step. It decides the record link's collection, and the wrong "
               "one returns an empty instance rather than an error.")
 
-    thin = [i["doc"] for i in items if not i["head"] or not i["facts"]]
+    # An item with a blank commitmentId on a kind whose link needs it renders no link at all.
+    nocid = [i["key"] for i in items if i["kind"] in ("inv", "cco") and not i["cid"]]
+    if nocid:
+        print("WARNING: blank commitmentId, so no Open in Procore link: " + ", ".join(nocid) +
+              ". Set commitmentId (Step 7): the requisition's commitment_id on an inv, the "
+              "package's contract_id on a cco.", file=sys.stderr)
+
+    # A skipped item is compact by design (below), so it is never thin.
+    thin = [i["doc"] for i in items
+            if i["verdict"] != "skipped" and (not i["head"] or not i["facts"])]
     if thin:
         print("WARNING: no head/facts for: " + ", ".join(thin) +
               " - these rows will render thin", file=sys.stderr)
 
 # retired: see actionable-retired/procore-open-items-review/publish_dashboard.cut.py, review-only-mode
+
+    # A skipped row is one line and a head: no facts, detail, context or verbs. Cuts the bytes
+    # the render pays for rows nobody acts on.
+    items = [({k: i[k] for k in SKIPPED_KEYS} if i["verdict"] == "skipped" else i)
+             for i in items]
 
     payload = {
         "lastRun": log.get("lastRunTime") or log.get("lastCompletedRun", ""),
@@ -276,41 +313,6 @@ def main():
     assert len(out) - len(tpl) == len(blob) - (b - a)
 
     open(OUT, "w", encoding="utf-8").write(out)
-
-    # A second, smaller file carrying only what the user can act on: items verdicted clear or
-    # flagged, which are the ones with a cost and a response to give. Everything else becomes a
-    # one-line row, and index.html keeps the complete record.
-    #
-    # Reached only when the template's integrity banner actually fires. There is no byte
-    # threshold here, and the sentence that used to sit in this comment - "past roughly 90 KB
-    # that stops being reliable" - was invented: nothing in show_widget documents a capacity,
-    # and SKILL.md Step 7 calls a claim of exactly that form a prediction written as a fact. It
-    # mattered because a run reads this file. On 2026-09-01 a 62-item queue was refused at
-    # 164 KB, and the refusal was argued in this comment's own terms.
-    #
-    # It is also not a size fallback, measured: only two verdicts fold, so a live queue saves
-    # 0-12%. A deliberately even 62-item fixture - half the queue foldable, which no real one is
-    # - still only came down 129 KB from 174 KB. What made a large queue renderable was
-    # serialise() above, not this.
-    ACTIONABLE = ("clear", "flagged", "tied")
-    slim, folded = [], []
-    for i in items:
-        if i.get("verdict") in ACTIONABLE:
-            slim.append(i)
-        else:
-            # display-only: enough for a one-line row and a link, nothing more. No resp, so
-            # they carry no buttons here - an item with no cost at a step that demands one is
-            # not something to action from a trimmed view. index.html keeps the full record.
-            folded.append({k: i.get(k) for k in
-                           ("key", "id", "pid", "cid", "kind", "subtype", "toolId", "wf",
-                            "type", "doc", "vendor", "projLabel", "amt", "due", "verdict")})
-    wpayload = dict(payload)
-    wpayload["items"] = slim + folded
-    wout = tpl[:a] + serialise(wpayload) + tpl[b:]
-    WIDGET = os.path.join(os.path.dirname(os.path.abspath(OUT)), "widget.html")
-    open(WIDGET, "w", encoding="utf-8").write(wout)
-    print("wrote %s  (fallback only; %d KB vs %d KB full; %d actionable, %d folded)" % (
-        WIDGET, len(wout) // 1024, len(out) // 1024, len(slim), len(folded)))
 
     #__SHARED:pub-render-archive__
     # Keep a short rolling archive of what was actually rendered. Two uses: diff a bad render

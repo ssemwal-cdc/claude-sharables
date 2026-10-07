@@ -211,7 +211,7 @@ function applyView(list){
     if(view.type!=="all"   && i.type!==view.type)return false;
     if(view.vendor!=="all" && i.vendor!==view.vendor)return false;
     if(q){
-      var hay=(i.doc+" "+i.vendor+" "+i.type+" "+i.id+" "+i.head).toLowerCase();
+      var hay=(i.doc+" "+i.vendor+" "+i.type+" "+(i.id||"")+" "+i.head).toLowerCase();
       if(hay.indexOf(q)<0)return false;
     }
     return true;

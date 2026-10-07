@@ -9,7 +9,7 @@ date: 2026-09-01
 
 **Rule.** Render the dashboard. Fall back only after an observed failure, never on a size estimate.
 
-**Outcome protected.** A reviewer keeps one-click execute on a large queue.
+**Outcome protected.** A reviewer gets the whole dashboard on a large queue, never a file.
 
 **Argument.**
 
@@ -21,12 +21,12 @@ An estimate is not an observed failure.
 
 Four runs declined a render. The first three argued the output side and were wrong. See F96, the read side had a real wall.
 
-One of those handed over a 120 KB dashboard as a file. That cost one-click execute entirely to avoid a risk that had not happened.
+One of those handed over a 120 KB dashboard as a file. That cost the rendered dashboard entirely to avoid a risk that had not happened.
 
 A fallback is licensed by a read that actually came back short. A byte count is not a licence.
 
-The slim build is not a size fallback. See
-`F123`, the slim build saves little.
+The slim build was no size fallback, and it is deleted. See
+`F123`, the slim build is no fallback.
 
 **Evidence.**
 

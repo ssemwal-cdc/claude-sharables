@@ -99,7 +99,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F121 | `skill-md-duplication-not-block-coverable` | SKILL.md duplication resists the block mechanism | observed | 2026-08-24 | Nobody expects the shared-block mechanism to reach prose it cannot cover. |
 | F122 | `skill-md-is-the-fixed-point-for-freshness` | SKILL.md is the fixed point for freshness | settled | 2026-08-24 | A run tells the user when its workspace copies are old. |
 | F70 | `slim-build-saves-little` | The slim build saves little | superseded | 2026-08-24 | A reviewer keeps the response buttons a folded row would cost. |
-| F123 | `slim-fold-saves-0-to-12-percent` | Slim build is no fallback | settled | 2026-08-24 | A skipped item keeps the response button it most often needs. |
+| F123 | `slim-fold-saves-0-to-12-percent` | Slim build is no fallback | settled | 2026-08-24 | The reviewer reads every row of a large queue in one render. |
 | F124 | `staleness-check-missed-second-site` | Staleness fix was itself stale | settled | 2026-08-24 | A version check compares every site that carries the version, not just the first. |
 | F125 | `step3-break-marker-relocated` | The onboarding break moved to step 3's end | observed | 2026-08-24 | A reader can find the point where they may stop. |
 | F126 | `template-version-check-blind-to-lockstep` | The version check missed lockstep staleness | settled | 2026-08-24 | A run tells the user when its workspace copies are old. |

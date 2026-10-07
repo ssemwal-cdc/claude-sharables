@@ -93,17 +93,18 @@ def serialise(payload):
 VERDICTS = ("clear", "flagged")
 
 
+#__SHARED:pub-strip-comments__
 def strip_comments(tpl):
     """Drop HTML comments and whole-line // comments from the published page.
 
     The widget payload has to be read and reproduced whole, and comments are dead bytes in it
     (Procore field run 2026-10-07: 101 KB render, ~45 KB template). The source template keeps
     its comments. Run after the version check, which reads a marker held in a comment.
-    The data sentinels are /* */ comments, so they survive. Duplicated in the Procore
-    publish script: the two lanes edit them in parallel and no shared block marks it yet.
+    The data sentinels are /* */ comments, so they survive.
     """
     tpl = re.sub(r"<!--.*?-->[ \t]*\n?", "", tpl, flags=re.S)
     return re.sub(r"^[ \t]*//[^\n]*\n", "", tpl, flags=re.M)
+#__END_SHARED:pub-strip-comments__
 
 
 def main():

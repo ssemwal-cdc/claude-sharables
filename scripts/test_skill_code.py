@@ -57,7 +57,7 @@ Covered:
                            which the execute step reads as already-actioned.
  15. `tied` verdict     - the fifth verdict survives publish, obeys the same
                            demotions as every other verdict, and is not folded
-                           into widget.html's display-only rows.
+                           into the compact skipped rows (widget.html is gone).
  16. Carried attachments - `supportCarried` (files read on an earlier run, not
                            reopened this run) survives publish as its own field,
                            and never merges into `supportRead`, whose contract is
@@ -98,7 +98,7 @@ failures = []
 
 
 def check(name, ok, detail=""):
-    print(("  PASS  " if ok else "  FAIL  ") + name + (("  - " + detail) if detail and not ok else ""))
+    print(("  PASS  " if ok else "  FAIL  ") + name + (("  - " + str(detail)) if detail and not ok else ""))
     if not ok:
         failures.append(name)
 
@@ -1008,8 +1008,11 @@ def test_custom_tool_subtype():
               items["#NEW-1"]["toolId"] == "", items["#NEW-1"]["toolId"])
         check("subtype: an unmapped subtype cannot stay clear",
               items["#NEW-1"]["verdict"] == "skipped", items["#NEW-1"]["verdict"])
-        check("subtype: it keeps its response buttons - the gate is unaffected",
-              items["#NEW-1"]["resp"] == ["Yes", "Reject"])
+        # Re-pointed (was: it keeps its response buttons, D78). Review-only plugins (D91)
+        # retired the buttons; skipped rows are compact with no resp (ruling 2026-10-07).
+        check("subtype: an unmapped subtype is a compact skipped row - no resp key",
+              items["#NEW-1"]["verdict"] == "skipped" and items["#NEW-1"]["toolId"] == ""
+              and "resp" not in items["#NEW-1"], sorted(items["#NEW-1"]))
         check("subtype: an unmapped subtype demotes a tied item too",
               items["#NEW-2"]["verdict"] == "skipped", items["#NEW-2"]["verdict"])
         check("subtype: an item with no subtype recorded is not guessed either",
@@ -1046,8 +1049,8 @@ def test_custom_tool_subtype():
 def test_tied_verdict():
     """`tied` is the fifth verdict: support was read and a headline figure ties, with
     exactly one named field blank in Procore. It renders like `clear` and `flagged` -
-    full detail and its own response verbs - and must not fold into widget.html's
-    display-only rows the way `skipped` and `ungated` do.
+    full detail and its own response verbs - and must not be stripped to the compact
+    row that `skipped` gets.
     """
     d = tempfile.mkdtemp()
     try:
@@ -1081,14 +1084,15 @@ def test_tied_verdict():
               "#ICR-9" in items and items["#ICR-9"]["verdict"] == "tied",
               items.get("#ICR-9", {}).get("verdict"))
 
-        widget = os.path.join(d, "widget.html")
-        wblob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/",
-                          open(widget, encoding="utf-8").read(), re.S).group(1)
-        witems = {i["doc"]: i for i in json.loads(wblob)["items"]}
-        check("tied: not folded in widget.html - keeps its response verbs",
-              witems["#ICR-9"].get("resp") == ["Yes", "Reject"], witems["#ICR-9"].get("resp"))
-        check("tied: not folded in widget.html - keeps full detail",
-              witems["#ICR-9"].get("detail") == "d", witems["#ICR-9"].get("detail"))
+        # Re-pointed (was: tied not folded in widget.html). The slim widget.html build is
+        # deleted (owner ruling 2026-10-07), so the claim now is: no widget.html, and the
+        # tied row keeps its verbs and full detail in index.html.
+        check("tied: publish writes no widget.html (slim build deleted)",
+              not os.path.exists(os.path.join(d, "widget.html")))
+        check("tied: keeps its response verbs in index.html",
+              items["#ICR-9"].get("resp") == ["Yes", "Reject"], items["#ICR-9"].get("resp"))
+        check("tied: keeps full detail in index.html",
+              items["#ICR-9"].get("detail") == "d", items["#ICR-9"].get("detail"))
     finally:
         shutil.rmtree(d, ignore_errors=True)
 
@@ -1353,6 +1357,111 @@ def _nsrp_publish(items, tpl_edit=None):
         shutil.rmtree(d, ignore_errors=True)
 
 
+# ------------------------------------ 19. field-run changes (owner ruling 2026-10-07)
+SKIPPED_KEYS = {"key", "id", "pid", "cid", "kind", "subtype", "toolId", "wf", "type", "doc",
+                "vendor", "projLabel", "amt", "due", "verdict", "head", "att", "carried"}
+
+
+def _publish_log(d, items, name="index.html"):
+    assets = os.path.join(PC, "assets")
+    for f in ("publish_dashboard.py", "dashboard_template.html"):
+        shutil.copy(os.path.join(assets, f), d)
+    json.dump({"lastCompletedRun": "2026-10-07", "lastRunTime": "2026-10-07 09:00",
+               "suppressed": 0, "config": {"company": "0", "icrToolId": "0"}, "items": items},
+              open(os.path.join(d, "_procore_review_log.json"), "w"))
+    out = os.path.join(d, name)
+    r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
+                       capture_output=True, text=True, timeout=60)
+    return r, out
+
+
+def _base(**kw):
+    b = {"itemId": "1", "projectId": "9", "commitmentId": "8", "kind": "icr",
+         "type": "Internal Change Risk", "docNo": "#X-1", "project": "A - B",
+         "counterparty": "V", "amount": 100, "step": "S", "responses": ["Yes"],
+         "verdict": "clear", "head": "h", "facts": ["f"], "detail": "d", "context": "ctx",
+         "warning": "w", "supportRead": ["a.pdf"]}
+    b.update(kw)
+    return b
+
+
+def test_field_run():
+    """Skipped rows are compact, the page carries no comments, no widget.html, a blank
+    commitmentId is announced and linkless, and thin-warning ignores skipped rows."""
+    d = tempfile.mkdtemp()
+    try:
+        r, out = _publish_log(d, {
+            "clr": _base(docNo="#CLR"), "flg": _base(docNo="#FLG", verdict="flagged"),
+            "tie": _base(docNo="#TIE", verdict="tied"),
+            "ung": _base(docNo="#UNG", verdict="ungated"),
+            "skp": _base(docNo="#SKP", verdict="skipped", head="", facts=[],
+                         supportCarried=["old.pdf"]),
+            "Req:INV1": _base(docNo="#INV", kind="inv", commitmentId=""),
+            "Req:CCO1": _base(docNo="#CCO", kind="cco", wfId="5", commitmentId="")})
+        if r.returncode != 0:
+            check("field run: publish script runs", False, (r.stderr or r.stdout)[-200:])
+            return
+        text = open(out, encoding="utf-8").read()
+        log = r.stdout + r.stderr
+
+        # 1. stripped page, intact markers
+        check("field run: index.html carries no <!-- --> comment", "<!--" not in text)
+        bad = [l for l in text.split(chr(10)) if l.lstrip().startswith("//")]
+        check("field run: index.html has no line starting with //", not bad, bad[:1])
+        check("field run: data sentinels intact",
+              "/*__REVIEW_DATA__*/" in text and "/*__END__*/" in text)
+        check("field run: <div id=\"__complete\" marker intact", '<div id="__complete"' in text)
+        items = {i["doc"]: i for i in json.loads(
+            re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/", text, re.S).group(1))["items"]}
+        check("field run: injected items intact", len(items) == 7, len(items))
+
+        # 2. skipped is compact; the rest are not
+        check("field run: skipped item carries only the compact keys",
+              set(items["#SKP"]) == SKIPPED_KEYS, sorted(set(items["#SKP"]) ^ SKIPPED_KEYS))
+        for doc in ("#CLR", "#FLG", "#TIE", "#UNG"):
+            it = items[doc]
+            check("field run: %s keeps facts, detail, po, poWarn" % doc,
+                  all(k in it for k in ("facts", "detail", "po", "poWarn")), sorted(it))
+
+        # 3. no widget.html
+        check("field run: publish writes no widget.html",
+              not os.path.exists(os.path.join(d, "widget.html")))
+
+        # 4. blank commitmentId
+        for k in ("Req:INV1", "Req:CCO1"):
+            check("field run: WARNING names %s (blank commitmentId)" % k,
+                  any(l.startswith("WARNING") and k in l for l in log.splitlines()),
+                  log[-300:])
+        tpl = os.path.join(d, "dashboard_template.html")
+        for kind in ("inv", "cco"):
+            it = {"kind": kind, "pid": "9", "cid": "", "id": "1", "wf": "x"}
+            html = render_item_row(tpl, it, fn_names=("recUrl",),
+                                   call="JSON.stringify(recUrl(%s))" % json.dumps(it))
+            check("field run: recUrl returns \"\" for %s with blank cid" % kind,
+                  html == '""', html)
+
+        # 5. thin warning ignores skipped
+        thin = [l for l in log.splitlines() if "no head/facts" in l]
+        check("field run: thin head/facts warning does not name a skipped item",
+              not any("#SKP" in l for l in thin), thin)
+
+        # 1b. version check still reads the source template (marker is stripped from output)
+        t = open(tpl, encoding="utf-8").read()
+        open(tpl, "w", encoding="utf-8").write(
+            re.sub(r"layout template v\d+", "layout template v0", t, count=1))
+        r2 = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
+                            capture_output=True, text=True, timeout=60)
+        check("field run: stale source template still warns (v0)",
+              "v0" in r2.stderr + r2.stdout and r2.returncode == 0, (r2.stderr or r2.stdout)[-200:])
+        open(tpl, "w", encoding="utf-8").write(t)
+        r3 = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
+                            capture_output=True, text=True, timeout=60)
+        check("field run: current source template does not warn",
+              "dashboard template is" not in r3.stderr + r3.stdout, r3.stderr[-200:])
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def _nsrp_bill(doc="BILL-1"):
     return {"type": "Bill", "docNo": doc, "vendor": "V", "amount": 1, "trandate": "8/1/2026",
             "verdict": "clear", "head": "h", "facts": ["f"], "detail": "d"}
@@ -1434,6 +1543,58 @@ def test_netsuite_blank_id_no_link():
               "no distinct keys to render" if shutil.which("node") else "node missing")
 
 
+def test_stripped_js_parses():
+    """Publishing strips comments and `//` lines from the page. A `//` line inside a
+    multi-line string, or `<!--` inside a JS string, would break the script silently.
+    Parse every inline <script> of the published page with `node --check`.
+    (NetSuite strips only once PR #42 lands; until then its half passes trivially.)"""
+    def poison(t):
+        # Mutation: a `<!--` in one JS string and a `-->` in another. The strip regex eats
+        # everything between them, so the page's script no longer parses.
+        i = t.index("/*__END__*/;") + len("/*__END__*/;")
+        t = t[:i] + "\nvar __m1='<!--';\n" + t[i:]
+        j = t.rindex("</script>")
+        return t[:j] + 'var __m2="-->";\n' + t[j:]
+
+    for name, root, log, stem, mutate in (
+            ("procore", PC, _big_procore_log(), "_procore_review_log.json", None),
+            ("procore (mutated copy, must be red)", PC, _big_procore_log(),
+             "_procore_review_log.json", poison),
+            ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json", None)):
+        d = tempfile.mkdtemp()
+        try:
+            for f in ("publish_dashboard.py", "dashboard_template.html"):
+                shutil.copy(os.path.join(root, "assets", f), d)
+            if mutate:
+                tp = os.path.join(d, "dashboard_template.html")
+                mutated = mutate(open(tp, encoding="utf-8").read())
+                open(tp, "w", encoding="utf-8").write(mutated)
+            json.dump(log, open(os.path.join(d, stem), "w"))
+            out = os.path.join(d, "index.html")
+            r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
+                                out], capture_output=True, text=True, timeout=60)
+            if r.returncode != 0:
+                check("%s: publish runs (js parse)" % name, False, (r.stderr or r.stdout)[-200:])
+                continue
+            html = open(out, encoding="utf-8").read()
+            scripts = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", html, re.S)
+            bad = []
+            for n, body in enumerate(scripts):
+                path = os.path.join(d, "s%d.js" % n)
+                open(path, "w", encoding="utf-8").write(body)
+                c = subprocess.run(["node", "--check", path], capture_output=True, text=True)
+                if c.returncode != 0:
+                    bad.append(c.stderr.strip()[:200])
+            if mutate:
+                check("%s: the guard goes red on a strip-breaking template" % name,
+                      bool(bad), "mutated page still parsed")
+                continue
+            check("%s: every inline script of the published page parses" % name,
+                  bool(scripts) and not bad, bad[:1] or "no inline script found")
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+
 def main():
     print("Skill code checks\n")
     if shutil.which("node"):
@@ -1453,6 +1614,9 @@ def main():
     test_commitment_kind()
     test_custom_tool_subtype()
     test_tied_verdict()
+    test_field_run()
+    if shutil.which("node"):
+        test_stripped_js_parses()
     test_render_fits_one_read()
     test_template_version()
     test_netsuite_published_page_is_stripped()

@@ -7,26 +7,23 @@ date: 2026-08-24
 ---
 # Slim build is no fallback
 
-**Outcome protected.** A skipped item keeps the response button it most often needs.
+**Outcome protected.** The reviewer reads every row of a large queue in one render.
 
-**Argument.** Procore rendered the slim copy as its primary dashboard.
+**Argument.** Procore once rendered a slim copy as its primary dashboard.
 The justification was that it is roughly a fifth smaller.
 Measured across five fixture queue mixes, the real figure is 0% to 12%.
 Only `skipped` and `ungated` rows fold, and a live queue is mostly neither.
-So the saving was always going to be small.
+So the saving was always small.
 
-The cost is not small.
-Folded rows drop `resp`, `head`, `facts` and `detail`.
-So on the slim render a `skipped` item cannot be sent back.
-That is the response such an item most often needs.
-An earlier note guessed the cost was nil, because folded rows have no
-response buttons to lose.
-That is true of `ungated` and false of `skipped`.
-The publish script's own `no_resp` warning covers `skipped` for exactly that
-reason.
+The slim copy also dropped `resp`, `head`, `facts` and `detail` from folded rows.
+It was never a fallback. It was a second file to keep in step.
 
-Procore now renders `index.html`, matching NetSuite.
-The slim copy is reached only when the integrity banner fires.
+Owner ruling, 2026-10-07: delete the slim build.
+Two cheaper cuts replace it.
+The publish script strips comments from the page.
+A `skipped` row publishes compact in `index.html` itself.
+The first reason for the slim copy was one-click execute on a skipped item.
+D91, review-only plugins, retired that outcome.
 
 **Evidence.** Measured 2026-08-24 across five fixture queue mixes.
 0% when nothing is skipped or ungated.
@@ -36,5 +33,4 @@ A deliberately even 62-item fixture came down from 174 KB to 129 KB on
 2026-09-01.
 G15, nothing has rendered at 161 KB, carries the render ceiling.
 
-**Checks.** none for the size claim. `check_verdict_vocabulary()` covers the
-fold branch's verdicts.
+**Checks.** `test_field_run` in `scripts/test_skill_code.py` asserts that no `widget.html` is written.

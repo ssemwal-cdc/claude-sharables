@@ -1008,8 +1008,11 @@ def test_custom_tool_subtype():
               items["#NEW-1"]["toolId"] == "", items["#NEW-1"]["toolId"])
         check("subtype: an unmapped subtype cannot stay clear",
               items["#NEW-1"]["verdict"] == "skipped", items["#NEW-1"]["verdict"])
-        check("subtype: it keeps its response buttons - the gate is unaffected",
-              items["#NEW-1"]["resp"] == ["Yes", "Reject"])
+        # Re-pointed (was: it keeps its response buttons, D78). Review-only plugins (D91)
+        # retired the buttons; skipped rows are compact with no resp (ruling 2026-10-07).
+        check("subtype: an unmapped subtype is a compact skipped row - no resp key",
+              items["#NEW-1"]["verdict"] == "skipped" and items["#NEW-1"]["toolId"] == ""
+              and "resp" not in items["#NEW-1"], sorted(items["#NEW-1"]))
         check("subtype: an unmapped subtype demotes a tied item too",
               items["#NEW-2"]["verdict"] == "skipped", items["#NEW-2"]["verdict"])
         check("subtype: an item with no subtype recorded is not guessed either",
@@ -1432,6 +1435,58 @@ def test_field_run():
         shutil.rmtree(d, ignore_errors=True)
 
 
+def test_stripped_js_parses():
+    """Publishing strips comments and `//` lines from the page. A `//` line inside a
+    multi-line string, or `<!--` inside a JS string, would break the script silently.
+    Parse every inline <script> of the published page with `node --check`.
+    (NetSuite strips only once PR #42 lands; until then its half passes trivially.)"""
+    def poison(t):
+        # Mutation: a `<!--` in one JS string and a `-->` in another. The strip regex eats
+        # everything between them, so the page's script no longer parses.
+        i = t.index("/*__END__*/;") + len("/*__END__*/;")
+        t = t[:i] + "\nvar __m1='<!--';\n" + t[i:]
+        j = t.rindex("</script>")
+        return t[:j] + 'var __m2="-->";\n' + t[j:]
+
+    for name, root, log, stem, mutate in (
+            ("procore", PC, _big_procore_log(), "_procore_review_log.json", None),
+            ("procore (mutated copy, must be red)", PC, _big_procore_log(),
+             "_procore_review_log.json", poison),
+            ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json", None)):
+        d = tempfile.mkdtemp()
+        try:
+            for f in ("publish_dashboard.py", "dashboard_template.html"):
+                shutil.copy(os.path.join(root, "assets", f), d)
+            if mutate:
+                tp = os.path.join(d, "dashboard_template.html")
+                mutated = mutate(open(tp, encoding="utf-8").read())
+                open(tp, "w", encoding="utf-8").write(mutated)
+            json.dump(log, open(os.path.join(d, stem), "w"))
+            out = os.path.join(d, "index.html")
+            r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
+                                out], capture_output=True, text=True, timeout=60)
+            if r.returncode != 0:
+                check("%s: publish runs (js parse)" % name, False, (r.stderr or r.stdout)[-200:])
+                continue
+            html = open(out, encoding="utf-8").read()
+            scripts = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", html, re.S)
+            bad = []
+            for n, body in enumerate(scripts):
+                path = os.path.join(d, "s%d.js" % n)
+                open(path, "w", encoding="utf-8").write(body)
+                c = subprocess.run(["node", "--check", path], capture_output=True, text=True)
+                if c.returncode != 0:
+                    bad.append(c.stderr.strip()[:200])
+            if mutate:
+                check("%s: the guard goes red on a strip-breaking template" % name,
+                      bool(bad), "mutated page still parsed")
+                continue
+            check("%s: every inline script of the published page parses" % name,
+                  bool(scripts) and not bad, bad[:1] or "no inline script found")
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+
 def main():
     print("Skill code checks\n")
     if shutil.which("node"):
@@ -1452,6 +1507,8 @@ def main():
     test_custom_tool_subtype()
     test_tied_verdict()
     test_field_run()
+    if shutil.which("node"):
+        test_stripped_js_parses()
     test_render_fits_one_read()
     test_template_version()
     test_step0_write_states()

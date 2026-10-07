@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v39 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
+description: v40 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 39 — 2026-10-05.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
+**Skill version 40 — 2026-10-07.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
 
 Review every bill, purchase order and change order in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document. Cross-check against the real purchase order and billing history. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
@@ -80,13 +80,13 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 3. **Use the existing workspace copies and say so, once**, naming the files' modification date from `ls -l` near the headline. Then carry on. Do not stop the run over it. Only the template and publish script can lag, so the verdicts are current either way.
 
 - **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, say exactly that. Stop before Step 7. There is no template to inject into. Inventing one is forbidden. Expect this case on Cowork.
-- **This plugin ships layout template `v15`. Confirm the sync landed by reading it back:**
+- **This plugin ships layout template `v16`. Confirm the sync landed by reading it back:**
 
 ```bash
 head -n 8 "<workspace>/NetSuite Approval Checks/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
 
-If that does not say `v15`, the sync did not land and the dashboard is stale. Say so once near the headline, naming both versions, and carry on. Same fail-open rule as rung 3. This check is the only one that can see a uniformly stale workspace. The template and the publish script are copied together, so they agree with each other while both are old.
+If that does not say `v16`, the sync did not land and the dashboard is stale. Say so once near the headline, naming both versions, and carry on. Same fail-open rule as rung 3. This check is the only one that can see a uniformly stale workspace. The template and the publish script are copied together, so they agree with each other while both are old.
 
 <!--__SHARED:skill-chrome-first-call__-->
 - **Call `tabs_context_mcp` once, before any browser action, on every run.** This is the Claude in Chrome tool. Do this first, even in a scheduled run where nobody is watching.
@@ -231,7 +231,7 @@ Two data quirks that will bite:
 - **`url`** is a link the user gave you. Navigate there instead of the default location. Verify it loaded and holds a queue before reading it. If it does not, say so and fall back to the default.
 - **`described`** is the user's own words, stored verbatim. Resolve it on each run rather than caching a guess. **If you cannot resolve what they described, ask once and store the answer.** Never substitute the nearest thing you found. A review of the wrong queue looks exactly like a review of the right one. Ask for both at first-run setup, alongside the other identifiers, and make clear that skipping them is normal. Re-editable at any time, like `config.focus`.
 
-Use `get_page_text` on the dashboard tab rather than screenshots. The portlet tables extract cleanly as text. **Do not open a tab per row here.** Every card on the dashboard links straight to its own record, so the reader opens the ones they want. Open a record tab only where a later step needs one. Those are Step 2's field reads in browser mode, and Step 4's attachment fetch. When you do, ctrl+click the row's date link. That tab is **a record tab**, one of the tabs this skill opens. Ctrl+click may silently fail on the first attempt, so verify with `tabs_context_mcp` and retry once if no new tab appeared. Review **every** item regardless of dollar amount. There is no threshold.
+Use `get_page_text` on the dashboard tab rather than screenshots. The portlet tables extract cleanly as text. Keep each Claude in Chrome call small and of one kind of request, about 20 rows. **Do not open a tab per row here.** Every card on the dashboard links straight to its own record, so the reader opens the ones they want. Open a record tab only where a later step needs one. Those are Step 2's field reads in browser mode, and Step 4's attachment fetch. When you do, ctrl+click the row's date link. That tab is **a record tab**, one of the tabs this skill opens. Ctrl+click may silently fail on the first attempt, so verify with `tabs_context_mcp` and retry once if no new tab appeared. Review **every** item regardless of dollar amount. There is no threshold.
 
 - **In browser mode, bills come from the bill portlet the same way change orders already do.** They carry the same "as of last review" caveat the dashboard already shows for change orders.
 - **Change orders are not queryable for pending status.** They live in `transaction` under a recordtype like `custompurchase_r_pci_change_order_po`. The records carry `approvalstatus = null` and no next-approver value, so no SuiteQL filter can identify the ones awaiting the user. The dashboard portlet is the only source. That is why the dashboard labels change orders "as of last review" rather than live. Do not remove that label.
@@ -299,7 +299,8 @@ const wt = await (await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0
 m.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([wt], {type:'text/javascript'}));
 
 window.__open = async function(u){
-  const b = await (await fetch(u, {credentials:'include'})).arrayBuffer();
+  const b = await (await fetch(u, {credentials:'include', signal:AbortSignal.timeout(20000)})).arrayBuffer();
+  // A timeout throws here. It is a failed read, never an absence (D41, three states never a boolean): report it as unread.
   // new Uint8Array is REQUIRED - a raw ArrayBuffer throws InvalidPDFException on valid bytes
   window.__doc = await m.getDocument({data:new Uint8Array(b)}).promise;
   return window.__doc.numPages;

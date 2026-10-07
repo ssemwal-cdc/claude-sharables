@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v15"
+TEMPLATE_VERSION = "v16"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -93,12 +93,26 @@ def serialise(payload):
 VERDICTS = ("clear", "flagged")
 
 
+def strip_comments(tpl):
+    """Drop HTML comments and whole-line // comments from the published page.
+
+    The widget payload has to be read and reproduced whole, and comments are dead bytes in it
+    (Procore field run 2026-10-07: 101 KB render, ~45 KB template). The source template keeps
+    its comments. Run after the version check, which reads a marker held in a comment.
+    The data sentinels are /* */ comments, so they survive. Duplicated in the Procore
+    publish script: the two lanes edit them in parallel and no shared block marks it yet.
+    """
+    tpl = re.sub(r"<!--.*?-->[ \t]*\n?", "", tpl, flags=re.S)
+    return re.sub(r"^[ \t]*//[^\n]*\n", "", tpl, flags=re.M)
+
+
 def main():
     log = json.load(open(LOG, encoding="utf-8"))
     tpl = open(TPL, encoding="utf-8").read()
 
     # Warns on a stale workspace copy; deliberately does not stop the run.
     check_template_version(tpl)
+    tpl = strip_comments(tpl)
 
     if tpl.count(S) != 1 or tpl.count(E) != 1:
         sys.exit("ABORT: template sentinels missing or duplicated. Do not "
@@ -114,7 +128,8 @@ def main():
         if verdict not in VERDICTS:
             bad.append("%s has verdict %r" % (tid, verdict))
         items.append({
-            "id": int(tid),
+            # A blank id would crash int(). Keep the row (the verdict stands), warn below.
+            "id": int(tid) if tid.strip() else None,
             "type": it.get("type", "Bill"),
             "doc": it.get("docNo", ""),
             "vendor": it.get("vendor", ""),
@@ -148,6 +163,11 @@ def main():
     if missing:
         print("WARNING: no head/facts for: " + ", ".join(missing) +
               " - these rows will render thin", file=sys.stderr)
+
+    noid = [i["doc"] or "(no docNo)" for i in items if i["id"] is None]
+    if noid:
+        print("WARNING: blank record id for: " + ", ".join(noid) +
+              " - these rows render with no Open record link", file=sys.stderr)
 
     cfg = log.get("config") or {}
     # `account` builds every record URL, so it is required on both routes. `me` and `tool` are

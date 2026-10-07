@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D107
 slug: vendor-tied-verdict
 kind: decision
 status: settled

@@ -14,7 +14,7 @@ Neither has been watched.
 Both came out of one Procore run's report.
 
 **What is observed.** Two custom tools appeared in one queue.
-They are Internal Change Risk and Customer Change Request.
+They are Internal Change Risk and Customer Change Risk.
 The second was 37 of 62 items.
 The report named the tool ids and the queue's `item_subtype` as the discriminator.
 `custom_field_522888` on the second tool is Duration in Weeks, not money.
@@ -28,11 +28,11 @@ The file sizes were reproduced here against a fixture.
   No run has done it.
   On 2026-09-24 the report line changed to name Shivam Semwal with the field mapping.
   That shape has not been seen live either.
-- **The second tool's cost field names.** `ROM Cost` and `Approved Customer Cost` are names off a
-  rendered record, mapped by label by that run.
-  They are almost certainly right and are not confirmed against a payload.
-  They were blank on every item seen, so no ICR check has ever tied on that tool.
-  A `clear` verdict on a Customer Change Request has never been produced by anything.
+- **The second tool's cost field name.** `Approved Customer Cost` is its only cost field.
+  It has no ROM Cost and no proposed-cost field (owner ruling, 2026-10-07).
+  The name is off a rendered record, mapped by label, and not confirmed against a payload.
+  It was blank on every item seen, so no ICR check has ever tied on that tool.
+  A `clear` verdict on a Customer Change Risk has never been produced by anything.
 - **Nothing has rendered at 161 KB.** The compact serialiser makes the file readable in one read.
   That read is the wall the run actually hit.
   Whether `show_widget` accepts 161 KB inline is still unknown.

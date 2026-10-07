@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v16"
+TEMPLATE_VERSION = "v17"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -164,6 +164,8 @@ def main():
         print("WARNING: no head/facts for: " + ", ".join(missing) +
               " - these rows will render thin", file=sys.stderr)
 
+    for n, i in enumerate(i for i in items if i["id"] is None):
+        i["key"] = -(n + 1)  # unique DOM key; real ids are positive
     noid = [i["doc"] or "(no docNo)" for i in items if i["id"] is None]
     if noid:
         print("WARNING: blank record id for: " + ", ".join(noid) +

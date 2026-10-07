@@ -80,13 +80,13 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 3. **Use the existing workspace copies and say so, once**, naming the files' modification date from `ls -l` near the headline. Then carry on. Do not stop the run over it. Only the template and publish script can lag, so the verdicts are current either way.
 
 - **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, say exactly that. Stop before Step 7. There is no template to inject into. Inventing one is forbidden. Expect this case on Cowork.
-- **This plugin ships layout template `v16`. Confirm the sync landed by reading it back:**
+- **This plugin ships layout template `v17`. Confirm the sync landed by reading it back:**
 
 ```bash
 head -n 8 "<workspace>/NetSuite Approval Checks/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
 
-If that does not say `v16`, the sync did not land and the dashboard is stale. Say so once near the headline, naming both versions, and carry on. Same fail-open rule as rung 3. This check is the only one that can see a uniformly stale workspace. The template and the publish script are copied together, so they agree with each other while both are old.
+If that does not say `v17`, the sync did not land and the dashboard is stale. Say so once near the headline, naming both versions, and carry on. Same fail-open rule as rung 3. This check is the only one that can see a uniformly stale workspace. The template and the publish script are copied together, so they agree with each other while both are old.
 
 <!--__SHARED:skill-chrome-first-call__-->
 - **Call `tabs_context_mcp` once, before any browser action, on every run.** This is the Claude in Chrome tool. Do this first, even in a scheduled run where nobody is watching.

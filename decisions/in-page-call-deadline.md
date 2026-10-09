@@ -7,7 +7,7 @@ date: 2026-10-09
 ---
 # Every in-page call stops itself
 
-**Rule.** Every in-page call in the Procore skill ends within about 60 to 90 seconds. Each fan-out in Steps 2 and 3, and each Step 4 read, runs through `window.__deadline(tasks, ms, cap)`. One `__deadline` runs per `javascript_tool` call. A task that fails, is unfinished at `ms`, or never started is `failed`, never `empty`. Every `fetch` carries `signal: AbortSignal.timeout(20000)`. An attachment read that times out is the seventh outcome, "support read timed out". It is never retried and never `clear` or `tied` (D27, retry only an expired link). Step 3 names the previous-requisition read. After one browser call times out mid-run, the run calls `tabs_context_mcp` once. If that is also stuck, it stops and reports what finished. A `__deadline` return where every task failed by timeout counts as a stuck call.
+**Rule.** Every in-page call in the Procore skill ends within about 60 to 90 seconds. Each fan-out in Steps 2 and 3, and each Step 4 read, runs through `window.__deadline(tasks, ms, cap)`. One `__deadline` runs per `javascript_tool` call. A task that fails, is unfinished at `ms`, or never started is `failed`, never `empty`. Every `fetch` carries `signal: AbortSignal.timeout(20000)`. An attachment read that times out is the seventh outcome, "support read timed out". A read that fails for another reason is the eighth in Procore, "support parse failed". Neither is retried or ever `clear` or `tied` (D27, retry only an expired link). Step 3 names the previous-requisition read. After one browser call times out mid-run, the run calls `tabs_context_mcp` once. If that is also stuck, it stops and reports what finished. A call whose every read failed by timeout counts as a stuck call.
 
 **Outcome protected.** A run that hits a stuck call ends with a report of what finished. It does not hold the browser to the four-minute ceiling. It never publishes a partial queue as complete.
 
@@ -21,7 +21,7 @@ A per-fetch timeout is not enough. A promise that never settles ignores it, and 
 
 Whether a restart clears a stuck call is unproven. The rule does not rely on it.
 
-The stop rule is in the shared block `skill-chrome-first-call`, so NetSuite carries it too. Its `__deadline` clause has no effect there. NetSuite has no such helper, and its fan-outs are unchanged.
+The stop rule is in the shared block `skill-chrome-first-call`, so NetSuite carries it too. The rule names no helper (D53, never share per-domain machinery). Procore names `__deadline` in its own Step 2 and Step 4 text.
 
 **Evidence.**
 

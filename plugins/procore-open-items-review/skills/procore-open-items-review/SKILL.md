@@ -98,7 +98,7 @@ If that does not say `v20`, say so once near the headline, naming both versions,
 - **Do every browser step through Claude in Chrome, in the user's own signed-in Chrome.** Never use the Claude app's built-in browser. Not as a first try, and never as a fallback.
 - **If the extension is unreachable, retry once.** A second failure means stop. Never keep calling failing browser tools.
 - **On a second failure, stop and say so in the run report.** State plainly that Claude in Chrome was unreachable. Never continue the run in the built-in browser or any other browser.
-- **A browser call that times out mid-run is a stuck call.** A `__deadline` return where every task failed by timeout counts as one too. Call `tabs_context_mcp` once. If that is also stuck, stop and report what finished. Never publish a partial queue as complete, and never keep issuing calls to a stuck tab.
+- **A browser call that times out mid-run is a stuck call.** A call whose every read failed by timeout counts as one too. Call `tabs_context_mcp` once. If that is also stuck, stop and report what finished. Never publish a partial queue as complete, and never keep issuing calls to a stuck tab.
 <!--__END_SHARED:skill-chrome-first-call__-->
 
 Then read `Procore Open Items/_procore_review_log.json`. A file already carrying a `config` block finishes this step, apart from the two back-fills below. Go to Step 1. Otherwise run setup once.
@@ -284,7 +284,7 @@ Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-sec
      .then(r => r.json())
      .then(rec => { setTimeout(() => { location.href = rec.attachments[i].url; }, 50); });
    ```
-2. The next call in that same tab, inside the 60-second window. Install `__deadline` (Step 2) and `__sniff` in the tab first. Run the whole read as one task of one `__deadline` (below):
+2. The next call in that same tab. The 60-second presigned window governs when the request starts. Issue the fetch first and promptly. Install `__deadline` (Step 2) and `__sniff` in the tab first. Run the whole read as one task of one `__deadline` (below):
    - Check `location.host.endsWith('amazonaws.com')` — a boolean, never the URL itself.
    - `fetch(location.href)`, then read `byteLength` off the `ArrayBuffer` **before** parsing. `getDocument` detaches the buffer (`F166`, read byte length first).
    - Sniff the bytes (`__sniff`, unchanged, below).
@@ -296,7 +296,7 @@ Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-sec
 
 **One `__deadline` per `javascript_tool` call, never chained in one call.** Every await in the read sits inside that one task. That covers the fetch, the sniff, the pdf.js import, `getDocument`, each page and each render. A call must stop itself within about 60 to 90 seconds. Nothing in a call may wait without a bound.
 
-**Batch it.** Navigate 4 to 6 carrier tabs at once. Then run their read calls, one per tab, in a single `browser_batch`. The margin inside the 60 seconds was measured once, live: an 18-page, 4.8 MB PDF extracted in 853 ms.
+**Batch it.** Navigate 4 to 6 carrier tabs at once. Then issue their read calls promptly, one per tab, in a single `browser_batch`. Each read runs in its own tab and issues its request at once. A slow read in one tab cannot push another tab past its window. The margin inside the 60 seconds was measured once, live: an 18-page, 4.8 MB PDF extracted in 853 ms.
 
 **Sniff the bytes before choosing a reader.** Handing pdf.js a non-PDF throws `InvalidPDFException`, which is also what a corrupt download gives. The first four bytes settle it.
 ```javascript
@@ -324,7 +324,9 @@ Then dispatch on the result, in the same call, inside one `__deadline`.
 ```javascript
 // One __deadline per javascript_tool call, never chained. The tab needs __deadline and __sniff installed first.
 const out = await window.__deadline([{key:'read', run: async () => {
-  const r = await fetch(location.href, {signal: AbortSignal.timeout(20000)});
+  let r;
+  try { r = await fetch(location.href, {signal: AbortSignal.timeout(20000)}); }
+  catch(e){ if(e && e.name === 'TimeoutError') throw e; return {state:'expired'}; }   // the fetch itself threw
   const b = await r.arrayBuffer();
   const byteLength = b.byteLength;                   // read BEFORE parsing - getDocument detaches it
   const kind = window.__sniff(b);
@@ -345,11 +347,11 @@ const out = await window.__deadline([{key:'read', run: async () => {
   }
   return {state: kind, byteLength};                  // never guess; the caller branches
 }}], 60000, 1);
-return out[0];       // state 'failed' with code 'deadline' or 'TimeoutError...' is a timed-out read, never a parse result
+return out[0];       // 'failed' + code 'deadline' or a 'TimeoutError' prefix = timed out. Any other 'failed' code = parse failed.
 ```
 The worker must be fetched as text and turned into a blob URL. Pointing `workerSrc` at the CDN directly fails. **The pdf.js pin is deliberate. Do not bump it in a skill edit.**
 
-**Seven outcomes per attachment, and they are not interchangeable.** The seventh, `timed out`, is below the table. **Never collapse these back into readable and not readable.**
+**Eight outcomes per attachment, and they are not interchangeable.** The seventh and eighth are below the table. **Never collapse these back into readable and not readable.**
 
 | Outcome | What it means | What to do |
 |---|---|---|
@@ -359,8 +361,12 @@ The worker must be fetched as text and turned into a blob URL. Pointing `workerS
 | `scanned` | **was a PDF**, parsed, almost no characters | rasterise, then visual read — if that fails, say "support is a scanned image, text not extractable" |
 | `expired` | `s3error`, or the fetch itself threw (not a timeout) | navigate a fresh carrier tab for a new URL, then retry, **at most twice**, then report it unreachable |
 | `unsupported` | a real file of a type with no reader | name the actual type. Never call it scanned, never call it expired |
+| `timed out` | a fetch hit its 20-second limit, or `__deadline` ended the read | skipped, naming "support read timed out". Never retry |
+| `parse failed` | any other `failed` from `__deadline`, such as `InvalidPDFException` | skipped, naming "support parse failed". Never retry |
 
-**The seventh outcome is `timed out`.** A fetch that hits its 20-second timeout, or a read that `__deadline` ends (code `deadline` or `TimeoutError`), is not `expired`. A slow link is not an expired link. Name it "support read timed out" on the item. Keep the verdict `skipped`. Say so in the run report. Never retry it.
+**The seventh outcome is `timed out`.** A fetch that hits its 20-second timeout, or a read that `__deadline` ends, is not `expired`. Match a `failed` code that is `deadline` or starts with `TimeoutError`. A slow link is not an expired link. Name it "support read timed out" on the item. Keep the verdict `skipped`. Say so in the run report. Never retry it.
+
+**The eighth outcome is `parse failed`.** It is any other `failed` from `__deadline`, such as `InvalidPDFException` from `getDocument`. It is neither `expired` nor `timed out`. Name it "support parse failed" with the code on the item. Keep the verdict `skipped`. Never retry it.
 
 **A retry is only ever legitimate for `expired`.** Bound it at two attempts, each a fresh carrier-tab navigation. Re-fetch only when the bytes said `s3error` or the fetch threw (not a timeout). A file that parsed as the wrong type will parse as the wrong type again.
 
@@ -458,7 +464,7 @@ def __read_workbook(path, start=0):
 ```
 - Read every sheet, hidden ones included. `data_only=True` returns the cached value a formula last computed. An unevaluated cell is `None`. Read that as blank, never as zero.
 - Keep the 4000-character whole-sheet budget, and the long-digit row filter. Call it again with `next` until it returns `None`, exactly like the old browser reader and the NetSuite page reader. Never split one sheet across two returns.
-- Apply the same first-bytes sniff and the same six outcomes to a downloaded file as to a fetched one. `expired` does not apply — the file is already local.
+- Apply the same first-bytes sniff and the same outcomes to a downloaded file as to a fetched one. `expired` does not apply — the file is already local.
 
 **`openpyxl` reads workbooks. A `.docx` or `.doc` reads with `__read_docx`, stdlib only.** It mirrors the same approach: a ZIP, with the text pulled out of its XML.
 ```python
@@ -575,7 +581,7 @@ Re-derive all six G702 identities from the record rather than reading the summar
 
 Then:
 - **Support tie-out.** Locate each headline figure verbatim in the attached pay application. A figure appearing rounded in the PDF is presentation, not a discrepancy. Say so rather than flagging it.
-- **Sequence integrity.** `previous_requisition_id` must exist when previous certificates are non-zero, and prior invoices must foot to that figure. A missing intermediate application is a FLAG. A failed previous-requisition read means `pc.inv-sequence` did not run. The invoice cannot be `clear`. Name the failed read. **Duplicates:** same vendor and period, or the same invoice number twice.
+- **Sequence integrity.** `previous_requisition_id` must exist when previous certificates are non-zero, and prior invoices must foot to that figure. A missing intermediate application is a FLAG. A failed previous-requisition read means `pc.inv-sequence` did not run. The invoice cannot be `clear`. It is `skipped`, naming the failed read. **Duplicates:** same vendor and period, or the same invoice number twice.
 - **Retainage.** Confirm the withheld percent is consistent and matches the contract. A commitment withholding none is worth naming, not flagging.
 - **An original contract sum of $0**, with everything booked as change orders, is a setup pattern. It is not an error when the totals agree. Name it in the warning line.
 - **Offsetting whole-dollar differences on lines other than payment due.** Give a warning naming the lines. Three conditions must hold. Each differing line is off by at most $1. Payment due ties exactly. The differences net to $0. Anything larger is a FLAG. See `D102`, offsetting line differences warn only when they net to zero.

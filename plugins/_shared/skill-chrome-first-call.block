@@ -2,4 +2,4 @@
 - **Do every browser step through Claude in Chrome, in the user's own signed-in Chrome.** Never use the Claude app's built-in browser. Not as a first try, and never as a fallback.
 - **If the extension is unreachable, retry once.** A second failure means stop. Never keep calling failing browser tools.
 - **On a second failure, stop and say so in the run report.** State plainly that Claude in Chrome was unreachable. Never continue the run in the built-in browser or any other browser.
-- **A browser call that times out mid-run is a stuck call.** A `__deadline` return where every task failed by timeout counts as one too. Call `tabs_context_mcp` once. If that is also stuck, stop and report what finished. Never publish a partial queue as complete, and never keep issuing calls to a stuck tab.
+- **A browser call that times out mid-run is a stuck call.** A call whose every read failed by timeout counts as one too. Call `tabs_context_mcp` once. If that is also stuck, stop and report what finished. Never publish a partial queue as complete, and never keep issuing calls to a stuck tab.

@@ -1969,7 +1969,7 @@ def test_midrun_stop_rule():
           _has_stuck_rule(synced), "the synced region has no such rule, or the marker is missing")
 
 
-TIMEOUT_RE = re.compile(r"(?i)timeout|timed out|times out|hits its|abort")
+TIMEOUT_RE = re.compile(r"(?i)time-?outs?|timed[- ]out|times?[- ]out|hits its|abort")
 RETRY_RE = re.compile(r"(?i)\bretr(?:y|ies|ied|ying)\b|\bre-?fetch\b|\bre-?attempt")
 NEG_RE = re.compile(r"(?i)\bnot\b|\bnever\b|\bno\b|\bnor\b")
 

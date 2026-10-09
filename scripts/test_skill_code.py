@@ -82,9 +82,22 @@ Covered:
                            a non-ZIP, a ZIP with no word/document.xml, and a
                            legacy OLE2 .doc all come back `unsupported` rather
                            than raising.
+ 20. Procore fetch timeouts - every `fetch(` in a javascript block of the Procore
+                           SKILL.md passes `signal: AbortSignal.timeout(...)`. Names
+                           each offender by line. A call with no signal can hang the
+                           whole Claude in Chrome call (the 2026-10-09 incident).
+ 21. Procore `__deadline` - the whole-call deadline helper. It returns within the
+                           deadline when a task never settles, marks unfinished and
+                           unstarted tasks `failed`, keeps a finished `ok` and `empty`
+                           as they are, and returns at once when everything settles.
+ 22. Step 3 previous read - Step 3 names the previous-requisition read,
+                           `GET /rest/v1.1/requisitions/<previous_requisition_id>`,
+                           inside the pool/deadline shape.
+ 23. Mid-run stop rule  - presence only. The Procore SKILL.md has a line that tells the
+                           run to stop after a stuck call.
 
 Usage:  python3 scripts/test_skill_code.py
-Needs node on PATH for 1-3, 16 and 18; those are skipped with a notice if it is missing.
+Needs node on PATH for 1-3, 16, 18 and 21; those are skipped with a notice if it is missing.
 """
 import ast, json, os, re, shutil, subprocess, sys, tempfile
 
@@ -1776,6 +1789,162 @@ def test_stripped_js_parses():
             shutil.rmtree(d, ignore_errors=True)
 
 
+# ------------------------------------------------- 20-23. Procore hang guards
+# Contract the builder must match (2026-10-09 incident: a fan-out never settled,
+# the call held to the four-minute ceiling, and the next calls timed out):
+#   window.__deadline(tasks, ms, cap)  -> Promise<Array>, never rejects.
+#     tasks: [{key, run}], run() returns a Promise of a record {state, ...}.
+#     cap:   concurrent runs, default 8.
+#     A finished task's record is returned unchanged, with `key` added.
+#     A rejected task, or one unfinished or unstarted at `ms`, is {key, state:'failed', code}.
+#     Results come back in input order. The call returns at `ms` even if a run never settles.
+def _procore_js_blocks():
+    src = open(os.path.join(PC, "SKILL.md"), encoding="utf-8").read()
+    return src, [(m.group(1), m.start(1)) for m in re.finditer(r"```javascript\n(.*?)```", src, re.S)]
+
+
+def _fetch_offenders():
+    """Every `fetch(` in a Procore javascript block, and the ones with no AbortSignal.timeout.
+    Returns (calls seen, offender strings naming the SKILL.md line)."""
+    src, blocks = _procore_js_blocks()
+    seen, bad = 0, []
+    for body, base in blocks:
+        for f in re.finditer(r"\bfetch\s*\(", body):
+            seen += 1
+            start = f.end() - 1                      # the "(" that opens the arguments
+            depth, end = 0, len(body) - 1
+            for j in range(start, len(body)):
+                if body[j] == "(":
+                    depth += 1
+                elif body[j] == ")":
+                    depth -= 1
+                    if depth == 0:
+                        end = j
+                        break
+            call = body[start:end + 1]
+            if not re.search(r"signal\s*:\s*AbortSignal\.timeout\s*\(", call):
+                line = src.count("\n", 0, base + f.start()) + 1
+                bad.append("line %d: %s" % (line, " ".join(call.split())[:80]))
+    return seen, bad
+
+
+def test_fetch_timeouts():
+    seen, bad = _fetch_offenders()
+    check("procore: the guard finds the fetch calls in the SKILL.md code", seen >= 1,
+          "no fetch( found in any javascript block")
+    check("procore: every fetch in a SKILL.md code block passes `signal: AbortSignal.timeout(...)`",
+          not bad, "; ".join(bad))
+
+
+def test_deadline_helper():
+    src, blocks = _procore_js_blocks()
+    bodies = [b for b, _ in blocks if "window.__deadline" in b]
+    if not bodies:
+        check("procore: SKILL.md defines the whole-call deadline helper `window.__deadline`",
+              False, "no javascript block assigns window.__deadline")
+        return
+    harness = r"""
+var window = {};
+""" + bodies[0] + r"""
+const never = () => new Promise(() => {});
+const settle = (rec) => async () => rec;
+(async () => {
+  const out = {typeofFn: typeof window.__deadline};
+  const t0 = Date.now();
+  // A: a stuck task, a finished ok, a finished empty, a rejected task. cap 4, ms 400.
+  const A = await window.__deadline([
+    {key:'hang', run: never},
+    {key:'ok1',  run: settle({state:'ok', can:true})},
+    {key:'emp',  run: settle({state:'empty'})},
+    {key:'boom', run: async () => { throw new Error('net down'); }},
+  ], 400, 4);
+  out.A = {elapsed: Date.now() - t0, res: A};
+  // B: cap 1, so the second task is queued behind a stuck one and never starts. ms 400.
+  const t1 = Date.now();
+  const B = await window.__deadline([
+    {key:'ok1',  run: settle({state:'ok', can:true})},
+    {key:'hang', run: never},
+    {key:'late', run: settle({state:'ok', can:false})},
+  ], 400, 1);
+  out.B = {elapsed: Date.now() - t1, res: B};
+  // C: everything settles well inside ms. The call must not sit out the whole deadline.
+  const t2 = Date.now();
+  const C = await window.__deadline([
+    {key:'ok1', run: settle({state:'ok', can:true})},
+    {key:'emp', run: settle({state:'empty'})},
+  ], 5000, 8);
+  out.C = {elapsed: Date.now() - t2, res: C};
+  console.log(JSON.stringify(out));
+})().catch(e => { console.log(JSON.stringify({error: String(e)})); });
+"""
+    try:
+        rc, out, err = run_node(harness)
+    except subprocess.TimeoutExpired:
+        check("procore: `window.__deadline` returns under node", False,
+              "the harness was still running after 60 s - the helper hung")
+        return
+    if rc != 0 or not out.startswith("{"):
+        check("procore: `window.__deadline` runs under node", False,
+              (err or out)[:200] or "no result printed: the call never settled")
+        return
+    r = json.loads(out)
+    if "error" in r:
+        check("procore: `window.__deadline` runs under node", False, r["error"][:200])
+        return
+    by = lambda rows, k: next((x for x in rows if x.get("key") == k), None)
+    st = lambda rows, k: (by(rows, k) or {}).get("state")
+    A, B, C = r["A"], r["B"], r["C"]
+    check("procore: `__deadline` is a function on window", r["typeofFn"] == "function",
+          "typeof window.__deadline = %s" % r["typeofFn"])
+    check("deadline: returns within the deadline when a task never settles",
+          A["elapsed"] < 400 + 1000, "took %d ms for ms=400" % A["elapsed"])
+    check("deadline: a task that never settles is `failed`",
+          by(A["res"], "hang") is not None and by(A["res"], "hang").get("state") == "failed",
+          by(A["res"], "hang"))
+    check("deadline: a finished ok keeps `ok` and its own fields",
+          by(A["res"], "ok1") is not None and by(A["res"], "ok1").get("state") == "ok"
+          and by(A["res"], "ok1").get("can") is True, by(A["res"], "ok1"))
+    check("deadline: a finished empty stays `empty`, distinct from `failed`",
+          by(A["res"], "emp") is not None and by(A["res"], "emp").get("state") == "empty",
+          by(A["res"], "emp"))
+    check("deadline: a rejected task is `failed`",
+          by(A["res"], "boom") is not None and by(A["res"], "boom").get("state") == "failed",
+          by(A["res"], "boom"))
+    check("deadline: one result per task, in input order",
+          [x.get("key") for x in A["res"]] == ["hang", "ok1", "emp", "boom"],
+          [x.get("key") for x in A["res"]])
+    check("deadline: a task queued behind a stuck one is `failed`, not dropped",
+          [x.get("key") for x in B["res"]] == ["ok1", "hang", "late"]
+          and st(B["res"], "late") == "failed" and st(B["res"], "ok1") == "ok",
+          B["res"])
+    check("deadline: returns at ms with a queued task still unstarted",
+          B["elapsed"] < 400 + 1000, "took %d ms for ms=400" % B["elapsed"])
+    check("deadline: returns at once when every task settles before ms",
+          C["elapsed"] < 2000 and [x.get("state") for x in C["res"]] == ["ok", "empty"],
+          "took %d ms, states %s" % (C["elapsed"], [x.get("state") for x in C["res"]]))
+
+
+def test_step3_previous_requisition():
+    src = open(os.path.join(PC, "SKILL.md"), encoding="utf-8").read()
+    m = re.search(r"^## Step 3[^\n]*\n(.*?)^## Step 4", src, re.S | re.M)
+    check("procore: Step 3 section is located", bool(m), "no `## Step 3` heading before `## Step 4`")
+    sec = m.group(1) if m else ""
+    check("procore: Step 3 names the previous-requisition read, "
+          "`GET /rest/v1.1/requisitions/<previous_requisition_id>`",
+          "GET /rest/v1.1/requisitions/<previous_requisition_id>" in sec,
+          "Step 3 names previous_requisition_id only as a field to read, not as a GET")
+    check("procore: Step 3 places that read inside the pool/deadline shape (`__deadline`)",
+          "__deadline" in sec, "Step 3 never names __deadline")
+
+
+def test_midrun_stop_rule():
+    src = open(os.path.join(PC, "SKILL.md"), encoding="utf-8").read()
+    hit = [l for l in src.split("\n")
+           if re.search(r"(?i)\bstop", l) and re.search(r"(?i)\bstuck\b", l)]
+    check("procore: a mid-run stop rule names a stuck call and says to stop",
+          bool(hit), "no line in SKILL.md tells the run to stop after a stuck call")
+
+
 def main():
     print("Skill code checks\n")
     if shutil.which("node"):
@@ -1787,10 +1956,14 @@ def main():
         test_po_line()
         test_carried_attachments()
         test_verdict_render_guard()
+        test_deadline_helper()
     else:
         print("  SKIP  node not on PATH - extractor, page budget, gate states, "
-              "sniff, sheets, poLine, carried attachments and verdict render "
-              "guard not run")
+              "sniff, sheets, poLine, carried attachments, verdict render "
+              "guard and the __deadline helper not run")
+    test_fetch_timeouts()
+    test_step3_previous_requisition()
+    test_midrun_stop_rule()
     test_cco_demotion()
     test_commitment_kind()
     test_custom_tool_subtype()

@@ -82,9 +82,22 @@ Covered:
                            a non-ZIP, a ZIP with no word/document.xml, and a
                            legacy OLE2 .doc all come back `unsupported` rather
                            than raising.
+ 20. Procore fetch timeouts - every `fetch(` in a javascript block of the Procore
+                           SKILL.md passes `signal: AbortSignal.timeout(...)`. Names
+                           each offender by line. A call with no signal can hang the
+                           whole Claude in Chrome call (the 2026-10-09 incident).
+ 21. Procore `__deadline` - the whole-call deadline helper. It returns within the
+                           deadline when a task never settles, marks unfinished and
+                           unstarted tasks `failed`, keeps a finished `ok` and `empty`
+                           as they are, and returns at once when everything settles.
+ 22. Step 3 previous read - Step 3 names the previous-requisition read,
+                           `GET /rest/v1.1/requisitions/<previous_requisition_id>`,
+                           inside the pool/deadline shape.
+ 23. Mid-run stop rule  - presence only. The Procore SKILL.md has a line that tells the
+                           run to stop after a stuck call.
 
 Usage:  python3 scripts/test_skill_code.py
-Needs node on PATH for 1-3, 16 and 18; those are skipped with a notice if it is missing.
+Needs node on PATH for 1-3, 16, 18 and 21; those are skipped with a notice if it is missing.
 """
 import ast, json, os, re, shutil, subprocess, sys, tempfile
 
@@ -1776,6 +1789,426 @@ def test_stripped_js_parses():
             shutil.rmtree(d, ignore_errors=True)
 
 
+# ------------------------------------------------- 20-23. Procore hang guards
+# Contract the builder must match (2026-10-09 incident: a fan-out never settled,
+# the call held to the four-minute ceiling, and the next calls timed out):
+#   window.__deadline(tasks, ms, cap)  -> Promise<Array>, never rejects.
+#     tasks: [{key, run}], run() returns a Promise of a record {state, ...}.
+#     cap:   concurrent runs, default 8.
+#     A finished task's record is returned unchanged, with `key` added.
+#     A rejected task, or one unfinished or unstarted at `ms`, is {key, state:'failed', code}.
+#     Results come back in input order. The call returns at `ms` even if a run never settles.
+def _procore_js_blocks():
+    src = open(os.path.join(PC, "SKILL.md"), encoding="utf-8").read()
+    return src, [(m.group(1), m.start(1)) for m in re.finditer(r"```javascript\n(.*?)```", src, re.S)]
+
+
+def _fetch_offenders():
+    """Every `fetch(` in a Procore javascript block, and the ones with no AbortSignal.timeout.
+    Returns (calls seen, offender strings naming the SKILL.md line)."""
+    src, blocks = _procore_js_blocks()
+    seen, bad = 0, []
+    for body, base in blocks:
+        for f in re.finditer(r"\bfetch\s*\(", body):
+            seen += 1
+            start = f.end() - 1                      # the "(" that opens the arguments
+            depth, end = 0, len(body) - 1
+            for j in range(start, len(body)):
+                if body[j] == "(":
+                    depth += 1
+                elif body[j] == ")":
+                    depth -= 1
+                    if depth == 0:
+                        end = j
+                        break
+            call = body[start:end + 1]
+            if not re.search(r"signal\s*:\s*AbortSignal\.timeout\s*\(", call):
+                line = src.count("\n", 0, base + f.start()) + 1
+                bad.append("line %d: %s" % (line, " ".join(call.split())[:80]))
+    return seen, bad
+
+
+def test_fetch_timeouts():
+    seen, bad = _fetch_offenders()
+    check("procore: the guard finds the fetch calls in the SKILL.md code", seen >= 1,
+          "no fetch( found in any javascript block")
+    check("procore: every fetch in a SKILL.md code block passes `signal: AbortSignal.timeout(...)`",
+          not bad, "; ".join(bad))
+
+
+def test_deadline_helper():
+    src, blocks = _procore_js_blocks()
+    bodies = [b for b, _ in blocks if "window.__deadline" in b]
+    if not bodies:
+        check("procore: SKILL.md defines the whole-call deadline helper `window.__deadline`",
+              False, "no javascript block assigns window.__deadline")
+        return
+    harness = r"""
+var window = {};
+""" + bodies[0] + r"""
+const never = () => new Promise(() => {});
+const settle = (rec) => async () => rec;
+(async () => {
+  const out = {typeofFn: typeof window.__deadline};
+  const t0 = Date.now();
+  // A: a stuck task, a finished ok, a finished empty, a rejected task. cap 4, ms 400.
+  const A = await window.__deadline([
+    {key:'hang', run: never},
+    {key:'ok1',  run: settle({state:'ok', can:true})},
+    {key:'emp',  run: settle({state:'empty'})},
+    {key:'boom', run: async () => { throw new Error('net down'); }},
+  ], 400, 4);
+  out.A = {elapsed: Date.now() - t0, res: A};
+  // B: cap 1, so the second task is queued behind a stuck one and never starts. ms 400.
+  const t1 = Date.now();
+  const B = await window.__deadline([
+    {key:'ok1',  run: settle({state:'ok', can:true})},
+    {key:'hang', run: never},
+    {key:'late', run: settle({state:'ok', can:false})},
+  ], 400, 1);
+  out.B = {elapsed: Date.now() - t1, res: B};
+  // C: everything settles well inside ms. The call must not sit out the whole deadline.
+  const t2 = Date.now();
+  const C = await window.__deadline([
+    {key:'ok1', run: settle({state:'ok', can:true})},
+    {key:'emp', run: settle({state:'empty'})},
+  ], 5000, 8);
+  out.C = {elapsed: Date.now() - t2, res: C};
+  console.log(JSON.stringify(out));
+})().catch(e => { console.log(JSON.stringify({error: String(e)})); });
+"""
+    try:
+        rc, out, err = run_node(harness)
+    except subprocess.TimeoutExpired:
+        check("procore: `window.__deadline` returns under node", False,
+              "the harness was still running after 60 s - the helper hung")
+        return
+    if rc != 0 or not out.startswith("{"):
+        check("procore: `window.__deadline` runs under node", False,
+              (err or out)[:200] or "no result printed: the call never settled")
+        return
+    r = json.loads(out)
+    if "error" in r:
+        check("procore: `window.__deadline` runs under node", False, r["error"][:200])
+        return
+    by = lambda rows, k: next((x for x in rows if x.get("key") == k), None)
+    st = lambda rows, k: (by(rows, k) or {}).get("state")
+    A, B, C = r["A"], r["B"], r["C"]
+    check("procore: `__deadline` is a function on window", r["typeofFn"] == "function",
+          "typeof window.__deadline = %s" % r["typeofFn"])
+    check("deadline: returns within the deadline when a task never settles",
+          A["elapsed"] < 400 + 1000, "took %d ms for ms=400" % A["elapsed"])
+    check("deadline: a task that never settles is `failed`",
+          by(A["res"], "hang") is not None and by(A["res"], "hang").get("state") == "failed",
+          by(A["res"], "hang"))
+    check("deadline: a finished ok keeps `ok` and its own fields",
+          by(A["res"], "ok1") is not None and by(A["res"], "ok1").get("state") == "ok"
+          and by(A["res"], "ok1").get("can") is True, by(A["res"], "ok1"))
+    check("deadline: a finished empty stays `empty`, distinct from `failed`",
+          by(A["res"], "emp") is not None and by(A["res"], "emp").get("state") == "empty",
+          by(A["res"], "emp"))
+    check("deadline: a rejected task is `failed`",
+          by(A["res"], "boom") is not None and by(A["res"], "boom").get("state") == "failed",
+          by(A["res"], "boom"))
+    check("deadline: one result per task, in input order",
+          [x.get("key") for x in A["res"]] == ["hang", "ok1", "emp", "boom"],
+          [x.get("key") for x in A["res"]])
+    check("deadline: a task queued behind a stuck one is `failed`, not dropped",
+          [x.get("key") for x in B["res"]] == ["ok1", "hang", "late"]
+          and st(B["res"], "late") == "failed" and st(B["res"], "ok1") == "ok",
+          B["res"])
+    check("deadline: returns at ms with a queued task still unstarted",
+          B["elapsed"] < 400 + 1000, "took %d ms for ms=400" % B["elapsed"])
+    check("deadline: returns at once when every task settles before ms",
+          C["elapsed"] < 2000 and [x.get("state") for x in C["res"]] == ["ok", "empty"],
+          "took %d ms, states %s" % (C["elapsed"], [x.get("state") for x in C["res"]]))
+
+
+def test_step3_previous_requisition():
+    src = open(os.path.join(PC, "SKILL.md"), encoding="utf-8").read()
+    m = re.search(r"^## Step 3[^\n]*\n(.*?)^## Step 4", src, re.S | re.M)
+    check("procore: Step 3 section is located", bool(m), "no `## Step 3` heading before `## Step 4`")
+    sec = m.group(1) if m else ""
+    check("procore: Step 3 names the previous-requisition read, "
+          "`GET /rest/v1.1/requisitions/<previous_requisition_id>`",
+          "GET /rest/v1.1/requisitions/<previous_requisition_id>" in sec,
+          "Step 3 names previous_requisition_id only as a field to read, not as a GET")
+    check("procore: Step 3 places that read inside the pool/deadline shape (`__deadline`)",
+          "__deadline" in sec, "Step 3 never names __deadline")
+
+
+def _has_stuck_rule(text):
+    """True when one bullet rule (a `- ` line and its continuation lines) names `stuck`,
+    `tabs_context_mcp`, and the case where every read of a call failed by timeout.
+    Helper-neutral on purpose: a shared block never names a per-domain helper (D53)."""
+    rules, cur = [], None
+    for line in text.split("\n"):
+        if line.startswith("- "):
+            cur = [line]
+            rules.append(cur)
+        elif not line.strip():
+            cur = None
+        elif cur is not None:
+            cur.append(line)
+    return any("stuck" in r and "tabs_context_mcp" in r
+               and re.search(r"(?i)\b(every|all) (reads?|tasks?)\b[^.]*\bfail[^.]*"
+                             r"(timeout|timed[- ]out|time-?out)", r)
+               for r in ("\n".join(x) for x in rules))
+
+
+def test_midrun_stop_rule():
+    block = open(os.path.join(REPO, "plugins/_shared/skill-chrome-first-call.block"),
+                 encoding="utf-8").read()
+    src = open(os.path.join(PC, "SKILL.md"), encoding="utf-8").read()
+    m = re.search(r"<!--__SHARED:skill-chrome-first-call__-->(.*?)"
+                  r"<!--__END_SHARED:skill-chrome-first-call__-->", src, re.S)
+    synced = m.group(1) if m else ""
+    want = ("one rule names `stuck`, `tabs_context_mcp`, and the case where every read of a "
+            "call failed by timeout counts as a stuck call")
+    check("shared block skill-chrome-first-call (plugins/_shared): " + want,
+          _has_stuck_rule(block), "no single rule carries all of those")
+    check("procore SKILL.md: the synced skill-chrome-first-call region carries the same rule",
+          _has_stuck_rule(synced), "the synced region has no such rule, or the marker is missing")
+    check("shared block skill-chrome-first-call does not name `__deadline` (D53, helper-neutral)",
+          "__deadline" not in block, "the shared block names a Procore-only helper")
+    check("procore SKILL.md: the synced skill-chrome-first-call region does not name `__deadline`",
+          "__deadline" not in synced, "the synced region names a Procore-only helper")
+
+
+TIMEOUT_RE = re.compile(r"(?i)time-?outs?|timed[- ]out|times?[- ]out|hits its|abort")
+RETRY_RE = re.compile(r"(?i)\bretr(?:y|ies|ied|ying)\b|\bre-?fetch\b|\bre-?attempt")
+NEG_RE = re.compile(r"(?i)\bnot\b|\bnever\b|\bno\b|\bnor\b")
+
+
+def _retry_timeout_pairs(src):
+    """Sentences and table cells that pair a retry with a timeout and never say the retry
+    does not apply. Split on sentence ends, newlines and pipes, so a table row's cells are
+    judged apart and a correctly negated sentence is not a false alarm."""
+    pieces = re.split(r"(?<=[.!?])\s+|\n|\|", src)
+    return [p.strip()[:120] for p in pieces
+            if TIMEOUT_RE.search(p) and RETRY_RE.search(p) and not NEG_RE.search(p)]
+
+
+def test_retry_timeout_pairing():
+    src = open(os.path.join(PC, "SKILL.md"), encoding="utf-8").read()
+    bad = _retry_timeout_pairs(src)
+    check("procore: no sentence or table cell pairs a retry with a timeout unnegated",
+          not bad, "; ".join(bad))
+    rows = [l for l in src.split("\n") if l.startswith("| `expired`")]
+    trigger = rows[0].split("|")[2] if rows else ""
+    check("procore: the `expired` row's trigger cell says a timeout is not expired",
+          "not a timeout" in trigger, "trigger cell: %r" % trigger.strip()[:100])
+
+
+def test_step4_dispatch_under_deadline():
+    _, blocks = _procore_js_blocks()
+    disp = [b for b, _ in blocks if "pdf.min.mjs" in b]
+    check("procore: the Step 4 carrier-tab dispatch block (fetches location.href, runs pdf.js) is found",
+          bool(disp), "no javascript block loads pdf.min.mjs")
+    check("procore: the Step 4 carrier-tab dispatch runs inside `__deadline`",
+          any("location.href" in b and "__deadline(" in b for b in disp),
+          "the block that fetches location.href and runs pdf.js calls no __deadline")
+
+
+# Timeout classes, run under node with a stubbed AbortSignal.timeout and a stubbed fetch.
+# The stub signal aborts after 30 ms with a TimeoutError reason, as a browser's
+# AbortSignal.timeout does. The fetch mock then rejects with the name under test.
+_SIGNAL_TIMES_OUT = ("AbortSignal.timeout = function(ms){ const c = new AbortController(); "
+                     "setTimeout(function(){ c.abort(new DOMException('signal timed out', "
+                     "'TimeoutError')); }, 30); return c.signal; };")
+_SIGNAL_NEVER = "AbortSignal.timeout = function(ms){ return new AbortController().signal; };"
+
+
+def _fetch_rejects_after_abort(name):
+    return ("globalThis.fetch = function(u, o){ return new Promise(function(res, rej){ "
+            "o.signal.addEventListener('abort', function(){ rej(new DOMException("
+            "'The operation was aborted.', '%s')); }); }); };" % name)
+
+
+def _brace_body(src, marker):
+    """The `{ ... }` body of the function that follows `marker`, by brace balancing."""
+    i = src.index(marker)
+    start = src.index("{", i)
+    depth = 0
+    for j in range(start, len(src)):
+        if src[j] == "{":
+            depth += 1
+        elif src[j] == "}":
+            depth -= 1
+            if depth == 0:
+                return src[i:j + 1]
+    sys.exit("ABORT: unbalanced braces after %r" % marker)
+
+
+def _procore_dispatch_outcome(signal_stub, fetch_stub):
+    """Run Step 4's carrier-tab dispatch (the block that loads pdf.min.mjs) under node,
+    inside the real __deadline and __sniff from SKILL.md. Returns the record it resolves to."""
+    _, blocks = _procore_js_blocks()
+    deadline = [b for b, _ in blocks if "window.__deadline = function" in b]
+    sniff = [b for b, _ in blocks if "window.__sniff = function" in b]
+    disp = [b for b, _ in blocks if "pdf.min.mjs" in b]
+    if not (deadline and sniff and disp):
+        return {"error": "missing block: deadline=%d sniff=%d dispatch=%d"
+                % (len(deadline), len(sniff), len(disp))}
+    harness = ("var window = {};\nvar location = {href: 'https://app.procore.com/carrier.pdf'};\n"
+               + deadline[0] + "\n" + sniff[0] + "\n" + signal_stub + "\n" + fetch_stub + "\n"
+               + "(async function(){\n" + disp[0] + "\n})().then(function(v){"
+               " console.log(JSON.stringify({ok: true, v: v, calls: globalThis.__calls || 0})); },"
+               " function(e){ console.log(JSON.stringify({ok: false, err: String(e)})); });\n")
+    try:
+        rc, out, err = run_node(harness)
+    except subprocess.TimeoutExpired:
+        return {"error": "the dispatch never settled within 60 s"}
+    if rc != 0 or not out.startswith("{"):
+        return {"error": (err or out)[:200] or "no result printed"}
+    return json.loads(out)
+
+
+def test_procore_dispatch_timeout_classes():
+    cases = [
+        ("a fetch rejected AbortError after its signal timed out",
+         _SIGNAL_TIMES_OUT, _fetch_rejects_after_abort("AbortError")),
+        ("a fetch rejected TimeoutError after its signal timed out",
+         _SIGNAL_TIMES_OUT, _fetch_rejects_after_abort("TimeoutError")),
+    ]
+    for label, sig, fet in cases:
+        r = _procore_dispatch_outcome(sig, fet)
+        if "error" in r:
+            check("procore dispatch, %s: runs under node" % label, False, r["error"])
+            continue
+        v = r.get("v") or {}
+        code = str(v.get("code", ""))
+        ok = (r.get("ok") is True and v.get("state") == "failed"
+              and (code == "deadline" or code.startswith("TimeoutError")))
+        check("procore dispatch, %s: the timed-out outcome, never `expired`" % label, ok,
+              "resolved %s" % json.dumps(r)[:200])
+    r = _procore_dispatch_outcome(_SIGNAL_NEVER, "globalThis.fetch = async function(){ "
+                                  "throw new TypeError('Failed to fetch'); };")
+    if "error" in r:
+        check("procore dispatch, a network drop with the signal not aborted: runs under node",
+              False, r["error"])
+    else:
+        v = r.get("v") or {}
+        check("procore dispatch, a TypeError network drop with the signal not aborted is `expired`",
+              r.get("ok") is True and v.get("state") == "expired", "resolved %s" % json.dumps(r)[:200])
+
+
+def test_netsuite_open_timeout():
+    ns = os.path.join(NS, "SKILL.md")
+    src = open(ns, encoding="utf-8").read()
+    if "window.__open = async function" not in src:
+        check("netsuite: `window.__open` is present in SKILL.md", False, "no window.__open")
+        return
+    body = _brace_body(src, "window.__open = async function")
+
+    def run(signal_stub, fetch_stub):
+        harness = ("var window = {};\n"
+                   "var m = {GlobalWorkerOptions: {}, getDocument: function(){ return {promise: "
+                   "Promise.resolve({numPages: 2})}; }};\n"
+                   + signal_stub + "\n" + fetch_stub + "\n" + body + ";\n"
+                   "window.__open('/x').then(function(v){ console.log(JSON.stringify({ok: true, v: v})); },"
+                   " function(e){ console.log(JSON.stringify({ok: false, err: String(e)})); });\n")
+        try:
+            rc, out, err = run_node(harness)
+        except subprocess.TimeoutExpired:
+            return {"error": "__open never settled within 60 s"}
+        if rc != 0 or not out.startswith("{"):
+            return {"error": (err or out)[:200] or "no result printed"}
+        return json.loads(out)
+
+    for name in ("AbortError", "TimeoutError"):
+        r = run(_SIGNAL_TIMES_OUT, _fetch_rejects_after_abort(name))
+        if "error" in r:
+            check("netsuite __open, a %s after timeout: runs under node" % name, False, r["error"])
+            continue
+        v = r.get("v") or {}
+        check("netsuite __open, a %s after its signal timed out: returns the named `timed out` state"
+              % name,
+              r.get("ok") is True and isinstance(v, dict) and v.get("state") == "timed out",
+              "got %s" % json.dumps(r)[:200])
+    r = run(_SIGNAL_NEVER, "globalThis.fetch = async function(){ return {arrayBuffer: async function(){ "
+                           "return new ArrayBuffer(4); }}; };")
+    check("netsuite __open, a read that completes still returns the page count (2)",
+          r.get("ok") is True and r.get("v") == 2, json.dumps(r)[:200])
+
+
+def test_procore_read_failed_body():
+    """fetch resolves, then arrayBuffer() rejects with a non-timeout error before the 20 s
+    signal. The outcome is `read failed`: a failed, never `expired`, never retried."""
+    body_err = ("globalThis.__calls = 0; globalThis.fetch = async function(){ "
+                "globalThis.__calls++; return {arrayBuffer: async function(){ "
+                "throw new TypeError('body stream errored'); }}; };")
+    r = _procore_dispatch_outcome(_SIGNAL_NEVER, body_err)
+    if "error" in r:
+        check("procore dispatch, a body read error: runs under node", False, r["error"])
+        return
+    v = r.get("v") or {}
+    code = str(v.get("code", ""))
+    check("procore dispatch, a body read error after a resolved fetch is `failed` (read failed)",
+          r.get("ok") is True and v.get("state") == "failed"
+          and code != "deadline" and not code.startswith("TimeoutError"),
+          "resolved %s" % json.dumps(r)[:200])
+    check("procore dispatch, a body read error is never `expired`",
+          v.get("state") != "expired", "resolved %s" % json.dumps(r)[:200])
+    check("procore dispatch, a body read error is never retried (one fetch)",
+          r.get("calls") == 1, "fetch calls: %s" % r.get("calls"))
+
+
+def test_netsuite_stale_doc_and_caller():
+    ns = os.path.join(NS, "SKILL.md")
+    src = open(ns, encoding="utf-8").read()
+    if "window.__open = async function" not in src:
+        check("netsuite: `window.__open` is present in SKILL.md", False, "no window.__open")
+        return
+    body = _brace_body(src, "window.__open = async function")
+    harness = ("var window = {};\n"
+               "var m = {GlobalWorkerOptions: {}, getDocument: function(){ return {promise: "
+               "Promise.resolve({numPages: 2})}; }};\n"
+               "var __n = 0;\n"
+               "AbortSignal.timeout = function(ms){ const c = new AbortController(); __n++;\n"
+               "  if (__n > 1) setTimeout(function(){ c.abort(new DOMException('signal timed out',"
+               " 'TimeoutError')); }, 30);\n"
+               "  return c.signal; };\n"
+               "var __calls = 0;\n"
+               "globalThis.fetch = function(u, o){ __calls++; if (__calls === 1) return Promise.resolve("
+               "{arrayBuffer: async function(){ return new ArrayBuffer(4); }});\n"
+               "  return new Promise(function(res, rej){ o.signal.addEventListener('abort', function(){"
+               " rej(new DOMException('The operation was aborted.', 'AbortError')); }); }); };\n"
+               + body + ";\n"
+               "(async function(){\n"
+               "  const first = await window.__open('/a');\n"
+               "  const second = await window.__open('/b');\n"
+               "  return {first: first, second: second, doc: window.__doc};\n"
+               "})().then(function(v){ console.log(JSON.stringify({ok: true, v: v,"
+               " docIsNull: v.doc === null})); },"
+               " function(e){ console.log(JSON.stringify({ok: false, err: String(e)})); });\n")
+    try:
+        rc, out, err = run_node(harness)
+    except subprocess.TimeoutExpired:
+        check("netsuite __open, stale doc: runs under node", False, "never settled within 60 s")
+        return
+    if rc != 0 or not out.startswith("{"):
+        check("netsuite __open, stale doc: runs under node", False, (err or out)[:200])
+        return
+    r = json.loads(out)
+    v = r.get("v") or {}
+    check("netsuite __open: a timed-out read after a good one leaves window.__doc === null",
+          r.get("ok") is True and r.get("docIsNull") is True,
+          "after the timed-out read window.__doc is %s" % json.dumps(v.get("doc")) if r.get("ok")
+          else r.get("err", "")[:200])
+    check("netsuite __open: the first read still returns the page count (2)",
+          v.get("first") == 2, "first = %s" % json.dumps(v.get("first")))
+
+    # Caller: the paragraph that calls window.__open must branch on the object return.
+    m = re.search(r"Then call `await window\.__open\('<path>'\)`[^\n]*", src)
+    para = m.group(0) if m else ""
+    check("netsuite caller: the step that calls window.__open names the `state` of its return",
+          bool(m) and re.search(r"\bstate\b", para) is not None,
+          "the caller passes the return on as a page count with no state branch")
+    check("netsuite caller: the step names the `timed out` state as not a page count",
+          "timed out" in para, "the caller never names the `timed out` state")
+
+
 def main():
     print("Skill code checks\n")
     if shutil.which("node"):
@@ -1787,10 +2220,21 @@ def main():
         test_po_line()
         test_carried_attachments()
         test_verdict_render_guard()
+        test_deadline_helper()
     else:
         print("  SKIP  node not on PATH - extractor, page budget, gate states, "
-              "sniff, sheets, poLine, carried attachments and verdict render "
-              "guard not run")
+              "sniff, sheets, poLine, carried attachments, verdict render "
+              "guard and the __deadline helper not run")
+    test_fetch_timeouts()
+    test_step3_previous_requisition()
+    test_midrun_stop_rule()
+    test_retry_timeout_pairing()
+    test_step4_dispatch_under_deadline()
+    if shutil.which("node"):
+        test_procore_dispatch_timeout_classes()
+        test_netsuite_open_timeout()
+        test_procore_read_failed_body()
+        test_netsuite_stale_doc_and_caller()
     test_cco_demotion()
     test_commitment_kind()
     test_custom_tool_subtype()

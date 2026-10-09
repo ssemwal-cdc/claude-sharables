@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v40 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
+description: v41 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 40 — 2026-10-07.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
+**Skill version 41 — 2026-10-09.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
 
 Review every bill, purchase order and change order in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document. Cross-check against the real purchase order and billing history. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
@@ -94,6 +94,7 @@ If that does not say `v17`, the sync did not land and the dashboard is stale. Sa
 - **Do every browser step through Claude in Chrome, in the user's own signed-in Chrome.** Never use the Claude app's built-in browser. Not as a first try, and never as a fallback.
 - **If the extension is unreachable, retry once.** A second failure means stop. Never keep calling failing browser tools.
 - **On a second failure, stop and say so in the run report.** State plainly that Claude in Chrome was unreachable. Never continue the run in the built-in browser or any other browser.
+- **A browser call that times out mid-run is a stuck call.** A call whose every read failed by timeout counts as one too. Call `tabs_context_mcp` once. If that is also stuck, stop and report what finished. Never publish a partial queue as complete, and never keep issuing calls to a stuck tab.
 <!--__END_SHARED:skill-chrome-first-call__-->
 
 Then read `NetSuite Approval Checks/_netsuite_review_log.json`. If it already carries a `config` block, the rest of this step is done. Go to Step 1, except for the one back-fill below.
@@ -300,8 +301,14 @@ const wt = await (await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0
 m.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([wt], {type:'text/javascript'}));
 
 window.__open = async function(u){
-  const b = await (await fetch(u, {credentials:'include', signal:AbortSignal.timeout(20000)})).arrayBuffer();
-  // A timeout throws here. It is a failed read, never an absence (D41, three states never a boolean): report it as unread.
+  const t = AbortSignal.timeout(20000);
+  let b;
+  try { b = await (await fetch(u, {credentials:'include', signal:t})).arrayBuffer(); }
+  catch(e){
+    // A timeout is a failed read, never an absence (D41, three states never a boolean). Return it as the named outcome `timed out`.
+    if(t.aborted || (e && (e.name === 'AbortError' || e.name === 'TimeoutError'))) { window.__doc = null; return {state:'timed out'}; }
+    throw e;
+  }
   // new Uint8Array is REQUIRED - a raw ArrayBuffer throws InvalidPDFException on valid bytes
   window.__doc = await m.getDocument({data:new Uint8Array(b)}).promise;
   return window.__doc.numPages;
@@ -331,7 +338,7 @@ window.__page = async function(n){
 'ready'
 ```
 
-Then call `await window.__open('<path>')` for the page count, and `await window.__pages(from)` to pull as many whole pages as fit in one return.
+Then call `await window.__open('<path>')` for the page count. An object return with `state` is not a page count. `timed out` is a named failed read: report it so, and read nothing from that file. and `await window.__pages(from)` to pull as many whole pages as fit in one return.
 
 ```javascript
 window.__pages = async function(from){
@@ -355,7 +362,7 @@ Three things are not optional:
 - **Nothing is written to disk.** The bytes stay in the page as an ArrayBuffer. So there is no downloads folder to poll, and no stale file from an earlier run to re-read.
 - **No attachment at all flags the item.**
 - **Sniff the bytes before parsing. Never hand a non-PDF to pdf.js.** Handing a workbook to `getDocument` throws `InvalidPDFException`, the same error a corrupt download gives. So a good spreadsheet gets logged as unreadable support. Non-PDF support occurs here.
-- **Sniff the first four bytes before choosing a reader.** `%PDF` is a PDF. `PK\x03\x04` is a ZIP container, and a workbook only if it holds `xl/` entries. `\xFF\xD8\xFF` is JPEG. `\x89PNG` is PNG. Anything that decodes cleanly as text is text. Six outcomes, kept distinct: `text`, `spreadsheet`, `image`, `scanned`, `expired`, `unsupported`.
+- **Sniff the first four bytes before choosing a reader.** `%PDF` is a PDF. `PK\x03\x04` is a ZIP container, and a workbook only if it holds `xl/` entries. `\xFF\xD8\xFF` is JPEG. `\x89PNG` is PNG. Anything that decodes cleanly as text is text. Seven outcomes, kept distinct: `text`, `spreadsheet`, `image`, `scanned`, `expired`, `unsupported`, `timed out`. A fetch that hits its 20-second limit is `timed out`. Name it "support read timed out", keep the item `skipped`, and never retry it. A parse that threw has no outcome of its own here. It is named by what the bytes were.
 - **`scanned` means that the bytes were a PDF, it parsed, and it yielded almost nothing.** A parse that threw is never `scanned`. It is `spreadsheet`, `image` or `unsupported`, named by what the bytes actually were.
 - **Multiple attachments: open every attached file, and read at least page 1 of each.** In connector mode that is the files the connector can list, today the one named field's file. Check the figures against the file the AP INVOICE or CHANGE ORDER ATTACHMENT field names. Mention the others, and say what page 1 of each showed when it bears on the item.
 - **Workbooks parse with SheetJS, loaded the way pdf.js is.** Probed live 2026-08-14: `await import('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')` populates `globalThis.XLSX` on the first attempt. Then `XLSX.read(new Uint8Array(ab), {type:'array'})` and `XLSX.utils.sheet_to_csv` round-trip cleanly. **This pin is deliberate. Do not bump it in a skill edit.** Same wrap, same whole-unit size budget: sheet by sheet, never split one. Read every sheet including hidden ones. Treat a blank cell from an unevaluated formula as missing, never as zero.

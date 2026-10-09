@@ -7,7 +7,7 @@ date: 2026-08-14
 ---
 # Retry only an expired link
 
-**Rule.** Retry an expired link at most twice. Name the outcome that caused every skip. There are seven outcomes. The seventh is "support read timed out", and it is never retried. The Procore skill adds an eighth, "support parse failed", also never retried.
+**Rule.** Retry an expired link at most twice. Name the outcome that caused every skip. There are seven outcomes. The seventh is "support read timed out", and it is never retried. The Procore skill adds an eighth, "support read failed", also never retried.
 
 **Outcome protected.** A format that cannot parse is not retried forever, and no skip hides a whole file format.
 

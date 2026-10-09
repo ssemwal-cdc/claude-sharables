@@ -19,3 +19,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | G23 | `cco-url-work-order-unverified` | CCO link on a work order contract unverified | unobserved | 2026-10-07 | A CCO link opens the right record, whatever contract kind it hangs from. |
 | G24 | `gate-resp-name-unconfirmed` | Response name key never seen | unobserved | 2026-10-07 | A response verb on a row is the real verb, never an object dump. |
 | pending | `fetch-limit-includes-body` | The 20 second fetch limit includes the body download | unobserved | 2026-10-09 | A large but healthy read is not reported as timed out. |
+| pending | `netsuite-read-outcomes-thin` | NetSuite has no named outcome for a thrown parse | unobserved | 2026-10-09 | A read that threw is named, never filed as unread or absent. |

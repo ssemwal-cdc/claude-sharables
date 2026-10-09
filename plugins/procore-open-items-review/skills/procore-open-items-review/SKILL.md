@@ -296,7 +296,7 @@ Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-sec
 
 **One `__deadline` per `javascript_tool` call, never chained in one call.** Every await in the read sits inside that one task. That covers the fetch, the sniff, the pdf.js import, `getDocument`, each page and each render. A call must stop itself within about 60 to 90 seconds. Nothing in a call may wait without a bound.
 
-**Batch it.** Navigate 4 to 6 carrier tabs at once. Then issue their read calls promptly, one per tab, in a single `browser_batch`. Each read runs in its own tab and issues its request at once. A slow read in one tab cannot push another tab past its window. The margin inside the 60 seconds was measured once, live: an 18-page, 4.8 MB PDF extracted in 853 ms.
+**Batch it.** Navigate 4 to 6 carrier tabs at once. Then issue their read calls promptly, one per tab, in a single `browser_batch`. `browser_batch` runs its actions in sequence. A later tab whose window has passed returns `s3error`. That is the existing `expired` path: a fresh navigation, within the retry bound. Keep batches small enough that reads usually finish inside 60 seconds. The margin inside the 60 seconds was measured once, live: an 18-page, 4.8 MB PDF extracted in 853 ms.
 
 **Sniff the bytes before choosing a reader.** Handing pdf.js a non-PDF throws `InvalidPDFException`, which is also what a corrupt download gives. The first four bytes settle it.
 ```javascript
@@ -324,10 +324,15 @@ Then dispatch on the result, in the same call, inside one `__deadline`.
 ```javascript
 // One __deadline per javascript_tool call, never chained. The tab needs __deadline and __sniff installed first.
 const out = await window.__deadline([{key:'read', run: async () => {
-  let r;
-  try { r = await fetch(location.href, {signal: AbortSignal.timeout(20000)}); }
-  catch(e){ if(e && e.name === 'TimeoutError') throw e; return {state:'expired'}; }   // the fetch itself threw
-  const b = await r.arrayBuffer();
+  const t0 = Date.now();
+  let b;
+  try { b = await (await fetch(location.href, {signal: AbortSignal.timeout(20000)})).arrayBuffer(); }
+  catch(e){
+    if(Date.now() - t0 >= 20000 || (e && (e.name === 'AbortError' || e.name === 'TimeoutError'))){
+      const te = new Error('timed out'); te.name = 'TimeoutError'; throw te;   // __deadline records code TimeoutError...
+    }
+    return {state:'expired'};      // a network drop: the fetch itself threw
+  }
   const byteLength = b.byteLength;                   // read BEFORE parsing - getDocument detaches it
   const kind = window.__sniff(b);
   if (kind === 'pdf') {
@@ -347,11 +352,11 @@ const out = await window.__deadline([{key:'read', run: async () => {
   }
   return {state: kind, byteLength};                  // never guess; the caller branches
 }}], 60000, 1);
-return out[0];       // 'failed' + code 'deadline' or a 'TimeoutError' prefix = timed out. Any other 'failed' code = parse failed.
+return out[0];       // 'failed' + code 'deadline' or a 'TimeoutError' prefix = timed out. Any other 'failed' code = read failed.
 ```
 The worker must be fetched as text and turned into a blob URL. Pointing `workerSrc` at the CDN directly fails. **The pdf.js pin is deliberate. Do not bump it in a skill edit.**
 
-**Eight outcomes per attachment, and they are not interchangeable.** The seventh and eighth are below the table. **Never collapse these back into readable and not readable.**
+**Eight outcomes per attachment, and they are not interchangeable.** The table lists all eight. **Never collapse these back into readable and not readable.**
 
 | Outcome | What it means | What to do |
 |---|---|---|
@@ -362,11 +367,11 @@ The worker must be fetched as text and turned into a blob URL. Pointing `workerS
 | `expired` | `s3error`, or the fetch itself threw (not a timeout) | navigate a fresh carrier tab for a new URL, then retry, **at most twice**, then report it unreachable |
 | `unsupported` | a real file of a type with no reader | name the actual type. Never call it scanned, never call it expired |
 | `timed out` | a fetch hit its 20-second limit, or `__deadline` ended the read | skipped, naming "support read timed out". Never retry |
-| `parse failed` | any other `failed` from `__deadline`, such as `InvalidPDFException` | skipped, naming "support parse failed". Never retry |
+| `read failed` | any other `failed` from `__deadline`: a parse error such as `InvalidPDFException`, a CDN import failure, or a body-read error | skipped, naming "support read failed" and the thrown cause. Never retry |
 
 **The seventh outcome is `timed out`.** A fetch that hits its 20-second timeout, or a read that `__deadline` ends, is not `expired`. Match a `failed` code that is `deadline` or starts with `TimeoutError`. A slow link is not an expired link. Name it "support read timed out" on the item. Keep the verdict `skipped`. Say so in the run report. Never retry it.
 
-**The eighth outcome is `parse failed`.** It is any other `failed` from `__deadline`, such as `InvalidPDFException` from `getDocument`. It is neither `expired` nor `timed out`. Name it "support parse failed" with the code on the item. Keep the verdict `skipped`. Never retry it.
+**The eighth outcome is `read failed`.** It is any other `failed` from `__deadline`. The thrown cause may be a parse error such as `InvalidPDFException`, a CDN import failure, or a body-read error. It is neither `expired` nor `timed out`. Name it "support read failed" with the thrown cause on the item. Keep the verdict `skipped`. Never retry it.
 
 **A retry is only ever legitimate for `expired`.** Bound it at two attempts, each a fresh carrier-tab navigation. Re-fetch only when the bytes said `s3error` or the fetch threw (not a timeout). A file that parsed as the wrong type will parse as the wrong type again.
 

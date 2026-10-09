@@ -23,11 +23,11 @@ With it, the rule that an OCR-derived figure never produces a `clear` verdict is
 That reads the same for a scan, a workbook and a link that expired.
 Whole formats went unread for weeks with nothing in the log to show it.
 A skip that cannot name which outcome caused it is that bug returning.
-The seventh outcome is "support read timed out", never retried. Procore adds an eighth, "support parse failed".
+The seventh outcome is "support read timed out", never retried. Procore adds an eighth, "support read failed".
 
 **Evidence.** The `scanned` branch and the OCR cap remain guessed, not proven.
 Nobody has watched either on real data. `unmeasured`.
 Do not cite either as established.
-The outcomes kept distinct are `text`, `spreadsheet`, `image`, `scanned`, `expired`, `unsupported` and `timed out`, plus `parse failed` in Procore.
+The outcomes kept distinct are `text`, `spreadsheet`, `image`, `scanned`, `expired`, `unsupported` and `timed out`, plus `read failed` in Procore.
 
 **Checks.** `scripts/test_skill_code.py`, mocks only for the sniff table.

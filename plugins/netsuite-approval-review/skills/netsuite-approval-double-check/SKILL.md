@@ -301,8 +301,14 @@ const wt = await (await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0
 m.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([wt], {type:'text/javascript'}));
 
 window.__open = async function(u){
-  const b = await (await fetch(u, {credentials:'include', signal:AbortSignal.timeout(20000)})).arrayBuffer();
-  // A timeout throws here. It is a failed read, never an absence (D41, three states never a boolean): report it as unread.
+  const t = AbortSignal.timeout(20000);
+  let b;
+  try { b = await (await fetch(u, {credentials:'include', signal:t})).arrayBuffer(); }
+  catch(e){
+    // A timeout is a failed read, never an absence (D41, three states never a boolean). Return it as the named outcome `timed out`.
+    if(t.aborted || (e && (e.name === 'AbortError' || e.name === 'TimeoutError'))) return {state:'timed out'};
+    throw e;
+  }
   // new Uint8Array is REQUIRED - a raw ArrayBuffer throws InvalidPDFException on valid bytes
   window.__doc = await m.getDocument({data:new Uint8Array(b)}).promise;
   return window.__doc.numPages;

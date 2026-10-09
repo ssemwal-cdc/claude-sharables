@@ -325,13 +325,19 @@ Then dispatch on the result, in the same call, inside one `__deadline`.
 // One __deadline per javascript_tool call, never chained. The tab needs __deadline and __sniff installed first.
 const out = await window.__deadline([{key:'read', run: async () => {
   const t0 = Date.now();
-  let b;
-  try { b = await (await fetch(location.href, {signal: AbortSignal.timeout(20000)})).arrayBuffer(); }
+  const isTimeout = function(e){ return Date.now() - t0 >= 20000 || (e && (e.name === 'AbortError' || e.name === 'TimeoutError')); };
+  const toTimeout = function(){ const te = new Error('timed out'); te.name = 'TimeoutError'; return te; };   // __deadline records code TimeoutError...
+  let r;
+  try { r = await fetch(location.href, {signal: AbortSignal.timeout(20000)}); }
   catch(e){
-    if(Date.now() - t0 >= 20000 || (e && (e.name === 'AbortError' || e.name === 'TimeoutError'))){
-      const te = new Error('timed out'); te.name = 'TimeoutError'; throw te;   // __deadline records code TimeoutError...
-    }
+    if(isTimeout(e)) throw toTimeout();
     return {state:'expired'};      // a network drop: the fetch itself threw
+  }
+  let b;
+  try { b = await r.arrayBuffer(); }
+  catch(e){
+    if(isTimeout(e)) throw toTimeout();
+    throw e;                       // any other body-read throw is `read failed`, never `expired`
   }
   const byteLength = b.byteLength;                   // read BEFORE parsing - getDocument detaches it
   const kind = window.__sniff(b);

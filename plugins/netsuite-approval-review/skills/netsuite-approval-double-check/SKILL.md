@@ -306,7 +306,7 @@ window.__open = async function(u){
   try { b = await (await fetch(u, {credentials:'include', signal:t})).arrayBuffer(); }
   catch(e){
     // A timeout is a failed read, never an absence (D41, three states never a boolean). Return it as the named outcome `timed out`.
-    if(t.aborted || (e && (e.name === 'AbortError' || e.name === 'TimeoutError'))) return {state:'timed out'};
+    if(t.aborted || (e && (e.name === 'AbortError' || e.name === 'TimeoutError'))) { window.__doc = null; return {state:'timed out'}; }
     throw e;
   }
   // new Uint8Array is REQUIRED - a raw ArrayBuffer throws InvalidPDFException on valid bytes
@@ -338,7 +338,7 @@ window.__page = async function(n){
 'ready'
 ```
 
-Then call `await window.__open('<path>')` for the page count, and `await window.__pages(from)` to pull as many whole pages as fit in one return.
+Then call `await window.__open('<path>')` for the page count. An object return with `state` is not a page count. `timed out` is a named failed read: report it so, and read nothing from that file. and `await window.__pages(from)` to pull as many whole pages as fit in one return.
 
 ```javascript
 window.__pages = async function(from){

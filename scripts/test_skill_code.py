@@ -1937,12 +1937,71 @@ def test_step3_previous_requisition():
           "__deadline" in sec, "Step 3 never names __deadline")
 
 
+def _has_stuck_rule(text):
+    """True when one bullet rule (a `- ` line and its continuation lines) names `stuck`,
+    `tabs_context_mcp`, and a `__deadline` return where every task failed by timeout."""
+    rules, cur = [], None
+    for line in text.split("\n"):
+        if line.startswith("- "):
+            cur = [line]
+            rules.append(cur)
+        elif not line.strip():
+            cur = None
+        elif cur is not None:
+            cur.append(line)
+    return any("stuck" in r and "tabs_context_mcp" in r and "__deadline" in r
+               and re.search(r"(?i)\b(every|all) tasks?\b[^.]*\bfail", r)
+               for r in ("\n".join(x) for x in rules))
+
+
 def test_midrun_stop_rule():
+    block = open(os.path.join(REPO, "plugins/_shared/skill-chrome-first-call.block"),
+                 encoding="utf-8").read()
     src = open(os.path.join(PC, "SKILL.md"), encoding="utf-8").read()
-    hit = [l for l in src.split("\n")
-           if re.search(r"(?i)\bstop", l) and re.search(r"(?i)\bstuck\b", l)]
-    check("procore: a mid-run stop rule names a stuck call and says to stop",
-          bool(hit), "no line in SKILL.md tells the run to stop after a stuck call")
+    m = re.search(r"<!--__SHARED:skill-chrome-first-call__-->(.*?)"
+                  r"<!--__END_SHARED:skill-chrome-first-call__-->", src, re.S)
+    synced = m.group(1) if m else ""
+    want = ("one rule names `stuck`, `tabs_context_mcp`, and a `__deadline` return where "
+            "every task failed by timeout counts as a stuck call")
+    check("shared block skill-chrome-first-call (plugins/_shared): " + want,
+          _has_stuck_rule(block), "no single rule carries all of those")
+    check("procore SKILL.md: the synced skill-chrome-first-call region carries the same rule",
+          _has_stuck_rule(synced), "the synced region has no such rule, or the marker is missing")
+
+
+TIMEOUT_RE = re.compile(r"(?i)timeout|timed out|times out|hits its|abort")
+RETRY_RE = re.compile(r"(?i)\bretr(?:y|ies|ied|ying)\b|\bre-?fetch\b|\bre-?attempt")
+NEG_RE = re.compile(r"(?i)\bnot\b|\bnever\b|\bno\b|\bnor\b")
+
+
+def _retry_timeout_pairs(src):
+    """Sentences and table cells that pair a retry with a timeout and never say the retry
+    does not apply. Split on sentence ends, newlines and pipes, so a table row's cells are
+    judged apart and a correctly negated sentence is not a false alarm."""
+    pieces = re.split(r"(?<=[.!?])\s+|\n|\|", src)
+    return [p.strip()[:120] for p in pieces
+            if TIMEOUT_RE.search(p) and RETRY_RE.search(p) and not NEG_RE.search(p)]
+
+
+def test_retry_timeout_pairing():
+    src = open(os.path.join(PC, "SKILL.md"), encoding="utf-8").read()
+    bad = _retry_timeout_pairs(src)
+    check("procore: no sentence or table cell pairs a retry with a timeout unnegated",
+          not bad, "; ".join(bad))
+    rows = [l for l in src.split("\n") if l.startswith("| `expired`")]
+    trigger = rows[0].split("|")[2] if rows else ""
+    check("procore: the `expired` row's trigger cell says a timeout is not expired",
+          "not a timeout" in trigger, "trigger cell: %r" % trigger.strip()[:100])
+
+
+def test_step4_dispatch_under_deadline():
+    _, blocks = _procore_js_blocks()
+    disp = [b for b, _ in blocks if "pdf.min.mjs" in b]
+    check("procore: the Step 4 carrier-tab dispatch block (fetches location.href, runs pdf.js) is found",
+          bool(disp), "no javascript block loads pdf.min.mjs")
+    check("procore: the Step 4 carrier-tab dispatch runs inside `__deadline`",
+          any("location.href" in b and "__deadline(" in b for b in disp),
+          "the block that fetches location.href and runs pdf.js calls no __deadline")
 
 
 def main():
@@ -1964,6 +2023,8 @@ def main():
     test_fetch_timeouts()
     test_step3_previous_requisition()
     test_midrun_stop_rule()
+    test_retry_timeout_pairing()
+    test_step4_dispatch_under_deadline()
     test_cco_demotion()
     test_commitment_kind()
     test_custom_tool_subtype()

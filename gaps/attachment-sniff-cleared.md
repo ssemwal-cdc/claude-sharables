@@ -20,13 +20,14 @@ With it, the rule that an OCR-derived figure never produces a `clear` verdict is
 
 **The regression to watch for is a skip whose reason is vague.** The bug this replaced said
 "support present but unreadable".
-That reads the same for a scan, a workbook and a link that timed out.
+That reads the same for a scan, a workbook and a link that expired.
 Whole formats went unread for weeks with nothing in the log to show it.
-A skip that cannot name which of the six outcomes caused it is that bug returning.
+A skip that cannot name which of the seven outcomes caused it is that bug returning.
+The seventh outcome is "support read timed out", never retried.
 
 **Evidence.** The `scanned` branch and the OCR cap remain guessed, not proven.
 Nobody has watched either on real data. `unmeasured`.
 Do not cite either as established.
-The six outcomes kept distinct are `text`, `spreadsheet`, `image`, `scanned`, `expired` and `unsupported`.
+The seven outcomes kept distinct are `text`, `spreadsheet`, `image`, `scanned`, `expired`, `unsupported` and `timed out`.
 
 **Checks.** `scripts/test_skill_code.py`, mocks only for the sniff table.

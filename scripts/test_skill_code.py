@@ -1939,7 +1939,8 @@ def test_step3_previous_requisition():
 
 def _has_stuck_rule(text):
     """True when one bullet rule (a `- ` line and its continuation lines) names `stuck`,
-    `tabs_context_mcp`, and a `__deadline` return where every task failed by timeout."""
+    `tabs_context_mcp`, and the case where every read of a call failed by timeout.
+    Helper-neutral on purpose: a shared block never names a per-domain helper (D53)."""
     rules, cur = [], None
     for line in text.split("\n"):
         if line.startswith("- "):
@@ -1949,8 +1950,9 @@ def _has_stuck_rule(text):
             cur = None
         elif cur is not None:
             cur.append(line)
-    return any("stuck" in r and "tabs_context_mcp" in r and "__deadline" in r
-               and re.search(r"(?i)\b(every|all) tasks?\b[^.]*\bfail", r)
+    return any("stuck" in r and "tabs_context_mcp" in r
+               and re.search(r"(?i)\b(every|all) (reads?|tasks?)\b[^.]*\bfail[^.]*"
+                             r"(timeout|timed[- ]out|time-?out)", r)
                for r in ("\n".join(x) for x in rules))
 
 
@@ -1961,12 +1963,16 @@ def test_midrun_stop_rule():
     m = re.search(r"<!--__SHARED:skill-chrome-first-call__-->(.*?)"
                   r"<!--__END_SHARED:skill-chrome-first-call__-->", src, re.S)
     synced = m.group(1) if m else ""
-    want = ("one rule names `stuck`, `tabs_context_mcp`, and a `__deadline` return where "
-            "every task failed by timeout counts as a stuck call")
+    want = ("one rule names `stuck`, `tabs_context_mcp`, and the case where every read of a "
+            "call failed by timeout counts as a stuck call")
     check("shared block skill-chrome-first-call (plugins/_shared): " + want,
           _has_stuck_rule(block), "no single rule carries all of those")
     check("procore SKILL.md: the synced skill-chrome-first-call region carries the same rule",
           _has_stuck_rule(synced), "the synced region has no such rule, or the marker is missing")
+    check("shared block skill-chrome-first-call does not name `__deadline` (D53, helper-neutral)",
+          "__deadline" not in block, "the shared block names a Procore-only helper")
+    check("procore SKILL.md: the synced skill-chrome-first-call region does not name `__deadline`",
+          "__deadline" not in synced, "the synced region names a Procore-only helper")
 
 
 TIMEOUT_RE = re.compile(r"(?i)time-?outs?|timed[- ]out|times?[- ]out|hits its|abort")

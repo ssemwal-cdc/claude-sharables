@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G26
 slug: netsuite-read-outcomes-thin
 kind: gap
 status: unobserved

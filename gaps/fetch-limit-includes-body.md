@@ -1,5 +1,5 @@
 ---
-id: pending
+id: G25
 slug: fetch-limit-includes-body
 kind: gap
 status: unobserved

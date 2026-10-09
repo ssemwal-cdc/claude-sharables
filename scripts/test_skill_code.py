@@ -2053,7 +2053,7 @@ def _procore_dispatch_outcome(signal_stub, fetch_stub):
     harness = ("var window = {};\nvar location = {href: 'https://app.procore.com/carrier.pdf'};\n"
                + deadline[0] + "\n" + sniff[0] + "\n" + signal_stub + "\n" + fetch_stub + "\n"
                + "(async function(){\n" + disp[0] + "\n})().then(function(v){"
-               " console.log(JSON.stringify({ok: true, v: v})); },"
+               " console.log(JSON.stringify({ok: true, v: v, calls: globalThis.__calls || 0})); },"
                " function(e){ console.log(JSON.stringify({ok: false, err: String(e)})); });\n")
     try:
         rc, out, err = run_node(harness)
@@ -2105,7 +2105,7 @@ def test_netsuite_open_timeout():
         harness = ("var window = {};\n"
                    "var m = {GlobalWorkerOptions: {}, getDocument: function(){ return {promise: "
                    "Promise.resolve({numPages: 2})}; }};\n"
-                   + signal_stub + "\n" + fetch_stub + "\n" + body + "\n"
+                   + signal_stub + "\n" + fetch_stub + "\n" + body + ";\n"
                    "window.__open('/x').then(function(v){ console.log(JSON.stringify({ok: true, v: v})); },"
                    " function(e){ console.log(JSON.stringify({ok: false, err: String(e)})); });\n")
         try:
@@ -2132,6 +2132,83 @@ def test_netsuite_open_timeout():
           r.get("ok") is True and r.get("v") == 2, json.dumps(r)[:200])
 
 
+def test_procore_read_failed_body():
+    """fetch resolves, then arrayBuffer() rejects with a non-timeout error before the 20 s
+    signal. The outcome is `read failed`: a failed, never `expired`, never retried."""
+    body_err = ("globalThis.__calls = 0; globalThis.fetch = async function(){ "
+                "globalThis.__calls++; return {arrayBuffer: async function(){ "
+                "throw new TypeError('body stream errored'); }}; };")
+    r = _procore_dispatch_outcome(_SIGNAL_NEVER, body_err)
+    if "error" in r:
+        check("procore dispatch, a body read error: runs under node", False, r["error"])
+        return
+    v = r.get("v") or {}
+    code = str(v.get("code", ""))
+    check("procore dispatch, a body read error after a resolved fetch is `failed` (read failed)",
+          r.get("ok") is True and v.get("state") == "failed"
+          and code != "deadline" and not code.startswith("TimeoutError"),
+          "resolved %s" % json.dumps(r)[:200])
+    check("procore dispatch, a body read error is never `expired`",
+          v.get("state") != "expired", "resolved %s" % json.dumps(r)[:200])
+    check("procore dispatch, a body read error is never retried (one fetch)",
+          r.get("calls") == 1, "fetch calls: %s" % r.get("calls"))
+
+
+def test_netsuite_stale_doc_and_caller():
+    ns = os.path.join(NS, "SKILL.md")
+    src = open(ns, encoding="utf-8").read()
+    if "window.__open = async function" not in src:
+        check("netsuite: `window.__open` is present in SKILL.md", False, "no window.__open")
+        return
+    body = _brace_body(src, "window.__open = async function")
+    harness = ("var window = {};\n"
+               "var m = {GlobalWorkerOptions: {}, getDocument: function(){ return {promise: "
+               "Promise.resolve({numPages: 2})}; }};\n"
+               "var __n = 0;\n"
+               "AbortSignal.timeout = function(ms){ const c = new AbortController(); __n++;\n"
+               "  if (__n > 1) setTimeout(function(){ c.abort(new DOMException('signal timed out',"
+               " 'TimeoutError')); }, 30);\n"
+               "  return c.signal; };\n"
+               "var __calls = 0;\n"
+               "globalThis.fetch = function(u, o){ __calls++; if (__calls === 1) return Promise.resolve("
+               "{arrayBuffer: async function(){ return new ArrayBuffer(4); }});\n"
+               "  return new Promise(function(res, rej){ o.signal.addEventListener('abort', function(){"
+               " rej(new DOMException('The operation was aborted.', 'AbortError')); }); }); };\n"
+               + body + ";\n"
+               "(async function(){\n"
+               "  const first = await window.__open('/a');\n"
+               "  const second = await window.__open('/b');\n"
+               "  return {first: first, second: second, doc: window.__doc};\n"
+               "})().then(function(v){ console.log(JSON.stringify({ok: true, v: v,"
+               " docIsNull: v.doc === null})); },"
+               " function(e){ console.log(JSON.stringify({ok: false, err: String(e)})); });\n")
+    try:
+        rc, out, err = run_node(harness)
+    except subprocess.TimeoutExpired:
+        check("netsuite __open, stale doc: runs under node", False, "never settled within 60 s")
+        return
+    if rc != 0 or not out.startswith("{"):
+        check("netsuite __open, stale doc: runs under node", False, (err or out)[:200])
+        return
+    r = json.loads(out)
+    v = r.get("v") or {}
+    check("netsuite __open: a timed-out read after a good one leaves window.__doc === null",
+          r.get("ok") is True and r.get("docIsNull") is True,
+          "after the timed-out read window.__doc is %s" % json.dumps(v.get("doc")) if r.get("ok")
+          else r.get("err", "")[:200])
+    check("netsuite __open: the first read still returns the page count (2)",
+          v.get("first") == 2, "first = %s" % json.dumps(v.get("first")))
+
+    # Caller: the paragraph that calls window.__open must branch on the object return.
+    m = re.search(r"Then call `await window\.__open\('<path>'\)`[^\n]*", src)
+    para = m.group(0) if m else ""
+    check("netsuite caller: the step that calls window.__open names the `state` of its return",
+          bool(m) and re.search(r"\bstate\b", para) is not None,
+          "the caller passes the return on as a page count with no state branch")
+    check("netsuite caller: the step names the `timed out` state as not a page count",
+          "timed out" in para, "the caller never names the `timed out` state")
+
+
 def main():
     print("Skill code checks\n")
     if shutil.which("node"):
@@ -2156,6 +2233,8 @@ def main():
     if shutil.which("node"):
         test_procore_dispatch_timeout_classes()
         test_netsuite_open_timeout()
+        test_procore_read_failed_body()
+        test_netsuite_stale_doc_and_caller()
     test_cco_demotion()
     test_commitment_kind()
     test_custom_tool_subtype()

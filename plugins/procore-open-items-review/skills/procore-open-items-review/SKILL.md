@@ -1,9 +1,9 @@
 ---
 name: procore-open-items-review
-description: v44 — Review of the Procore open items actually awaiting your workflow response. Covers internal change risks, subcontractor invoices, commitment change orders, and the purchase order and work order contracts. Published to a live dashboard widget in chat. Trigger on "run my Procore review," "check my open items," or "review my Procore queue". Also trigger on "double check my ICRs", "run the daily Procore check", or any mention of the Procore open items dashboard, items waiting on your response, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Filters the queue to items you can actually action. Verifies the cost figures and pay-application math against the attached support. Publishes a clear, flagged, skipped, tied, or vendor-tied verdict per item. Read-only: no clicking Respond, Approve, Reject, or Revise and Resubmit. Every Procore call is a GET. No response controls on the dashboard. Every verdict is a recommendation. The response stays yours to make in Procore.
+description: v45 — Review of the Procore open items actually awaiting your workflow response. Covers internal change risks, subcontractor invoices, commitment change orders, and the purchase order and work order contracts. Published to a live dashboard widget in chat. Trigger on "run my Procore review," "check my open items," or "review my Procore queue". Also trigger on "double check my ICRs", "run the daily Procore check", or any mention of the Procore open items dashboard, items waiting on your response, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Filters the queue to items you can actually action. Verifies the cost figures and pay-application math against the attached support. Publishes a clear, flagged, skipped, tied, or vendor-tied verdict per item. Read-only: no clicking Respond, Approve, Reject, or Revise and Resubmit. Every Procore call is a GET. No response controls on the dashboard. Every verdict is a recommendation. The response stays yours to make in Procore.
 ---
 # Procore Open Items Review
-**Skill version 44 — 2026-10-07.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
+**Skill version 45 — 2026-10-09.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
 
 Review every Procore item **waiting on the user's workflow response**. Verify each item's figures against its attached support. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget. Chat gets one headline line.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
@@ -98,6 +98,7 @@ If that does not say `v20`, say so once near the headline, naming both versions,
 - **Do every browser step through Claude in Chrome, in the user's own signed-in Chrome.** Never use the Claude app's built-in browser. Not as a first try, and never as a fallback.
 - **If the extension is unreachable, retry once.** A second failure means stop. Never keep calling failing browser tools.
 - **On a second failure, stop and say so in the run report.** State plainly that Claude in Chrome was unreachable. Never continue the run in the built-in browser or any other browser.
+- **A browser call that times out mid-run is a stuck call.** Call `tabs_context_mcp` once. If that is also stuck, stop and report what finished. Never publish a partial queue as complete, and never keep issuing calls to a stuck tab. A restart clears a stuck call. It does not prevent the next.
 <!--__END_SHARED:skill-chrome-first-call__-->
 
 Then read `Procore Open Items/_procore_review_log.json`. A file already carrying a `config` block finishes this step, apart from the two back-fills below. Go to Step 1. Otherwise run setup once.
@@ -183,35 +184,53 @@ This is what makes the review worth reading. Most of the queue is distribution-o
 
 **Keep each Claude in Chrome call small: one endpoint family, about 20 rows.** Two larger fan-out calls hung four minutes each. Split a bigger family across calls. This size rule holds for every fan-out in Steps 2 and 3.
 ```javascript
-window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}]
-  const out=[], q=rows.slice();
-  await Promise.all(Array.from({length: Math.min(cap||8, q.length)}, async function(){
-    while(q.length){
-      const r=q.shift();
-      const qs = new URLSearchParams({
-        'filters[workflowable_object_id]': r.id,
-        'filters[workflowable_object_type]': r.type,
-        page: '1', per_page: '100',     // per_page is load-bearing - see above
-        view: 'action_card'
-      });
-      const u='/rest/v1.0/projects/'+r.pid+'/workflows/instances?'+qs;
-      try{
-        const res=await fetch(u,{headers:{Accept:'application/json'}, signal: AbortSignal.timeout(20000)});
-        if(!res.ok){ out.push({key:r.key, state:'failed', code:res.status}); continue; }
-        const j=await res.json();
-        if(!j||!j.length){ out.push({key:r.key, state:'empty'}); continue; }
-        const s=j[0].current_step_occurrence||{};
-        out.push({key:r.key, state:'ok', can:!!(j[0].user_permissions||{}).can_respond,
-                  step:s.name||'', due:s.due_at||'',
-                  resp:(s.available_responses||[]).map(function(x){return (x&&x.name)||String(x);})});
-      }catch(e){ out.push({key:r.key, state:'failed', code:String(e).slice(0,60)}); }
-    }
-  }));
-  return out;
+// The whole call has a deadline. A fan-out that never settles held a call to the four-minute
+// ceiling (2026-10-09), so every in-page fan-out in Steps 2 and 3 runs through this. It never rejects.
+window.__deadline = function(tasks, ms, cap){      // tasks: [{key, run}]; run() -> {state, ...}
+  const n = tasks.length, out = new Array(n), q = tasks.map(function(t, i){ return i; });
+  const fail = function(i, code){ return {key: tasks[i].key, state:'failed', code: code}; };
+  const started = {};
+  return new Promise(function(resolve){
+    let tm = null, live = 0, done = false;
+    const finish = function(){
+      if(done) return; done = true; clearTimeout(tm);
+      resolve(tasks.map(function(t, i){ return out[i] || fail(i, started[i] ? 'deadline' : 'unstarted'); }));
+    };
+    tm = setTimeout(finish, ms || 75000);
+    const next = function(){
+      if(done) return;
+      if(!q.length){ if(!live) finish(); return; }
+      const i = q.shift(); started[i] = true; live++;
+      Promise.resolve().then(function(){ return tasks[i].run(); }).then(function(r){
+        out[i] = (r && r.state) ? Object.assign({}, r, {key: tasks[i].key}) : fail(i, 'badrecord');
+      }, function(e){ out[i] = fail(i, String(e).slice(0, 60)); }).then(function(){ live--; next(); });
+    };
+    if(!n) return finish();
+    for(let w = 0; w < Math.min(cap || 8, n); w++) next();
+  });
+};
+window.__gate = function(rows, cap, ms){          // rows: [{key, pid, id, type}]
+  return window.__deadline(rows.map(function(r){ return {key: r.key, run: async function(){
+    const qs = new URLSearchParams({
+      'filters[workflowable_object_id]': r.id,
+      'filters[workflowable_object_type]': r.type,
+      page: '1', per_page: '100',     // per_page is load-bearing - see above
+      view: 'action_card'
+    });
+    const u='/rest/v1.0/projects/'+r.pid+'/workflows/instances?'+qs;
+    const res=await fetch(u,{headers:{Accept:'application/json'}, signal: AbortSignal.timeout(20000)});
+    if(!res.ok) return {state:'failed', code:res.status};
+    const j=await res.json();
+    if(!j||!j.length) return {state:'empty'};
+    const s=j[0].current_step_occurrence||{};
+    return {state:'ok', can:!!(j[0].user_permissions||{}).can_respond,
+            step:s.name||'', due:s.due_at||'',
+            resp:(s.available_responses||[]).map(function(x){return (x&&x.name)||String(x);})};
+  }}; }), ms || 75000, cap);
 };
 ```
 - **Cap concurrency at 8 to 10.** A 429 from rate limiting is a `failed`, not an `empty`.
-- **A timeout is `failed`, never `empty`.** The 20-second abort throws, and the `catch` records it.
+- **A timeout is `failed`, never `empty`.** The 20-second abort throws, and `__deadline` records it. So does the whole-call deadline, about 75 seconds (the `ms` argument). A task unfinished or unstarted then is `failed`, code `deadline` or `unstarted`. The call still returns. Pass about 20 rows per call.
 - **`resp` holds names.** The `.name` key on an `available_responses` entry is unconfirmed. See `G24`, the response name key was never seen. A bare string passes through as it is.
 - **A CCO row enters `__gate` already translated.** Its `type` is `CommitmentChangeOrder` and its `id` is the `holder.id`. A raw `ChangeOrderPackage` row is never gated, so its 400 never happens.
 - **The three states are the safety property. They are not interchangeable.** `ok` gates on `can`, exactly as above. `empty` means that the API genuinely returned no instance.
@@ -234,13 +253,15 @@ window.__gate = async function(rows, cap){        // rows: [{key, pid, id, type}
 - **Cross-check the first CCO of a run against the UI**, because the gate cannot detect its own miss. One record per run is enough.
 - Open the record in **a record tab** and read its workflow panel. An actionable item shows a live **Respond** button naming the user against the current step's role. **Look, do not click.** Close that record tab once the panel is read.
 ## Step 3 — Read the record
-**Fan these out per endpoint family, not per item.** Same worker-pool shape as Step 2, and the same `ok` / `empty` / `failed` rule. Run them in the fetch tab. A record that failed to load is reported by name and excluded, never reviewed as though it came back thin.
+**Fan these out per endpoint family, not per item.** Run every fan-out through `window.__deadline` (Step 2). Put `signal: AbortSignal.timeout(20000)` on each fetch. The same `ok` / `empty` / `failed` rule holds. Run them in the fetch tab. A record that failed to load is reported by name and excluded, never reviewed as though it came back thin.
 
 **ICR — `GenericToolItem`**, from `GET /rest/v1.0/generic_tool_items/<item_id>` with `project_id=<project_id>`. Read `cost_impact.status`, one of `yes_known`, `yes_unknown`, `tbd` or `no_impact`, and `cost_impact.value`. Read the cost custom fields mapped for **this item's own subtype**, at `config.customTools[subtype].costFields`. Read `description`, the narrative of General Background, Entitlement, Need v. Want, Scope and Cost. Read `attachments[]`, `status` and `schedule_impact`. **Read only that subtype's mapping. Never another's, and never an id that merely looks right.** `cost_impact` is a native generic-tool field and means the same thing on every custom tool. The cost custom fields are not.
 
 **Invoice — `Billings::Requisition`**, from `GET /rest/v1.1/requisitions/<item_id>` with `project_id=<project_id>` and `view=extended`. `summary` is a complete AIA G702: `original_contract_sum`, `net_change_by_change_orders`, `contract_sum_to_date`, `total_completed_and_stored_to_date`, `total_retainage`, `total_earned_less_retainage`, `less_previous_certificates_for_payment`, `current_payment_due`, `balance_to_finish_including_retainage` and `formatted_period`. `items[]` is the G703 line by line. Also read `vendor_name`, `invoice_number`, `previous_requisition_id`, `commitment_id` and `attachments[]`.
 
 **This is the largest payload in either skill. Reduce the nesting, not the rows.** In the same tab, compute the six G702 identities from Step 5 and return **the residuals**, each as `left - right`. Relative reliability against reading the JSON is `unmeasured`. Then return the G703 **as flat rows**, one line each carrying description, scheduled value, previous, this period, completed-to-date and retainage. **Do not return the residuals alone.** A duplicated line survives a residual of `0.00`. So does a zero-quantity line, a description that does not match the scope, and retainage that moved alone. The rows are what let the reviewer find what nobody specified.
+
+**Previous requisition.** Read it once per invoice, only when `previous_requisition_id` is present. Step 5 sequence integrity needs it. `GET /rest/v1.1/requisitions/<previous_requisition_id>` with `project_id=<project_id>`, through `__deadline` in its own call, never mixed into the invoice family. Read compact fields only: `invoice_number`, `formatted_period`, `vendor_name`, `status` and `summary.total_completed_and_stored_to_date` (plus `summary.current_payment_due`). Do not request `view=extended` and do not read `items[]`. A `failed` read marks the sequence check *not run* by name. It is never a pass.
 
 **CCO — `ChangeOrderPackage`**, from `GET /rest/v1.0/change_order_packages/<item_id>` with `project_id=<project_id>`. Read `number`, `title`, `status`, `executed`, `grand_total`, `line_items[]`, `attachments[]` and `contract_id`. **The counterparty is not on the package payload.** Write `counterparty` as `not on payload (on contract <contract_id>)`. **Run this one before the Step 2 gate, not after it.** `line_items[].holder.id` is the commitment change order id the gate needs. Capture `holder.id` per line here and dedupe it as Step 2 describes.
 
@@ -259,7 +280,7 @@ Procore attachment URLs point at `storage.procore.com`, which 302s to a **60-sec
 1. Open **a carrier tab** on `app.procore.com`. In it, fetch the record JSON, then schedule the navigation so the call returns before the tab unloads:
    ```javascript
    // id, pid: the item's generic_tool_items id and project id. i: this attachment's index in the item.
-   fetch('/rest/v1.0/generic_tool_items/' + id + '?' + new URLSearchParams({project_id: pid}))
+   fetch('/rest/v1.0/generic_tool_items/' + id + '?' + new URLSearchParams({project_id: pid}), {signal: AbortSignal.timeout(20000)})
      .then(r => r.json())
      .then(rec => { setTimeout(() => { location.href = rec.attachments[i].url; }, 50); });
    ```
@@ -299,13 +320,13 @@ window.__sniff = function(ab){
 ```
 Then dispatch on the result, in the same call.
 ```javascript
-const r = await fetch(location.href);
+const r = await fetch(location.href, {signal: AbortSignal.timeout(20000)});
 const b = await r.arrayBuffer();
 const byteLength = b.byteLength;                   // read BEFORE parsing - getDocument detaches it
 const kind = window.__sniff(b);
 if (kind === 'pdf') {
   const m = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
-  const wt = await (await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs')).text();
+  const wt = await (await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs', {signal: AbortSignal.timeout(20000)})).text();
   m.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([wt], {type:'text/javascript'}));
   // new Uint8Array is REQUIRED - a raw ArrayBuffer throws InvalidPDFException on valid bytes
   const d = await m.getDocument({data:new Uint8Array(b)}).promise;
@@ -330,8 +351,10 @@ The worker must be fetched as text and turned into a blob URL. Pointing `workerS
 | `spreadsheet` | `zip` with `xl/` entries, or `ole2` | not read here — see the download fallback below |
 | `image` | PNG, JPEG, GIF, TIFF or WEBP | visual read with `computer`, in the carrier tab |
 | `scanned` | **was a PDF**, parsed, almost no characters | rasterise, then visual read — if that fails, say "support is a scanned image, text not extractable" |
-| `expired` | `s3error`, or the fetch itself threw | navigate a fresh carrier tab for a new URL, then retry, **at most twice**, then report it unreachable |
+| `expired` | `s3error`, or the fetch itself threw (not a timeout) | navigate a fresh carrier tab for a new URL, then retry, **at most twice**, then report it unreachable |
 | `unsupported` | a real file of a type with no reader | name the actual type. Never call it scanned, never call it expired |
+
+**A fetch that hits its 20-second timeout is a failed read, not `expired`.** It does not fit the six outcomes, because a slow link is not an expired link. Name it "support read timed out" on the item. Keep the verdict `skipped`. Say so in the run report. Do not retry it.
 
 **A retry is only ever legitimate for `expired`.** Bound it at two attempts, each a fresh carrier-tab navigation. Re-fetch only when the bytes said `s3error` or the fetch threw. A file that parsed as the wrong type will parse as the wrong type again.
 
@@ -373,7 +396,7 @@ A `.docx` or `.doc` attachment gets its own route. It is not viewable in the bro
 
 1. Open **a carrier tab** on `app.procore.com`, never the fetch tab. Fetch the record JSON there. Then schedule the navigation. The fetch call returns first:
    ```javascript
-   fetch('/rest/v1.0/generic_tool_items/' + id + '?' + new URLSearchParams({project_id: pid}))
+   fetch('/rest/v1.0/generic_tool_items/' + id + '?' + new URLSearchParams({project_id: pid}), {signal: AbortSignal.timeout(20000)})
      .then(r => r.json())
      .then(rec => { setTimeout(() => { location.href = rec.attachments[i].url; }, 50); });
    ```

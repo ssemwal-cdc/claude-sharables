@@ -320,7 +320,7 @@ def check_capability_verdicts():
                 for verdict in re.findall(r"`([a-z-]+)`", row):
                     if verdict in ("core", "connector", "attachment", "record", "queue"):
                         continue
-                    if verdict in ("clear", "flagged", "skipped", "ungated", "tied", "vendor-tied") and verdict not in allowed:
+                    if verdict in ("clear", "history-open", "flagged", "skipped", "ungated", "tied", "vendor-tied") and verdict not in allowed:
                         problems.append(
                             "%s/%s: the capability table tells a run to mark an item `%s`, "
                             "which is not in that plugin's VERDICTS (%s) - publish_dashboard.py "

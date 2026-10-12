@@ -18,8 +18,8 @@ and for each one it:
   over-commitment. This runs only where a NetSuite connector is available. A
   live connector-mode run confirmed this check
   (F146, po cross-check run confirmed)
-- publishes a clear or flagged verdict per item to a dashboard, with the
-  figures visible without clicking into anything
+- publishes a clear, history open or flagged verdict per item to a dashboard.
+  The figures are visible without clicking into anything
 
 Purchase orders are reviewed. Execute mode was retired on 2026-09-18. Its
 prose and code sit in `actionable-retired/` at the repo root.

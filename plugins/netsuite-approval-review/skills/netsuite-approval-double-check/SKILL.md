@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v41 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
+description: v42 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear, history open or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 41 — 2026-10-09.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
+**Skill version 42 — 2026-10-12.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
 
 Review every bill, purchase order and change order in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document. Cross-check against the real purchase order and billing history. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
@@ -81,13 +81,13 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 3. **Use the existing workspace copies and say so, once**, naming the files' modification date from `ls -l` near the headline. Then carry on. Do not stop the run over it. Only the template and publish script can lag, so the verdicts are current either way.
 
 - **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, say exactly that. Stop before Step 7. There is no template to inject into. Inventing one is forbidden. Expect this case on Cowork.
-- **This plugin ships layout template `v17`. Confirm the sync landed by reading it back:**
+- **This plugin ships layout template `v18`. Confirm the sync landed by reading it back:**
 
 ```bash
 head -n 8 "<workspace>/NetSuite Approval Checks/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
 
-If that does not say `v17`, the sync did not land and the dashboard is stale. Say so once near the headline, naming both versions, and carry on. Same fail-open rule as rung 3. This check is the only one that can see a uniformly stale workspace. The template and the publish script are copied together, so they agree with each other while both are old.
+If that does not say `v18`, the sync did not land and the dashboard is stale. Say so once near the headline, naming both versions, and carry on. Same fail-open rule as rung 3. This check is the only one that can see a uniformly stale workspace. The template and the publish script are copied together, so they agree with each other while both are old.
 
 <!--__SHARED:skill-chrome-first-call__-->
 - **Call `tabs_context_mcp` once, before any browser action, on every run.** This is the Claude in Chrome tool. Do this first, even in a scheduled run where nobody is watching.
@@ -400,7 +400,7 @@ Every check in Steps 4 and 5 carries an **id**, the **lens** it serves, and the 
 | capability | means | when it is absent |
 |---|---|---|
 | `record` | fields from the Step 1a/2 queries, or read off the record page — Step 2 opens that item's tab when it needs one | never absent — the queue is built from them |
-| `attachment` | a Step 4 attachment outcome of `text` or `spreadsheet` | the item is `flagged`, **naming which outcome** — Step 4. There is no skipped verdict on this side: `VERDICTS` is `clear` and `flagged` only, and the publish script aborts on anything else |
+| `attachment` | a Step 4 attachment outcome of `text` or `spreadsheet` | the item is `flagged`, **naming which outcome** — Step 4. There is no skipped verdict on this side: `VERDICTS` is `clear`, `history-open` and `flagged` only, and the publish script aborts on anything else |
 | `connector` | a working NetSuite SuiteQL tool | Step 5 does not run and **nothing is said about it** — Step 5 |
 | `queue` | the other items in this run, not this item alone | never absent — it marks the check as cross-item |
 
@@ -480,6 +480,14 @@ Keying on `po_id` matters. A document-number match resolves whatever string you 
 
 Then reconcile. A professional-services invoice's "billed previously" plus its remaining contract phases should tie to the PO's contract value. A change order's PREVIOUSLY APPROVED AMOUNT should tie to the PO total. Residual differences usually correspond to a specific already-approved change order. Identify it rather than reporting a bare variance. Caution: `custbody_r_it_total_amount_invoiced` and `..._remaining` are frequently stale, often 0. Do not rely on them. Derive from actual bills instead.
 
+**The third verdict, `history-open` (D`netsuite-history-open`, a third verdict).** It sits between `clear` and `flagged`. Name the evidence in `head`. It applies when **every check on the item itself passes**. Those checks are the math, adequate support from a `text` or `spreadsheet` outcome, and the amount tying to NetSuite. It also needs this reconcile, with 5c billed-to-date, to leave a residual. **No named approved bill or change order explains it.** Example: the item's own figures tie. The PO's approved billing history runs ahead of the vendor's previously-billed figure. Nothing explains the gap.
+
+- **State the residual in `poWarning`, in dollars, with both figures.** Keep that line. It tells the user to ask AP and the vendor before approving.
+- **A residual that named approved bills or change orders fully explain is `clear`.** Name each one in `poWarning`.
+- **Any failing check on the item itself, or a missing or unreadable attachment, is `flagged`.** `flagged` outranks `history-open`.
+- **A typed-reference mismatch alone never makes `history-open`.** It stays a data-entry note (5b).
+- Step 5 runs only in connector mode. A browser-mode run has no reconcile, so it never produces `history-open`, and says nothing about that.
+
 ### 5c. Billed-to-date comes from the linkage, split by approval state
 
 **Derive it through the link table, not from a memo search.** Sum the bills NetSuite has actually applied to that PO, deduplicated to distinct bill ids per 5a. Keep approved and pending apart.
@@ -536,12 +544,12 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
     "<transaction id>": {
       "docNo": "...", "type": "Bill|Purchase Order|Change Order", "vendor": "...", "amount": 0,
       "trandate": "8/4/2026",
-      "verdict": "clear|flagged",
+      "verdict": "clear|history-open|flagged",
       "reviewedOn": "YYYY-MM-DD", "lastSeenPending": "YYYY-MM-DD",
       "head": "one line, the verdict in plain terms",
       "facts": ["two or three skim lines with the specific figures"],
       "poContext": "PO<id> - contract $216,000 - billed to date $76,500 (approved) - this bill $12,000 pending - takes it to $88,500 of $216,000",
-      "poWarning": "optional; a duplicate PO worth naming, or a typed reference that disagrees with the linkage",
+      "poWarning": "optional; a duplicate PO worth naming, a typed reference that disagrees with the linkage, the residual a `history-open` item carries, or the approved bills and change orders that explain a residual on a `clear` one",
       "poLink": "linked|unlinked|failed",
       "poTyped": "what custbody3 said, recorded whether or not it agrees",
       "detail": "the full paragraph of reasoning",
@@ -617,7 +625,7 @@ A design change goes in the plugin repo, not the workspace copy. Step 0 overwrit
 Step 8 runs first, and the headline follows it. **Report in chat with one line only**, no per-item blocks.
 
 ```
-6 pending · 1 flagged · dashboard updated
+6 pending · 1 flagged · 1 history open · dashboard updated
 ```
 
 Add a second line only if something blocked the run. That includes a login redirect, a missing attachment that prevented review, or a renamed portlet. Never put the verdicts in chat. **One more line, and only in one case: a lens the user picked could not run.** Suppose `config.focus.lenses` names a lens whose capability is missing, such as `supply-chain` with no working connector. Then open the chat reply with a single plain line saying so. Name the lens and what is missing, then never mention it again in that run.

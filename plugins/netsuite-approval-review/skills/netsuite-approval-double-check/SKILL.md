@@ -419,7 +419,7 @@ Every check in Steps 4 and 5 carries an **id**, the **lens** it serves, and the 
 | `ns.po-price-variance` | supply-chain | `connector` | Step 5f — PO line rate against billed rate |
 | `ns.lead-time` | supply-chain | `connector` | Step 5g — PO due date against receipt date, observation only |
 
-**A check that cannot run is never a silent pass.** The two absences above behave differently on purpose. A missing attachment skips the item and names the outcome that caused it. A missing connector skips Step 5 and says nothing at all. Do not normalise them into one rule.
+**A check that cannot run is never a silent pass.** The two absences above behave differently on purpose. A missing attachment skips the item and names the outcome that caused it. A missing connector skips Step 5 and says nothing at all. Such a run never reaches `history-open`. Do not normalise them into one rule.
 
 ### Math
 
@@ -482,13 +482,13 @@ Then reconcile. A professional-services invoice's "billed previously" plus its r
 
 **The third verdict, `history-open` (D`netsuite-history-open`, a third verdict).** It sits between `clear` and `flagged`. Name the evidence in `head`. It applies when **every check on the item itself passes**. Those checks are the math, adequate support, and the amount tying to NetSuite. Adequate support means a **full** `text` or `spreadsheet` read. It also needs this reconcile, with 5c billed-to-date, to leave an **unexplained remainder in dollars** above zero. Example: the item's own figures tie. The PO's approved billing history runs ahead of the vendor's previously-billed figure. Nothing explains the gap.
 
-- **The remainder decides.** Subtract what named approved bills and change orders explain. Remainder zero is `clear`. `poWarning` names each explaining bill or change order. Remainder above zero is `history-open`. `poWarning` names the explained part and the remainder, both in dollars.
+- **The remainder decides.** Subtract what named approved bills and change orders explain. Remainder exactly zero is `clear`. `poWarning` names each explaining bill or change order. Any other remainder is `history-open`, whether positive or negative. A negative one means the explanations overshoot the gap. `poWarning` names the explained part and the remainder, both in dollars.
 - **`poWarning` is required on `history-open`.** Write this sentence in it verbatim. "Billing history does not reconcile: ask AP and the vendor which side is wrong before approving." Put the dollar figures after it. The publish script flags a `history-open` item that has no `poWarning`.
-- **Only a full `text` or `spreadsheet` read may reach `history-open`.** A partial read, a visual read, an OCR read, or any other outcome stays `flagged`. A visual read counting as parsed text for the tie-outs does not change that.
+- **Only a full `text` or `spreadsheet` read may reach `history-open`.** A partial read, an OCR read, or any other outcome stays `flagged`. An image or scanned read never reaches `history-open`.
 - **Any failing check on the item itself is `flagged`.** So is a missing or unreadable attachment. So is a missing intermediate application, which is a failed check on the item itself. `flagged` outranks `history-open`.
 - **A gap that matches a duplicate is `flagged`.** A duplicate is never an explanation.
 - **A typed-reference mismatch alone never makes `history-open`.** It stays a data-entry note (5b).
-- Step 5 runs only in connector mode. A browser-mode run has no reconcile, so it never produces `history-open`, and says nothing about that.
+- Step 5 runs only in connector mode, so only a connector run can reach `history-open`. A browser-only run judges what it can see. It gives `clear` or `flagged` from its own checks. It says nothing about the billing history (D69, silence on an absent connector).
 
 ### 5c. Billed-to-date comes from the linkage, split by approval state
 
@@ -582,8 +582,8 @@ On each run:
 - Items already logged **clear** and unchanged: same amount, no new attachment. Do not re-fetch or re-analyze any attachment. Carry the entry forward. The whole entry, `attachmentFiles` included, is carried untouched.
 - **A new attachment ends the carry.** Compare NetSuite file ids, not names. A file id absent from the last review's `attachmentFiles` forces the same full review as a changed amount. **In connector mode only the named-field files are visible.** So a new unnamed file on a carried bill is not detected. Browser mode is designed to see every `media.nl` link on the page.
 - Items previously **flagged** or **history-open**: re-check in full, every run. Never carry them forward. The vendor may have replaced the attachment.
-- **A browser-mode re-check cannot see Step 5.** It keeps the prior `history-open` verdict and its `poWarning`. It adds that the history was not re-checked this run. It never clears the item silently.
-- Items whose amount changed since the last review: treat as new. The dashboard has no `changed` pill, so the change shows up only as a fresh full review of that item.
+- **`history-open` is never carried forward.** Every run derives the verdict again from its own checks. A browser-only run says nothing about the billing history.
+- Items whose amount changed since the last review: treat as new, with a full review and a fresh verdict. The dashboard has no `changed` pill, so the change shows up only as a fresh full review of that item.
 - Brand-new items: full review.
 - Items no longer in the queue: drop the entry. There is no actioned bin to show them in, so a lingering entry would render as an apparently-pending row.
 

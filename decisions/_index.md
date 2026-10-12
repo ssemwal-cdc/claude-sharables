@@ -112,4 +112,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D106 | `skipped-rows-compact` | A skipped row publishes compact | settled | 2026-10-07 | The render fits one read, so the reviewer sees every row. |
 | D107 | `vendor-tied-verdict` | A sixth verdict where only the vendor's proposal ties | settled | 2026-10-07 | An item whose only checkable figure was verified reaches the reviewer. |
 | D108 | `in-page-call-deadline` | Every in-page call stops itself | settled | 2026-10-09 | A run that hits a stuck call ends with a report of what finished. |
-| pending | `netsuite-history-open` | A third NetSuite verdict, history open | settled | 2026-10-12 | A reviewer is not told a right bill is wrong because of a question in the PO's history. |
+| D109 | `netsuite-history-open` | A third NetSuite verdict, history open | settled | 2026-10-12 | A reviewer is not told a right bill is wrong because of a question in the PO's history. |

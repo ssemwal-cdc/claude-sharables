@@ -4,10 +4,11 @@
     PYTHONUTF8=1 python3 scripts/test_check_records.py
 
 A slug cited as D`slug` is never rewritten by the stamp. .github/stamp.json cite.pattern
-rewrites only D‹slug›. The check named NAME must flag the backtick form on every ref and
-name the D‹slug› form in its message. Stdlib only. Each case builds its own throwaway
-tree. The four leftovers are pinned to their 41b96f9 lines, so this test does not depend
-on the live records, which the fix rewrites.
+rewrites only D‹slug›. The check named NAME mirrors the stamp: it flags the backtick form
+everywhere the stamp scans, fences and frontmatter included, on every ref. It names the
+D‹slug› form in its message. Stdlib only. Each case builds its own throwaway tree. The
+four leftovers are pinned to their 41b96f9 lines, so this test does not depend on the live
+records, which the fix rewrites.
 """
 import os
 import shutil
@@ -85,11 +86,35 @@ assert len(p) == 1 and "D‹some-slug›" in p[0], p
 # a backtick inside a double-quoted string does not pair across the real citation
 p = _run({DECISION: _doc('Write "a`b" then D`some-slug`, gloss.')})
 assert len(p) == 1 and "D‹some-slug›" in p[0], p
-# the scan resumes after a fence closes, and skips the fence body
+# a fence neither hides the citation after it, nor the citation inside it
 p = _run({DECISION: _doc("```text", "D`inside-fence` example", "```", "See D`some-slug`, gloss.")})
-assert len(p) == 1 and _os(DECISION) + ":4" in p[0], p
+assert len(p) == 2, p
+assert any(_os(DECISION) + ":2" in m for m in p), p
+assert any(_os(DECISION) + ":4" in m for m in p), p
 
-# ---- 3. no false alarm on ordinary inline code, a lone backtick, quotes, or fences
+# ---- 1b. the stamp's slug charset: digit-first and uppercase are flagged, all-digit is an id
+for slug in ("2fa-rule", "Some-Slug"):
+    p = _run({DECISION: _doc("See D`%s`, gloss." % slug)})
+    assert len(p) == 1 and slug in p[0], (slug, p)
+assert _run({DECISION: _doc("See D`12`, gloss.")}) == [], "an all-digit token is an id, not a slug"
+
+# ---- 5. the stamp mirror: tilde fences and frontmatter are scanned, as the stamp scans them
+p = _run({DECISION: _doc("~~~text", "D`some-slug` example", "~~~")})
+assert len(p) == 1 and _os(DECISION) + ":2" in p[0], p
+p = _run({SKILL: _doc("---", "name: some-skill", "description: Cites D`some-slug` here.", "---",
+                      "", "Body.")})
+assert len(p) == 1 and _os(SKILL) + ":3" in p[0], p
+
+# ---- 6. the lookbehind: a letter that ends a word is not a citation letter
+for line in ("Export as PDF`x`, gloss.", "The ID `abc` field, gloss."):
+    assert _run({DECISION: _doc(line)}) == [], line
+
+# ---- 7. a line that opens and closes inline code does not hide the next line's citation
+p = _run({DECISION: _doc("```inline``` then D`some-slug`", "See D`next-slug`.")})
+assert len(p) == 2, p
+assert any(_os(DECISION) + ":2" in m for m in p), p
+
+# ---- 3. no false alarm on ordinary inline code, a lone backtick, or quotes
 CLEAN = (
     "**Evidence.** `unmeasured`. Nobody timed it.",
     "Read the PDF `x` file.",
@@ -102,7 +127,6 @@ CLEAN = (
 )
 for ref in REFS:
     assert _run({DECISION: _doc(*CLEAN)}, ref) == [], ref
-    assert _run({DECISION: _doc("```text", "D`some-slug` example", "```")}, ref) == [], ref
 
 # ---- 4. the four leftovers on 41b96f9, pinned verbatim, each must be named
 LEFTOVERS = (

@@ -191,8 +191,7 @@ It checks eleven things:
 - The record and prose checks in `scripts/check_records.py` pass. They cover
   frontmatter, citations, bare-slug citations, index freshness and size.
   They also cover sentence length, waiter loops, and device shots. They
-  cover no pending record on `main`, a claim dry run, and visual-read
-  mention counts too.
+  cover no pending record on `main`, and a claim dry run too.
 - A skill whose files changed since the branch's merge base has raised its
   version. `scripts/check_version_bump.py` checks this.
 - Every `scripts/` and `.github/workflows/` path named in CLAUDE.md or a

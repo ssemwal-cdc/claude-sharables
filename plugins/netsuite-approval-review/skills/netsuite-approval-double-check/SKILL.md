@@ -480,7 +480,7 @@ Keying on `po_id` matters. A document-number match resolves whatever string you 
 
 Then reconcile. A professional-services invoice's "billed previously" plus its remaining contract phases should tie to the PO's contract value. A change order's PREVIOUSLY APPROVED AMOUNT should tie to the PO total. Residual differences usually correspond to a specific already-approved change order. Identify it rather than reporting a bare variance. Caution: `custbody_r_it_total_amount_invoiced` and `..._remaining` are frequently stale, often 0. Do not rely on them. Derive from actual bills instead.
 
-**The third verdict, `history-open` (D`netsuite-history-open`, a third verdict).** It sits between `clear` and `flagged`. Name the evidence in `head`. It applies when **every check on the item itself passes**. Those checks are the math, adequate support, and the amount tying to NetSuite. Adequate support means a **full** `text` or `spreadsheet` read. It also needs this reconcile, with 5c billed-to-date, to leave an **unexplained remainder in dollars** above zero. Example: the item's own figures tie. The PO's approved billing history runs ahead of the vendor's previously-billed figure. Nothing explains the gap.
+**The third verdict, `history-open` (D`netsuite-history-open`, a third verdict).** It sits between `clear` and `flagged`. Name the evidence in `head`. It applies when **every check on the item itself passes**. Those checks are the math, adequate support, and the amount tying to NetSuite. Adequate support means a **full** `text` or `spreadsheet` read. It also needs this reconcile, with 5c billed-to-date, to leave an **unexplained remainder in dollars** that is not zero. Example: the item's own figures tie. The PO's approved billing history runs ahead of the vendor's previously-billed figure. Nothing explains the gap.
 
 - **The remainder decides.** Subtract what named approved bills and change orders explain. Remainder exactly zero is `clear`. `poWarning` names each explaining bill or change order. Any other remainder is `history-open`, whether positive or negative. A negative one means the explanations overshoot the gap. `poWarning` names the explained part and the remainder, both in dollars.
 - **`poWarning` is required on `history-open`.** Write this sentence in it verbatim. "Billing history does not reconcile: ask AP and the vendor which side is wrong before approving." Put the dollar figures after it. The publish script flags a `history-open` item that has no `poWarning`.
@@ -548,6 +548,7 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
       "trandate": "8/4/2026",
       "verdict": "clear|history-open|flagged",
       "reviewedOn": "YYYY-MM-DD", "lastSeenPending": "YYYY-MM-DD",
+      "step5": true,
       "head": "one line, the verdict in plain terms",
       "facts": ["two or three skim lines with the specific figures"],
       "poContext": "PO<id> - contract $216,000 - billed to date $76,500 (approved) - this bill $12,000 pending - takes it to $88,500 of $216,000",
@@ -579,9 +580,10 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
 
 On each run:
 
-- Items already logged **clear** and unchanged: same amount, no new attachment. Do not re-fetch or re-analyze any attachment. Carry the entry forward. The whole entry, `attachmentFiles` included, is carried untouched.
+- Items already logged **clear** and unchanged: same amount, no new attachment, and `step5` true. Do not re-fetch or re-analyze any attachment. Carry the entry forward. The whole entry, `attachmentFiles` included, is carried untouched.
 - **A new attachment ends the carry.** Compare NetSuite file ids, not names. A file id absent from the last review's `attachmentFiles` forces the same full review as a changed amount. **In connector mode only the named-field files are visible.** So a new unnamed file on a carried bill is not detected. Browser mode is designed to see every `media.nl` link on the page.
 - Items previously **flagged** or **history-open**: re-check in full, every run. Never carry them forward. The vendor may have replaced the attachment.
+- **`step5` is true only when the run reached Step 5.** Only a connector run does. A **clear** with `step5` false came from a browser-only run. Never carry it forward. The next run reviews it in full, so a connector run reruns the history reconcile. A browser-only run stays silent about this.
 - **`history-open` is never carried forward.** Every run derives the verdict again from its own checks. A browser-only run says nothing about the billing history.
 - Items whose amount changed since the last review: treat as new, with a full review and a fresh verdict. The dashboard has no `changed` pill, so the change shows up only as a fresh full review of that item.
 - Brand-new items: full review.

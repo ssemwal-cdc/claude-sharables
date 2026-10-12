@@ -434,9 +434,13 @@ function itemRow(it,c2){
   h+='<p class="head">'+esc(it.head)+'</p>'+
   '<ul class="f">'+it.facts.map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+
   '<div class="po'+(it.poLink==="unlinked"?" unlinked":it.poLink==="failed"?" failed":"")+'">'+poLine(it)+esc(it.po)+
+  // A history-open warning is the whole reason for the verdict, so it is never clipped
+  // and has no `more` control.
   (it.poWarn?'<div class="pwarn"><span class="lbl">Worth clearing separately</span>'+
-   '<span class="txt" id="pw'+k+'">'+esc(it.poWarn)+'</span>'+
-   '<button class="more" onclick="pwtog('+k+',this)">more</button></div>':'')+'</div>'+
+   (c2.state==="history-open"
+     ?'<span class="full" id="pw'+k+'">'+esc(it.poWarn)+'</span></div>'
+     :'<span class="txt" id="pw'+k+'">'+esc(it.poWarn)+'</span>'+
+      '<button class="more" onclick="pwtog('+k+',this)">more</button></div>'):'')+'</div>'+
   '<p class="det" id="det'+k+'">'+esc(it.detail)+
    (it.att?'<br><span class="att">Read: '+esc(it.att)+'</span>':'')+'</p>'+
   '<div class="acts">'+

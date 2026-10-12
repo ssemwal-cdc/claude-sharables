@@ -128,6 +128,12 @@ def main():
         verdict = it.get("verdict") or ""
         if verdict not in VERDICTS:
             bad.append("%s has verdict %r" % (tid, verdict))
+        # Fail closed. history-open is the ask-AP warning plus a verdict. With no warning
+        # there is nothing to ask, so the item is flagged and the run is told which one.
+        if verdict == "history-open" and not str(it.get("poWarning") or "").strip():
+            verdict = "flagged"
+            print("WARNING: %s was history-open with no poWarning; published as flagged."
+                  % (it.get("docNo") or tid))
         items.append({
             # A blank id would crash int(). Keep the row (the verdict stands), warn below.
             "id": int(tid) if tid.strip() else None,

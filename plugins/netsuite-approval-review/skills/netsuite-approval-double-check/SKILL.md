@@ -366,7 +366,7 @@ Three things are not optional:
 - **`scanned` means that the bytes were a PDF, it parsed, and it yielded almost nothing.** A parse that threw is never `scanned`. It is `spreadsheet`, `image` or `unsupported`, named by what the bytes actually were.
 - **Multiple attachments: open every attached file, and read at least page 1 of each.** In connector mode that is the files the connector can list, today the one named field's file. Check the figures against the file the AP INVOICE or CHANGE ORDER ATTACHMENT field names. Mention the others, and say what page 1 of each showed when it bears on the item.
 - **Workbooks parse with SheetJS, loaded the way pdf.js is.** Probed live 2026-08-14: `await import('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')` populates `globalThis.XLSX` on the first attempt. Then `XLSX.read(new Uint8Array(ab), {type:'array'})` and `XLSX.utils.sheet_to_csv` round-trip cleanly. **This pin is deliberate. Do not bump it in a skill edit.** Same wrap, same whole-unit size budget: sheet by sheet, never split one. Read every sheet including hidden ones. Treat a blank cell from an unevaluated formula as missing, never as zero.
-- **Images and scanned pages: look at them, with `computer`.** That is the only tool in the set that returns a visual read. NetSuite renders the file in the record tab, which is ordinary HTML, so `document.createElement('canvas')` works here. A visual read counts as parsed text for the tie-outs. If no visual read is available, fall back to OCR and **cap the verdict.** An OCR-derived figure never produces a clean approval recommendation. Label it `read by OCR, not independently verified` and put it in front of the user.
+- **Images and scanned pages: look at them, with `computer`.** That is the only tool in the set that returns a visual read. NetSuite renders the file in the record tab, which is ordinary HTML, so `document.createElement('canvas')` works here. A visual read counts as parsed text for the tie-outs only. It never qualifies an item for `history-open`. If no visual read is available, fall back to OCR and **cap the verdict.** An OCR-derived figure never produces a clean approval recommendation. Label it `read by OCR, not independently verified` and put it in front of the user.
 
 <!--__SHARED:skill-first-page-read__-->
 - **Open every attachment, and read at least its first page.** That much is mandatory.
@@ -393,7 +393,7 @@ Three things are not optional:
 
 ### Check registry
 
-Every check in Steps 4 and 5 carries an **id**, the **lens** it serves, and the **capability** it needs. **`core` always runs and is never a choice.** Any other lens runs only when `config.focus.lenses` names it, so a run with no configuration executes exactly the `core` rows. **A lens adds checks. It never removes, relaxes or overrides one.** `clear` and `flagged` mean what they have always meant.
+Every check in Steps 4 and 5 carries an **id**, the **lens** it serves, and the **capability** it needs. **`core` always runs and is never a choice.** Any other lens runs only when `config.focus.lenses` names it, so a run with no configuration executes exactly the `core` rows. **A lens adds checks. It never removes, relaxes or overrides one.** `clear`, `history-open` and `flagged` mean what they have always meant.
 
 **Capabilities**, each already a condition these steps honour in prose:
 
@@ -480,11 +480,13 @@ Keying on `po_id` matters. A document-number match resolves whatever string you 
 
 Then reconcile. A professional-services invoice's "billed previously" plus its remaining contract phases should tie to the PO's contract value. A change order's PREVIOUSLY APPROVED AMOUNT should tie to the PO total. Residual differences usually correspond to a specific already-approved change order. Identify it rather than reporting a bare variance. Caution: `custbody_r_it_total_amount_invoiced` and `..._remaining` are frequently stale, often 0. Do not rely on them. Derive from actual bills instead.
 
-**The third verdict, `history-open` (D`netsuite-history-open`, a third verdict).** It sits between `clear` and `flagged`. Name the evidence in `head`. It applies when **every check on the item itself passes**. Those checks are the math, adequate support from a `text` or `spreadsheet` outcome, and the amount tying to NetSuite. It also needs this reconcile, with 5c billed-to-date, to leave a residual. **No named approved bill or change order explains it.** Example: the item's own figures tie. The PO's approved billing history runs ahead of the vendor's previously-billed figure. Nothing explains the gap.
+**The third verdict, `history-open` (D`netsuite-history-open`, a third verdict).** It sits between `clear` and `flagged`. Name the evidence in `head`. It applies when **every check on the item itself passes**. Those checks are the math, adequate support, and the amount tying to NetSuite. Adequate support means a **full** `text` or `spreadsheet` read. It also needs this reconcile, with 5c billed-to-date, to leave an **unexplained remainder in dollars** above zero. Example: the item's own figures tie. The PO's approved billing history runs ahead of the vendor's previously-billed figure. Nothing explains the gap.
 
-- **State the residual in `poWarning`, in dollars, with both figures.** Keep that line. It tells the user to ask AP and the vendor before approving.
-- **A residual that named approved bills or change orders fully explain is `clear`.** Name each one in `poWarning`.
-- **Any failing check on the item itself, or a missing or unreadable attachment, is `flagged`.** `flagged` outranks `history-open`.
+- **The remainder decides.** Subtract what named approved bills and change orders explain. Remainder zero is `clear`. `poWarning` names each explaining bill or change order. Remainder above zero is `history-open`. `poWarning` names the explained part and the remainder, both in dollars.
+- **`poWarning` is required on `history-open`.** Write this sentence in it verbatim. "Billing history does not reconcile: ask AP and the vendor which side is wrong before approving." Put the dollar figures after it. The publish script flags a `history-open` item that has no `poWarning`.
+- **Only a full `text` or `spreadsheet` read may reach `history-open`.** A partial read, a visual read, an OCR read, or any other outcome stays `flagged`. A visual read counting as parsed text for the tie-outs does not change that.
+- **Any failing check on the item itself is `flagged`.** So is a missing or unreadable attachment. So is a missing intermediate application, which is a failed check on the item itself. `flagged` outranks `history-open`.
+- **A gap that matches a duplicate is `flagged`.** A duplicate is never an explanation.
 - **A typed-reference mismatch alone never makes `history-open`.** It stays a data-entry note (5b).
 - Step 5 runs only in connector mode. A browser-mode run has no reconcile, so it never produces `history-open`, and says nothing about that.
 
@@ -522,8 +524,8 @@ ORDER BY t.trandate
 The memo field is the reliable engagement key. Staffing POs are often pooled, carrying many people at once. So a PO memo naming a different person is not a mismatch. Query by memo, not by PO alone. Three further checks. All three are **designed, not yet observed.** Step 5 runs only in connector mode, and no connector run has been walked through end to end.
 
 - **Cumulative reasonableness.** Sum all bills for the engagement including the pending one and compare to what the contract period implies. A partial-month factor that looks inflated in isolation is often exactly right once the whole engagement is footed.
-- **Application sequence.** If a pay application says "less previous certificates $X", confirm that bills totalling $X exist in NetSuite for that engagement. A missing intermediate application means the audit trail is broken. Flag it before approval.
-- **Duplicates.** Same vendor, same reference number, or same period billed twice. Also watch for two POs with identical memo and amount, which double-commits the spend.
+- **Application sequence.** If a pay application says "less previous certificates $X", confirm that bills totalling $X exist in NetSuite for that engagement. A missing intermediate application means the audit trail is broken. The item is `flagged`, and it outranks `history-open`.
+- **Duplicates.** Same vendor, same reference number, or same period billed twice. Also watch for two POs with identical memo and amount, which double-commits the spend. A duplicate makes the item `flagged`. It is never an explanation for a residual.
 
 ### 5e-5g. The `supply-chain` lens
 
@@ -579,7 +581,8 @@ On each run:
 
 - Items already logged **clear** and unchanged: same amount, no new attachment. Do not re-fetch or re-analyze any attachment. Carry the entry forward. The whole entry, `attachmentFiles` included, is carried untouched.
 - **A new attachment ends the carry.** Compare NetSuite file ids, not names. A file id absent from the last review's `attachmentFiles` forces the same full review as a changed amount. **In connector mode only the named-field files are visible.** So a new unnamed file on a carried bill is not detected. Browser mode is designed to see every `media.nl` link on the page.
-- Items previously **flagged**: re-check in full. The vendor may have replaced the attachment.
+- Items previously **flagged** or **history-open**: re-check in full, every run. Never carry them forward. The vendor may have replaced the attachment.
+- **A browser-mode re-check cannot see Step 5.** It keeps the prior `history-open` verdict and its `poWarning`. It adds that the history was not re-checked this run. It never clears the item silently.
 - Items whose amount changed since the last review: treat as new. The dashboard has no `changed` pill, so the change shows up only as a fresh full review of that item.
 - Brand-new items: full review.
 - Items no longer in the queue: drop the entry. There is no actioned bin to show them in, so a lingering entry would render as an apparently-pending row.

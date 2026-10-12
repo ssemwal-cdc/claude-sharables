@@ -288,7 +288,12 @@ def _citation_targets():
     return ids, pending
 
 
+NOTATION_LINES = (("CLAUDE.md", "never with backticks"),)  # the line that shows the pending form
+
+
 def _is_notation(rel, line):
+    if any(rel == f and mark in line for f, mark in NOTATION_LINES):
+        return True
     if rel != NOT_CITATIONS.notation_file:
         return False
     return any(mark in line for mark in NOT_CITATIONS.notation_marks)
@@ -387,7 +392,7 @@ def check_bare_slug_citations():
     return problems
 
 
-BACKTICK_SLUG = re.compile(r"(?<![A-Za-z0-9_])([DFG])`([a-z][a-z0-9-]*)`")
+BACKTICK_SLUG = re.compile(r"(?<![A-Za-z0-9_])([DFG])`([A-Za-z0-9][A-Za-z0-9-]*)`")
 STAMP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".github", "stamp.json")
 
 
@@ -411,17 +416,12 @@ def check_backtick_slug_citations():
                if r.keys and re.match(r"^[DFG][0-9]+$", r.keys.get("id", ""))}
     for path in _stamp_scanned():
         rel = _rel(path)
-        lines = _read(path).splitlines()
-        fm_end = _frontmatter_span(lines)
-        fence = False
-        for n, line in enumerate(lines, start=1):
-            if line.lstrip().startswith("```"):
-                fence = not fence
-                continue
-            if n <= fm_end or fence:
-                continue
+        for n, line in enumerate(_read(path).splitlines(), start=1):
+            # no fence or frontmatter skip: the stamp rewrite is unguarded, so the check mirrors it
             for m in BACKTICK_SLUG.finditer(line):
                 letter, slug = m.groups()
+                if slug.isnumeric():
+                    continue  # an all-number token is an id, not a slug
                 right = claimed.get((letter, slug)) or "%s‹%s›" % (letter, slug)
                 problems.append("%s:%d cites %s`%s`; write %s (the stamp rewrites only %s‹slug›)"
                                 % (rel, n, letter, slug, right, letter))

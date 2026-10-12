@@ -1299,10 +1299,10 @@ def test_vendor_tied_vocabulary_checks():
 
 
 # ------------------------------------- 15c. the NetSuite `history-open` verdict
-# Owner ruling 2026-10-12. Incident: bill 89 was flagged although its own figures tied (fee
-# table and NetSuite amount), while PO10086's approved billing history ran $75,187.50 ahead of
-# the vendor's previously-billed figure, unexplained. A third NetSuite verdict, ranked between
-# `clear` and `flagged`, with its own row class `vhist`. Template, VERDICTS and SKILL.md change
+# Owner ruling 2026-10-12. Incident: one bill (<BILL-ID>) was flagged although its own figures
+# tied (fee table and NetSuite amount), while the approved billing history of its PO (<PO-ID>)
+# ran $X,XXX.XX ahead of the vendor's previously-billed figure, unexplained. A third NetSuite
+# verdict, ranked between `clear` and `flagged`, with its own row class `vhist`. Template, VERDICTS and SKILL.md change
 # together (D63, gate verdicts against publish).
 #
 # Orders asserted. Rows, under the verdict sort: flagged, history-open, clear (the severity
@@ -1349,7 +1349,7 @@ def _render_ns_items(items, view_sort="verdict"):
 def test_history_open_verdict():
     items = {
         "701": _nsrp_item("BILL-HIST", "history-open", amount=89,
-                          poWarning="Billed $75,187.50 ahead of vendor history"),
+                          poWarning="Billed $X,XXX.XX ahead of vendor history"),
         "702": _nsrp_item("BILL-FLG", "flagged", amount=200),
         "703": _nsrp_item("BILL-CLR", "clear", amount=300),
     }
@@ -1367,7 +1367,7 @@ def test_history_open_verdict():
           by.get("BILL-HIST", {}).get("verdict") == "history-open",
           by.get("BILL-HIST", {}).get("verdict"))
     check("history-open: poWarn is kept on the item",
-          by.get("BILL-HIST", {}).get("poWarn") == "Billed $75,187.50 ahead of vendor history",
+          by.get("BILL-HIST", {}).get("poWarn") == "Billed $X,XXX.XX ahead of vendor history",
           by.get("BILL-HIST", {}).get("poWarn"))
     check("history-open: payload order is flagged, history-open, clear",
           [i["doc"] for i in its] == ["BILL-FLG", "BILL-HIST", "BILL-CLR"],
@@ -1379,7 +1379,7 @@ def test_history_open_verdict():
     secs, _ = _render_ns_items([
         {"id": 701, "type": "Bill", "doc": "BILL-HIST", "vendor": "V", "amt": 89,
          "trandate": "8/1/2026", "verdict": "history-open", "head": "h", "facts": ["f"],
-         "po": "", "poWarn": "Billed $75,187.50 ahead of vendor history", "poRef": "",
+         "po": "", "poWarn": "Billed $X,XXX.XX ahead of vendor history", "poRef": "",
          "poLink": "", "detail": "d", "att": ""},
         {"id": 702, "type": "Bill", "doc": "BILL-FLG", "vendor": "V", "amt": 200,
          "trandate": "8/1/2026", "verdict": "flagged", "head": "h", "facts": ["f"],
@@ -1397,7 +1397,7 @@ def test_history_open_verdict():
     check("history-open: verdict sort puts it between flagged and clear",
           [k for k, _, _ in rows] == ["702", "701", "703"], [k for k, _, _ in rows])
     check("history-open: poWarn text stays on its row",
-          "Billed $75,187.50 ahead of vendor history" in seg and "Worth clearing separately" in seg,
+          "Billed $X,XXX.XX ahead of vendor history" in seg and "Worth clearing separately" in seg,
           seg[:300])
     cards = secs.get("cards", "")
     labels = re.findall(r'<div class="l">([^<]*)</div>', cards)
@@ -1405,6 +1405,64 @@ def test_history_open_verdict():
           re.search(r'History open</div><div class="v"[^>]*>1<', cards) is not None, cards[:300])
     check("history-open: its tile sits between Clear and Flagged",
           labels[:3] == ["Clear", "History open", "Flagged"], labels)
+
+
+def test_history_open_needs_warning():
+    """Fail closed: a history-open item with no poWarning (empty, or the key absent) is the
+    ask-AP warning with nothing behind it, so publish demotes it to flagged and says which
+    item it demoted. An item that carries its warning keeps history-open."""
+    items = {
+        "701": _nsrp_item("BILL-EMPTY", "history-open", amount=89, poWarning=""),
+        "702": _nsrp_item("BILL-NOKEY", "history-open", amount=200),
+        "703": _nsrp_item("BILL-WARNED", "history-open", amount=300,
+                          poWarning="Billed $X,XXX.XX ahead of vendor history"),
+    }
+    rc, out, err, html = _nsrp_publish(items)
+    log = out + err
+    check("history-open no-warning: publish runs (demotes, does not abort)", rc == 0,
+          log.strip()[-200:])
+    blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/", html, re.S)
+    by = {i["doc"]: i for i in json.loads(blob.group(1))["items"]} if blob else {}
+    for doc in ("BILL-EMPTY", "BILL-NOKEY"):
+        check("history-open no-warning: %s is demoted to flagged" % doc,
+              by.get(doc, {}).get("verdict") == "flagged", by.get(doc, {}).get("verdict"))
+        check("history-open no-warning: a WARNING names %s" % doc,
+              any("WARNING" in l and doc in l for l in log.splitlines()), log[-200:])
+    check("history-open no-warning: a warned item keeps history-open",
+          by.get("BILL-WARNED", {}).get("verdict") == "history-open",
+          by.get("BILL-WARNED", {}).get("verdict"))
+
+
+_NS_WARN_CLAMP = re.compile(r"\.pwarn \.([\w-]+)\s*\{[^}]*line-clamp")
+_NS_SPAN = r'<span class="([^"]*)" id="pw%s">'
+
+
+def test_history_open_warning_not_clipped():
+    """A history-open row shows its poWarning in full. Detection: the template's own CSS
+    decides what clips. A rule `.pwarn .X{...line-clamp...}` names each clamped class; the
+    history-open row's warning span must carry none of them, and the row must carry no
+    `more` control (the control that reveals clipped text). If the template stops clamping,
+    the set is empty and the check holds trivially."""
+    long_warn = ("Billed $X,XXX.XX ahead of vendor history, approved across several billing "
+                 "cycles with no reconciling note on the PO record, so it runs past three "
+                 "lines in the dashboard column.")
+    secs, _ = _render_ns_items([
+        {"id": 701, "type": "Bill", "doc": "BILL-HIST", "vendor": "V", "amt": 89,
+         "trandate": "8/1/2026", "verdict": "history-open", "head": "h", "facts": ["f"],
+         "po": "", "poWarn": long_warn, "poRef": "", "poLink": "", "detail": "d", "att": ""}])
+    rows = _ns_rows(secs.get("rows", ""))
+    seg = {k: s for k, _, s in rows}.get("701", "")
+    tpl = open(os.path.join(NS, "assets", "dashboard_template.html"), encoding="utf-8").read()
+    clamped = set(_NS_WARN_CLAMP.findall(tpl))
+    span = re.search(_NS_SPAN % "701", seg)
+    span_classes = set(span.group(1).split()) if span else set()
+    check("history-open unclipped: the warning text is rendered in full",
+          long_warn in seg, seg[:300])
+    check("history-open unclipped: its warning span carries no clamped class %s"
+          % sorted(clamped), span is not None and not (span_classes & clamped),
+          span.group(0) if span else "no span")
+    check("history-open unclipped: the row has no `more` control",
+          'class="more"' not in seg, seg[-300:])
 
 
 def test_history_open_vocabulary_checks():
@@ -2398,8 +2456,10 @@ def main():
         test_vendor_tied_icr_only()
     test_vendor_tied_vocabulary_checks()
     test_history_open_vocabulary_checks()
+    test_history_open_needs_warning()
     if shutil.which("node"):
         test_history_open_verdict()
+        test_history_open_warning_not_clipped()
     test_field_run()
     if shutil.which("node"):
         test_stripped_js_parses()

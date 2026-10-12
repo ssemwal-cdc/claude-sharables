@@ -19,6 +19,8 @@ Run with no argument to print every problem the five checks find.
 """
 
 import collections
+import fnmatch
+import glob
 import json
 import os
 import re
@@ -286,7 +288,12 @@ def _citation_targets():
     return ids, pending
 
 
+NOTATION_LINES = (("CLAUDE.md", "never with backticks"),)  # the line that shows the pending form
+
+
 def _is_notation(rel, line):
+    if any(rel == f and mark in line for f, mark in NOTATION_LINES):
+        return True
     if rel != NOT_CITATIONS.notation_file:
         return False
     return any(mark in line for mark in NOT_CITATIONS.notation_marks)
@@ -382,6 +389,42 @@ def check_bare_slug_citations():
                 problems.append(
                     "%s:%d cites `%s` by slug alone; write `<letter><id-or-slug>`, "
                     "a short gloss" % (rel, n, slug))
+    return problems
+
+
+BACKTICK_SLUG = re.compile(r"(?<![A-Za-z0-9_])([DFG])`([A-Za-z0-9][A-Za-z0-9-]*)`")
+STAMP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".github", "stamp.json")
+
+
+def _stamp_scanned():
+    """The files the stamp claim rewrites: cite.scanGlobs minus cite.excludeGlobs, read from the stamp."""
+    with open(STAMP, encoding="utf-8") as fh:
+        cite = json.load(fh)["cite"]
+    out = set()
+    for g in cite["scanGlobs"]:
+        for path in glob.glob(os.path.join(REPO, g), recursive=True):
+            rel = _rel(path).replace(os.sep, "/")
+            if os.path.isfile(path) and not any(fnmatch.fnmatch(rel, x) for x in cite["excludeGlobs"]):
+                out.add(path)
+    return sorted(out)
+
+
+def check_backtick_slug_citations():
+    """Flag D`slug`: the stamp rewrites only D‹slug›, so the backtick form survives the claim."""
+    problems = []
+    claimed = {(r.letter, r.keys.get("slug")): r.keys["id"] for r in load_records()
+               if r.keys and re.match(r"^[DFG][0-9]+$", r.keys.get("id", ""))}
+    for path in _stamp_scanned():
+        rel = _rel(path)
+        for n, line in enumerate(_read(path).splitlines(), start=1):
+            # no fence or frontmatter skip: the stamp rewrite is unguarded, so the check mirrors it
+            for m in BACKTICK_SLUG.finditer(line):
+                letter, slug = m.groups()
+                if slug.isnumeric():
+                    continue  # an all-number token is an id, not a slug
+                right = claimed.get((letter, slug)) or "%s‹%s›" % (letter, slug)
+                problems.append("%s:%d cites %s`%s`; write %s (the stamp rewrites only %s‹slug›)"
+                                % (rel, n, letter, slug, right, letter))
     return problems
 
 
@@ -801,6 +844,7 @@ CHECKS = (
     ("frontmatter", check_frontmatter),
     ("citations", check_citations),
     ("bare slug citations", check_bare_slug_citations),
+    ("backtick slug citations", check_backtick_slug_citations),
     ("index freshness", check_index_fresh),
     ("index size", check_index_size),
     ("sentence length", check_sentence_length),

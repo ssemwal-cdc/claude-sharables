@@ -43,6 +43,7 @@ Compare the external prerequisites of the new skill to each plugin, exactly. A m
 python3 scripts/validate.py                  # the build gate. Runs the shared-block checks too.
 python3 scripts/test_skill_code.py           # runs the code the skills carry. Needs node.
 python3 scripts/test_validate_versions.py    # the per-skill version tail checks
+python3 scripts/test_check_records.py        # the backtick slug citation check
 python3 scripts/test_check_version_bump.py   # the bump gate, on throwaway repos
 python3 scripts/check_records.py --write-index   # by hand. The claim is `merge <pr> --confirm`, through the stamp
 python3 scripts/shared_blocks.py --sync      # push plugins/_shared into every marked site
@@ -139,6 +140,6 @@ live in the skill. See in-skill-onboarding, onboarding lives in the skill.
 - `findings/_index.md` lists every observed defect and measurement, in the same six columns.
 - `gaps/_index.md` lists every unobserved claim and unfired branch, in the same six columns. Read it before citing anything recent as established.
 - A citation is an id plus a short gloss, never a bare id and never a path.
-- A record on a branch has `id: pending` and is cited by slug. Nobody allocates a number on a branch.
+- A record on a branch has `id: pending` and is cited as `D‹slug›`, never with backticks. The stamp rewrites only that form. Nobody allocates a number on a branch.
 - A branch writes `id: pending`. `merge <pr> --confirm` claims through the stamp (`.github/stamp.json`) before the merge. CI's `records` job refuses a number a branch adds without a `Record-claim` trailer, and any pending record on main. `D98`, claim through the stamp.
 - The record and prose checks run inside `python3 scripts/validate.py`. The Bash hook in `.claude/settings.json` refuses the shared-tree commands. `D82`, hooks and checks pass.

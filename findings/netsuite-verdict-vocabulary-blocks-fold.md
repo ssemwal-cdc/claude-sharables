@@ -30,7 +30,7 @@ is not.
 
 **Evidence.** Recorded 2026-08-24, alongside
 `F123`, the fold's own size measurement.
-Rewritten 2026-10-12 for the third verdict (D`netsuite-history-open`, a third NetSuite verdict).
+Rewritten 2026-10-12 for the third verdict (D109, a third NetSuite verdict).
 The earlier premise, that the verdicts were exactly `clear` and `flagged`, no longer holds.
 The conclusion does.
 

@@ -21,7 +21,7 @@ On success, update the state file per the skill's schema, including today's date
 Then report in chat with one line, in this exact shape:
 
 ```
-<n> pending · <n> flagged · dashboard updated
+<n> pending · <n> flagged · <n> history open · dashboard updated
 ```
 
 Add a second line only if something blocked the run. Do not put per-item

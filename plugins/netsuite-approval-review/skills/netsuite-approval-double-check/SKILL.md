@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v41 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
+description: v42 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear, history open or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 41 — 2026-10-09.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
+**Skill version 42 — 2026-10-12.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
 
 Review every bill, purchase order and change order in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document. Cross-check against the real purchase order and billing history. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
@@ -81,13 +81,13 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 3. **Use the existing workspace copies and say so, once**, naming the files' modification date from `ls -l` near the headline. Then carry on. Do not stop the run over it. Only the template and publish script can lag, so the verdicts are current either way.
 
 - **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, say exactly that. Stop before Step 7. There is no template to inject into. Inventing one is forbidden. Expect this case on Cowork.
-- **This plugin ships layout template `v17`. Confirm the sync landed by reading it back:**
+- **This plugin ships layout template `v18`. Confirm the sync landed by reading it back:**
 
 ```bash
 head -n 8 "<workspace>/NetSuite Approval Checks/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
 
-If that does not say `v17`, the sync did not land and the dashboard is stale. Say so once near the headline, naming both versions, and carry on. Same fail-open rule as rung 3. This check is the only one that can see a uniformly stale workspace. The template and the publish script are copied together, so they agree with each other while both are old.
+If that does not say `v18`, the sync did not land and the dashboard is stale. Say so once near the headline, naming both versions, and carry on. Same fail-open rule as rung 3. This check is the only one that can see a uniformly stale workspace. The template and the publish script are copied together, so they agree with each other while both are old.
 
 <!--__SHARED:skill-chrome-first-call__-->
 - **Call `tabs_context_mcp` once, before any browser action, on every run.** This is the Claude in Chrome tool. Do this first, even in a scheduled run where nobody is watching.
@@ -366,7 +366,7 @@ Three things are not optional:
 - **`scanned` means that the bytes were a PDF, it parsed, and it yielded almost nothing.** A parse that threw is never `scanned`. It is `spreadsheet`, `image` or `unsupported`, named by what the bytes actually were.
 - **Multiple attachments: open every attached file, and read at least page 1 of each.** In connector mode that is the files the connector can list, today the one named field's file. Check the figures against the file the AP INVOICE or CHANGE ORDER ATTACHMENT field names. Mention the others, and say what page 1 of each showed when it bears on the item.
 - **Workbooks parse with SheetJS, loaded the way pdf.js is.** Probed live 2026-08-14: `await import('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')` populates `globalThis.XLSX` on the first attempt. Then `XLSX.read(new Uint8Array(ab), {type:'array'})` and `XLSX.utils.sheet_to_csv` round-trip cleanly. **This pin is deliberate. Do not bump it in a skill edit.** Same wrap, same whole-unit size budget: sheet by sheet, never split one. Read every sheet including hidden ones. Treat a blank cell from an unevaluated formula as missing, never as zero.
-- **Images and scanned pages: look at them, with `computer`.** That is the only tool in the set that returns a visual read. NetSuite renders the file in the record tab, which is ordinary HTML, so `document.createElement('canvas')` works here. A visual read counts as parsed text for the tie-outs. If no visual read is available, fall back to OCR and **cap the verdict.** An OCR-derived figure never produces a clean approval recommendation. Label it `read by OCR, not independently verified` and put it in front of the user.
+- **Images and scanned pages: look at them, with `computer`.** That is the only tool in the set that returns a visual read. NetSuite renders the file in the record tab, which is ordinary HTML, so `document.createElement('canvas')` works here. A visual read counts as parsed text for the tie-outs only. It never qualifies an item for `history-open`. If no visual read is available, fall back to OCR and **cap the verdict.** An OCR-derived figure never produces a clean approval recommendation. Label it `read by OCR, not independently verified` and put it in front of the user.
 
 <!--__SHARED:skill-first-page-read__-->
 - **Open every attachment, and read at least its first page.** That much is mandatory.
@@ -393,14 +393,14 @@ Three things are not optional:
 
 ### Check registry
 
-Every check in Steps 4 and 5 carries an **id**, the **lens** it serves, and the **capability** it needs. **`core` always runs and is never a choice.** Any other lens runs only when `config.focus.lenses` names it, so a run with no configuration executes exactly the `core` rows. **A lens adds checks. It never removes, relaxes or overrides one.** `clear` and `flagged` mean what they have always meant.
+Every check in Steps 4 and 5 carries an **id**, the **lens** it serves, and the **capability** it needs. **`core` always runs and is never a choice.** Any other lens runs only when `config.focus.lenses` names it, so a run with no configuration executes exactly the `core` rows. **A lens adds checks. It never removes, relaxes or overrides one.** `clear`, `history-open` and `flagged` mean what they have always meant.
 
 **Capabilities**, each already a condition these steps honour in prose:
 
 | capability | means | when it is absent |
 |---|---|---|
 | `record` | fields from the Step 1a/2 queries, or read off the record page — Step 2 opens that item's tab when it needs one | never absent — the queue is built from them |
-| `attachment` | a Step 4 attachment outcome of `text` or `spreadsheet` | the item is `flagged`, **naming which outcome** — Step 4. There is no skipped verdict on this side: `VERDICTS` is `clear` and `flagged` only, and the publish script aborts on anything else |
+| `attachment` | a Step 4 attachment outcome of `text` or `spreadsheet` | the item is `flagged`, **naming which outcome** — Step 4. There is no skipped verdict on this side: `VERDICTS` is `clear`, `history-open` and `flagged` only, and the publish script aborts on anything else |
 | `connector` | a working NetSuite SuiteQL tool | Step 5 does not run and **nothing is said about it** — Step 5 |
 | `queue` | the other items in this run, not this item alone | never absent — it marks the check as cross-item |
 
@@ -419,7 +419,7 @@ Every check in Steps 4 and 5 carries an **id**, the **lens** it serves, and the 
 | `ns.po-price-variance` | supply-chain | `connector` | Step 5f — PO line rate against billed rate |
 | `ns.lead-time` | supply-chain | `connector` | Step 5g — PO due date against receipt date, observation only |
 
-**A check that cannot run is never a silent pass.** The two absences above behave differently on purpose. A missing attachment skips the item and names the outcome that caused it. A missing connector skips Step 5 and says nothing at all. Do not normalise them into one rule.
+**A check that cannot run is never a silent pass.** The two absences above behave differently on purpose. A missing attachment skips the item and names the outcome that caused it. A missing connector skips Step 5 and says nothing at all. Such a run never reaches `history-open`. Do not normalise them into one rule.
 
 ### Math
 
@@ -480,6 +480,16 @@ Keying on `po_id` matters. A document-number match resolves whatever string you 
 
 Then reconcile. A professional-services invoice's "billed previously" plus its remaining contract phases should tie to the PO's contract value. A change order's PREVIOUSLY APPROVED AMOUNT should tie to the PO total. Residual differences usually correspond to a specific already-approved change order. Identify it rather than reporting a bare variance. Caution: `custbody_r_it_total_amount_invoiced` and `..._remaining` are frequently stale, often 0. Do not rely on them. Derive from actual bills instead.
 
+**The third verdict, `history-open` (D`netsuite-history-open`, a third verdict).** It sits between `clear` and `flagged`. Name the evidence in `head`. It applies when **every check on the item itself passes**. Those checks are the math, adequate support, and the amount tying to NetSuite. Adequate support means a **full** `text` or `spreadsheet` read. It also needs this reconcile, with 5c billed-to-date, to leave an **unexplained remainder in dollars** that is not zero. Example: the item's own figures tie. The PO's approved billing history runs ahead of the vendor's previously-billed figure. Nothing explains the gap.
+
+- **The remainder decides.** Subtract what named approved bills and change orders explain. Remainder exactly zero is `clear`. `poWarning` names each explaining bill or change order. Any other remainder is `history-open`, whether positive or negative. A negative one means the explanations overshoot the gap. `poWarning` names the explained part and the remainder, both in dollars.
+- **`poWarning` is required on `history-open`.** Write this sentence in it verbatim. "Billing history does not reconcile: ask AP and the vendor which side is wrong before approving." Put the dollar figures after it. The publish script flags a `history-open` item that has no `poWarning`.
+- **Only a full `text` or `spreadsheet` read may reach `history-open`.** A partial read, an OCR read, or any other outcome stays `flagged`. An image or scanned read never reaches `history-open`.
+- **Any failing check on the item itself is `flagged`.** So is a missing or unreadable attachment. So is a missing intermediate application, which is a failed check on the item itself. `flagged` outranks `history-open`.
+- **A gap that matches a duplicate is `flagged`.** A duplicate is never an explanation.
+- **A typed-reference mismatch alone never makes `history-open`.** It stays a data-entry note (5b).
+- Step 5 runs only in connector mode, so only a connector run can reach `history-open`. A browser-only run judges what it can see. It gives `clear` or `flagged` from its own checks. It says nothing about the billing history (D69, silence on an absent connector).
+
 ### 5c. Billed-to-date comes from the linkage, split by approval state
 
 **Derive it through the link table, not from a memo search.** Sum the bills NetSuite has actually applied to that PO, deduplicated to distinct bill ids per 5a. Keep approved and pending apart.
@@ -514,8 +524,8 @@ ORDER BY t.trandate
 The memo field is the reliable engagement key. Staffing POs are often pooled, carrying many people at once. So a PO memo naming a different person is not a mismatch. Query by memo, not by PO alone. Three further checks. All three are **designed, not yet observed.** Step 5 runs only in connector mode, and no connector run has been walked through end to end.
 
 - **Cumulative reasonableness.** Sum all bills for the engagement including the pending one and compare to what the contract period implies. A partial-month factor that looks inflated in isolation is often exactly right once the whole engagement is footed.
-- **Application sequence.** If a pay application says "less previous certificates $X", confirm that bills totalling $X exist in NetSuite for that engagement. A missing intermediate application means the audit trail is broken. Flag it before approval.
-- **Duplicates.** Same vendor, same reference number, or same period billed twice. Also watch for two POs with identical memo and amount, which double-commits the spend.
+- **Application sequence.** If a pay application says "less previous certificates $X", confirm that bills totalling $X exist in NetSuite for that engagement. A missing intermediate application means the audit trail is broken. The item is `flagged`, and it outranks `history-open`.
+- **Duplicates.** Same vendor, same reference number, or same period billed twice. Also watch for two POs with identical memo and amount, which double-commits the spend. A duplicate makes the item `flagged`. It is never an explanation for a residual.
 
 ### 5e-5g. The `supply-chain` lens
 
@@ -536,12 +546,13 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
     "<transaction id>": {
       "docNo": "...", "type": "Bill|Purchase Order|Change Order", "vendor": "...", "amount": 0,
       "trandate": "8/4/2026",
-      "verdict": "clear|flagged",
+      "verdict": "clear|history-open|flagged",
       "reviewedOn": "YYYY-MM-DD", "lastSeenPending": "YYYY-MM-DD",
+      "step5": true,
       "head": "one line, the verdict in plain terms",
       "facts": ["two or three skim lines with the specific figures"],
       "poContext": "PO<id> - contract $216,000 - billed to date $76,500 (approved) - this bill $12,000 pending - takes it to $88,500 of $216,000",
-      "poWarning": "optional; a duplicate PO worth naming, or a typed reference that disagrees with the linkage",
+      "poWarning": "optional; a duplicate PO worth naming, a typed reference that disagrees with the linkage, the residual a `history-open` item carries, or the approved bills and change orders that explain a residual on a `clear` one",
       "poLink": "linked|unlinked|failed",
       "poTyped": "what custbody3 said, recorded whether or not it agrees",
       "detail": "the full paragraph of reasoning",
@@ -569,10 +580,12 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
 
 On each run:
 
-- Items already logged **clear** and unchanged: same amount, no new attachment. Do not re-fetch or re-analyze any attachment. Carry the entry forward. The whole entry, `attachmentFiles` included, is carried untouched.
+- Items already logged **clear** and unchanged: same amount, no new attachment, and `step5` true. Do not re-fetch or re-analyze any attachment. Carry the entry forward. The whole entry, `attachmentFiles` included, is carried untouched.
 - **A new attachment ends the carry.** Compare NetSuite file ids, not names. A file id absent from the last review's `attachmentFiles` forces the same full review as a changed amount. **In connector mode only the named-field files are visible.** So a new unnamed file on a carried bill is not detected. Browser mode is designed to see every `media.nl` link on the page.
-- Items previously **flagged**: re-check in full. The vendor may have replaced the attachment.
-- Items whose amount changed since the last review: treat as new. The dashboard has no `changed` pill, so the change shows up only as a fresh full review of that item.
+- Items previously **flagged** or **history-open**: re-check in full, every run. Never carry them forward. The vendor may have replaced the attachment.
+- **`step5` is true only when the run reached Step 5.** Only a connector run does. A **clear** with `step5` false came from a browser-only run. Never carry it forward. The next run reviews it in full, so a connector run reruns the history reconcile. A browser-only run stays silent about this.
+- **`history-open` is never carried forward.** Every run derives the verdict again from its own checks. A browser-only run says nothing about the billing history.
+- Items whose amount changed since the last review: treat as new, with a full review and a fresh verdict. The dashboard has no `changed` pill, so the change shows up only as a fresh full review of that item.
 - Brand-new items: full review.
 - Items no longer in the queue: drop the entry. There is no actioned bin to show them in, so a lingering entry would render as an apparently-pending row.
 
@@ -617,7 +630,7 @@ A design change goes in the plugin repo, not the workspace copy. Step 0 overwrit
 Step 8 runs first, and the headline follows it. **Report in chat with one line only**, no per-item blocks.
 
 ```
-6 pending · 1 flagged · dashboard updated
+6 pending · 1 flagged · 1 history open · dashboard updated
 ```
 
 Add a second line only if something blocked the run. That includes a login redirect, a missing attachment that prevented review, or a renamed portlet. Never put the verdicts in chat. **One more line, and only in one case: a lens the user picked could not run.** Suppose `config.focus.lenses` names a lens whose capability is missing, such as `supply-chain` with no working connector. Then open the chat reply with a single plain line saying so. Name the lens and what is missing, then never mention it again in that run.

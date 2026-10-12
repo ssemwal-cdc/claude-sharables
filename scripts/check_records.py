@@ -796,63 +796,6 @@ def check_claim_dry_run():
     return problems
 
 
-# ---------------------------------------------- check, visual read mentions
-# D84's own record format: "Checks. The script or test that enforces it, or
-# none." An inline shell command in prose is neither. This counts "image" and
-# "scanned" mentions across every SKILL.md and fails on drift from what
-# findings/netsuite-visual-read-thin.md states, so the count stays mechanical.
-VISUAL_READ_FINDING = os.path.join("findings", "netsuite-visual-read-thin.md")
-VISUAL_READ_COUNTS = re.compile(
-    r"Re-measured [0-9-]+: Procore `image` (\d+) times, `scanned` (\d+) times, "
-    r"NetSuite `image` (\d+) times, `scanned` (\d+) times\.")
-
-
-def _count_mentions(word, path):
-    return len(re.findall(r"\b%s\b" % re.escape(word), _read(path)))
-
-
-def check_visual_read_mentions():
-    """The finding's stated image/scanned counts must match the real files."""
-    problems = []
-    path = os.path.join(REPO, VISUAL_READ_FINDING)
-    if not os.path.isfile(path):
-        return problems
-    m = VISUAL_READ_COUNTS.search(_read(path))
-    if not m:
-        problems.append(
-            "%s has no 'Re-measured <date>: Procore `image` N times, ...' line "
-            "for check_visual_read_mentions() to check" % VISUAL_READ_FINDING)
-        return problems
-    p_image, p_scanned, n_image, n_scanned = (int(g) for g in m.groups())
-    stated = {"procore": (p_image, p_scanned), "netsuite": (n_image, n_scanned)}
-    plugins_dir = os.path.join(REPO, "plugins")
-    for keyword, (want_image, want_scanned) in stated.items():
-        plugin = next(
-            (e for e in sorted(os.listdir(plugins_dir)) if keyword in e.lower()),
-            None) if os.path.isdir(plugins_dir) else None
-        if not plugin:
-            problems.append(
-                "no plugin folder name contains %r, for check_visual_read_mentions()"
-                % keyword)
-            continue
-        skills_dir = os.path.join(plugins_dir, plugin, "skills")
-        have_image = have_scanned = 0
-        if os.path.isdir(skills_dir):
-            for skill in sorted(os.listdir(skills_dir)):
-                sp = os.path.join(skills_dir, skill, "SKILL.md")
-                if os.path.isfile(sp):
-                    have_image += _count_mentions("image", sp)
-                    have_scanned += _count_mentions("scanned", sp)
-        if (have_image, have_scanned) != (want_image, want_scanned):
-            problems.append(
-                "%s/skills/*/SKILL.md mentions image %d time(s) and scanned %d "
-                "time(s); %s states image %d, scanned %d. Re-run the count and "
-                "update the Evidence line."
-                % (plugin, have_image, have_scanned, VISUAL_READ_FINDING,
-                   want_image, want_scanned))
-    return problems
-
-
 # ----------------------------------------------------------------------- main
 CHECKS = (
     ("frontmatter", check_frontmatter),
@@ -865,7 +808,6 @@ CHECKS = (
     ("device shots", check_device_shots),
     ("no pending on main", check_no_pending_on_main),
     ("claim dry run", check_claim_dry_run),
-    ("visual read mentions", check_visual_read_mentions),
 )
 
 

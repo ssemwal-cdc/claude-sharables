@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v17"
+TEMPLATE_VERSION = "v18"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -59,7 +59,7 @@ def check_template_version(tpl):
 #__END_SHARED:pub-version-check__
 
 
-# The only two verdicts this review produces (Step 6 of SKILL.md). An unknown value used to
+# The only three verdicts this review produces (Step 6 of SKILL.md). An unknown value used to
 # fall straight through the template's pill logic into "Clear" - a fail-open on the one field
 # that decides what gets approved - so it aborts the publish instead. Procore's script has
 # had this guard since it shipped; this side never got it.
@@ -90,7 +90,7 @@ def serialise(payload):
     return "{" + ",".join(parts) + "}"
 #__END_SHARED:pub-payload-serialise__
 
-VERDICTS = ("clear", "flagged")
+VERDICTS = ("clear", "history-open", "flagged")
 
 
 #__SHARED:pub-strip-comments__
@@ -128,6 +128,12 @@ def main():
         verdict = it.get("verdict") or ""
         if verdict not in VERDICTS:
             bad.append("%s has verdict %r" % (tid, verdict))
+        # Fail closed. history-open is the ask-AP warning plus a verdict. With no warning
+        # there is nothing to ask, so the item is flagged and the run is told which one.
+        if verdict == "history-open" and not str(it.get("poWarning") or "").strip():
+            verdict = "flagged"
+            print("WARNING: %s was history-open with no poWarning; published as flagged."
+                  % (it.get("docNo") or tid))
         items.append({
             # A blank id would crash int(). Keep the row (the verdict stands), warn below.
             "id": int(tid) if tid.strip() else None,
@@ -157,7 +163,7 @@ def main():
         sys.exit("ABORT: unknown verdict(s) - " + "; ".join(bad) +
                  ". Allowed: " + ", ".join(VERDICTS))
 
-    order = {"flagged": 0, "clear": 1}
+    order = {"flagged": 0, "history-open": 1, "clear": 2}
     items.sort(key=lambda i: (order.get(i["verdict"], 2), -i["amt"]))
 
     missing = [i["doc"] for i in items if not i["head"] or not i["facts"]]
@@ -229,8 +235,9 @@ def main():
     #__END_SHARED:pub-render-archive__
     flagged = sum(1 for i in items if i["verdict"] == "flagged")
     print("wrote %s" % OUT)
-    print("%d items (%d flagged) as of %s" % (len(items), flagged, payload["lastRun"]))
-    print("headline: %d pending · %d flagged · dashboard updated" % (len(items), flagged))
+    hist = sum(1 for i in items if i["verdict"] == "history-open")
+    print("%d items (%d flagged, %d history open) as of %s" % (len(items), flagged, hist, payload["lastRun"]))
+    print("headline: %d pending · %d flagged · %d history open · dashboard updated" % (len(items), flagged, hist))
     if cfg.get("tool"):
         print("identity: employee %s via %s" % (cfg["me"], cfg["tool"]))
     else:

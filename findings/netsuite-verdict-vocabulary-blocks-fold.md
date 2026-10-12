@@ -10,17 +10,14 @@ date: 2026-08-24
 **Outcome protected.** Nobody adds a feature to NetSuite that would copy a file byte for
 byte.
 
-**Argument.** NetSuite is not getting a slim build to match Procore's, and the reason is
-structural.
-Its verdicts are exactly `clear` and `flagged`, which is the slim build's
-actionable set.
-The fold branch is the `else`.
-So nothing would ever fold.
-The output would be a byte-for-byte duplicate of `index.html` on every run.
+**Argument.** NetSuite has no slim build, and nothing in it would fold.
+Procore's slim build folds the verdicts that need no action.
+NetSuite's three verdicts, `clear`, `history-open` and `flagged`, all need a read before approval.
+NetSuite has no `skipped` verdict, because a missing attachment flags an item.
+So there is no verdict to fold.
+A fold would copy `index.html` byte for byte on every run.
 
-NetSuite has no `skipped` concept by design, because a missing attachment
-flags an item.
-It could not be a shared block either, because the folded keep-list is
+The fold could not be a shared block either, because the folded keep-list is
 per-domain.
 The Procore keep-list names project, due, project id, contract id, kind,
 workflow and key.
@@ -33,6 +30,9 @@ is not.
 
 **Evidence.** Recorded 2026-08-24, alongside
 `F123`, the fold's own size measurement.
+Rewritten 2026-10-12 for the third verdict (D`netsuite-history-open`, a third NetSuite verdict).
+The earlier premise, that the verdicts were exactly `clear` and `flagged`, no longer holds.
+The conclusion does.
 
 **Checks.** `check_verdict_vocabulary()` in `scripts/shared_blocks.py` pins the
 NetSuite vocabulary.

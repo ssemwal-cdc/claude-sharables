@@ -48,8 +48,6 @@ exist, or the build fails outright.
   which redirects through it.
 - The NetSuite README's and `SKILL.md`'s published "3 hours" staleness
   warning must match `dashboard_template.html`'s `isStale()` threshold.
-- `check_visual_read_mentions()`, in `scripts/check_records.py`. See
-  `F79`, NetSuite visual read prose thin.
 
 **Left as honest prose, on purpose.** Each of these is a claim a script
 cannot observe from this checkout. Each stays prose, cited or marked

@@ -95,6 +95,10 @@ Covered:
                            inside the pool/deadline shape.
  23. Mid-run stop rule  - presence only. The Procore SKILL.md has a line that tells the
                            run to stop after a stuck call.
+ 24. NetSuite `history-open` - the third NetSuite verdict (owner ruling 2026-10-12): publish
+                           accepts it, the page gives it its own row class, tile and PO
+                           warning, sorts it between flagged and clear, and both shared
+                           verdict checks see it.
 
 Usage:  python3 scripts/test_skill_code.py
 Needs node on PATH for 1-3, 16, 18 and 21; those are skipped with a notice if it is missing.
@@ -1114,12 +1118,16 @@ def test_tied_verdict():
 # Owner ruling 2026-10-07: a sixth Procore verdict, ranked below `tied` and above `skipped`.
 # Accepted cost blank AND Cost Impact blank, Vendor Proposed ties verbatim to the proposal
 # total. Template, VERDICTS and SKILL.md change together (D63, gate verdicts against publish).
-def _render_page(index_html):
+def _render_page(index_html, view_sort=None):
     """Run the published page's own render() in node against a stub DOM. Returns
-    ({element id: innerHTML}, [wrapper ids in markup order])."""
+    ({element id: innerHTML}, [wrapper ids in markup order]). `view_sort` stores that sort in
+    the page's saved view (NetSuite's `ns_view_v2`), so a test can pick the verdict sort."""
     text = open(index_html, encoding="utf-8").read()
     script = re.findall(r"<script>(.*?)</script>", text, re.S)[-1]
     order = re.findall(r'<div id="(rows|\w+wrap)"', text)
+    stored = "null" if view_sort is None else json.dumps(json.dumps({"sort": view_sort}))
+    ls_line = ("var localStorage = {getItem(k){return k===\"ns_view_v2\"?" + stored +
+               ":null}, setItem(){}};\n")
     harness = """
 var out = {};
 function el(id){ var e = {style:{}, classList:{add(){},remove(){},toggle(){}}, value:"", options:[],
@@ -1134,8 +1142,7 @@ var document = {getElementById(id){return cache[id]||(cache[id]=el(id))}, body: 
   addEventListener(){}, querySelector(){return el("q")}, querySelectorAll(){return []},
   createElement(){return el("c")}};
 var window = {}; var setInterval = function(){return 0}; var setTimeout = function(){return 0};
-var localStorage = {getItem(){return null}, setItem(){}};
-""" + script + """
+""" + ls_line + script + """
 console.log(JSON.stringify(out));
 """
     rc, o, err = run_node(harness)
@@ -1291,6 +1298,211 @@ def test_vendor_tied_vocabulary_checks():
         shutil.rmtree(d, ignore_errors=True)
 
 
+# ------------------------------------- 15c. the NetSuite `history-open` verdict
+# Owner ruling 2026-10-12. Incident: one bill (<BILL-ID>) was flagged although its own figures
+# tied (fee table and NetSuite amount), while the approved billing history of its PO (<PO-ID>)
+# ran $X,XXX.XX ahead of the vendor's previously-billed figure, unexplained. A third NetSuite
+# verdict, ranked between `clear` and `flagged`, with its own row class `vhist`. Template, VERDICTS and SKILL.md change
+# together (D63, gate verdicts against publish).
+#
+# Orders asserted. Rows, under the verdict sort: flagged, history-open, clear (the severity
+# rank the ruling names). Summary tiles: Clear, History open, Flagged (the template's own tile
+# order, with the new tile between its two neighbours). The default sort is newest, so the row
+# test selects the verdict sort through the page's saved view.
+#
+# Not tested: a total of dollars cleared to approve. NetSuite's template has none; its `In
+# queue` tile sums every item, so there is no total for history-open to be excluded from.
+_NS_ROW = re.compile(r'<div class="(row[^"]*)" id="row(-?\d+)"')
+
+
+def _nsrp_item(doc, verdict, **kw):
+    b = _nsrp_bill(doc)
+    b.update(verdict=verdict, **kw)
+    return b
+
+
+def _ns_rows(rows_html):
+    """(row key, row class, row markup) for each rendered row, in DOM order."""
+    ms = list(_NS_ROW.finditer(rows_html))
+    return [(m.group(2), m.group(1),
+             rows_html[m.start():ms[i + 1].start() if i + 1 < len(ms) else len(rows_html)])
+            for i, m in enumerate(ms)]
+
+
+def _render_ns_items(items, view_sort="verdict"):
+    """Inject `items` into the NetSuite template's data block (the same shape publish writes),
+    then run the page's own script through _render_page under the saved sort."""
+    tpl = open(os.path.join(NS, "assets", "dashboard_template.html"), encoding="utf-8").read()
+    a = tpl.index("/*__REVIEW_DATA__*/") + len("/*__REVIEW_DATA__*/")
+    b = tpl.index("/*__END__*/")
+    payload = {"lastRun": "2026-10-12 09:00", "lastRunISO": "",
+               "config": {"account": "1"}, "items": items}
+    d = tempfile.mkdtemp()
+    try:
+        page = os.path.join(d, "index.html")
+        open(page, "w", encoding="utf-8").write(tpl[:a] + json.dumps(payload) + tpl[b:])
+        return _render_page(page, view_sort=view_sort)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_history_open_verdict():
+    items = {
+        "701": _nsrp_item("BILL-HIST", "history-open", amount=89,
+                          poWarning="Billed $X,XXX.XX ahead of vendor history"),
+        "702": _nsrp_item("BILL-FLG", "flagged", amount=200),
+        "703": _nsrp_item("BILL-CLR", "clear", amount=300),
+    }
+    rc, out, err, html = _nsrp_publish(items)
+    log = out + err
+    check("history-open: publish accepts the verdict (no abort as unknown)", rc == 0,
+          log.strip()[-200:])
+    # With publish aborted there is no payload: every check below then reads empty and fails.
+    blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/", html, re.S)
+    its = json.loads(blob.group(1))["items"] if blob else []
+    by = {i["doc"]: i for i in its}
+    check("history-open: headline counts it after flagged, before clear",
+          re.search(r"1 flagged · 1 history[ -]open", log) is not None, log[-200:])
+    check("history-open: verdict survives publish",
+          by.get("BILL-HIST", {}).get("verdict") == "history-open",
+          by.get("BILL-HIST", {}).get("verdict"))
+    check("history-open: poWarn is kept on the item",
+          by.get("BILL-HIST", {}).get("poWarn") == "Billed $X,XXX.XX ahead of vendor history",
+          by.get("BILL-HIST", {}).get("poWarn"))
+    check("history-open: payload order is flagged, history-open, clear",
+          [i["doc"] for i in its] == ["BILL-FLG", "BILL-HIST", "BILL-CLR"],
+          [i["doc"] for i in its])
+
+    # The render checks run on the template alone: the same item shape publish writes is
+    # injected into the template's data block, so a render defect is not hidden behind a
+    # publish abort, and a publish defect is not read as a render defect.
+    secs, _ = _render_ns_items([
+        {"id": 701, "type": "Bill", "doc": "BILL-HIST", "vendor": "V", "amt": 89,
+         "trandate": "8/1/2026", "verdict": "history-open", "head": "h", "facts": ["f"],
+         "po": "", "poWarn": "Billed $X,XXX.XX ahead of vendor history", "poRef": "",
+         "poLink": "", "detail": "d", "att": ""},
+        {"id": 702, "type": "Bill", "doc": "BILL-FLG", "vendor": "V", "amt": 200,
+         "trandate": "8/1/2026", "verdict": "flagged", "head": "h", "facts": ["f"],
+         "po": "", "poWarn": "", "poRef": "", "poLink": "", "detail": "d", "att": ""},
+        {"id": 703, "type": "Bill", "doc": "BILL-CLR", "vendor": "V", "amt": 300,
+         "trandate": "8/1/2026", "verdict": "clear", "head": "h", "facts": ["f"],
+         "po": "", "poWarn": "", "poRef": "", "poLink": "", "detail": "d", "att": ""}])
+    rows = _ns_rows(secs.get("rows", ""))
+    cls = {k: c for k, c, _ in rows}
+    seg = {k: s for k, _, s in rows}.get("701", "")
+    check("history-open: its row carries its own class `vhist`",
+          cls.get("701") == "row vhist", cls)
+    check("history-open: row is not rendered as Clear or Flagged (final-else trap)",
+          ">Clear</span>" not in seg and "vflag" not in seg and "vclear" not in seg, seg[:200])
+    check("history-open: verdict sort puts it between flagged and clear",
+          [k for k, _, _ in rows] == ["702", "701", "703"], [k for k, _, _ in rows])
+    check("history-open: poWarn text stays on its row",
+          "Billed $X,XXX.XX ahead of vendor history" in seg and "Worth clearing separately" in seg,
+          seg[:300])
+    cards = secs.get("cards", "")
+    labels = re.findall(r'<div class="l">([^<]*)</div>', cards)
+    check("history-open: the tiles carry a History open counter of 1",
+          re.search(r'History open</div><div class="v"[^>]*>1<', cards) is not None, cards[:300])
+    check("history-open: its tile sits between Clear and Flagged",
+          labels[:3] == ["Clear", "History open", "Flagged"], labels)
+
+
+def test_history_open_needs_warning():
+    """Fail closed: a history-open item with no poWarning (empty, or the key absent) is the
+    ask-AP warning with nothing behind it, so publish demotes it to flagged and says which
+    item it demoted. An item that carries its warning keeps history-open."""
+    items = {
+        "701": _nsrp_item("BILL-EMPTY", "history-open", amount=89, poWarning=""),
+        "702": _nsrp_item("BILL-NOKEY", "history-open", amount=200),
+        "703": _nsrp_item("BILL-WARNED", "history-open", amount=300,
+                          poWarning="Billed $X,XXX.XX ahead of vendor history"),
+    }
+    rc, out, err, html = _nsrp_publish(items)
+    log = out + err
+    check("history-open no-warning: publish runs (demotes, does not abort)", rc == 0,
+          log.strip()[-200:])
+    blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/", html, re.S)
+    by = {i["doc"]: i for i in json.loads(blob.group(1))["items"]} if blob else {}
+    for doc in ("BILL-EMPTY", "BILL-NOKEY"):
+        check("history-open no-warning: %s is demoted to flagged" % doc,
+              by.get(doc, {}).get("verdict") == "flagged", by.get(doc, {}).get("verdict"))
+        check("history-open no-warning: a WARNING names %s" % doc,
+              any("WARNING" in l and doc in l for l in log.splitlines()), log[-200:])
+    check("history-open no-warning: a warned item keeps history-open",
+          by.get("BILL-WARNED", {}).get("verdict") == "history-open",
+          by.get("BILL-WARNED", {}).get("verdict"))
+
+
+_NS_WARN_CLAMP = re.compile(r"\.pwarn \.([\w-]+)\s*\{[^}]*line-clamp")
+_NS_SPAN = r'<span class="([^"]*)" id="pw%s">'
+
+
+def test_history_open_warning_not_clipped():
+    """A history-open row shows its poWarning in full. Detection: the template's own CSS
+    decides what clips. A rule `.pwarn .X{...line-clamp...}` names each clamped class; the
+    history-open row's warning span must carry none of them, and the row must carry no
+    `more` control (the control that reveals clipped text). If the template stops clamping,
+    the set is empty and the check holds trivially."""
+    long_warn = ("Billed $X,XXX.XX ahead of vendor history, approved across several billing "
+                 "cycles with no reconciling note on the PO record, so it runs past three "
+                 "lines in the dashboard column.")
+    secs, _ = _render_ns_items([
+        {"id": 701, "type": "Bill", "doc": "BILL-HIST", "vendor": "V", "amt": 89,
+         "trandate": "8/1/2026", "verdict": "history-open", "head": "h", "facts": ["f"],
+         "po": "", "poWarn": long_warn, "poRef": "", "poLink": "", "detail": "d", "att": ""}])
+    rows = _ns_rows(secs.get("rows", ""))
+    seg = {k: s for k, _, s in rows}.get("701", "")
+    tpl = open(os.path.join(NS, "assets", "dashboard_template.html"), encoding="utf-8").read()
+    clamped = set(_NS_WARN_CLAMP.findall(tpl))
+    span = re.search(_NS_SPAN % "701", seg)
+    span_classes = set(span.group(1).split()) if span else set()
+    check("history-open unclipped: the warning text is rendered in full",
+          long_warn in seg, seg[:300])
+    check("history-open unclipped: its warning span carries no clamped class %s"
+          % sorted(clamped), span is not None and not (span_classes & clamped),
+          span.group(0) if span else "no span")
+    check("history-open unclipped: the row has no `more` control",
+          'class="more"' not in seg, seg[-300:])
+
+
+def test_history_open_vocabulary_checks():
+    """shared_blocks' capability check compares table verdicts to a hard-coded tuple, not to
+    the publish allowlist, so a capability-table row naming `history-open` is never compared
+    to VERDICTS. The template-branch check already reads hyphens. Drive both on a fixture
+    plugin: a branch or row naming `history-open` that VERDICTS lacks must be reported; with
+    it present, both checks must be silent."""
+    sys.path.insert(0, os.path.join(REPO, "scripts"))
+    import shared_blocks as sb
+    d = tempfile.mkdtemp()
+    old = sb.PLUGINS
+    try:
+        sk = os.path.join(d, "p", "skills", "s")
+        os.makedirs(os.path.join(sk, "assets"))
+        pub = os.path.join(sk, "assets", "publish_dashboard.py")
+        tpl = os.path.join(sk, "assets", "dashboard_template.html")
+        md = os.path.join(sk, "SKILL.md")
+        open(pub, "w", encoding="utf-8").write(
+            'VERDICTS = ("clear", "flagged")\n')
+        open(tpl, "w", encoding="utf-8").write(
+            '<script>if(it.verdict==="history-open"){}</script>\n')
+        open(md, "w", encoding="utf-8").write(
+            "| `attachment` | Bill | `history-open` when the billing history runs ahead |\n")
+        sb.PLUGINS = d
+        p1, p2 = sb.check_verdict_vocabulary(), sb.check_capability_verdicts()
+        check("history-open: vocabulary check flags a template branch the allowlist lacks",
+              any("history-open" in x for x in p1), p1)
+        check("history-open: capability check flags a table row the allowlist lacks",
+              any("history-open" in x for x in p2), p2)
+        open(pub, "w", encoding="utf-8").write(
+            'VERDICTS = ("clear", "history-open", "flagged")\n')
+        p3, p4 = sb.check_verdict_vocabulary(), sb.check_capability_verdicts()
+        check("history-open: both checks are silent once the allowlist carries it",
+              p3 == [] and p4 == [], (p3, p4))
+    finally:
+        sb.PLUGINS = old
+        shutil.rmtree(d, ignore_errors=True)
+
+
 # ------------------------------------------ 16. carried-forward attachments
 def test_carried_attachments():
     """`supportCarried` (files read on an earlier run, not reopened this run) must stay a
@@ -1380,7 +1592,7 @@ def test_verdict_render_guard():
                 "verdict": v, "head": "h", "facts": ["f"], "po": "", "poWarn": "",
                 "detail": "d", "att": "", "carried": ""}
 
-    netsuite_markers = {"flagged": "vflag", "clear": "vclear"}
+    netsuite_markers = {"flagged": "vflag", "clear": "vclear", "history-open": "vhist"}
     netsuite_fns = ("esc", "money", "recUrl", "parseNsDate", "ageDaysRaw", "ageDays",
                     "poLine", "classify", "itemRow")
 
@@ -2243,6 +2455,11 @@ def main():
         test_vendor_tied_verdict()
         test_vendor_tied_icr_only()
     test_vendor_tied_vocabulary_checks()
+    test_history_open_vocabulary_checks()
+    test_history_open_needs_warning()
+    if shutil.which("node"):
+        test_history_open_verdict()
+        test_history_open_warning_not_clipped()
     test_field_run()
     if shutil.which("node"):
         test_stripped_js_parses()

@@ -55,7 +55,7 @@ Restate the coverage claim in `decisions/library-pins-checked-not-shared.md:24`.
 A new library in one plugin passes the pin check today.
 Restate the stale argument in `decisions/execute-bar-always-rendered.md:24`.
 `F82`, the widget frame never scrolls, settled that question.
-Point the drifted counts in `findings/netsuite-visual-read-thin.md` at a script.
+Dropped 2026-10-12: the owner retired the word counts in `findings/netsuite-visual-read-thin.md`.
 Correct the 450-line figure in `findings/fewer-larger-tool-calls.md`.
 The two files hold 730 and 561 lines today.
 Add the silent-pass branch to `findings/mandate-gaps-closed.md:21`.

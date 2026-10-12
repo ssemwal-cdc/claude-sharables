@@ -102,7 +102,7 @@ session start.
 
 | Plugin | Version | What it does | Needs |
 |---|---|---|---|
-| `netsuite-approval-review` | v41 | Reviews the bills, purchase orders and change orders in your NetSuite approval queue. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to NetSuite. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. The NetSuite MCP connector is optional. It adds bulk queries and the PO cross-check. |
+| `netsuite-approval-review` | v42 | Reviews the bills, purchase orders and change orders in your NetSuite approval queue. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to NetSuite. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. The NetSuite MCP connector is optional. It adds bulk queries and the PO cross-check. |
 | `procore-open-items-review` | v45 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
 
 Purchase orders are reviewed. Execute mode was retired on 2026-09-18. Its
@@ -191,8 +191,7 @@ It checks eleven things:
 - The record and prose checks in `scripts/check_records.py` pass. They cover
   frontmatter, citations, bare-slug citations, index freshness and size.
   They also cover sentence length, waiter loops, and device shots. They
-  cover no pending record on `main`, a claim dry run, and visual-read
-  mention counts too.
+  cover no pending record on `main`, and a claim dry run too.
 - A skill whose files changed since the branch's merge base has raised its
   version. `scripts/check_version_bump.py` checks this.
 - Every `scripts/` and `.github/workflows/` path named in CLAUDE.md or a

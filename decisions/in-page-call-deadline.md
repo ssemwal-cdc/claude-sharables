@@ -26,7 +26,7 @@ The stop rule is in the shared block `skill-chrome-first-call`, so NetSuite carr
 **Evidence.**
 
 - Incident: the 2026-10-09 live Procore run, 73 items. The four-minute hold and the two later timeouts were seen. The cause of the stuck read is `unmeasured`.
-- The 20-second limit is unmeasured against real payloads. See G`fetch-limit-includes-body`, the 20 second limit counts the body.
+- The 20-second limit is unmeasured against real payloads. See G25, the 20 second limit counts the body.
 - Related: D41, three states never a boolean. D27, retry only an expired link.
 
 **Checks.** `scripts/test_skill_code.py`: `test_fetch_timeouts`, `test_deadline_helper`, `test_step3_previous_requisition`, `test_midrun_stop_rule`, `test_retry_timeout_pairing`, `test_step4_dispatch_under_deadline`.

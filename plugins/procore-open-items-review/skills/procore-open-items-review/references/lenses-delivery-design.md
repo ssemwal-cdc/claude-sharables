@@ -9,7 +9,7 @@ scope, schedule and design origin unevenly. A narrative field may be thorough, t
 blank, and none of those is misconduct. So both lenses are **lenient by design**.
 
 - **Missing or thin information is never a finding.** A blank schedule-impact field means nobody filled it in, **not** that the change has no schedule impact. Report what is there. Never infer an absence into a claim.
-- **Three states, never a boolean.** `stated` means the record says it, `absent` means the field exists and is empty, and `failed` means the read errored. `failed` is never `absent`.
+- **Three states, never a boolean.** `stated` means that the record says it. `absent` means that the field exists and is empty. `failed` means that the read errored. `failed` is never `absent`.
 - **These lenses add context. They do not add flags.** A lens check produces a line in `facts` or `context`, never a `flagged` verdict on its own. No exceptions.
 - The financial checks in `core` decide the verdict. These tell a reader what the change *touches*.
 - **`pc.del-schedule-impact`** reports the ICR's `schedule_impact` alongside its cost impact. Where it is blank, say it is unstated rather than saying there is none.

@@ -22,13 +22,13 @@ NAME = "backtick slug citations"
 REFS = (None, "refs/heads/main", "refs/heads/claude/some-branch")  # every ref runs the check
 
 
-def _check():
+def _check(name=NAME):
     fns = dict(cr.CHECKS)
-    assert NAME in fns, "check %r is not registered in check_records.CHECKS" % NAME
-    return fns[NAME]
+    assert name in fns, "check %r is not registered in check_records.CHECKS" % name
+    return fns[name]
 
 
-def _run(files, ref=None):
+def _run(files, ref=None, name=NAME):
     """Write files under a throwaway REPO, run the check, return its problems."""
     root = tempfile.mkdtemp(prefix="cr-test-")
     saved_repo = cr.REPO
@@ -42,7 +42,7 @@ def _run(files, ref=None):
         cr.REPO = root
         if ref is not None:
             os.environ["GITHUB_REF"] = ref
-        return _check()()
+        return _check(name)()
     finally:
         cr.REPO = saved_repo
         os.environ.pop("GITHUB_REF", None)
@@ -157,5 +157,33 @@ for ref in REFS:
     assert len(p) == 4, (ref, p)
     for rel, line_no, _text in LEFTOVERS:
         assert any(("%s:%d" % (_os(rel), line_no)) in m for m in p), (rel, line_no, p)
+
+# Slug length, owner ruling 2026-10-15: a record slug is 32 characters or fewer.
+# Contract for the builder: check_records.check_slug_length() -> list of problem strings,
+# registered in cr.CHECKS as ("slug length", check_slug_length). For each record file in
+# decisions/, findings/ and gaps/ it tests the filename stem and the frontmatter slug. Each
+# one over 32 characters adds a message that holds the record's rel path and its length.
+SLUG_NAME = "slug length"
+S32 = "a" * 32
+S33 = "a" * 33
+
+
+def _rec(folder, stem, slug=None):
+    return {"%s/%s.md" % (folder, stem): _doc(
+        "---", "id: pending", "slug: %s" % (slug or stem), "---", "", "# T")}
+
+
+for folder in ("decisions", "findings", "gaps"):
+    assert _run(_rec(folder, S32), name=SLUG_NAME) == [], folder  # exactly 32 passes
+    p = _run(_rec(folder, S33), name=SLUG_NAME)  # 33 fails, names file and length
+    assert len(p) >= 1 and all(_os("%s/%s.md" % (folder, S33)) in m and "33" in m for m in p), (folder, p)
+    # filename short, frontmatter slug long: still fails
+    p = _run(_rec(folder, "short", S33), name=SLUG_NAME)
+    assert len(p) == 1 and _os("%s/short.md" % folder) in p[0] and "33" in p[0], (folder, p)
+    # filename long, frontmatter slug short: still fails
+    p = _run(_rec(folder, S33, "short"), name=SLUG_NAME)
+    assert len(p) == 1 and "33" in p[0], (folder, p)
+p = _run({**_rec("decisions", "a" * 40), **_rec("gaps", S32)}, name=SLUG_NAME)
+assert len(p) >= 1 and all("40" in m and "gaps" not in m for m in p), p  # only the long one
 
 print("OK: backtick slug citation checks passed")

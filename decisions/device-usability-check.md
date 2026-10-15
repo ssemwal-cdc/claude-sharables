@@ -27,7 +27,7 @@ Every capture also reports `scrollWidth` against the viewport width, into `summa
 
 The images are not committed. `.gitignore` excludes `.claude/shots/`, because a binary baseline rots and nothing reads it.
 
-The command runs by hand and not in CI, because `validate.py` may not assume a browser. It reuses the float measurement's browser, so one run does both.
+The command runs by hand and in the `shots` CI job. `validate.py` may not assume a browser. It reuses the float measurement's browser, so one run does both.
 
 A metric is not appearance. A person still has to look at typography, spacing and hierarchy in the images.
 

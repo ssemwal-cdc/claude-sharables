@@ -8,7 +8,7 @@ Its only job is to be a catalog that `/plugin marketplace add` resolves and `/pl
 4. Register it in `.claude-plugin/marketplace.json` as below.
 5. Update `README.md` and this file. Add a table row with the prerequisite and the skill version.
 6. Run the checks below. Then run `claude --plugin-dir plugins/<name> -p "quote the skill version line verbatim"`.
-7. Open a pull request to `main`, and merge it with `merge <pr> --confirm` once CI is green. The merge is the release. D93, main moves only by pull request.
+7. Open a draft pull request to `main`. Merge it only on the owner's word. The merge is the release. D93, main moves only by pull request.
 
 ```
 plugins/<plugin-name>/
@@ -48,7 +48,7 @@ python3 scripts/test_check_version_bump.py   # the bump gate, on throwaway repos
 python3 scripts/check_records.py --write-index   # by hand. The claim is `merge <pr> --confirm`, through the stamp
 python3 scripts/shared_blocks.py --sync      # push plugins/_shared into every marked site
 python3 scripts/shared_blocks.py --check     # what validate.py runs
-NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand, not in the gate. The cloud image has Chromium.
+NODE_PATH=$(npm root -g) node scripts/measure_float.js   # the `shots` CI job runs it with --shots. Run it by hand after a layout change.
 ```
 ## Repo facts
 - Remote `https://github.com/ssemwal-cdc/claude-sharables`, default branch `main`. Marketplace name `compass-claude-plugins`.
@@ -121,12 +121,9 @@ NODE_PATH=$(npm root -g) node scripts/measure_float.js   # by hand, not in the g
 - Ship a new view default under a new view key, and migrate the old one. `D39`, a new default needs key.
 - Never rename a per-item marks key. `D38`, never rename a marks key.
 ### The teammate sheet
-`docs/onboarding.html` is now a short stub. Setup advice and the schedule offer
-live in the skill. See in-skill-onboarding, onboarding lives in the skill.
-- Edit `docs/onboarding.html` and push. `D33`, the page is the file. Superseded, see in-skill-onboarding above.
-- Put nothing sensitive in the docs folder. `D31`, the docs folder is public. Still applies.
-- Keep a plain colour-scheme media query in the sheet. `D32`, no theme attribute on Pages. Still applies, while the stub exists.
-- Keep terminal commands out of the sheet. `D59`, no terminal commands in sheet. Superseded, see in-skill-onboarding above.
+`docs/onboarding.html` is a short stub. Setup advice and the schedule offer live in the skill. `D94`, onboarding lives in the skill.
+- Put nothing sensitive in the docs folder. `D31`, the docs folder is public.
+- Keep a plain colour-scheme media query in the sheet. `D32`, no theme attribute on Pages.
 ## Do not
 - Do not add a `version` field anywhere. `D9`, no version field anywhere.
 - Do not set `metadata.pluginRoot`. `D7`, never use metadata.pluginRoot.
@@ -140,6 +137,6 @@ live in the skill. See in-skill-onboarding, onboarding lives in the skill.
 - `findings/_index.md` lists every observed defect and measurement, in the same six columns.
 - `gaps/_index.md` lists every unobserved claim and unfired branch, in the same six columns. Read it before citing anything recent as established.
 - A citation is an id plus a short gloss, never a bare id and never a path.
-- A record on a branch has `id: pending` and is cited as `D‹slug›`, never with backticks. The stamp rewrites only that form. Nobody allocates a number on a branch.
-- A branch writes `id: pending`. `merge <pr> --confirm` claims through the stamp (`.github/stamp.json`) before the merge. CI's `records` job refuses a number a branch adds without a `Record-claim` trailer, and any pending record on main. `D98`, claim through the stamp.
-- The record and prose checks run inside `python3 scripts/validate.py`. The Bash hook in `.claude/settings.json` refuses the shared-tree commands. `D82`, hooks and checks pass.
+- A record on a branch has `id: pending` and is cited as `D‹slug›`, never with backticks. The stamp rewrites only that form.
+- The stamp is `.github/stamp.json`. CI's `records` job refuses a number a branch adds without a `Record-claim` trailer. `D98`, claim through the stamp.
+- The record and prose checks run inside `python3 scripts/validate.py`. `D82`, checks enforce the prose rules.

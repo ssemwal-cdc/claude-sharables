@@ -133,7 +133,7 @@ LEFTOVERS = (
     ("decisions/in-page-call-deadline.md", 29,
      "- The 20-second limit is unmeasured against real payloads. See G`fetch-limit-includes-body`, "
      "the 20 second limit counts the body."),
-    ("findings/netsuite-verdict-vocabulary-blocks-fold.md", 33,
+    ("findings/netsuite-verdict-words-fold.md", 33,
      "Rewritten 2026-10-12 for the third verdict (D`netsuite-history-open`, a third NetSuite verdict)."),
     ("gaps/fetch-limit-includes-body.md", 14,
      "**Evidence.** `unmeasured`. Nobody timed the largest invoice JSON or the largest attachment "

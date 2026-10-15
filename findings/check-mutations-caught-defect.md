@@ -32,7 +32,7 @@ citation rule it reports on.
 | `check_frontmatter` | a decision takes an id another decision holds | the id is reused, and the holder is named |
 | `check_frontmatter` | the outcome marker is renamed | the outcome line is missing |
 | `check_frontmatter` | the slug stops matching the filename | the slug must equal the filename stem |
-| `check_frontmatter` | a finding takes a decision letter | a finding takes the letter F |
+| `check_frontmatter` | a finding uses a decision letter | a finding takes the letter F |
 | `check_frontmatter` | a date written as a day, a month name and a year | write the date as YYYY-MM-DD |
 | `check_citations` | a cited number that no record holds | no record carries that id |
 | `check_citations` | the gloss after a cited id is deleted | the citation carries no gloss |

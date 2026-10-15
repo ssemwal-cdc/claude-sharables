@@ -32,7 +32,7 @@ Anything genuinely visual still has to be eyeballed by a person.
 
 **Evidence.** Rendered and driven in Chromium 2026-08-28.
 Closed-block copy measured 2,272 characters for the NetSuite block and 2,224 for the Procore one.
-`open` was `false` before and after the click on both blocks.
+`open` was `false` before and after the click in both blocks.
 Measured at 1600px, 1200px and 390px, in both colour schemes.
 No horizontal scroll, no element wider than the viewport, no console or page errors.
 The nav rail is correctly absent below 1300px.

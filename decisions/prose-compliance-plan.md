@@ -25,7 +25,7 @@ This is a prose redo.
 | 1 | Simplified Technical English scope | Every markdown file |
 | 2 | Record storage | One file per record, one folder per kind |
 | 3 | NetSuite browser-mode silence about skipped `core` checks | Keep silence. Record it as a named exception with its argument |
-| 4 | Skill chat output shape | Out of scope. Skills run in teammate sessions, not under the mandate |
+| 4 | Skill chat output shape | Out of scope. Skills run in teammate sessions, outside the mandate |
 | 5 | `SKILL.md` prose and size | Deferred to a separate pass |
 | 6 | Hooks and new checks | Deferred to a separate pass |
 | 7 | Three widths, both themes | A usability check across devices, not a documentation exception. Deferred to the code pass |

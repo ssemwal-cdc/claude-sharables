@@ -13,7 +13,7 @@ date: 2026-08-19
 
 The NetSuite connector needs a separate, Claude-enabled NetSuite account. It is a second account issued on top of the usual login.
 
-A normal NetSuite login is not connector access. People who hold one account assume it is.
+A normal NetSuite login is not connector access. People who hold one account assume that it is.
 
 If the connector is not listed, they were never provisioned. The route is an email invite from Compass, otherwise IT.
 

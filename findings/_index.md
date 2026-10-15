@@ -29,7 +29,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F24 | `stale-install-reads-as-repo-bug` | Stale install reads as bug | observed | 2026-08-14 | A maintainer checks the install version before editing a file that is already right. |
 | F25 | `xlsx-cdnjs-import-works` | The cdnjs import works | observed | 2026-08-14 | A workbook attachment is read with the simplest loader. |
 | F26 | `xml-scratch-tab-no-createelement` | The scratch tab is XML | observed | 2026-08-14 | A rasterised PDF page renders instead of throwing. |
-| F27 | `approve-notes-same-tab-freeze` | The notes click navigates | observed | 2026-08-15 | A frozen tab never produces a second click on a bill already approved. |
+| F27 | `approve-notes-same-tab-freeze` | The notes click navigates | observed | 2026-08-15 | A frozen tab never produces a second click for a bill already approved. |
 | F5 | `confounded-test-looked-like-fix` | A confound looked like a result | observed | 2026-08-15 | A permission question converges in one round instead of four. |
 | F28 | `cowork-shell-no-plugin-dir` | Cowork shell cannot see plugins | observed | 2026-08-15 | A stale workspace copy is visible instead of silent. |
 | F29 | `diagnostic-overgeneralized-probe` | A probe was read as evidence about the workflow | observed | 2026-08-15 | A permission question converges in one round instead of four. |
@@ -77,7 +77,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F107 | `execute-message-least-governed` | Execute message was least governed | settled | 2026-08-24 | The text closest to a real approve click is governed text. |
 | F58 | `freshness-fold-flex-regression` | A fold restored the height | observed | 2026-08-24 | The chrome above the first item is smaller, measurably. |
 | F108 | `hand-kept-strings-drift-unseen` | Hand-maintained strings drift unchecked | observed | 2026-08-24 | A claim that names an identifier gets a mechanical check, not just a human re-read. |
-| F109 | `mechanism-replaces-2nd-screen` | A hardware phrase became a mechanism claim | observed | 2026-08-24 | A prerequisite reads as a thing you must have, not as a description of the wait. |
+| F109 | `mechanism-replaces-2nd-screen` | A hardware phrase became a mechanism claim | observed | 2026-08-24 | A prerequisite reads as a thing you must have, not as a note about the wait. |
 | F59 | `more-button-needs-clipping` | A clamp needs real clipping | observed | 2026-08-24 | A control that is offered does something visible. |
 | F110 | `netsuite-bin-fed-dead-live-state` | NetSuite's actioned bin fed dead state | settled | 2026-08-24 | The queue count on the dashboard matches the queue. |
 | F111 | `netsuite-co-buttons-are-the-gate` | NetSuite change orders gate on their buttons | settled | 2026-08-24 | A whole batch is never logged as actioned on a role mistake. |
@@ -154,7 +154,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F148 | `waiter-check-fires-on-defect` | The waiter-loop check fires on a real defect | observed | 2026-09-16 | No sentence in this repo instructs an unbounded wait-and-retry. |
 | F149 | `onboarding-check-silent-no-file` | The onboarding page check passed on a missing file | observed | 2026-09-18 | A missing `docs/onboarding.html` fails the build, per `D89`, the markdown compliance fix plan, ruling 3. |
 | F150 | `review-only-dashboards-measured` | Review-only dashboards measured | observed | 2026-09-18 | A reviewer sees the whole queue, with no control they cannot use. |
-| F151 | `browser-assumed-absent-in-cloud` | A session assumed no browser | observed | 2026-09-23 | A capability is measured before a run claims it cannot run. |
+| F151 | `browser-assumed-absent-in-cloud` | A session assumed that no browser | observed | 2026-09-23 | A capability is measured before a run claims it cannot run. |
 | F152 | `invalid-font-shorthand-dropped` | An invalid shorthand was dropped | observed | 2026-09-23 | A control renders in the font the template authored for it. |
 | F153 | `toolbar-select-overflow` | Long option text overflows toolbar | observed | 2026-09-23 | A reader on a narrow panel is not made to scroll sideways. |
 | F155 | `commitment-payload-unread` | Commitment payload reported closed | observed | 2026-09-24 | A commitment's figures come from fields the payload really has. |

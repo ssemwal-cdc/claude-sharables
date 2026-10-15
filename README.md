@@ -116,8 +116,8 @@ See F76, folderless runs work.
 Description is the installed version, in the form "Skill version N — date".
 The same number starts each skill's one-line description, as `vN — …`. It also
 sits at the top of `SKILL.md`. Ask in a chat and the skill reports it. Compare
-that number to the Version column above. A lower number means your copy is
-stale. No version anywhere means the same. Update or reinstall the plugin.
+that number to the Version column above. A lower number means that your copy is
+stale. No version anywhere means that the same. Update or reinstall the plugin.
 
 ## For maintainers: releasing an update
 

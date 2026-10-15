@@ -17,7 +17,7 @@ The namespaced form, plugin name then colon then skill name, always works. Both 
 
 Assets travel with the plugin and are visible in the skill panel. The plugin root variable resolves them at run time.
 
-**Retraction.** An earlier note claimed the short slash name meant a stale personal skill was shadowing the plugin.
+**Retraction.** An earlier note claimed the short slash name meant that a stale personal skill was shadowing the plugin.
 
 Checked against this live run, that was false. The short name loads the plugin skill, with its own description and assets.
 

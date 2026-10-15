@@ -9,7 +9,7 @@ date: 2026-08-12
 
 **Rule.** Render both dashboards with `show_widget`. Never render them as an artifact.
 
-**Outcome protected.** One click on a dashboard button puts the execute instruction into chat.
+**Outcome protected.** One click of a dashboard button puts the execute instruction into chat.
 
 **Argument.**
 

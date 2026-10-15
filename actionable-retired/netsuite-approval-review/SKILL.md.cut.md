@@ -32,7 +32,7 @@ was: Those three buttons sit adjacent at the top-left of every record, above Pri
 now: Those three buttons sit adjacent at the top-left of every record, above Primary Information. Keep all clicks well away from that region.
 
 ===== plugins/netsuite-approval-review/skills/netsuite-approval-double-check/SKILL.md line 19, sentence trim =====
-was: Treat the connector as read-only. Approvals go through the real UI, so the workflow routes and the trail records the user as the approver. A REST field flip would bypass SuiteFlow and leave no trail.
+was: Treat the connector as read-only. Approvals use the real UI, so the workflow routes and the trail records the user as the approver. A REST field flip would bypass SuiteFlow and leave no trail.
 now: Treat the connector as read-only. This skill writes nothing to NetSuite, by any route.
 
 ===== plugins/netsuite-approval-review/skills/netsuite-approval-double-check/SKILL.md line 30, sentence trim =====
@@ -44,7 +44,7 @@ was: Do not stall it over how an auditor might read it later. The `Approved by C
 now: Do not stall it over how an auditor might read it later. The document is still theirs to action.
 
 ===== plugins/netsuite-approval-review/skills/netsuite-approval-double-check/SKILL.md line 160, sentence trim =====
-was: Attachment reading, every arithmetic check and every approval click are identical either way. pdf.js runs same-origin in the record tab, and approvals always go through the real UI.
+was: Attachment reading, every arithmetic check and every approval click are identical either way. pdf.js runs same-origin in the record tab, and approvals always use the real UI.
 now: Attachment reading and every arithmetic check are identical either way. pdf.js runs same-origin in the record tab.
 
 ===== plugins/netsuite-approval-review/skills/netsuite-approval-double-check/SKILL.md line 162, sentence trim =====
@@ -64,5 +64,5 @@ was: Step 9 runs first, and the headline follows it.
 now: Step 8 runs first, and the headline follows it.
 
 ===== plugins/netsuite-approval-review/skills/netsuite-approval-double-check/SKILL.md line 590, sentence trim =====
-was: ## Step 9 — Close down
-now: ## Step 8 — Close down
+was: ## Step 9 — Finish
+now: ## Step 8 — Finish

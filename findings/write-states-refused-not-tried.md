@@ -23,7 +23,7 @@ The step offered a list of plausible causes that a run can match against before 
 
 The cause list is gone.
 
-Three states were collapsed into two. Kept, refused and not attempted. The state that means nobody looked reported as the state that means it failed.
+Three states were collapsed into two. Kept, refused and not attempted. The state that means nobody looked reported as the state that means that it failed.
 
 The step now names all three, and it ties the session-local fallback to the refused state alone. It requires the write to be read back rather than merely issued.
 

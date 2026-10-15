@@ -7,7 +7,7 @@ date: 2026-08-15
 ---
 # The notes click navigates
 
-**Outcome protected.** A frozen tab never produces a second click on a bill already approved.
+**Outcome protected.** A frozen tab never produces a second click for a bill already approved.
 
 **Argument.**
 

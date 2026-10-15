@@ -20,7 +20,7 @@ Maintainer prose is not a prompt. The skill file is the prompt.
 
 That is the transferable lesson. A rule about what a run may claim has to be in the file the run reads.
 
-A check then fails the build if the rule stops being stated.
+If the rule stops being stated, a check then fails the build.
 
 **Evidence.**
 

@@ -8,7 +8,7 @@ date: 2026-08-24
 # A hardware phrase became a mechanism claim
 
 **Outcome protected.** A prerequisite reads as a thing you must have, not as a
-description of the wait.
+note about the wait.
 
 **Argument.** The onboarding sheet's phrase about a second screen was cut, while its
 meaning was kept.

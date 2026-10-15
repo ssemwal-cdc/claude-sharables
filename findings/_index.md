@@ -73,7 +73,6 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F57 | `disabled-button-three-states` | One disabled style, two meanings | observed | 2026-08-24 | A blocked execute button reads as blocked, not as broken. |
 | F105 | `docs-vs-code-drift-not-caught` | Docs pointing at removed code go uncaught | observed | 2026-08-24 | Prose that survives its own code's deletion is found, not left to drift forever. |
 | F106 | `drift-check-from-six-defects` | The drift check came out of six defects | observed | 2026-08-24 | A one-sided edit, a reworded comment, a missing canonical file and an orphaned one all fail the build. |
-| F119 | `examples-now-placeholders-found` | Shipped examples now use placeholders | settled | 2026-08-24 | A teammate cannot copy a live value out of a shipped example. |
 | F107 | `execute-message-least-governed` | Execute message was least governed | settled | 2026-08-24 | The text closest to a real approve click is governed text. |
 | F58 | `freshness-fold-flex-regression` | A fold restored the height | observed | 2026-08-24 | The chrome above the first item is smaller, measurably. |
 | F108 | `hand-kept-strings-drift-unseen` | Hand-maintained strings drift unchecked | observed | 2026-08-24 | A claim that names an identifier gets a mechanical check, not just a human re-read. |
@@ -83,10 +82,10 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F111 | `netsuite-co-buttons-are-the-gate` | NetSuite change orders gate on their buttons | settled | 2026-08-24 | A whole batch is never logged as actioned on a role mistake. |
 | F60 | `netsuite-no-slim-build` | NetSuite cannot fold rows | superseded | 2026-08-24 | Nobody adds a feature to NetSuite that would copy a file byte for byte. |
 | F112 | `netsuite-verdict-words-fold` | NetSuite cannot fold rows | settled | 2026-08-24 | Nobody adds a feature to NetSuite that would copy a file byte for byte. |
-| F113 | `nine-agent-audit-fixed-claims` | Interview corrected four audit claims | observed | 2026-08-24 | A maintainer interview catches an auditor's wrong premise before it ships as a rule. |
+| F113 | `nine-agent-audit-fixed-4-claims` | Interview corrected four audit claims | observed | 2026-08-24 | A maintainer interview catches an auditor's wrong premise before it ships as a rule. |
 | F62 | `no-run-without-browser` | Nothing runs without Chrome | observed | 2026-08-24 | A missed window is covered by a later one instead of being lost. |
 | F63 | `onboarding-claims-unchecked` | Four claimed tests were absent | observed | 2026-08-24 | Every claim about the onboarding sheet has a reader or is deleted. |
-| F114 | `phantom-bin-inflated-queue-count` | The dead bin inflated a count, not a click | observed | 2026-08-24 | A departed item never causes a wrong click, only a wrong number. |
+| F114 | `phantom-bin-inflated-count-only` | The dead bin inflated a count, not a click | observed | 2026-08-24 | A departed item never causes a wrong click, only a wrong number. |
 | F64 | `plugin-command-two-surfaces` | Two plugin commands exist | observed | 2026-08-24 | An instruction names the surface it works on. |
 | F115 | `procore-bin-blocked-by-guard` | Procore's actioned bin never worked | settled | 2026-08-24 | The queue count on the dashboard matches the queue. |
 | F65 | `render-unverifiable-ask-user` | The render is unverifiable agent-side | observed | 2026-08-24 | A truncated dashboard is reported instead of hidden. |
@@ -94,6 +93,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F116 | `same-session-self-fixes` | Three fixes to that session's own work | settled | 2026-08-24 | A reachability check catches the inequality form of a filter, not only the equality form. |
 | F117 | `second-source-found-check-gap` | A second source found what self-checks could not | observed | 2026-08-24 | A plugin's own drift is found by comparison, not by asking it about itself. |
 | F118 | `shared-block-loop-enforced` | The shared-block loop ran for real | observed | 2026-08-24 | A claim that used to stand in for a check now runs as a check. |
+| F119 | `shipped-examples-placeholders` | Shipped examples now use placeholders | settled | 2026-08-24 | A teammate cannot copy a live value out of a shipped example. |
 | F120 | `six-one-sided-dashboard-defects` | Six defects from one-sided drift | settled | 2026-08-24 | A fix that reaches one plugin reaches the other one. |
 | F68 | `skill-md-block-eligibility` | Only 34 SKILL.md lines eligible | observed | 2026-08-24 | Nobody rewords a correct skill to raise a sharing percentage. |
 | F121 | `skill-md-dup-not-block-coverable` | SKILL.md duplication resists the block mechanism | observed | 2026-08-24 | Nobody expects the shared-block mechanism to reach prose it cannot cover. |
@@ -139,7 +139,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F136 | `login-rung-three-named-outcomes` | Login rung now names three outcomes | settled | 2026-09-10 | A run decides the login screen on what is on screen, not on a misread absolute. |
 | F137 | `onboarding-skill-login-conflict` | Two files disagreed on login behaviour | settled | 2026-09-10 | Two files describing one behaviour to two audiences never contradict each other. |
 | F138 | `password-box-triggers-wall` | A password box correctly triggers wall | observed | 2026-09-10 | The login table decides on the password box, not on whether an email field sits beside it. |
-| F139 | `check-mutations-caught-defect` | Every record check caught its mutation | observed | 2026-09-15 | A check is trusted only after it fails on the defect it guards. |
+| F139 | `all-mutations-caught-defect` | Every record check caught its mutation | observed | 2026-09-15 | A check is trusted only after it fails on the defect it guards. |
 | F140 | `citation-regex-was-blind-once` | The slug-citation check was blind once | settled | 2026-09-15 | A slug citation that names no pending record fails the build, and did not always. |
 | F141 | `claim-ids-proved-twice` | The id claim ran clean twice | observed | 2026-09-15 | Claiming ids never moves an existing id, and always rewrites the citations it can. |
 | F99 | `device-shots-first-run` | Device shots first run | observed | 2026-09-15 | The three widths and the two themes are measured, not assumed. |
@@ -147,7 +147,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F143 | `device-shots-catch-overflow` | The device-shots check has three outcomes | observed | 2026-09-16 | Every screen is measured at three widths and both themes, or the gap is a stated note. |
 | F102 | `fetch-tab-state-lost` | Fetch tab navigated, first pass lost | observed | 2026-09-16 | A run fetches its data once, and leaves no tab parked on a dead link. |
 | F144 | `netsuite-approval-note-confirmed` | NetSuite approval note confirmed | observed | 2026-09-16 | An approval note lands where the auditor will look for it. |
-| F145 | `pending-id-checks-gate-main` | Pending-id checks gate main and citations | observed | 2026-09-16 | No numbered record is claimed on a branch, and no citation stays unresolved after claiming. |
+| F145 | `pending-ids-gate-main-and-cites` | Pending-id checks gate main and citations | observed | 2026-09-16 | No numbered record is claimed on a branch, and no citation stays unresolved after claiming. |
 | F146 | `po-crosscheck-run-confirmed` | PO cross-check run confirmed | observed | 2026-09-16 | A correctly coded bill is never flagged as coded to the wrong purchase order. |
 | F147 | `procore-missed-window-confirmed` | Procore missed window confirmed | observed | 2026-09-16 | A scheduled Procore window reviews the queue once, not repeatedly. |
 | F103 | `version-line-silently-stale` | A version line can silently miss its bump | observed | 2026-09-16 | A teammate compares their installed version against the README table. |

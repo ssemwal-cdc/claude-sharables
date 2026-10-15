@@ -1,6 +1,6 @@
 ---
 id: F113
-slug: nine-agent-audit-fixed-claims
+slug: nine-agent-audit-fixed-4-claims
 kind: finding
 status: observed
 date: 2026-08-24

@@ -1,6 +1,6 @@
 ---
 id: F145
-slug: pending-id-checks-gate-main
+slug: pending-ids-gate-main-and-cites
 kind: finding
 status: observed
 date: 2026-09-16

@@ -18,7 +18,7 @@ Procore rendered the slim copy as its primary dashboard, justified as roughly a 
 
 Only two verdicts fold, and a live queue is mostly neither. So the saving is small.
 
-Procore now renders the full page like NetSuite. When the integrity banner fires, the slim copy is the only one reached.
+Procore now renders the full page like NetSuite. Only the integrity banner leads to the slim copy.
 
 The slim copy is not a size fallback and never was.
 

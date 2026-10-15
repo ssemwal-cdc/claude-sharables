@@ -20,3 +20,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | G24 | `gate-resp-name-unconfirmed` | Response name key never seen | unobserved | 2026-10-07 | A response verb on a row is the real verb, never an object dump. |
 | G25 | `fetch-limit-includes-body` | The 20 second fetch limit includes the body download | unobserved | 2026-10-09 | A large but healthy read is not reported as timed out. |
 | G26 | `netsuite-read-outcomes-thin` | NetSuite has no named outcome for a thrown parse | unobserved | 2026-10-09 | A read that threw is named, never filed as unread or absent. |
+| pending | `shared-tree-guard-user-only` | The shared-tree guard runs only for the owner | unobserved | 2026-10-15 | No session loses another session's work in a shared checkout. |

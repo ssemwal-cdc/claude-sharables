@@ -839,12 +839,29 @@ def check_claim_dry_run():
     return problems
 
 
+SLUG_MAX = 32  # parent rule git-slug-then-claim-number
+
+
+def check_slug_length():
+    """A record slug, in the filename and in the frontmatter, is 32 characters or fewer."""
+    problems = []
+    for rec in load_records():
+        stem = os.path.basename(rec.path)[:-3]
+        fm = (rec.keys or {}).get("slug") or ""
+        for what, val in (("filename stem", stem), ("frontmatter slug", fm)):
+            if len(val) > SLUG_MAX:
+                problems.append("%s %s is %d characters; the limit is %d"
+                                % (rec.rel, what, len(val), SLUG_MAX))
+    return problems
+
+
 # ----------------------------------------------------------------------- main
 CHECKS = (
     ("frontmatter", check_frontmatter),
     ("citations", check_citations),
     ("bare slug citations", check_bare_slug_citations),
     ("backtick slug citations", check_backtick_slug_citations),
+    ("slug length", check_slug_length),
     ("index freshness", check_index_fresh),
     ("index size", check_index_size),
     ("sentence length", check_sentence_length),

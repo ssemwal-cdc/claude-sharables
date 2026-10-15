@@ -6,7 +6,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 |---|---|---|---|---|---|
 | D1 | `asset-paths-plugin-root` | Reference assets through CLAUDE_PLUGIN_ROOT | settled | 2026-08-11 | A skill finds its own assets after it is installed. |
 | D2 | `first-run-setup-per-plugin` | First-run setup is per plugin | settled | 2026-08-11 | A second run asks nothing and reviews immediately. |
-| D3 | `frontmatter-name-description-only` | Frontmatter is name and description | settled | 2026-08-11 | A skill fires when a teammate describes the job it does. |
+| D3 | `frontmatter-name-desc-only` | Frontmatter is name and description | settled | 2026-08-11 | A skill fires when a teammate describes the job it does. |
 | D4 | `git-subdir-sources` | Use git-subdir marketplace sources | settled | 2026-08-11 | A teammate can install from the desktop app, from the CLI, and through org sync. |
 | D5 | `marketplace-name-vs-repo` | Marketplace name differs from repo | settled | 2026-08-11 | A teammate's install command works the first time. |
 | D6 | `no-plugin-acts-on-own-judgement` | Never act without an instruction | settled | 2026-08-11 | No approval carries a decision the user did not make. |
@@ -14,7 +14,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D8 | `no-self-update-instruction` | No self-update text in SKILL.md | settled | 2026-08-11 | A teammate follows an instruction that can actually run. |
 | D9 | `no-version-field` | No version field anywhere | settled | 2026-08-11 | Every push to `main` reaches everyone who has the plugin. |
 | D10 | `one-marketplace-only` | Never create a second marketplace | settled | 2026-08-11 | A teammate keeps the marketplace they added and its plugins. |
-| D11 | `plugin-json-only-in-claude-plugin` | Only plugin.json in claude-plugin | settled | 2026-08-11 | A plugin installs and its skills are discovered. |
+| D11 | `plugin-json-only-in-plugin-dir` | Only plugin.json in claude-plugin | settled | 2026-08-11 | A plugin installs and its skills are discovered. |
 | D12 | `port-skill-verbatim` | Port a skill verbatim | settled | 2026-08-11 | A skill that worked before the port still works after it. |
 | D13 | `public-repo` | Keep this repo public | settled | 2026-08-11 | A teammate installs a plugin and gets every later fix, with no GitHub account and no silent failure. |
 | D14 | `never-prewrite-actions` | Never pre-write an action | superseded | 2026-08-12 | The action log records what happened and nothing else. |
@@ -49,6 +49,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D45 | `bar-holds-only-commit-controls` | Keep reference text out | superseded | 2026-08-24 | A reviewer can see the queue the bar floats over. |
 | D46 | `bar-ignores-filter` | The bar ignores filters | superseded | 2026-08-24 | A decision made before a filter was applied still executes. |
 | D47 | `diagnose-stale-copy-in-order` | Diagnose stale copies in order | settled | 2026-08-24 | A maintainer fixes the copy that is actually stale. |
+| D60 | `examples-use-placeholders` | Shipped examples use placeholders | settled | 2026-08-24 | Nothing a teammate copies carries customer data into a public repo. |
 | D48 | `execute-message-authorises-only` | The message authorises only | superseded | 2026-08-24 | The gates that govern a click live in the text a test reads. |
 | D49 | `extend-shared-blocks` | Extend shared block coverage | open | 2026-08-24 | A fix reaches both plugins, and neither plugin's own names get reworded away. |
 | D50 | `generated-bespoke-skill` | Skill that generates skills | abandoned | 2026-08-24 | Every approval runs on text a maintainer vetted and a push can fix. |
@@ -60,7 +61,6 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D56 | `prerequisite-bucket` | Plugins are prerequisite buckets | settled | 2026-08-24 | A teammate can switch off the work they cannot run, and keeps the work they can. |
 | D57 | `provenance-ids-allowed` | Provenance may cite ids | settled | 2026-08-24 | Every documented defect is traceable to a record and a date. |
 | D58 | `shared-blocks` | Sync shared blocks from canonical | settled | 2026-08-24 | A fix reaches both plugins, or the build fails. |
-| D60 | `shipped-examples-use-placeholders` | Shipped examples use placeholders | settled | 2026-08-24 | Nothing a teammate copies carries customer data into a public repo. |
 | D61 | `skill-md-marker-rules` | Place SKILL.md markers on boundaries | settled | 2026-08-24 | A synced block leaves both skills readable and both code fences runnable. |
 | D62 | `skill-spine-plus-references` | Thin spine plus reference modules | settled | 2026-08-24 | Every run reads every rule that governs it. |
 | D63 | `verdict-vocabulary-gate` | Gate template verdicts against publish | settled | 2026-08-24 | Every branch on a dashboard can actually render. |

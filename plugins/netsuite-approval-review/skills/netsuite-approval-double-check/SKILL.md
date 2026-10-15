@@ -220,7 +220,7 @@ Two data quirks that will bite:
 
 1. **Go and look, and name what is actually there.** Open the NetSuite home page and enumerate every portlet by title, including the ones that plainly are not approval queues.
 2. **Surface the candidates and ask which is theirs.** Show the list and what each portlet holds. This is the common case. Store the answer in `config.billPortlet`.
-3. If nothing on the dashboard is a plausible candidate, **ask for a link**. Store it in `config.queueSource` and use it from then on.
+3. If nothing on the dashboard is a plausible candidate, and only then, **ask for a link**. Store it in `config.queueSource` and use it from then on.
 
 - **Record the answer either way, including *there is no such portlet*.** Then this is asked once rather than every run.
 - **Never present a partial queue as the whole one.** With no change-order source, bills and purchase orders are covered and change orders cannot be identified at all. Say that in the same breath as the count.

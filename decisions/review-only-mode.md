@@ -51,7 +51,7 @@ The superseded records below return to `settled` in that same pull request.
 8. In `scripts/test_skill_code.py`, move `test_gate_states` and the bar and mirror assertions of `test_dashboard_view` into `actionable-retired/scripts/`. Add one assertion that neither template contains `onclick="mark(` or an element with id `bar`. Break it once and watch it go red.
 9. Run the float measurement by hand on both renders. D70, measure position in a browser. Record the queue rows visible in the first 700px as a finding.
 10. Mark eleven decisions `superseded`, each citing this record. They are D14, never pre-write an action, through D78, an unmapped subtype keeps buttons, and the list sits under Evidence. Close F159, execute button blocked state, and F163, purchase order route, as moot. Regenerate the indexes.
-11. Rewrite the marketplace descriptions, the READMEs, `CLAUDE.md` and the onboarding sheet. No line may say the dashboard approves or responds. D33, the page is the file. Add a `CLAUDE.md` line naming `actionable-retired/` as read-only reference.
+11. Rewrite the marketplace descriptions, the READMEs, `CLAUDE.md` and the onboarding sheet. No line may say the dashboard approves or responds. Add a `CLAUDE.md` line naming `actionable-retired/` as read-only reference.
 12. Bump the four version sites in one commit. D43, four synced version sites.
 13. Open one pull request. The maintainer claims ids in the last commit and merges. The merge sha goes into this record under Evidence.
 

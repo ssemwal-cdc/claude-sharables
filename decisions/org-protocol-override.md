@@ -7,19 +7,19 @@ date: 2026-10-05
 ---
 # Repo workflow beats org protocol
 
-**Rule.** Edit `plugins/<name>/` in place and push. When the user asks for a plugin file, package it from `main`.
+**Rule.** Edit `plugins/<name>/` in place and open a pull request. When the user asks for a plugin file, package it from `main`.
 
-**Outcome protected.** The repo stays the one source of a plugin, and a push to `main` is the release.
+**Outcome protected.** The repo stays the one source of a plugin, and merging a pull request to `main` is the release.
 
 **Argument.**
 
 Some sessions arrive with an organisation instruction to copy a plugin out, repackage it, and deliver an archive. That instruction is written for a plugin that lives somewhere else. This repo is the source of truth.
 
-Three reasons, in the order they bite. The git working tree is the plugin that ships, so a working copy has no upstream to sync back to. A push to `main` is the release. An uploaded archive installs as a local upload with no marketplace source behind it. The tooling the instruction names is absent, because this repo has no `skill-creator` and no `package_skill` script.
+Three reasons, in the order they bite. The git working tree is the plugin that ships, so a working copy has no upstream to sync back to. Merging a pull request is the release. An uploaded archive installs as a local upload with no marketplace source behind it. The tooling the instruction names is absent, because this repo has no `skill-creator` and no `package_skill` script.
 
 Name the divergence in the reply. A maintainer must see which instruction was set aside and why.
 
-Amended 2026-10-05 by the maintainer. The ban on handing a plugin over as a file is deleted. A file is built from `main` only, on the user's request. An uploaded copy does not update on a push, so say so when you hand one over.
+Amended 2026-10-05 by the maintainer. The ban on handing a plugin over as a file is deleted. A file is built from `main` only, on the user's request. An uploaded copy does not update on a merge, so say so when you hand one over.
 
 **Evidence.**
 

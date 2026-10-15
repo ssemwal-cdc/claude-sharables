@@ -35,7 +35,6 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D30 | `demote-missing-wfid-ungated` | Demote a missing workflow id | settled | 2026-08-15 | An unresolved gate cannot reach the execute list. |
 | D31 | `docs-folder-is-public` | The docs folder is public | settled | 2026-08-17 | Nothing confidential is served to the internet. |
 | D32 | `no-data-theme-on-pages` | No theme attribute on Pages | settled | 2026-08-17 | The sheet renders correctly on the default system setting. |
-| D33 | `onboarding-sheet-is-the-file` | The page is the file | settled | 2026-08-17 | Every teammate reads the current sheet. |
 | D34 | `connector-failure-never-empty` | A failed call is unknown | settled | 2026-08-19 | A user is never told their approval queue is empty because a call failed. |
 | D35 | `connector-is-optional` | The connector is optional | settled | 2026-08-19 | An unprovisioned teammate starts the same day instead of waiting on IT. |
 | D36 | `stale-connector-said-once` | Say a stale session once | settled | 2026-08-19 | A reader fixes a stale session in seconds and gets the cross-check back. |
@@ -61,7 +60,6 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D56 | `prerequisite-bucket` | Plugins are prerequisite buckets | settled | 2026-08-24 | A teammate can switch off the work they cannot run, and keeps the work they can. |
 | D57 | `provenance-ids-allowed` | Provenance may cite ids | settled | 2026-08-24 | Every documented defect is traceable to a record and a date. |
 | D58 | `shared-blocks` | Sync shared blocks from canonical | settled | 2026-08-24 | A fix reaches both plugins, or the build fails. |
-| D59 | `sheet-has-no-terminal-commands` | No terminal commands in sheet | settled | 2026-08-24 | A teammate reading the sheet sees instructions for the app they are using. |
 | D60 | `shipped-examples-use-placeholders` | Shipped examples use placeholders | settled | 2026-08-24 | Nothing a teammate copies carries customer data into a public repo. |
 | D61 | `skill-md-marker-rules` | Place SKILL.md markers on boundaries | settled | 2026-08-24 | A synced block leaves both skills readable and both code fences runnable. |
 | D62 | `skill-spine-plus-references` | Thin spine plus reference modules | settled | 2026-08-24 | Every run reads every rule that governs it. |
@@ -98,7 +96,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D94 | `in-skill-onboarding` | Onboarding lives in the skill | settled | 2026-09-25 | A new user who only installs the plugin reaches a working review and a working schedule without reading anything else. |
 | D21 | `blocked-marker-never-a-value` | Never trust a blocked marker | settled | 2026-10-02 | A redacted figure is read again instead of read as empty. |
 | D95 | `no-filter-evasion` | A skill never shapes its way past a filter | settled | 2026-10-02 | A run passes the safety check honestly, and never hides data from it. |
-| D79 | `org-protocol-override` | Repo workflow beats org protocol | settled | 2026-10-05 | The repo stays the one source of a plugin, and a push to `main` is the release. |
+| D79 | `org-protocol-override` | Repo workflow beats org protocol | settled | 2026-10-05 | The repo stays the one source of a plugin, and merging a pull request to `main` is the release. |
 | D96 | `run-downloads-word-files` | A run downloads Word files itself | settled | 2026-10-05 | Word support gets read without the user downloading files by hand. |
 | D98 | `claim-through-the-stamp` | Claim record ids through the stamp | settled | 2026-10-06 | A record id stays permanent and unique. |
 | D97 | `login-email-stored` | The sign-in email comes from config | settled | 2026-10-06 | Once the address is stored, an idle Procore session resumes without a hand-off. |
@@ -113,3 +111,6 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D107 | `vendor-tied-verdict` | A sixth verdict where only the vendor's proposal ties | settled | 2026-10-07 | An item whose only checkable figure was verified reaches the reviewer. |
 | D108 | `in-page-call-deadline` | Every in-page call stops itself | settled | 2026-10-09 | A run that hits a stuck call ends with a report of what finished. |
 | D109 | `netsuite-history-open` | A third NetSuite verdict, history open | settled | 2026-10-12 | A reviewer is not told a right bill is wrong because of a question in the PO's history. |
+| pending | `main-has-no-required-check` | The merge tool is the only check on main | settled | 2026-10-15 | One gate holds the merge, so a merge never waits on a second, drifting setting. |
+| pending | `merge-waits-for-owner` | Every merge waits for the owner | settled | 2026-10-15 | The owner decides what ships to every teammate. |
+| pending | `parent-rules-win` | The parent CLAUDE.md always wins | settled | 2026-10-15 | One rule has one home, so two copies never disagree. |

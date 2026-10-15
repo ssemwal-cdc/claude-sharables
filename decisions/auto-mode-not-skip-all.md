@@ -7,7 +7,7 @@ date: 2026-08-15
 ---
 # Auto mode, never skip-all
 
-**Rule.** Run both plugins in auto permission mode. Never use skip-all, and add no permission configuration.
+**Rule.** Run both plugins in auto permission mode. Never use skip-all. Add no auto-mode environment block. A deny list in `.claude/settings.json` is allowed, because it is stricter.
 
 **Outcome protected.** A browser holding live approval authority keeps its permission prompts.
 
@@ -23,7 +23,7 @@ So the instruction rests on its other leg. Skip-all is ruled out on the Anthropi
 
 A browser signed into Procore and NetSuite with live approval authority is the exact opposite of that.
 
-An auto-mode environment configuration block is not recommended. It is configuration with no demonstrated purpose, and unused configuration rots. The block is in the git history if something is ever genuinely blocked.
+An auto-mode environment configuration block is not recommended. It is configuration with no demonstrated purpose, and unused configuration rots. A deny list is different: it only removes tools, and `.claude/settings.json` denies the two NetSuite write tools. The block is in the git history if something is ever genuinely blocked.
 
 An onboarding section was written for a scheduled-run hang that turned out not to exist, and removed unshipped. Do not add one without a reproduction.
 

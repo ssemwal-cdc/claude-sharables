@@ -15,7 +15,7 @@ date: 2026-08-20
 
 This is the shape these records keep recording. A distinct failure folded into a category that means something else never surfaces.
 
-The purchase order linkage has three states. Linked means that purchase order is the coding and is authoritative. Unlinked means the query succeeded and found none, and the typed value is all there is. Failed means the query errored, which is unknown and never unlinked.
+The purchase order linkage has three states. Linked means that purchase order is the coding and is authoritative. Unlinked means that the query succeeded and found none, and the typed value is all there is. Failed means that the query errored, which is unknown and never unlinked.
 
 Every fan-out returns three states per item. An ok state, an empty state where the API genuinely returned nothing, and a failed state carrying the code.
 

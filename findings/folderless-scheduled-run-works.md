@@ -35,7 +35,7 @@ See G11, unattended Step 0 identity branch.
 **Evidence.** 2026-08-26, third maintainer correction of that day.
 One reported run, no transcript.
 The repeat-review cost is `unmeasured`.
-The shipped scheduled prompt reads `_netsuite_review_log.json` and stops when `lastCompletedRun` is today.
+The shipped scheduled prompt reads `_netsuite_review_log.json`. When `lastCompletedRun` is today, it stops.
 Its own fallback treats a missing or unreadable file as no run today.
 
 **Checks.** none.

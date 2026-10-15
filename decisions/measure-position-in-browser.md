@@ -19,7 +19,7 @@ This repo has shipped a pinned bar that was not pinned twice, and both times the
 
 So the script reproduces the host arrangement and measures it. That is a cross-origin frame sized to its own content, a scrolling parent, and both dashboards published from fixtures.
 
-The `shots` CI job runs it with `--shots`. `validate.py` may not assume a browser.
+The `shots` CI job runs it with `--shots`. `validate.py` may not assume that a browser.
 
 Run it after touching the band track block, the float CSS block or the header mirror block. Also run it after anything that changes the page height.
 

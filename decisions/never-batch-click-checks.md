@@ -21,7 +21,7 @@ The entire value of the pre-click re-verification is running in the moment befor
 
 The post-click verification catches more than connector lag. It catches an unexpected record state, a response that routed wrongly and a frozen tab.
 
-Sweeping once at the end means every remaining click has already landed before any of that is visible.
+Sweeping once at the end means that every remaining click has already landed before any of that is visible.
 
 Both were costed as small savings. Neither is worth the trade.
 

@@ -17,6 +17,11 @@ The owner ruled this on 2026-10-15. A sentence that restates a parent rule is de
 
 Process-only ruling. Two later lanes follow from it. One renames each record slug over 32 characters. One writes the whole repo in Simplified Technical English, `actionable-retired/` included.
 
+**Follow-on rulings, 2026-10-15, process-only.**
+
+- Simplified Technical English covers every Markdown file in the repo, `actionable-retired/` included.
+- Every record slug is 32 characters or fewer. The slug length check (`check_slug_length`) enforces it.
+
 **Evidence.**
 
 - Ruled by the owner on 2026-10-15.

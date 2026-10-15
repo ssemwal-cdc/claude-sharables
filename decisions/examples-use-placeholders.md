@@ -17,7 +17,7 @@ No token and no credential may land in this repo, ever. If a ported skill carrie
 
 The shipped worked examples are the config blocks and log schemas a teammate copies. They use placeholders only.
 
-That means no tenant or company id, no custom-field id, no counterparty name, no project label and no real amount.
+They carry no tenant or company id, no custom-field id, no counterparty name, no project label and no real amount.
 
 Defect provenance is the other case and the rule differs. See D57, provenance may cite ids.
 

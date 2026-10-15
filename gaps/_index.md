@@ -4,7 +4,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 
 | id | slug | title | status | date | outcome |
 |---|---|---|---|---|---|
-| G2 | `freeze-fallback-unfired` | Freeze fallback never fired | unobserved | 2026-08-15 | A frozen tab never causes a second click on an approved record. |
+| G2 | `freeze-fallback-unfired` | Freeze fallback never fired | unobserved | 2026-08-15 | A frozen tab never causes a second click for an approved record. |
 | G5 | `small-unknowns` | Four small unknowns | unobserved | 2026-08-15 | A small unknown stays named instead of becoming an assumption. |
 | G6 | `attachment-sniff-cleared` | Two branches in the attachment sniff stay unfired | unobserved | 2026-08-20 | A workbook or an image is read, not filed as unreadable. |
 | G3 | `cowork-storage-path-unverified` | Cowork storage leads only | unobserved | 2026-08-26 | A session reads a research note as leads, never as settled behaviour. |

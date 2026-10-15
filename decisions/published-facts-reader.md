@@ -21,7 +21,7 @@ The 2026-09-16 audit found 37 published numbers and paths with no reader.
 That audit's own item list was not handed to this lane. This record
 re-enumerates `CLAUDE.md`, `README.md` and both plugin `README.md` files
 from scratch. Its count will not match 37 item for item. It is a full
-accounting on its own terms, not a reproduction of the audit's list.
+accounting on its own terms, not a copy of the audit's list.
 
 **Already had a reader, before this lane.** `validate.py` already checked
 several things. A plugin or skill name named in the docs must resolve to a

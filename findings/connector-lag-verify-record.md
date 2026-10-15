@@ -23,9 +23,9 @@ Together they produce a false failure on work that succeeded. That stops the bat
 
 So verify the record. Select the approval status, the next approver, the previous approver and the approval count for that record id.
 
-Advanced means the previous approver is now the user, and the next approver is someone else. It also means the count went up by one.
+Advanced means that the previous approver is now the user, and the next approver is someone else. It also means that the count went up by one.
 
-Unchanged means not yet, never failed. Report `still propagating` once and end the round. Never re-click on it, and never write a waiter loop around it.
+Unchanged means not yet, never failed. Report `still propagating` once and end the round. Never click it again, and never write a waiter loop around it.
 
 **Evidence.**
 

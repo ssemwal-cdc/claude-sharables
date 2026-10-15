@@ -19,7 +19,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D13 | `public-repo` | Keep this repo public | settled | 2026-08-11 | A teammate installs a plugin and gets every later fix, with no GitHub account and no silent failure. |
 | D14 | `never-prewrite-actions` | Never pre-write an action | superseded | 2026-08-12 | The action log records what happened and nothing else. |
 | D15 | `one-state-file-per-skill` | One state file per skill | settled | 2026-08-12 | A verdict from one system never lands in the other log. |
-| D16 | `widget-not-artifact` | Render dashboards with show_widget | settled | 2026-08-12 | One click on a dashboard button puts the execute instruction into chat. |
+| D16 | `widget-not-artifact` | Render dashboards with show_widget | settled | 2026-08-12 | One click of a dashboard button puts the execute instruction into chat. |
 | D17 | `netsuite-pdf-geometry-rows` | Rebuild NetSuite rows from geometry | settled | 2026-08-13 | The quantity, rate and line-tie checks read aligned columns. |
 | D18 | `never-batch-click-checks` | Never batch the click checks | superseded | 2026-08-13 | A wrong record state stops the batch before the next click lands. |
 | D19 | `return-rows-not-residuals` | Return the rows, flattened | settled | 2026-08-13 | A review still catches the defect nobody specified a check for. |

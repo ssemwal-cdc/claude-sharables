@@ -345,7 +345,7 @@ def check_onboarding_page():
     rel = os.path.join("docs", "onboarding.html")
     fp = os.path.join(REPO, rel)
     if not os.path.isfile(fp):
-        return ["%s is missing. D33, the page is the file: GitHub Pages serves this "
+        return ["%s is missing. D94, onboarding lives in the skill: GitHub Pages serves this "
                 "exact path, so its absence is a build failure, not a skip." % rel]
     problems = []
     raw = open(fp, "rb").read()

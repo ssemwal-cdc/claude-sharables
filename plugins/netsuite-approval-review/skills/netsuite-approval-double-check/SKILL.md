@@ -39,7 +39,7 @@ The user is one approver among several, and not the accountant of record. An app
 - **Do this on every run, before anything else.** The workspace copies of the template and the publish script are a cache of the plugin's assets. Refresh them every run, or a plugin update never reaches the dashboard.
 - **`<workspace>` is the workspace folder connected to this session.** Resolve it once, here, and use that same path below.
 - **With no workspace folder connected, run now.** Never ask and never wait. Skip every state-file read and write. Treat the run as a first run. Say once in the report that no folder was connected, so no log was saved.
-- **Attempt the write. Never put it to the user as a question.** Create the folder if it is absent, keep the state file in it, then **read it back**. A write is proven by reading it.
+- **Attempt the write. Never put it to the user as a question.** If the folder is absent, create it. Keep the state file in it, then **read it back**. A write is proven by reading it.
 - **Three write outcomes.** `kept` is written and read back. `refused` is attempted, and the surface returned an error. `not attempted` is nobody tried. Never report `not attempted` as either of the other two.
 - **The session-local fallback belongs to `refused` alone**, and **never infer the outcome from a property of** the folder. A cloud-synced, OneDrive-backed or network-share folder does not predict a refused write.
 - **If the fallback is genuinely reached, name what refused it.** Write one short line near the headline, carrying the error the write returned. Do not describe the alternatives. Do not offer to hand the file over. Never write somewhere the session will discard and call it kept.
@@ -77,7 +77,7 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 **The sandbox shell may not see the plugin's files at all.** Observed 2026-08-15 in a Cowork run: the shell mounts only the connected workspace folder, outputs and uploads. The `cp` source path does not exist there. Sync down this ladder and take the first rung that works.
 
 1. **The `cp` above**, wherever the shell can see `${CLAUDE_PLUGIN_ROOT}`.
-2. **Read, then write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/` with the file tools and write it over the workspace copy byte for byte. Never retype, trim or tidy in passing. Then prove the copy landed whole. The template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and `python3 -m py_compile publish_dashboard.py` passes in the workspace folder. This rung is designed, not yet observed. Say so in the run report if it also fails.
+2. **Read, then write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/netsuite-approval-double-check/assets/` with the file tools and write it over the workspace copy byte for byte. Never retype, trim or tidy in passing. Then prove the copy landed whole. The template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and `python3 -m py_compile publish_dashboard.py` passes in the workspace folder. This rung is designed, not yet observed. If it also fails, say so in the run report.
 3. **Use the existing workspace copies and say so, once**, naming the files' modification date from `ls -l` near the headline. Then carry on. Do not stop the run over it. Only the template and publish script can lag, so the verdicts are current either way.
 
 - **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, say exactly that. Stop before Step 7. There is no template to inject into. Inventing one is forbidden. Expect this case on Cowork.
@@ -655,7 +655,7 @@ Add a second line only if something blocked the run. That includes a login redir
 <!--__SHARED:skill-schedule-offer__-->
 **Offer this only right after a first run that finished Step 7.** Skip it on every later run.
 
-- **Where nobody is watching, in a scheduled window, do not ask anything.** Put one line in the report instead. Name the scheduled-prompt path below, and say a schedule can be set up on the next attended run.
+- **Where nobody is watching, in a scheduled window, do not ask anything.** Put one line in the report instead. Name the scheduled-prompt path below, and say a schedule can be configured on the next attended run.
 - **Otherwise, check whether a scheduling tool is present in this session.**
 - **If one is present, offer a daily schedule.** Ask three things. Ask the first time of day. Ask the retries after it and their times. Ask weekdays only or every day.
 - **Create the task with this skill's own scheduled prompt, verbatim.** Never summarise, reword or restate a rule from it.

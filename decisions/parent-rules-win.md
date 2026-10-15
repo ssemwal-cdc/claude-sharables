@@ -15,12 +15,16 @@ date: 2026-10-15
 
 The owner ruled this on 2026-10-15. A sentence that restates a parent rule is deleted. A sentence that adds a domain rule stays.
 
-Process-only ruling. Two later lanes follow from it. One renames each record slug over 32 characters. One writes the whole repo in Simplified Technical English, `actionable-retired/` included.
+Process-only ruling.
 
 **Follow-on rulings, 2026-10-15, process-only.**
 
 - Simplified Technical English covers every Markdown file in the repo, `actionable-retired/` included.
 - Every record slug is 32 characters or fewer. The slug length check (`check_slug_length`) enforces it.
+
+**Holes, named.**
+
+- The repo's own shared-tree hook is deleted. The parent guard runs from the owner's user settings, not from this repo. A session without that guard has no shared-tree guard here. That covers a teammate, a cloud session or a fresh machine. The debt is G‹shared-tree-guard-user-only›, the guard runs only for the owner.
 
 **Evidence.**
 

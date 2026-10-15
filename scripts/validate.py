@@ -302,7 +302,7 @@ for doc in ("README.md", "CLAUDE.md"):
             )
 
 # --------------------------------------------------------- published facts
-# D84 ruling 3 (markdown-compliance-fix-plan): give every published number and
+# D89 ruling 3 (markdown-compliance-fix-plan): give every published number and
 # path in CLAUDE.md and the three READMEs a reader. These are the ones that
 # are genuinely mechanical. See decisions/published-facts-reader.md for the
 # full accounting of what is left as honest, cited prose instead.

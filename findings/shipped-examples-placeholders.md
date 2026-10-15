@@ -1,6 +1,6 @@
 ---
 id: F119
-slug: examples-now-placeholders-found
+slug: shipped-examples-placeholders
 kind: finding
 status: settled
 date: 2026-08-24

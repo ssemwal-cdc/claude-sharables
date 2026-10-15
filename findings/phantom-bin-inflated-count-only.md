@@ -1,6 +1,6 @@
 ---
 id: F114
-slug: phantom-bin-inflated-queue-count
+slug: phantom-bin-inflated-count-only
 kind: finding
 status: observed
 date: 2026-08-24

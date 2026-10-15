@@ -1,6 +1,6 @@
 ---
 id: F139
-slug: check-mutations-caught-defect
+slug: all-mutations-caught-defect
 kind: finding
 status: observed
 date: 2026-09-15

@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v43 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear, history open or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
+description: v44 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear, history open or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 43 — 2026-10-12.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
+**Skill version 44 — 2026-10-15.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
 
 Review every bill, purchase order and change order in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document. Cross-check against the real purchase order and billing history. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
@@ -206,7 +206,7 @@ ORDER BY t.trandate
 
 - **`custbody3` is a typed reference. It is not the PO this bill is applied to.** It is aliased `po_typed` for that reason. A person enters it by hand. Checked live 2026-08-20: it was wrong on five of five bills examined.
 - **The PO the money is actually on comes from the transaction linkage that Step 2 builds.** That is the only thing that may be called the bill's PO. Never let `po_typed` reach a verdict, a `poContext` figure, a comment or the dashboard as though it were the coding. See Step 5.
-- **Zero rows here is a claim, so make sure it is a true one.** This query is the only thing that finds pending bills. So "no rows" and "the call failed" look the same to the reader. **An error, an auth challenge, or any response that is not a result set is a failure.** It is not an empty queue. Switch to the browser route per Step 0 and read the bills off the portlet.
+- **Zero rows here is a claim, so make sure that it is a true one.** This query is the only thing that finds pending bills. So "no rows" and "the call failed" look the same to the reader. **An error, an auth challenge, or any response that is not a result set is a failure.** It is not an empty queue. Switch to the browser route per Step 0 and read the bills off the portlet.
 
 Two data quirks that will bite:
 
@@ -214,13 +214,13 @@ Two data quirks that will bite:
 - **`trandate` comes back as `"7/19/2026"`**, not ISO. Parse month, day and year explicitly.
 
 - **1b. Dashboard, authoritative, and the only place change orders appear:**
-- **Check `config.queueSource` first.** If it names a `url`, go there instead of the default dashboard. If it only `described` somewhere, resolve that description before navigating, and ask once if you cannot. With both empty, the normal case, navigate to the NetSuite dashboard and scroll to the bottom. Three kinds of portlet matter. One holds change orders, one holds purchase orders, frequently empty, and one holds vendor bills, named in `config.billPortlet`. Portlet names are user-specific saved searches and can be arbitrary. Never assume a name is a placeholder. If a portlet has been renamed since setup, report it rather than guessing.
+- **Check `config.queueSource` first.** If it names a `url`, go there instead of the default dashboard. If it only `described` somewhere, resolve that description before navigating. If you cannot, ask once. With both empty, the normal case, navigate to the NetSuite dashboard and scroll to the bottom. Three kinds of portlet matter. One holds change orders, one holds purchase orders, frequently empty, and one holds vendor bills, named in `config.billPortlet`. Portlet names are user-specific saved searches and can be arbitrary. Never assume that a name is a placeholder. If a portlet has been renamed since setup, report it rather than guessing.
 
 **If no approval portlet is on the dashboard, do not conclude there is none.** That conclusion produces a queue permanently missing change orders, and it reads as a complete queue. Work down this ladder and stop at the first rung that resolves it.
 
 1. **Go and look, and name what is actually there.** Open the NetSuite home page and enumerate every portlet by title, including the ones that plainly are not approval queues.
 2. **Surface the candidates and ask which is theirs.** Show the list and what each portlet holds. This is the common case. Store the answer in `config.billPortlet`.
-3. **Ask for a link**, only when nothing on the dashboard is a plausible candidate. Store it in `config.queueSource` and use it from then on.
+3. If nothing on the dashboard is a plausible candidate, **ask for a link**. Store it in `config.queueSource` and use it from then on.
 
 - **Record the answer either way, including *there is no such portlet*.** Then this is asked once rather than every run.
 - **Never present a partial queue as the whole one.** With no change-order source, bills and purchase orders are covered and change orders cannot be identified at all. Say that in the same breath as the count.
@@ -233,7 +233,7 @@ Two data quirks that will bite:
 - **`url`** is a link the user gave you. Navigate there instead of the default location. Verify it loaded and holds a queue before reading it. If it does not, say so and fall back to the default.
 - **`described`** is the user's own words, stored verbatim. Resolve it on each run rather than caching a guess. **If you cannot resolve what they described, ask once and store the answer.** Never substitute the nearest thing you found. A review of the wrong queue looks exactly like a review of the right one. Ask for both at first-run setup, alongside the other identifiers, and make clear that skipping them is normal. Re-editable at any time, like `config.focus`.
 
-Use `get_page_text` on the dashboard tab rather than screenshots. The portlet tables extract cleanly as text. Keep each Claude in Chrome call small and of one kind of request, about 20 rows. **Do not open a tab per row here.** Every card on the dashboard links straight to its own record, so the reader opens the ones they want. Open a record tab only where a later step needs one. Those are Step 2's field reads in browser mode, and Step 4's attachment fetch. When you do, ctrl+click the row's date link. That tab is **a record tab**, one of the tabs this skill opens. Ctrl+click may silently fail on the first attempt, so verify with `tabs_context_mcp` and retry once if no new tab appeared. Review **every** item regardless of dollar amount. There is no threshold.
+Use `get_page_text` on the dashboard tab rather than screenshots. The portlet tables extract cleanly as text. Keep each Claude in Chrome call small and of one kind of request, about 20 rows. **Do not open a tab per row here.** Every card on the dashboard links straight to its own record, so the reader opens the ones they want. Open a record tab only where a later step needs one. Those are Step 2's field reads in browser mode, and Step 4's attachment fetch. When you do, ctrl+click the row's date link. That tab is **a record tab**, one of the tabs this skill opens. Ctrl+click may silently fail on the first attempt, so verify with `tabs_context_mcp`. If no new tab appeared, retry once. Review **every** item regardless of dollar amount. There is no threshold.
 
 - **In browser mode, bills come from the bill portlet the same way change orders already do.** They carry the same "as of last review" caveat the dashboard already shows for change orders.
 - **Change orders are not queryable for pending status.** They live in `transaction` under a recordtype like `custompurchase_r_pci_change_order_po`. The records carry `approvalstatus = null` and no next-approver value, so no SuiteQL filter can identify the ones awaiting the user. The dashboard portlet is the only source. That is why the dashboard labels change orders "as of last review" rather than live. Do not remove that label.
@@ -426,7 +426,7 @@ Every check in Steps 4 and 5 carries an **id**, the **lens** it serves, and the 
 1. **Header tie.** The PDF total must equal the NetSuite AMOUNT. Flag any delta. The PDF may explain it, through tax, freight, retainage or a partial draw. Where it does, state the reconciliation rather than the bare difference.
 2. **Line tie.** Every NetSuite line must reproduce on the PDF. Sum the lines to the header in both places.
 3. **Internal consistency.** For AIA-style pay applications and phased professional-services invoices, re-derive the arithmetic. The schedule of values sums to the contract sum. Earned-less-previously equals current billing on each phase. Completed-to-date less previous certificates equals current payment due. Balance to finish equals contract less completed.
-4. **Prorations.** Assume no fixed house convention unless the user has stated one. When a partial period is billed, show the vendor's factor next to each plausible basis. The bases are calendar days over actual days in month, calendar days over 30, and business days. Let the user decide. **Then check the cumulative position**, below. A factor that looks generous in isolation is often correct across the engagement.
+4. **Prorations.** Assume that no fixed house convention exists unless the user has stated one. When a partial period is billed, show the vendor's factor next to each plausible basis. The bases are calendar days over actual days in month, calendar days over 30, and business days. Let the user decide. **Then check the cumulative position**, below. A factor that looks generous in isolation is often correct across the engagement.
 
 ### Support adequacy
 
@@ -480,9 +480,9 @@ Keying on `po_id` matters. A document-number match resolves whatever string you 
 
 Then reconcile. A professional-services invoice's "billed previously" plus its remaining contract phases should tie to the PO's contract value. A change order's PREVIOUSLY APPROVED AMOUNT should tie to the PO total. Residual differences usually correspond to a specific already-approved change order. Identify it rather than reporting a bare variance. Caution: `custbody_r_it_total_amount_invoiced` and `..._remaining` are frequently stale, often 0. Do not rely on them. Derive from actual bills instead.
 
-**The third verdict, `history-open` (D109, a third verdict).** It sits between `clear` and `flagged`. Name the evidence in `head`. It applies when **every check on the item itself passes**. Those checks are the math, adequate support, and the amount tying to NetSuite. Adequate support means a **full** `text` or `spreadsheet` read. It also needs this reconcile, with 5c billed-to-date, to leave an **unexplained remainder in dollars** that is not zero. Example: the item's own figures tie. The PO's approved billing history runs ahead of the vendor's previously-billed figure. Nothing explains the gap.
+**The third verdict, `history-open` (D109, a third verdict).** It sits between `clear` and `flagged`. Name the evidence in `head`. It applies when **every check on the item itself passes**. Those checks are the math, adequate support, and the amount tying to NetSuite. Adequate support means that a **full** `text` or `spreadsheet` read. It also needs this reconcile, with 5c billed-to-date, to leave an **unexplained remainder in dollars** that is not zero. Example: the item's own figures tie. The PO's approved billing history runs ahead of the vendor's previously-billed figure. Nothing explains the gap.
 
-- **The remainder decides.** Subtract what named approved bills and change orders explain. Remainder exactly zero is `clear`. `poWarning` names each explaining bill or change order. Any other remainder is `history-open`, whether positive or negative. A negative one means the explanations overshoot the gap. `poWarning` names the explained part and the remainder, both in dollars.
+- **The remainder decides.** Subtract what named approved bills and change orders explain. Remainder exactly zero is `clear`. `poWarning` names each explaining bill or change order. Any other remainder is `history-open`, whether positive or negative. A negative one means that the explanations overshoot the gap. `poWarning` names the explained part and the remainder, both in dollars.
 - **`poWarning` is required on `history-open`.** Write this sentence in it verbatim. "Billing history does not reconcile: ask AP and the vendor which side is wrong before approving." Put the dollar figures after it. The publish script flags a `history-open` item that has no `poWarning`.
 - **Only a full `text` or `spreadsheet` read may reach `history-open`.** A partial read, an OCR read, or any other outcome stays `flagged`. An image or scanned read never reaches `history-open`.
 - **Any failing check on the item itself is `flagged`.** So is a missing or unreadable attachment. So is a missing intermediate application, which is a failed check on the item itself. `flagged` outranks `history-open`.
@@ -524,7 +524,7 @@ ORDER BY t.trandate
 The memo field is the reliable engagement key. Staffing POs are often pooled, carrying many people at once. So a PO memo naming a different person is not a mismatch. Query by memo, not by PO alone. Three further checks. All three are **designed, not yet observed.** Step 5 runs only in connector mode, and no connector run has been walked through end to end.
 
 - **Cumulative reasonableness.** Sum all bills for the engagement including the pending one and compare to what the contract period implies. A partial-month factor that looks inflated in isolation is often exactly right once the whole engagement is footed.
-- **Application sequence.** If a pay application says "less previous certificates $X", confirm that bills totalling $X exist in NetSuite for that engagement. A missing intermediate application means the audit trail is broken. The item is `flagged`, and it outranks `history-open`.
+- **Application sequence.** If a pay application says "less previous certificates $X", confirm that bills totalling $X exist in NetSuite for that engagement. A missing intermediate application means that the audit trail is broken. The item is `flagged`, and it outranks `history-open`.
 - **Duplicates.** Same vendor, same reference number, or same period billed twice. Also watch for two POs with identical memo and amount, which double-commits the spend. A duplicate makes the item `flagged`. It is never an explanation for a residual.
 
 ### 5e-5g. The `supply-chain` lens
@@ -641,7 +641,7 @@ Add a second line only if something blocked the run. That includes a login redir
 - **This applies to lenses only. It never applies to `core`.** A browser-mode run says nothing at all about Step 5 being skipped, exactly as Step 5 requires. **A capability the user chose is informative. One they were never given is an apology.** Say it once per run, at the start. Never on an item, in a verdict, in a warning line or in a detail paragraph.
 <!-- retired: see actionable-retired/netsuite-approval-review/SKILL.md.cut.md, review-only-mode -->
 
-## Step 8 — Close down
+## Step 8 — Close
 
 <!--__SHARED:skill-close-down__-->
 - **This step is the last action of every run.** It runs after Step 7. Report nothing before it has run.

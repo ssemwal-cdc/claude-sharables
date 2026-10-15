@@ -8,7 +8,7 @@ Read this file only when `config.focus.lenses` names `supply-chain`. It is Step 
 
 - **Missing data is never a finding.** No receipt rows, no PO lines, an unpopulated date: report nothing, or report it as context. It never flags an item and never skips one.
 - **Only a real discrepancy, where both sides are present, can flag.** Billed 50 against receipts totalling 40 is a finding. Billed 50 against no receipt data at all is silence.
-- **Three states, never a boolean.** `matched` means both sides present and compared. `absent` means the query succeeded and NetSuite holds no such rows. `failed` means the query errored. **`failed` is never `absent`**, and `absent` is never "nothing was received".
+- **Three states, never a boolean.** `matched` means both sides present and compared. `absent` means that the query succeeded and NetSuite holds no such rows. `failed` means that the query errored. **`failed` is never `absent`**, and `absent` is never "nothing was received".
 - **Match leniently.** Descriptions, units and line splits differ between a PO, a receipt and an invoice for ordinary reasons. Tie on item and quantity where you can, and tolerate a reworded description. Prefer an approximate tie to a mismatch manufactured out of formatting. The lens adds evidence when NetSuite happens to hold it. It must never stop someone working the queue.
 
 - **5e. Receipt against billed quantity.** Step 2's link query discards `ShipRcpt` rows, which is correct for summing billings. With this lens on, run the same query a second time for `linktype = 'ShipRcpt'` rather than widening the first. The billing sum must keep its own filter untouched.

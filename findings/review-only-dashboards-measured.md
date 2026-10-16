@@ -23,7 +23,7 @@ Verdict per screen: PASS, PASS, PASS. No button, no bar, no mirror. Each row kee
 
 **Evidence.**
 
-- Page heights fell. NetSuite at 1200 is 5471px. Procore at 1200 is 6162px. The bar's 153px, measured in D45, keep reference text out, is gone from each.
+- Page heights fell. NetSuite at 1200 is 5471px. Procore at 1200 is 6162px. The bar's 153px, measured in D116, keep reference text out, is gone from each.
 - The measurement script itself carried eight lines of execute assertions the record did not list. They were cut into `actionable-retired/scripts/measure_float.cut.js`, and the README map names them.
 
 **Checks.** `NODE_PATH=$(npm root -g) node scripts/measure_float.js --shots .claude/shots`, by hand.

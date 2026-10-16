@@ -15,7 +15,7 @@ They closed as a check, a fix, or a stated reason. That happened during the
 same pass that resolved the items needing one.
 
 **Evidence.** Pass dated 2026-08-24, immediately after the audit.
-See `F113`, 122 findings and 29 surviving,
+See F190, 122 findings and 29 surviving,
 the audit this worked through.
 
 **Checks.** `scripts/validate.py`, `scripts/test_skill_code.py` in CI,

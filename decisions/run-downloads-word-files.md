@@ -13,7 +13,7 @@ date: 2026-10-05
 
 **Argument.**
 
-Chrome cannot display a `.docx`. A Procore attachment record carries only an id, a name and a signed link. So no read of a Word file avoids a download. The user's earlier rule kept files out of Downloads unless they opted in. This is that opt-in, for Word files only.
+Chrome cannot display a `.docx`. A Procore attachment record carries only an id, a name and a signed link. So no read of a Word file avoids a download. The user's earlier rule kept files out of Downloads. Only an opt-in could change that. This is that opt-in, for Word files only.
 
 **Evidence.**
 

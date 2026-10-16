@@ -21,7 +21,7 @@ So the rule stands and it gained a second branch.
 
 Name an unbuilt type as a defect in the skill, not as a property of the record.
 
-A missing procedure is not something a user can authorise their way out of. Asking implies it is.
+A missing procedure is not something a user can authorise their way out of. Asking implies that it is.
 
 The tell that this branch was missing was this: a run offered the user a choice. That choice was between authorising a workaround and having the plugin fixed.
 

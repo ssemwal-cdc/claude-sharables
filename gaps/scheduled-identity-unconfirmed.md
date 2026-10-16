@@ -24,8 +24,8 @@ Zero rows or several rows is the branch the rule stops.
 An unattended run that picked anyway chose an identity in silence.
 `config.me` then scopes the whole review to that identity.
 Nobody has looked at which branch fired.
-Do not assume the branch is safe.
-Do not assume the branch is broken.
+Do not assume that the branch is safe.
+Do not assume that the branch is broken.
 
 **Evidence.** Everything in this record is guessed, not observed.
 It is tested against mocks or fixtures and shipped.

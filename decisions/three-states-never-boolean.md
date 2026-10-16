@@ -15,7 +15,7 @@ date: 2026-08-20
 
 This is the shape these records keep recording. A distinct failure folded into a category that means something else never surfaces.
 
-The purchase order linkage has three states. Linked means that purchase order is the coding and is authoritative. Unlinked means the query succeeded and found none, and the typed value is all there is. Failed means the query errored, which is unknown and never unlinked.
+The purchase order linkage has three states. Linked means that purchase order is the coding and is authoritative. Unlinked means that the query succeeded and found none, and the typed value is all there is. Failed means that the query errored, which is unknown and never unlinked.
 
 Every fan-out returns three states per item. An ok state, an empty state where the API genuinely returned nothing, and a failed state carrying the code.
 
@@ -29,7 +29,7 @@ The same rule covers the write states in the workspace folder, the attachment ou
 
 - Applied to the purchase order path 2026-08-20, the fifth instance of the shape at that date.
 - The four earlier instances are the fan-out empty state against its failed state. They also include the change order wrong id returning 200 empty. The other two are a workbook read as expired, and a redaction marker read as an empty field.
-- The sixth instance is the workspace write. See F86, three write states.
+- The sixth instance is the workspace write. See F206, three write states.
 - The gate query needs an explicit page size. See F31, workflow queries need per_page.
 - The link rows need deduplication. See F43, dedupe the link rows first.
 - The fan-out design is F21, the fan-out caps concurrency.

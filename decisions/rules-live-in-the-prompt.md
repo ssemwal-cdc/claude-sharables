@@ -20,11 +20,11 @@ Maintainer prose is not a prompt. The skill file is the prompt.
 
 That is the transferable lesson. A rule about what a run may claim has to be in the file the run reads.
 
-A check then fails the build if the rule stops being stated.
+If the rule stops being stated, a check then fails the build.
 
 **Evidence.**
 
-- Recorded 2026-08-27 from F86, three write states.
+- Recorded 2026-08-27 from F206, three write states.
 - The same shape recurred with the login rung. See
   `F135`, a run banned itself from login.
 

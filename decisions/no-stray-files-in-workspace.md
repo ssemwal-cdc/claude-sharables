@@ -21,7 +21,7 @@ The alternative is stated rather than implied. Write the destination file itself
 
 Where that genuinely cannot be done, the outcome is refused and it takes the one-line report.
 
-The reason the rule is a property and not a list is F90, a list let a stray through.
+The reason the rule is a property and not a list is F207, a list let a stray through.
 
 A run once invented a to-delete folder and asked the user to empty it. That folder appears nowhere in this repo.
 

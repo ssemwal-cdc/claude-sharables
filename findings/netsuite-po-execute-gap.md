@@ -24,8 +24,8 @@ This is the Procore fourth-type problem one skill along, with the split inside a
 **Evidence.**
 
 - Reported 2026-09-01. Two batches stopped at the same gate before it was called a defect.
-- The route is D76, purchase orders take the bill route.
-- The gate is D75, gate the two type lists.
+- The route is D116, purchase orders take the bill route.
+- The gate is D116, gate the two type lists.
 - The route later fired. See F163, the maintainer's report that the
   route worked.
 

@@ -7,7 +7,7 @@ date: 2026-08-15
 ---
 # Auto mode, never skip-all
 
-**Rule.** Run both plugins in auto permission mode. Never use skip-all, and add no permission configuration.
+**Rule.** Run both plugins in auto permission mode. Never use skip-all. Add no auto-mode environment block. A deny list in `.claude/settings.json` is allowed, because it is stricter.
 
 **Outcome protected.** A browser holding live approval authority keeps its permission prompts.
 
@@ -23,7 +23,7 @@ So the instruction rests on its other leg. Skip-all is ruled out on the Anthropi
 
 A browser signed into Procore and NetSuite with live approval authority is the exact opposite of that.
 
-An auto-mode environment configuration block is not recommended. It is configuration with no demonstrated purpose, and unused configuration rots. The block is in the git history if something is ever genuinely blocked.
+An auto-mode environment configuration block is not recommended. It is configuration with no demonstrated purpose, and unused configuration rots. A deny list is different: it only removes tools, and `.claude/settings.json` denies the two NetSuite write tools. The block is in the git history if something is ever genuinely blocked.
 
 An onboarding section was written for a scheduled-run hang that turned out not to exist, and removed unshipped. Do not add one without a reproduction.
 
@@ -32,9 +32,9 @@ An onboarding section was written for a scheduled-run hang that turned out not t
 - Settled 2026-08-15 by re-running byte-identical code in auto mode with no configuration block.
 - Coverage of auto mode across every operation is `unmeasured`.
 - The onboarding sheet carries the skip-all reason and never the withdrawn claim. See F45, a retraction reached one surface.
-- The denial that started it is F22, the classifier can deny everything.
+- The denial that started it is F170, the classifier can deny everything.
 - The mode cannot be read back. See
-  `F42`, permission mode is unreadable.
+  F174, permission mode is unreadable.
 - A returned promise can serialise empty. See F34, a returned promise serialises empty.
 
 **Checks.** none

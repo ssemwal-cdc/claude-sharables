@@ -7,7 +7,7 @@ date: 2026-08-15
 ---
 # Freeze fallback never fired
 
-**Outcome protected.** A frozen tab never causes a second click on an approved record.
+**Outcome protected.** A frozen tab never causes a second click for an approved record.
 
 **Argument.** The recovery path has never fired.
 That path abandons the tab and re-reads from a fresh page load.

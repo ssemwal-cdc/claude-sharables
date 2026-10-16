@@ -6,8 +6,8 @@ Internal marketplace of Claude plugins for Compass Datacenters.
 
 Start with [`docs/onboarding.html`](docs/onboarding.html). It is a short stub:
 install the plugin, then ask for a review. Setup advice and the daily
-schedule offer now come from the skill itself, on its first run. See
-in-skill-onboarding, onboarding lives in the skill.
+schedule offer now come from the skill itself, on its first run. D94,
+onboarding lives in the skill.
 
 Send teammates this link:
 
@@ -15,9 +15,9 @@ Send teammates this link:
 https://ssemwal-cdc.github.io/claude-sharables/
 ```
 
-GitHub Pages serves `docs/` from `main`. The page is the file. Edit
-`docs/onboarding.html` and push. The live page updates itself. There is no
-publish step and no second copy to drift.
+GitHub Pages serves `docs/` from `main`. Merging a pull request
+that edits `docs/onboarding.html` updates the live page. There is no publish
+step and no second copy to drift.
 
 Two things follow:
 
@@ -102,8 +102,8 @@ session start.
 
 | Plugin | Version | What it does | Needs |
 |---|---|---|---|
-| `netsuite-approval-review` | v43 | Reviews the bills, purchase orders and change orders in your NetSuite approval queue. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to NetSuite. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. The NetSuite MCP connector is optional. It adds bulk queries and the PO cross-check. |
-| `procore-open-items-review` | v45 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
+| `netsuite-approval-review` | v44 | Reviews the bills, purchase orders and change orders in your NetSuite approval queue. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to NetSuite. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. The NetSuite MCP connector is optional. It adds bulk queries and the PO cross-check. |
+| `procore-open-items-review` | v46 | Filters your Procore open items down to the ones awaiting your workflow response. Those are change risks, subcontractor invoices, commitment change orders and the commitments themselves. Verifies every figure against the attached support. Publishes a verdict per item to a read-only dashboard. | Claude in Chrome, signed in to Procore. The machine on and Chrome open whenever it runs. A workspace folder is recommended for state. Procore has no connector. |
 
 Purchase orders are reviewed. Execute mode was retired on 2026-09-18. Its
 prose and code sit in `actionable-retired/` at the repo root.
@@ -116,21 +116,21 @@ See F76, folderless runs work.
 Description is the installed version, in the form "Skill version N — date".
 The same number starts each skill's one-line description, as `vN — …`. It also
 sits at the top of `SKILL.md`. Ask in a chat and the skill reports it. Compare
-that number to the Version column above. A lower number means your copy is
-stale. No version anywhere means the same. Update or reinstall the plugin.
+that number to the Version column above. A lower number means that your copy is
+stale. No version anywhere means that the same. Update or reinstall the plugin.
 
 ## For maintainers: releasing an update
 
-Push to the default branch. That is the whole release. The version resolves
-from the commit SHA, so every push is a new version. Observed 2026-08-11: an
+Merging a pull request is the whole release. The version resolves from the
+commit SHA, so every merge is a new version. Observed 2026-08-11: an
 install reports a commit SHA prefix as its version. See D9, no version field.
 
-If the push changes anything under a skill, bump four sites in the same
-commit. Bump that skill's `**Skill version N — date.**` line. Bump the
+If the pull request changes anything under a skill, bump four sites in the
+same commit. Bump that skill's `**Skill version N — date.**` line. Bump the
 frontmatter description's version prefix and the `plugin.json` description's
 version suffix. Bump the Version cell in the table above. `validate.py`
-checks that all four agree. It cannot check the bump itself, so that part is
-habit.
+checks that all four agree. `scripts/check_version_bump.py` checks the bump
+itself. D88, skill version bump enforced.
 
 Teammates get an update automatically only while auto sync is on for this
 marketplace. Turn it on from `/plugin` → **Marketplaces** →
@@ -171,7 +171,7 @@ and `gaps/`.
 
 ## Checks
 
-`scripts/validate.py` runs in CI on every push and pull request.
+`scripts/validate.py` runs in CI on every pull request.
 
 ```bash
 python3 scripts/validate.py
@@ -203,12 +203,12 @@ It checks eleven things:
 Every other command, URL and path here is prose. Each is cited to a record or
 marked `unmeasured`. See D90, published facts reader.
 
-One check does not run in CI, because it needs a browser. The dashboards place
+The `shots` CI job runs one check in a browser. The dashboards place
 a floating header from JavaScript, against the slice of the page the reader can
 see. No static check can see where it lands. `scripts/measure_float.js`
 publishes both dashboards from fixtures. It serves them cross-origin into a
-scrolling host. It then measures the bar's real viewport position. Run it by
-hand after changing the dashboard layout:
+scrolling host. It then measures the bar's real viewport position. The job runs it
+with `--shots`. Run it by hand after changing the dashboard layout:
 
 ```bash
 NODE_PATH=$(npm root -g) node scripts/measure_float.js   # needs playwright + chromium

@@ -36,7 +36,7 @@ These rulings are that interview.
 | 10 | procore `README.md:15` | Drop the two figures. Describe the narrowing without numbers |
 | 11 | `F40`, the NetSuite toolbar port, with `F52`, amber was the real finding, `F62`, nothing runs without Chrome, and `F64`, two plugin commands exist | Keep the observed status. Write the reported observation into each Evidence line |
 | 12 | `F57`, one disabled style two meanings | Two states reported. A new gap, `gaps/execute-button-blocked-state-unseen.md`, records the amber blocked state as unseen |
-| 13 | Cowork storage leads, formerly a finding | Moved to G3, a gap for the unverified leads. Every citation rewritten |
+| 13 | Cowork storage leads, formerly a finding | Moved to G27, a gap for the unverified leads. Every citation rewritten |
 | 14 | No duplicate-copy warning, and both slash forms resolve | Merged into `F8`, both slash forms resolve. It holds the run, both conclusions and the retraction. The old no-duplicate-copy-warning record is deleted |
 | 15 | 15 findings over 45 lines | Split each into one observation per record |
 | 16 | `docs/onboarding.html:192` | Keep the 45-minute figure. A finding marks it `unmeasured` |
@@ -48,7 +48,7 @@ Use this form: `Reported by the maintainer, date unrecorded. The run is unmeasur
 **Also in scope.** Fix all 176 linter errors in the 218 markdown files.
 Fix the 14 errors in the 5 prose blocks under `plugins/_shared/`.
 Fix the marker break at netsuite `SKILL.md:581`, per `D61`, markers on paragraph boundaries.
-Replace the real vendor in the example at netsuite `SKILL.md:530`, per `D60`, shipped examples use placeholders.
+Replace the real vendor in the example at netsuite `SKILL.md:530`, per D112, shipped examples use placeholders.
 Correct `README.md:126`, which names two version sites where four are enforced.
 Correct `README.md:177`, which counts seven checks and omits the record checks.
 Restate the coverage claim in `decisions/library-pins-checked-not-shared.md:24`.

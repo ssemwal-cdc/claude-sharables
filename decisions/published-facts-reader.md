@@ -21,7 +21,7 @@ The 2026-09-16 audit found 37 published numbers and paths with no reader.
 That audit's own item list was not handed to this lane. This record
 re-enumerates `CLAUDE.md`, `README.md` and both plugin `README.md` files
 from scratch. Its count will not match 37 item for item. It is a full
-accounting on its own terms, not a reproduction of the audit's list.
+accounting on its own terms, not a copy of the audit's list.
 
 **Already had a reader, before this lane.** `validate.py` already checked
 several things. A plugin or skill name named in the docs must resolve to a
@@ -42,7 +42,7 @@ exist, or the build fails outright.
 - `docs/onboarding.html` must exist, or the build fails.
   `scripts/shared_blocks.py`'s `check_onboarding_page()` silently returned
   `[]` on a missing file before this lane. See
-  `F149`, the check passed on a
+  F214, the check passed on a
   missing file.
 - `docs/index.html` must exist. `README.md` links the GitHub Pages root,
   which redirects through it.

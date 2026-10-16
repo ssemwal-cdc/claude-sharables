@@ -26,5 +26,6 @@ The `sed` fallback was proved with `jq` off the path.
 **Evidence.** Measured on 2026-09-15, on this branch over `3a63144`, with 15
 payloads on stdin.
 
-**Checks.** `.claude/settings.json` runs `scripts/refuse_shared_tree.sh` before
-every Bash call.
+**Checks.** none
+
+**Note, 2026-10-15.** This repo removed `scripts/refuse_shared_tree.sh`. The guard in claude-settings (`hooks/guard_shared_tree.py`) now refuses these commands.

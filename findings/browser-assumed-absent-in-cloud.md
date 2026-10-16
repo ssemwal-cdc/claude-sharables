@@ -5,7 +5,7 @@ kind: finding
 status: observed
 date: 2026-09-23
 ---
-# A session assumed no browser
+# A session assumed that no browser
 
 **Outcome protected.** A capability is measured before a run claims it cannot run.
 

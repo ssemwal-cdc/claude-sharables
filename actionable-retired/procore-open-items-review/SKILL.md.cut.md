@@ -63,8 +63,8 @@ was: Step 9 runs first, and the headline follows it.
 now: Step 8 runs first, and the headline follows it.
 
 ===== plugins/procore-open-items-review/skills/procore-open-items-review/SKILL.md line 515, sentence trim =====
-was: ## Step 9 — Close down
-now: ## Step 8 — Close down
+was: ## Step 9 — Finish
+now: ## Step 8 — Finish
 
 ===== plugins/procore-open-items-review/skills/procore-open-items-review/SKILL.md line 524, sentence trim =====
 was: The tabs this skill opens are the fetch tab, the carrier tabs and the pdf.js tab. Step 2 and Step 8 also open the record tabs.

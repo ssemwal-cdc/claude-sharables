@@ -15,7 +15,7 @@ date: 2026-08-14
 
 The presigned window is per window, not per file, so batching inside it is free.
 
-An expired link yields no text. No text already means the support is a scanned image.
+An expired link yields no text. No text already means that the support is a scanned image.
 
 So an overrun batch converts live invoices into skipped verdicts nobody ordered.
 

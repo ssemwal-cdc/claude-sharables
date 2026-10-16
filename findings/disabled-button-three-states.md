@@ -22,7 +22,7 @@ At the blocked moment the loudest control on offer was the one that discards eve
 **Evidence.**
 
 - Landed 2026-08-24.
-- The header mirror change is in D37, render the execute bar always.
+- The header mirror change is in D116, render the execute bar always.
 - Reported by the maintainer, date unrecorded. The idle and ready states were seen directly. The amber blocked state was not.
 
 **Checks.** `test_dashboard_view` in `scripts/test_skill_code.py`.

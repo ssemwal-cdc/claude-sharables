@@ -23,4 +23,4 @@ The owner chose this on 2026-09-25. Adding a plugin is now common knowledge, so 
 The sheet copy of the schedule prompt drifted from the skill. A task carrying that copy stopped a run that the skill would have finished in browser mode.
 Moving both into the plugin removes the second copy.
 
-**Supersedes.** D33, the page is the file. D59, no terminal commands in sheet. D32, no theme attribute on Pages, applies only while the stub exists. D31, the docs folder is public, still applies.
+**Related.** D32, no theme attribute on Pages, applies while the stub exists. D31, the docs folder is public.

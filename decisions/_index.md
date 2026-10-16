@@ -6,7 +6,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 |---|---|---|---|---|---|
 | D1 | `asset-paths-plugin-root` | Reference assets through CLAUDE_PLUGIN_ROOT | settled | 2026-08-11 | A skill finds its own assets after it is installed. |
 | D2 | `first-run-setup-per-plugin` | First-run setup is per plugin | settled | 2026-08-11 | A second run asks nothing and reviews immediately. |
-| pending | `frontmatter-name-desc-only` | Frontmatter is name and description | settled | 2026-08-11 | A skill fires when a teammate describes the job it does. |
+| D110 | `frontmatter-name-desc-only` | Frontmatter is name and description | settled | 2026-08-11 | A skill fires when a teammate describes the job it does. |
 | D4 | `git-subdir-sources` | Use git-subdir marketplace sources | settled | 2026-08-11 | A teammate can install from the desktop app, from the CLI, and through org sync. |
 | D5 | `marketplace-name-vs-repo` | Marketplace name differs from repo | settled | 2026-08-11 | A teammate's install command works the first time. |
 | D6 | `no-plugin-acts-on-own-judgement` | Never act without an instruction | settled | 2026-08-11 | No approval carries a decision the user did not make. |
@@ -14,7 +14,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D8 | `no-self-update-instruction` | No self-update text in SKILL.md | settled | 2026-08-11 | A teammate follows an instruction that can actually run. |
 | D9 | `no-version-field` | No version field anywhere | settled | 2026-08-11 | Every push to `main` reaches everyone who has the plugin. |
 | D10 | `one-marketplace-only` | Never create a second marketplace | settled | 2026-08-11 | A teammate keeps the marketplace they added and its plugins. |
-| pending | `plugin-json-only-in-plugin-dir` | Only plugin.json in claude-plugin | settled | 2026-08-11 | A plugin installs and its skills are discovered. |
+| D111 | `plugin-json-only-in-plugin-dir` | Only plugin.json in claude-plugin | settled | 2026-08-11 | A plugin installs and its skills are discovered. |
 | D12 | `port-skill-verbatim` | Port a skill verbatim | settled | 2026-08-11 | A skill that worked before the port still works after it. |
 | D13 | `public-repo` | Keep this repo public | settled | 2026-08-11 | A teammate installs a plugin and gets every later fix, with no GitHub account and no silent failure. |
 | D15 | `one-state-file-per-skill` | One state file per skill | settled | 2026-08-12 | A verdict from one system never lands in the other log. |
@@ -42,7 +42,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D43 | `skill-version-lines` | Four synced version sites | settled | 2026-08-21 | A teammate can read which version of a skill they run, on the surface they are looking at. |
 | D44 | `widget-is-only-deliverable` | The widget is the deliverable | settled | 2026-08-21 | A reviewer reads one dashboard instead of sorting through download cards. |
 | D47 | `diagnose-stale-copy-in-order` | Diagnose stale copies in order | settled | 2026-08-24 | A maintainer fixes the copy that is actually stale. |
-| pending | `examples-use-placeholders` | Shipped examples use placeholders | settled | 2026-08-24 | Nothing a teammate copies carries customer data into a public repo. |
+| D112 | `examples-use-placeholders` | Shipped examples use placeholders | settled | 2026-08-24 | Nothing a teammate copies carries customer data into a public repo. |
 | D49 | `extend-shared-blocks` | Extend shared block coverage | open | 2026-08-24 | A fix reaches both plugins, and neither plugin's own names get reworded away. |
 | D50 | `generated-bespoke-skill` | Skill that generates skills | abandoned | 2026-08-24 | Every approval runs on text a maintainer vetted and a push can fix. |
 | D51 | `library-pins-checked-not-shared` | Check library pins, never share | settled | 2026-08-24 | A library bump reaches both plugins, or the build fails. |
@@ -100,7 +100,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D107 | `vendor-tied-verdict` | A sixth verdict where only the vendor's proposal ties | settled | 2026-10-07 | An item whose only checkable figure was verified reaches the reviewer. |
 | D108 | `in-page-call-deadline` | Every in-page call stops itself | settled | 2026-10-09 | A run that hits a stuck call ends with a report of what finished. |
 | D109 | `netsuite-history-open` | A third NetSuite verdict, history open | settled | 2026-10-12 | A reviewer is not told a right bill is wrong because of a question in the PO's history. |
-| pending | `main-has-no-required-check` | The merge tool is the only check on main | settled | 2026-10-15 | One gate holds the merge, so a merge never waits on a second, drifting setting. |
-| pending | `merge-waits-for-owner` | Every merge waits for the owner | settled | 2026-10-15 | The owner decides what ships to every teammate. |
-| pending | `parent-rules-win` | The parent CLAUDE.md always wins | settled | 2026-10-15 | One rule has one home, so two copies never disagree. |
-| pending | `execute-rules-retired` | Execute-mode rules are retired | settled | 2026-10-16 | A reader finds one record for the execute rules. |
+| D113 | `main-has-no-required-check` | The merge tool is the only check on main | settled | 2026-10-15 | One gate holds the merge, so a merge never waits on a second, drifting setting. |
+| D114 | `merge-waits-for-owner` | Every merge waits for the owner | settled | 2026-10-15 | The owner decides what ships to every teammate. |
+| D115 | `parent-rules-win` | The parent CLAUDE.md always wins | settled | 2026-10-15 | One rule has one home, so two copies never disagree. |
+| D116 | `execute-rules-retired` | Execute-mode rules are retired | settled | 2026-10-16 | A reader finds one record for the execute rules. |

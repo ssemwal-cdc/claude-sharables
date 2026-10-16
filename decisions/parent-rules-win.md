@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D115
 slug: parent-rules-win
 kind: decision
 status: settled
@@ -25,7 +25,7 @@ Process-only ruling.
 
 **Holes, named.**
 
-- The repo's own shared-tree hook is deleted. The parent guard runs from the owner's user settings, not from this repo. A session without that guard has no shared-tree guard here. That covers a teammate, a cloud session or a fresh machine. The debt is G‹shared-tree-guard-user-only›, the guard runs only for the owner.
+- The repo's own shared-tree hook is deleted. The parent guard runs from the owner's user settings, not from this repo. A session without that guard has no shared-tree guard here. That covers a teammate, a cloud session or a fresh machine. The debt is G28, the guard runs only for the owner.
 
 **Evidence.**
 

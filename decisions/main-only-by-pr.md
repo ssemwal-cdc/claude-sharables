@@ -7,7 +7,7 @@ date: 2026-09-24
 ---
 # Main moves only by pull request
 
-**Rule.** The parent rule git-main-only-by-pr governs this repo. This record adds one argument: the version-bump check needs a pull request. Merge only on the owner's word. D‹merge-waits-for-owner›, no standing merge grant. The merge tool is the only CI check on `main`. D‹main-has-no-required-check›, no GitHub required checks.
+**Rule.** The parent rule git-main-only-by-pr governs this repo. This record adds one argument: the version-bump check needs a pull request. Merge only on the owner's word. D114, no standing merge grant. The merge tool is the only CI check on `main`. D113, no GitHub required checks.
 
 **Outcome protected.** Every release passes the whole build gate, the version-bump check included.
 

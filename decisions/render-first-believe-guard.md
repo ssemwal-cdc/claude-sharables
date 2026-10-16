@@ -36,7 +36,7 @@ The slim build was no size fallback, and it is deleted. See
 - The tool takes content inline only. See F12, show_widget takes content inline.
 - The caller cannot see what rendered. See F65, the render is unverifiable agent-side.
 - NetSuite cannot fold rows at all. See
-  F‹netsuite-verdict-words-fold›, NetSuite cannot fold rows.
+  F189, NetSuite cannot fold rows.
 - An asset shipped a threshold that fed a refusal. See F93, an asset invented a threshold.
 - The same run produced four findings this repo could not have produced. See F91, a wrong run found four defects.
 

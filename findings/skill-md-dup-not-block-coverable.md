@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F196
 slug: skill-md-dup-not-block-coverable
 kind: finding
 status: observed

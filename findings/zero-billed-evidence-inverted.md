@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F182
 slug: zero-billed-evidence-inverted
 kind: finding
 status: settled
@@ -17,7 +17,7 @@ That reading is expected, not corroboration.
 The history query selected the approval status, and no rule ever spent it.
 
 **Evidence.** Found by a teammate and confirmed against production 2026-08-20.
-See F‹phantom-po-miscode-flag-wrong›, the bills this produced a false
+See F180, the bills this produced a false
 flag on.
 
 **Checks.** `scripts/test_skill_code.py` runs the code the cross-check step

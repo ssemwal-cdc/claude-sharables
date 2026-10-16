@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F198
 slug: staleness-check-missed-2nd-site
 kind: finding
 status: settled
@@ -23,6 +23,6 @@ That is the third instance of one shape.
 A check whose inputs fail together only ever looks at one of them.
 
 **Evidence.** Found 2026-08-24, in a nine-agent prose audit.
-See F‹checks-with-shared-input-fail›, the same shape one turn earlier.
+See F184, the same shape one turn earlier.
 
 **Checks.** none.

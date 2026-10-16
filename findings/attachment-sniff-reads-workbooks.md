@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F178
 slug: attachment-sniff-reads-workbooks
 kind: finding
 status: observed

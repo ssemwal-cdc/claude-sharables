@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D110
 slug: frontmatter-name-desc-only
 kind: decision
 status: settled

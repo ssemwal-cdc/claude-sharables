@@ -29,7 +29,7 @@ The same rule covers the write states in the workspace folder, the attachment ou
 
 - Applied to the purchase order path 2026-08-20, the fifth instance of the shape at that date.
 - The four earlier instances are the fan-out empty state against its failed state. They also include the change order wrong id returning 200 empty. The other two are a workbook read as expired, and a redaction marker read as an empty field.
-- The sixth instance is the workspace write. See F‹write-states-refused-not-tried›, three write states.
+- The sixth instance is the workspace write. See F206, three write states.
 - The gate query needs an explicit page size. See F31, workflow queries need per_page.
 - The link rows need deduplication. See F43, dedupe the link rows first.
 - The fan-out design is F21, the fan-out caps concurrency.

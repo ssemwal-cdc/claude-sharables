@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F208
 slug: onboarding-skill-login-conflict
 kind: finding
 status: settled

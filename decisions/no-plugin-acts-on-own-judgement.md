@@ -19,7 +19,7 @@ Both only approve or respond on an explicit per-item instruction.
 
 Preserve that in anything ported in.
 
-The instruction arrives through the composed execute message. See D‹execute-rules-retired›, the message authorises only.
+The instruction arrives through the composed execute message. See D116, the message authorises only.
 
 **Evidence.**
 

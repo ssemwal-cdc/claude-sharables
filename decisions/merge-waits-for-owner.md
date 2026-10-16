@@ -1,5 +1,5 @@
 ---
-id: pending
+id: D114
 slug: merge-waits-for-owner
 kind: decision
 status: settled

@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F170
 slug: js-tool-denied-classifier
 kind: finding
 status: observed

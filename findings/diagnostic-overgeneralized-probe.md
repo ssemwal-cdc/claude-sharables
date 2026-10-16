@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F172
 slug: diagnostic-overgeneralized-probe
 kind: finding
 status: observed

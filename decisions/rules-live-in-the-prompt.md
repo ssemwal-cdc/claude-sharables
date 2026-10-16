@@ -24,7 +24,7 @@ If the rule stops being stated, a check then fails the build.
 
 **Evidence.**
 
-- Recorded 2026-08-27 from F‹write-states-refused-not-tried›, three write states.
+- Recorded 2026-08-27 from F206, three write states.
 - The same shape recurred with the login rung. See
   `F135`, a run banned itself from login.
 

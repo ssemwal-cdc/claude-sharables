@@ -1,5 +1,5 @@
 ---
-id: pending
+id: F174
 slug: permission-mode-agent-unreadable
 kind: finding
 status: settled

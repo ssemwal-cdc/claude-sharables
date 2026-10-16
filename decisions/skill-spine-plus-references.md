@@ -45,7 +45,7 @@ The spine size of the in-house precedent is 158 lines.
 - Settled 2026-09-17 by commit `4a81d8c`. It split Step 8 and the lens sections into
   `references/` in both `SKILL.md` prompts. Step 8 got a mandatory-read pointer in each
   spine. `scripts/shared_blocks.py`'s route-table check now also reads `references/`, so
-  `D75`, gate the two type lists, still holds. Option B, chosen as recommended.
+  D‹execute-rules-retired›, gate the two type lists, still holds. Option B, chosen as recommended.
 
 **Checks.** `scripts/shared_blocks.py`'s `check_execute_type_coverage`, which now also reads a
 skill's `references/` files. `scripts/test_skill_code.py`, confirmed unaffected because the

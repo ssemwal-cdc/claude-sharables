@@ -9,7 +9,7 @@ date: 2026-09-24
 
 **Outcome protected.** A reviewed purchase order can be actioned, and only as the reviewer instructed.
 
-**Argument.** The route shipped as NS v23 on the bill-route rule, D76, purchase orders take
+**Argument.** The route shipped as NS v23 on the bill-route rule, D‹execute-rules-retired›, purchase orders take
 bill route.
 Five purchase orders once refused at the click, F94, NetSuite could not click POs, before
 that rule shipped.

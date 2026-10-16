@@ -21,7 +21,7 @@ removed from the tab order throughout.
 These are controls already in the page.
 
 The count on it follows the filter, and the execute mirror does not.
-That is the same split as D46, the execute bar ignores the filter.
+That is the same split as D‹execute-rules-retired›, the execute bar ignores the filter.
 
 **Evidence.** Closed 2026-08-27.
 The full header is about 380px.

@@ -1025,7 +1025,7 @@ def test_custom_tool_subtype():
               items["#NEW-1"]["toolId"] == "", items["#NEW-1"]["toolId"])
         check("subtype: an unmapped subtype cannot stay clear",
               items["#NEW-1"]["verdict"] == "skipped", items["#NEW-1"]["verdict"])
-        # Re-pointed (was: it keeps its response buttons, D78). Review-only plugins (D91)
+        # Re-pointed (was: it keeps its response buttons, D78, now in the execute-rules-retired record). Review-only plugins (D91)
         # retired the buttons; skipped rows are compact with no resp (ruling 2026-10-07).
         check("subtype: an unmapped subtype is a compact skipped row - no resp key",
               items["#NEW-1"]["verdict"] == "skipped" and items["#NEW-1"]["toolId"] == ""

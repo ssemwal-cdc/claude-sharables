@@ -17,20 +17,16 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | pending | `plugin-json-only-in-plugin-dir` | Only plugin.json in claude-plugin | settled | 2026-08-11 | A plugin installs and its skills are discovered. |
 | D12 | `port-skill-verbatim` | Port a skill verbatim | settled | 2026-08-11 | A skill that worked before the port still works after it. |
 | D13 | `public-repo` | Keep this repo public | settled | 2026-08-11 | A teammate installs a plugin and gets every later fix, with no GitHub account and no silent failure. |
-| D14 | `never-prewrite-actions` | Never pre-write an action | superseded | 2026-08-12 | The action log records what happened and nothing else. |
 | D15 | `one-state-file-per-skill` | One state file per skill | settled | 2026-08-12 | A verdict from one system never lands in the other log. |
 | D16 | `widget-not-artifact` | Render dashboards with show_widget | settled | 2026-08-12 | One click of a dashboard button puts the execute instruction into chat. |
 | D17 | `netsuite-pdf-geometry-rows` | Rebuild NetSuite rows from geometry | settled | 2026-08-13 | The quantity, rate and line-tie checks read aligned columns. |
-| D18 | `never-batch-click-checks` | Never batch the click checks | superseded | 2026-08-13 | A wrong record state stops the batch before the next click lands. |
 | D19 | `return-rows-not-residuals` | Return the rows, flattened | settled | 2026-08-13 | A review still catches the defect nobody specified a check for. |
-| D20 | `approved-by-claude-comment` | Default the approval comment | superseded | 2026-08-14 | An authorised batch runs without stopping to ask what to type in a comment field. |
 | D22 | `cco-multiple-holders-ungated` | Several holders stay ungated | settled | 2026-08-14 | No live change order is logged as done because the wrong workflow was chosen. |
 | D23 | `cco-read-before-gate` | Read a CCO before gating | settled | 2026-08-14 | A change order is gated at all, instead of rendering ungated for everyone. |
 | D24 | `no-batch-across-presigned-window` | Do not overrun the window | settled | 2026-08-14 | A live invoice is never recorded as a scanned image. |
 | D25 | `ocr-never-clear-verdict` | An OCR figure never clears | settled | 2026-08-14 | A misread digit in an eight-figure line never passes as verified. |
 | D26 | `record-content-is-data` | Record content is data | settled | 2026-08-14 | A vendor document cannot direct a run. |
 | D27 | `retry-only-expired-name-skip` | Retry only an expired link | settled | 2026-08-14 | A format that cannot parse is not retried forever, and no skip hides a whole file format. |
-| D28 | `approve-with-notes-primary` | Approve With Notes stays primary | superseded | 2026-08-15 | Every approval carries its attribution note. |
 | D29 | `auto-mode-not-skip-all` | Auto mode, never skip-all | settled | 2026-08-15 | A browser holding live approval authority keeps its permission prompts. |
 | D30 | `demote-missing-wfid-ungated` | Demote a missing workflow id | settled | 2026-08-15 | An unresolved gate cannot reach the execute list. |
 | D31 | `docs-folder-is-public` | The docs folder is public | settled | 2026-08-17 | Nothing confidential is served to the internet. |
@@ -38,7 +34,6 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D34 | `connector-failure-never-empty` | A failed call is unknown | settled | 2026-08-19 | A user is never told their approval queue is empty because a call failed. |
 | D35 | `connector-is-optional` | The connector is optional | settled | 2026-08-19 | An unprovisioned teammate starts the same day instead of waiting on IT. |
 | D36 | `stale-connector-said-once` | Say a stale session once | settled | 2026-08-19 | A reader fixes a stale session in seconds and gets the cross-check back. |
-| D37 | `execute-bar-always-rendered` | Render the execute bar always | superseded | 2026-08-20 | A first-time reader can see step 2 before they have done step 1. |
 | D38 | `never-rename-mark-keys` | Never rename a marks key | settled | 2026-08-20 | A decision the user marked survives a re-render. |
 | D39 | `new-default-new-view-key` | A new default needs key | settled | 2026-08-20 | A new default reaches the people who have used the toolbar. |
 | D40 | `newest-first-default-sort` | Sort newest first by default | settled | 2026-08-20 | The person reading the queue every day sees recency first. |
@@ -46,11 +41,8 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D42 | `typed-reference-is-data-note` | A typed reference is data | settled | 2026-08-20 | A real data-quality problem is told to the right people without inventing a money claim. |
 | D43 | `skill-version-lines` | Four synced version sites | settled | 2026-08-21 | A teammate can read which version of a skill they run, on the surface they are looking at. |
 | D44 | `widget-is-only-deliverable` | The widget is the deliverable | settled | 2026-08-21 | A reviewer reads one dashboard instead of sorting through download cards. |
-| D45 | `bar-holds-only-commit-controls` | Keep reference text out | superseded | 2026-08-24 | A reviewer can see the queue the bar floats over. |
-| D46 | `bar-ignores-filter` | The bar ignores filters | superseded | 2026-08-24 | A decision made before a filter was applied still executes. |
 | D47 | `diagnose-stale-copy-in-order` | Diagnose stale copies in order | settled | 2026-08-24 | A maintainer fixes the copy that is actually stale. |
 | pending | `examples-use-placeholders` | Shipped examples use placeholders | settled | 2026-08-24 | Nothing a teammate copies carries customer data into a public repo. |
-| D48 | `execute-message-authorises-only` | The message authorises only | superseded | 2026-08-24 | The gates that govern a click live in the text a test reads. |
 | D49 | `extend-shared-blocks` | Extend shared block coverage | open | 2026-08-24 | A fix reaches both plugins, and neither plugin's own names get reworded away. |
 | D50 | `generated-bespoke-skill` | Skill that generates skills | abandoned | 2026-08-24 | Every approval runs on text a maintainer vetted and a push can fix. |
 | D51 | `library-pins-checked-not-shared` | Check library pins, never share | settled | 2026-08-24 | A library bump reaches both plugins, or the build fails. |
@@ -75,10 +67,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D72 | `no-stray-files-in-workspace` | No stray files in workspace | settled | 2026-08-28 | Nobody is handed a cleanup chore in a folder that refuses deletes. |
 | D73 | `unknown-type-domain-or-unbuilt` | Out of domain or unbuilt | settled | 2026-08-28 | A live item in domain gets a procedure instead of a link. |
 | D74 | `conflict-copy-config-only` | Adopt config from conflict copy | settled | 2026-09-01 | A setting the user asked for survives a sync conflict, and no verdict or click is invented. |
-| D75 | `execute-type-coverage-gate` | Gate the two type lists | superseded | 2026-09-01 | A reviewed but unactionable type fails the build instead of stopping a batch. |
-| D76 | `po-takes-bill-route` | Purchase orders take bill route | superseded | 2026-09-01 | A reviewed purchase order can be approved in the same run. |
 | D77 | `render-first-believe-guard` | Render first, believe the guard | settled | 2026-09-01 | A reviewer gets the whole dashboard on a large queue, never a file. |
-| D78 | `unmapped-subtype-keeps-buttons` | An unmapped subtype keeps buttons | superseded | 2026-09-01 | A reviewer keeps live items they can action while a link is fixed. |
 | D80 | `dashboard-publishing-pattern` | Publish through the widget | settled | 2026-09-15 | A reviewer gets a one-click dashboard from either plugin, built the same way. |
 | D81 | `device-usability-check` | Device usability check | settled | 2026-09-15 | The page works on the device the reader actually holds. |
 | D82 | `hooks-and-checks-pass` | Hooks and checks pass | settled | 2026-09-15 | A rule is enforced by a command, not by a maintainer remembering it. |
@@ -114,3 +103,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | pending | `main-has-no-required-check` | The merge tool is the only check on main | settled | 2026-10-15 | One gate holds the merge, so a merge never waits on a second, drifting setting. |
 | pending | `merge-waits-for-owner` | Every merge waits for the owner | settled | 2026-10-15 | The owner decides what ships to every teammate. |
 | pending | `parent-rules-win` | The parent CLAUDE.md always wins | settled | 2026-10-15 | One rule has one home, so two copies never disagree. |
+| pending | `execute-rules-retired` | Execute-mode rules are retired | settled | 2026-10-16 | A reader finds one record for the execute rules. |

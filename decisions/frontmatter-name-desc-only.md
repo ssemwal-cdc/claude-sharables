@@ -1,5 +1,5 @@
 ---
-id: D3
+id: pending
 slug: frontmatter-name-desc-only
 kind: decision
 status: settled

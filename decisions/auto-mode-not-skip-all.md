@@ -32,9 +32,9 @@ An onboarding section was written for a scheduled-run hang that turned out not t
 - Settled 2026-08-15 by re-running byte-identical code in auto mode with no configuration block.
 - Coverage of auto mode across every operation is `unmeasured`.
 - The onboarding sheet carries the skip-all reason and never the withdrawn claim. See F45, a retraction reached one surface.
-- The denial that started it is F22, the classifier can deny everything.
+- The denial that started it is F‹js-tool-denied-classifier›, the classifier can deny everything.
 - The mode cannot be read back. See
-  `F42`, permission mode is unreadable.
+  F‹permission-mode-agent-unreadable›, permission mode is unreadable.
 - A returned promise can serialise empty. See F34, a returned promise serialises empty.
 
 **Checks.** none

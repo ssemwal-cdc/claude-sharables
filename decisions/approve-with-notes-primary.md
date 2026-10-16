@@ -21,7 +21,7 @@ This is a deliberate exception to clicking only the button named in the instruct
 
 Reject is never substituted for either button, in any direction.
 
-Do not promote the direct approval URL to the primary route. See F33, plain Approve can no-op.
+Do not promote the direct approval URL to the primary route. See F‹plain-approve-noop-activation›, plain Approve can no-op.
 
 **Evidence.**
 

@@ -1,5 +1,5 @@
 ---
-id: F137
+id: pending
 slug: onboarding-skill-login-conflict
 kind: finding
 status: settled

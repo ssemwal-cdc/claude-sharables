@@ -18,7 +18,7 @@ The "tied survives publish" test only read the JSON payload in `index.html`.
 It never called `itemRow()`.
 So nothing there caught a dropped branch. Only a manual render check would.
 
-This was the same shape as F98, a missing verdict defaulted to clear.
+This was the same shape as F‹absent-verdict-key-read-clear›, a missing verdict defaulted to clear.
 D63, gate verdicts against publish, covers adding a verdict.
 It did not cover one falling back out of the template later.
 

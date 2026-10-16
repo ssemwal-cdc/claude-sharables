@@ -30,6 +30,6 @@ Step 5 runs only in connector mode, so only a connector run can produce `history
 **Evidence.**
 
 - Incident: a live NetSuite run, 2026-10-12. The bill's own figures tied. The PO's approved billing history ran ahead of the vendor's previously-billed figure with the gap unexplained. The run flagged it.
-- Related: F112, NetSuite cannot fold rows. Its premise changed with this decision.
+- Related: F‹netsuite-verdict-words-fold›, NetSuite cannot fold rows. Its premise changed with this decision.
 
 **Checks.** `scripts/test_skill_code.py`: `test_history_open_verdict`, `test_history_open_vocabulary_checks`, and the row-class map in `test_verdict_render_guard`.

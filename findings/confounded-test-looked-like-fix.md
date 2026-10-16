@@ -1,5 +1,5 @@
 ---
-id: F5
+id: pending
 slug: confounded-test-looked-like-fix
 kind: finding
 status: observed

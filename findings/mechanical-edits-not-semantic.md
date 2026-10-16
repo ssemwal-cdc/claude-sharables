@@ -1,5 +1,5 @@
 ---
-id: F32
+id: pending
 slug: mechanical-edits-not-semantic
 kind: finding
 status: settled

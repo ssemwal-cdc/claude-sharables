@@ -1,5 +1,5 @@
 ---
-id: F109
+id: pending
 slug: mechanism-replaces-2nd-screen
 kind: finding
 status: observed

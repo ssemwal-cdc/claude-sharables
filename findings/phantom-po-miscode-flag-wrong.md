@@ -1,5 +1,5 @@
 ---
-id: F71
+id: pending
 slug: phantom-po-miscode-flag-wrong
 kind: finding
 status: observed

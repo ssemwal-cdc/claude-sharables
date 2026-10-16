@@ -19,7 +19,7 @@ The fix landed before the check was trusted.
 
 **Evidence.** Measured on 2026-09-15, on this branch over `3a63144`, as part of
 mutation-testing `check_citations`.
-See `F139`, every check's mutation, for the
+See F‹all-mutations-caught-defect›, every check's mutation, for the
 full table.
 
 **Checks.** `python3 scripts/validate.py`, which calls `check_citations`.

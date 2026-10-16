@@ -21,12 +21,12 @@ Stripping those ids would leave the findings unfalsifiable, which is worse.
 
 They live in maintainer-facing records, not in patterns a teammate copies.
 
-The copied patterns are covered by D60, shipped examples use placeholders.
+The copied patterns are covered by D‹examples-use-placeholders›, shipped examples use placeholders.
 
 **Evidence.**
 
 - Separated from the placeholder rule 2026-08-24, when the two cases were conflated.
-- The worked example is `F71`, bill PO
+- The worked example is F‹phantom-po-miscode-flag-wrong›, bill PO
   comes from linkage.
 
 **Checks.** none

@@ -1,5 +1,5 @@
 ---
-id: F130
+id: pending
 slug: intersection-observer-clip-rect
 kind: finding
 status: observed

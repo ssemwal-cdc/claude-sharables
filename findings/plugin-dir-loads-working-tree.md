@@ -21,7 +21,7 @@ Schema-valid and installable are different things. Run `claude plugin validate` 
 
 **Evidence.**
 
-- Confirmed 2026-08-26, the same day as F78, marketplace add tests the release.
+- Confirmed 2026-08-26, the same day as F‹marketplace-add-tests-pub-tree›, marketplace add tests the release.
 - The CLI text is `pass --plugin-dir <path> to load one from disk`.
 
 **Checks.** none. This is a manual pre-push check.

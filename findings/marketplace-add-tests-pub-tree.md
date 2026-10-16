@@ -1,5 +1,5 @@
 ---
-id: F78
+id: pending
 slug: marketplace-add-tests-pub-tree
 kind: finding
 status: observed

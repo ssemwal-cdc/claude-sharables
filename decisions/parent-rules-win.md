@@ -21,6 +21,7 @@ Process-only ruling.
 
 - Simplified Technical English covers every Markdown file in the repo, `actionable-retired/` included.
 - Every record slug is 32 characters or fewer. The slug length check (`check_slug_length`) enforces it.
+- The 50 long-named numbered records were deleted and added again as pending records. The stamp keeps a numbered record's key, so a rename is not allowed. Each old number is retired.
 
 **Holes, named.**
 

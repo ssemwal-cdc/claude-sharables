@@ -1,5 +1,5 @@
 ---
-id: D11
+id: pending
 slug: plugin-json-only-in-plugin-dir
 kind: decision
 status: settled

@@ -1,5 +1,5 @@
 ---
-id: F69
+id: pending
 slug: contract-billed-unjoined-keys
 kind: finding
 status: settled
@@ -16,7 +16,7 @@ The billed total came from a vendor and memo sum with no purchase order
 predicate at all.
 
 **Evidence.** Found by a teammate and confirmed against production 2026-08-20.
-See `F71`, the bills this produced a false
+See F‹phantom-po-miscode-flag-wrong›, the bills this produced a false
 flag on.
 
 **Checks.** `scripts/test_skill_code.py` runs the code the cross-check step

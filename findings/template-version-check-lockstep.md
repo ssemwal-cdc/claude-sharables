@@ -1,5 +1,5 @@
 ---
-id: F126
+id: pending
 slug: template-version-check-lockstep
 kind: finding
 status: settled

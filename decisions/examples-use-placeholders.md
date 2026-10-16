@@ -1,5 +1,5 @@
 ---
-id: D60
+id: pending
 slug: examples-use-placeholders
 kind: decision
 status: settled

@@ -1,5 +1,5 @@
 ---
-id: F42
+id: pending
 slug: permission-mode-agent-unreadable
 kind: finding
 status: settled

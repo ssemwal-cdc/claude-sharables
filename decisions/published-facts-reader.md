@@ -42,7 +42,7 @@ exist, or the build fails outright.
 - `docs/onboarding.html` must exist, or the build fails.
   `scripts/shared_blocks.py`'s `check_onboarding_page()` silently returned
   `[]` on a missing file before this lane. See
-  `F149`, the check passed on a
+  F‹onboarding-check-silent-no-file›, the check passed on a
   missing file.
 - `docs/index.html` must exist. `README.md` links the GitHub Pages root,
   which redirects through it.

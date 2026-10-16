@@ -1,5 +1,5 @@
 ---
-id: F148
+id: pending
 slug: waiter-check-fires-on-defect
 kind: finding
 status: observed

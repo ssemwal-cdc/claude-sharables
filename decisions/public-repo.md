@@ -24,6 +24,6 @@ A session that thinks this is stale must argue with the argument above. Do not r
 **Evidence.**
 
 - Decided 2026-08-11 with the first two plugins. No measurement of update reach exists, so the no-silent-failure claim is `unmeasured`.
-- Because the repo is public, no token and no credential may land here. See D60, worked examples use placeholders.
+- Because the repo is public, no token and no credential may land here. See D‹examples-use-placeholders›, worked examples use placeholders.
 
 **Checks.** none

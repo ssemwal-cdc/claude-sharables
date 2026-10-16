@@ -1,5 +1,5 @@
 ---
-id: F106
+id: pending
 slug: drift-check-from-six-defects
 kind: finding
 status: observed

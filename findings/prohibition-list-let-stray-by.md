@@ -1,5 +1,5 @@
 ---
-id: F90
+id: pending
 slug: prohibition-list-let-stray-by
 kind: finding
 status: observed

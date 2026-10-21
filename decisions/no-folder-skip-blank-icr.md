@@ -21,6 +21,11 @@ Owner ruling, 2026-10-21, process-only: the skip is not limited to the `icr` cas
 
 The head says `support not read: no folder connected, nothing to tie`. Check 3 is named as not run.
 
+**Holes, named.**
+
+- The Procore skill names two certain-to-skip cases with no folder. Case (a): an `icr` with a blank accepted cost, a blank Cost Impact, and Vendor Proposed blank, absent or unmapped. Case (b): a `com` whose payload has no `grand_total`. An `inv` or a `cco` never qualifies.
+- Owner ruling, 2026-10-21, process-only: keep skipping case (a). Check 3, `pc.icr-phase-sum` (the proposal's phase lines sum), could in principle flag from the attachment. That miss is unlikely. The read costs more.
+
 **Evidence.**
 
 - Owner ruling, 2026-10-07, from the 2026-10-07 field run.

@@ -65,7 +65,6 @@ a:hover{text-decoration:underline}
 /* retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode */
 .topright{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .note{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
-.banner{border-radius:var(--r2);padding:12px 15px;margin-bottom:14px;font-size:13.5px}
 .empty{text-align:center;padding:42px 20px;color:var(--ink2);font-size:14px;background:var(--card);border:1px dashed var(--ctl);border-radius:var(--r2)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .tog{cursor:pointer;user-select:none}
@@ -160,8 +159,6 @@ document.addEventListener("DOMContentLoaded",function(){
      rides it. Both are absolutely positioned inside .wrap and contribute no layout height. -->
 <div id="bandsen" aria-hidden="true"></div>
 <div id="floathdr" aria-hidden="true"></div>
-
-<div id="banners"></div>
 
 <!-- retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode -->
 <div id="rows"></div>
@@ -357,16 +354,11 @@ function recUrl(it){
   // the item, and ICR_TOOL is only the floor for a payload published before subtypes were
   // recorded. Returning "" is deliberate and the caller renders no link: the wrong tool_id does
   // not 404, it resolves to a real page in the wrong tool, which nobody can tell from the right
-  // one. Same fail-closed reasoning as wfType above.
+  // one. Same fail-closed reasoning as the commitment link above.
   var tid = it.toolId || ICR_TOOL;
   if(!tid) return "";
   return "https://app.procore.com/webclients/host/companies/"+CO+"/projects/"+it.pid+"/tools/generic-tool/details/"+it.id+"?tool_id="+tid;
 }
-// The workflow endpoint's type is not always the queue's item_type: a CCO's workflow hangs off the
-// underlying commitment change order, which also has its own id. Hence wfId, distinct from the
-// record id used for links. See Step 2 of SKILL.md.
-function wfType(it){return it.wf||(it.kind==="inv"?"Billings::Requisition":it.kind==="cco"?"CommitmentChangeOrder":it.kind==="com"?"PurchaseOrderContract":"GenericToolItem")}
-function wfIdOf(it){return it.wfId||it.id}
 // retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode
 
 var STALE_NOTE=" — this snapshot is getting old. Procore may have moved on; re-check before acting on anything below.";
@@ -413,9 +405,6 @@ function render(){
 
   freshTick();
 
-
-  var b="";
-  document.getElementById("banners").innerHTML=b;
 
   fillFilters(all);
 

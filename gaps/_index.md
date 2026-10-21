@@ -21,3 +21,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | G25 | `fetch-limit-includes-body` | The 20 second fetch limit includes the body download | unobserved | 2026-10-09 | A large but healthy read is not reported as timed out. |
 | G26 | `netsuite-read-outcomes-thin` | NetSuite has no named outcome for a thrown parse | unobserved | 2026-10-09 | A read that threw is named, never filed as unread or absent. |
 | G28 | `shared-tree-guard-user-only` | The shared-tree guard runs only for the owner | unobserved | 2026-10-15 | No session loses another session's work in a shared checkout. |
+| pending | `work-order-total-key-unseen` | No folderless run has seen a work order payload | unobserved | 2026-10-21 | A work order that can be read is read, not skipped on a guessed key. |

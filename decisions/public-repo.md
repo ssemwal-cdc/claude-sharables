@@ -24,6 +24,7 @@ A session that thinks this is stale must argue with the argument above. Do not r
 **Evidence.**
 
 - Decided 2026-08-11 with the first two plugins. No measurement of update reach exists, so the no-silent-failure claim is `unmeasured`.
+- Dashboards may load pinned, hash-checked assets from this public repo. See D‹pinned-repo-cdn-assets›, pinned repo assets. The repo must stay public, on the same account and name, for that load to resolve.
 - Because the repo is public, no token and no credential may land here. See D112, worked examples use placeholders.
 
 **Checks.** none

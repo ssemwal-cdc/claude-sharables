@@ -21,6 +21,8 @@ Both skills now carry an absolute rule that the widget is the only deliverable.
 
 If cards still appear with that rule shipped, the surface is auto-listing written files. No skill wording can suppress that.
 
+Process-only ruling, 2026-10-21. Post no chat summary of verdicts. The owner reads dashboards only in the desktop app or on claude.ai on a computer.
+
 **Evidence.**
 
 - Observed 2026-08-21.

@@ -18,7 +18,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D12 | `port-skill-verbatim` | Port a skill verbatim | settled | 2026-08-11 | A skill that worked before the port still works after it. |
 | D13 | `public-repo` | Keep this repo public | settled | 2026-08-11 | A teammate installs a plugin and gets every later fix, with no GitHub account and no silent failure. |
 | D15 | `one-state-file-per-skill` | One state file per skill | settled | 2026-08-12 | A verdict from one system never lands in the other log. |
-| D16 | `widget-not-artifact` | Render dashboards with show_widget | settled | 2026-08-12 | One click of a dashboard button puts the execute instruction into chat. |
+| D16 | `widget-not-artifact` | Render dashboards with show_widget | settled | 2026-08-12 | One click of a dashboard button starts a re-run or a read-only follow-up in chat. |
 | D17 | `netsuite-pdf-geometry-rows` | Rebuild NetSuite rows from geometry | settled | 2026-08-13 | The quantity, rate and line-tie checks read aligned columns. |
 | D19 | `return-rows-not-residuals` | Return the rows, flattened | settled | 2026-08-13 | A review still catches the defect nobody specified a check for. |
 | D22 | `cco-multiple-holders-ungated` | Several holders stay ungated | settled | 2026-08-14 | No live change order is logged as done because the wrong workflow was chosen. |
@@ -104,3 +104,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D114 | `merge-waits-for-owner` | Every merge waits for the owner | settled | 2026-10-15 | The owner decides what ships to every teammate. |
 | D115 | `parent-rules-win` | The parent CLAUDE.md always wins | settled | 2026-10-15 | One rule has one home, so two copies never disagree. |
 | D116 | `execute-rules-retired` | Execute-mode rules are retired | settled | 2026-10-16 | A reader finds one record for the execute rules. |
+| pending | `pinned-repo-cdn-assets` | Dashboards may load fixed assets from a pinned repo copy | settled | 2026-10-21 | A dashboard stays small enough to render in one read. |

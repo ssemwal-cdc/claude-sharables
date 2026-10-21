@@ -9,7 +9,7 @@ date: 2026-08-12
 
 **Rule.** Render both dashboards with `show_widget`. Never render them as an artifact.
 
-**Outcome protected.** One click of a dashboard button puts the execute instruction into chat.
+**Outcome protected.** One click of a dashboard button starts a re-run or a read-only follow-up in chat.
 
 **Argument.**
 
@@ -21,7 +21,9 @@ An artifact cannot send a message to chat. A button that hands an instruction ba
 
 The cost is that `callMcpTool` is unavailable, so the page cannot re-query its own data. The NetSuite dashboard used to do that on open.
 
-That check now lives in the execute turn, which is strictly better. An on-open query is already stale when execute is pressed. A check in the moment before the click has no window at all.
+Execute mode is retired. See D91, review-only plugins. So no check lives in an execute turn now. A button starts a re-run or a read-only follow-up.
+
+The dead artifact-host fallback was removed from the template in commit `c888908`.
 
 Do not restore the artifact path for persistence. A shareable URL was considered and rejected, because NetSuite and Procore are the systems of record.
 

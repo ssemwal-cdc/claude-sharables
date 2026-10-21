@@ -20,7 +20,7 @@ It was never a fallback. It was a second file to keep in step.
 
 Owner ruling, 2026-10-07: delete the slim build.
 Two cheaper cuts replace it.
-The publish script strips comments from the page.
+The publish script strips every comment except the two data markers, and caps flagged and clear detail at 240 characters.
 A `skipped` row publishes compact in `index.html` itself.
 The first reason for the slim copy was one-click execute on a skipped item.
 D91, review-only plugins, retired that outcome.

@@ -17,6 +17,8 @@ There is no known ceiling on the render tool. Every threshold anyone proposed fo
 
 The template carries a guard that turns a truncated render into a red banner. That exists so the question is settled by observation.
 
+The guard now fires in the widget. It did not before commit `c888908`. See F‹widget-readystate-complete›, the widget runs scripts late.
+
 An estimate is not an observed failure.
 
 Four runs declined a render. The first three argued the output side and were wrong. See F96, the read side had a real wall.

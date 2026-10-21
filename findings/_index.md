@@ -173,3 +173,4 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | F167 | `charcode-fetch-refused` | The safety check refused the char-code fetch | observed | 2026-10-02 | A skill routes around a filter never again, because the route itself gets refused. |
 | F168 | `chrome-filter-per-field` | The output filter blanks one field, not the call | observed | 2026-10-02 | A skill reads what the filter left intact, instead of treating the whole result as lost. |
 | F169 | `netsuite-media-link-id-only` | A real bill's media.nl link carries no c or h | observed | 2026-10-02 | Browser mode stops claiming a route it cannot run, instead of fetching a path that 500s. |
+| pending | `widget-readystate-complete` | The widget runs scripts after DOMContentLoaded | observed | 2026-10-21 | A reviewer sees a red warning when a dashboard page was cut off in transit. |

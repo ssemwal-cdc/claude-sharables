@@ -44,7 +44,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v18"
+TEMPLATE_VERSION = "v19"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -93,17 +93,47 @@ def serialise(payload):
 VERDICTS = ("clear", "history-open", "flagged")
 
 
+#__SHARED:pub-detail-cap__
+DETAIL_CAP = 240
+
+
+def cap_details(items):
+    """Cut each row's `detail` to DETAIL_CAP characters, at a word edge, and mark the cut.
+
+    DETAIL_CAP is about two lines at the width Show detail opens to. The full text stays in
+    the review log; a row that was cut carries `dcut`, which draws the Full detail button.
+    That button asks the chat to read the text back from the log. It never acts on the record.
+    """
+    for i in items:
+        d = i.get("detail") or ""
+        if len(d) > DETAIL_CAP:
+            i["detail"] = d[:DETAIL_CAP].rsplit(" ", 1)[0].rstrip(" ,;:.") + "\u2026"
+            i["dcut"] = 1
+#__END_SHARED:pub-detail-cap__
+
 #__SHARED:pub-strip-comments__
 def strip_comments(tpl):
-    """Drop HTML comments and whole-line // comments from the published page.
+    """Drop every comment from the published page except the two data sentinels.
 
     The widget payload has to be read and reproduced whole, and comments are dead bytes in it
     (Procore field run 2026-10-07: 101 KB render, ~45 KB template). The source template keeps
     its comments. Run after the version check, which reads a marker held in a comment.
-    The data sentinels are /* */ comments, so they survive.
+    Three kinds go: HTML comments, whole-line // comments, and /* */ comments. End-of-line //
+    is not scanned: a // inside a URL string is not a comment, so the source keeps such
+    comments on their own lines. The /* */ scan reads quoted strings first and leaves them
+    whole, so a /* or // inside a string survives. The sentinels S and E are /* */ and stay.
     """
     tpl = re.sub(r"<!--.*?-->[ \t]*\n?", "", tpl, flags=re.S)
-    return re.sub(r"^[ \t]*//[^\n]*\n", "", tpl, flags=re.M)
+    tpl = re.sub(r"^[ \t]*//[^\n]*\n", "", tpl, flags=re.M)
+
+    def block(m):
+        if m.group(1) or m.group(0) in (S, E):
+            return m.group(0)
+        return "\0"
+
+    tpl = re.sub(r"""("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|/\*.*?\*/""", block, tpl, flags=re.S)
+    tpl = re.sub(r"^[ \t]*\0[ \t]*\n", "", tpl, flags=re.M)
+    return tpl.replace("\0", "")
 #__END_SHARED:pub-strip-comments__
 
 
@@ -196,6 +226,8 @@ def main():
             sys.exit("ABORT: config.%s missing from %s (%s). "
                      "Run the first-time setup before publishing - never fall back "
                      "to another person's identity." % (key, os.path.basename(LOG), hint))
+
+    cap_details(items)
 
     payload = {
         "lastRun": log.get("lastRunTime") or log.get("lastCompletedRun", ""),

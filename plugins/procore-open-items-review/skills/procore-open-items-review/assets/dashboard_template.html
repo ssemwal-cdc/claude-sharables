@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Procore open items queue</title>
-<!-- layout template v20 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v21 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -107,7 +107,9 @@ select{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http
 // unlike the old artifact path (which passed it by path) the whole layout travels through a tool
 // call and can arrive truncated. A short dashboard looks plausible: fewer rows reads as a shorter
 // queue, not as damage. This looks for a marker that is the very last element in the document.
-document.addEventListener("DOMContentLoaded",function(){
+// The widget host runs scripts after the page has loaded, so DOMContentLoaded never fires there:
+// run now once past loading, and wait for the event only before that.
+function guard(){
   if(document.getElementById("__complete"))return;
   var w=document.createElement("div");
   w.style.cssText="position:sticky;top:0;z-index:999;background:#a32d2d;color:#fff;padding:12px 16px;"+
@@ -115,7 +117,8 @@ document.addEventListener("DOMContentLoaded",function(){
   w.textContent="This dashboard did not render completely — part of it was lost on the way to the "+
     "screen, so items may be missing. Do not act on anything below. Ask for it to be rendered again.";
   document.body.insertBefore(w,document.body.firstChild);
-});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",guard);else guard();
 </script>
 </head>
 <body>
@@ -216,7 +219,8 @@ function saveView(){try{localStorage.setItem(VKEY,JSON.stringify(view))}catch(e)
 //__END_SHARED:dash-view-migration__
 function setView(k,v){
   view[k]=v;
-  if(k==="campus")view.bldg="all";   // campus is the outer axis; buildings belong to one campus
+  // campus is the outer axis; buildings belong to one campus
+  if(k==="campus")view.bldg="all";
   if(k==="q"&&v)showSkipped=true;
   saveView(); render();
   if(k==="q"){var e=document.getElementById("fQ"); if(e){e.focus(); e.setSelectionRange(e.value.length,e.value.length)}}
@@ -384,7 +388,8 @@ function trimMores(){
   }
 }
 function render(){
-  var all=REVIEW.items;   // no filter: "gone" is not in VERDICTS, so nothing can ever be excluded
+  // no filter: "gone" is not in VERDICTS, so nothing can ever be excluded
+  var all=REVIEW.items;
   var ready=all.filter(function(i){return i.verdict==="clear"||i.verdict==="flagged"});
   var tied=all.filter(function(i){return i.verdict==="tied"});
   var vtied=all.filter(function(i){return i.verdict==="vendor-tied"});
@@ -503,6 +508,7 @@ function itemRow(it){
     '<span class="txt" id="pw'+it.id+'">'+esc(it.poWarn)+'</span>'+
     '<button class="more" onclick="pwtog(\''+it.id+'\',this)">more</button></div>':'')+'</div>'+
    '<p class="det" id="det'+it.id+'">'+esc(it.detail)+
+    (it.dcut?' <a href="#" onclick="fullDetail(\''+it.id+'\');return false">Full detail ↗</a>':'')+
     (it.att?'<br><span class="att">Read: '+esc(it.att)+'</span>':'')+
     (it.carried?'<br><span class="att">Carried forward, not re-read: '+esc(it.carried)+'</span>':'')+'</p>'+
    '<div class="acts">';
@@ -526,44 +532,14 @@ function pwtog(id,btn){var t=document.getElementById("pw"+id);if(!t)return;
 function tog(id,btn){var d=document.getElementById("det"+id);var open=d.style.display==="block";d.style.display=open?"none":"block";btn.textContent=open?"Show detail":"Hide detail"}
 function toggleSkipped(){showSkipped=!showSkipped;render()}
 // retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode
+function fullDetail(id){var it=byId(id);
+  say("Show me the full detail text for Procore item "+it.doc+" (id "+it.id+") exactly as it is written in the review log. Read-only: quote it and change nothing.")}
 function sendRun(){say("Re-run my Procore open items review now.")}
 function resolveGate(id){var it=byId(id);
   say("Resolve the workflow gate for Procore change order package "+it.doc+" (package id "+it.id+", project id "+it.pid+", commitment "+it.cid+"). The workflow is not attached to the package, which is why ChangeOrderPackage returns a 400. Fetch the change order package record for project "+it.pid+" and read line_items[].holder.id - that is the commitment change order id the workflow hangs off. Dedupe it across the lines: exactly one id is the answer; several means the package spans several change orders, so report the ids and leave it ungated rather than picking one; none means fall back to opening the commitment_contract_change_orders URL for the package id and noting the id it redirects to. Then query workflows/instances for project "+it.pid+" with filters[workflowable_object_type]=CommitmentChangeOrder and filters[workflowable_object_id] set to that change order id, page=1, view=action_card. Save the id as wfId on the item in the log so the dashboard can compose it, and update the dashboard with can_respond, the step name, due date and available responses. Never query with the package id. Do not click Respond.");}
 function reviewSupport(id){var it=byId(id);
   say("Read every PCI attached to Procore change order package "+it.doc+" (id "+it.id+", project id "+it.pid+"), tie each one to a line item, confirm the PCI totals sum to the package grand total, and flag any line without support or any PCI without a line. Then update the dashboard. Do not respond to the item.");}
-function say(t){
-  // Two hosts with disjoint surfaces, both probed live. The widget host exposes sendPrompt as a
-  // bare global — that is the path this dashboard takes, and the re-run button is one click.
-  // The artifact host exposes window.cowork (callMcpTool, askClaude, runScheduledTask) and no
-  // sendPrompt anywhere, so it cannot start a turn. The cowork branch is a hedge in case the two
-  // surfaces ever converge on that namespace; it matches nothing today.
-  if(window.cowork&&window.cowork.sendPrompt){window.cowork.sendPrompt(t);return}
-  if(window.sendPrompt){window.sendPrompt(t);return}
-  // Reached only when this page is opened as an artifact. Hand the instruction back to be pasted.
-  // Shown even when the copy succeeds, on purpose: you should read exactly what you are
-  // authorising, and it then runs from your message rather than from this page.
-  if(navigator.clipboard&&navigator.clipboard.writeText)
-    navigator.clipboard.writeText(t).then(function(){handoff(t,true)},function(){handoff(t,false)});
-  else handoff(t,false);
-}
-function handoff(t,copied){
-  closeHandoff();
-  var d=document.createElement("div");d.id="handoff";
-  d.style.cssText="position:fixed;inset:0;z-index:99;background:rgba(20,20,19,.45);display:flex;align-items:center;justify-content:center;padding:24px";
-  d.innerHTML='<div style="background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.18);max-width:640px;width:100%;padding:20px">'+
-   '<div style="font-size:15px;font-weight:600">'+(copied?"Copied — paste it into chat and send":"Copy this, then paste it into chat")+'</div>'+
-   '<p class="note" style="margin:4px 0 12px">Nothing has reached Procore yet. The response runs from your message, not from this page.</p>'+
-   '<textarea readonly style="width:100%;height:170px;box-sizing:border-box;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:10px;resize:vertical"></textarea>'+
-   '<div style="display:flex;gap:8px;margin-top:12px"><button class="go" onclick="recopy()">Copy again</button><button onclick="closeHandoff()">Close</button></div></div>';
-  d.addEventListener("click",function(e){if(e.target===d)closeHandoff()});
-  document.body.appendChild(d);
-  // Assigned as a value, never as markup — the instruction carries vendor names and free-text notes.
-  var ta=d.querySelector("textarea");ta.value=t;ta.focus();ta.select();
-}
-function recopy(){var ta=document.querySelector("#handoff textarea");if(!ta)return;ta.focus();ta.select();
-  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(ta.value);else document.execCommand("copy")}
-function closeHandoff(){var o=document.getElementById("handoff");if(o)o.parentNode.removeChild(o)}
-document.addEventListener("keydown",function(e){if(e.key==="Escape")closeHandoff()});
+function say(t){if(window.sendPrompt)window.sendPrompt(t)}
 
 // retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode
 //__SHARED:dash-band-track__
@@ -594,8 +570,10 @@ var BAND_TILE=100, BAND_MIN=140, bandSeen=new Map(), bandIO=null, bandH=-1;
 function bandBuild(){
   var sen=document.getElementById("bandsen");
   if(!sen||!window.IntersectionObserver)return;
-  var h=sen.clientHeight;              // height:100% of .wrap, so this measures the page
-  if(h===bandH)return;                 // nothing moved, and re-tiling would only churn
+  // height:100% of .wrap, so this measures the page
+  var h=sen.clientHeight;
+  // nothing moved, and re-tiling would only churn
+  if(h===bandH)return;
   bandH=h;
   if(bandIO)bandIO.disconnect();
   bandSeen.clear();

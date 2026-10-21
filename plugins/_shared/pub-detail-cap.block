@@ -1,0 +1,15 @@
+DETAIL_CAP = 240
+
+
+def cap_details(items):
+    """Cut each row's `detail` to DETAIL_CAP characters, at a word edge, and mark the cut.
+
+    DETAIL_CAP is about two lines at the width Show detail opens to. The full text stays in
+    the review log; a row that was cut carries `dcut`, which draws the Full detail button.
+    That button asks the chat to read the text back from the log. It never acts on the record.
+    """
+    for i in items:
+        d = i.get("detail") or ""
+        if len(d) > DETAIL_CAP:
+            i["detail"] = d[:DETAIL_CAP].rsplit(" ", 1)[0].rstrip(" ,;:.") + "\u2026"
+            i["dcut"] = 1

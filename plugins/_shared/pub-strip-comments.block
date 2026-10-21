@@ -1,10 +1,22 @@
 def strip_comments(tpl):
-    """Drop HTML comments and whole-line // comments from the published page.
+    """Drop every comment from the published page except the two data sentinels.
 
     The widget payload has to be read and reproduced whole, and comments are dead bytes in it
     (Procore field run 2026-10-07: 101 KB render, ~45 KB template). The source template keeps
     its comments. Run after the version check, which reads a marker held in a comment.
-    The data sentinels are /* */ comments, so they survive.
+    Three kinds go: HTML comments, whole-line // comments, and /* */ comments. End-of-line //
+    is not scanned: a // inside a URL string is not a comment, so the source keeps such
+    comments on their own lines. The /* */ scan reads quoted strings first and leaves them
+    whole, so a /* or // inside a string survives. The sentinels S and E are /* */ and stay.
     """
     tpl = re.sub(r"<!--.*?-->[ \t]*\n?", "", tpl, flags=re.S)
-    return re.sub(r"^[ \t]*//[^\n]*\n", "", tpl, flags=re.M)
+    tpl = re.sub(r"^[ \t]*//[^\n]*\n", "", tpl, flags=re.M)
+
+    def block(m):
+        if m.group(1) or m.group(0) in (S, E):
+            return m.group(0)
+        return "\0"
+
+    tpl = re.sub(r"""("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|/\*.*?\*/""", block, tpl, flags=re.S)
+    tpl = re.sub(r"^[ \t]*\0[ \t]*\n", "", tpl, flags=re.M)
+    return tpl.replace("\0", "")

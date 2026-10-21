@@ -1,11 +1,11 @@
 ---
 name: netsuite-approval-double-check
-description: v45 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear, history open or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
+description: v46 — Financial double-check of the NetSuite bills, purchase orders and change orders in your approval queue. Published to a live dashboard widget in chat. Trigger on "run my approval check," "check my NetSuite queue," or "double check my bills". Also trigger on "review my change orders to approve", "run the daily approval review", or any mention of the NetSuite approval dashboard, items pending approval, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Reads each attachment in the page without downloading it. Verifies the math and the support. Cross-checks the real purchase order and billing history. Publishes a clear, history open or flagged verdict per item. Read-only: no approve, approve with notes, or reject. No write to NetSuite by connector or UI. No decision controls on the dashboard. Every verdict is a recommendation. The approval stays yours to make in NetSuite.
 ---
 
 # NetSuite Approval Double-Check
 
-**Skill version 45 — 2026-10-21.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
+**Skill version 46 — 2026-10-21.** This installed file is a snapshot. The current number is the Version column of the repo README on GitHub, at github.com/ssemwal-cdc/claude-sharables. When asked for the version, report this line and leave the comparison to the reader. A higher number there means that this copy is stale, and the fix is updating or reinstalling the plugin. Never add a version field to `plugin.json`.
 
 Review every bill, purchase order and change order in the user's NetSuite approval queue. Verify each item's math and the adequacy of its supporting document. Cross-check against the real purchase order and billing history. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget, not to chat. Chat gets one headline line.
 
@@ -81,13 +81,13 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 3. **Use the existing workspace copies and say so, once**, naming the files' modification date from `ls -l` near the headline. Then carry on. Do not stop the run over it. Only the template and publish script can lag, so the verdicts are current either way.
 
 - **On a first run there are no existing copies, so rung 3 is not available.** If rungs 1 and 2 both fail on a first run, say exactly that. Stop before Step 7. There is no template to inject into. Inventing one is forbidden. Expect this case on Cowork.
-- **This plugin ships layout template `v18`. Confirm the sync landed by reading it back:**
+- **This plugin ships layout template `v19`. Confirm the sync landed by reading it back:**
 
 ```bash
 head -n 8 "<workspace>/NetSuite Approval Checks/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
 
-If that does not say `v18`, the sync did not land and the dashboard is stale. Say so once near the headline, naming both versions, and carry on. Same fail-open rule as rung 3. This check is the only one that can see a uniformly stale workspace. The template and the publish script are copied together, so they agree with each other while both are old.
+If that does not say `v19`, the sync did not land and the dashboard is stale. Say so once near the headline, naming both versions, and carry on. Same fail-open rule as rung 3. This check is the only one that can see a uniformly stale workspace. The template and the publish script are copied together, so they agree with each other while both are old.
 
 <!--__SHARED:skill-chrome-first-call__-->
 - **Call `tabs_context_mcp` once, before any browser action, on every run.** This is the Claude in Chrome tool. Do this first, even in a scheduled run where nobody is watching.
@@ -572,7 +572,7 @@ Maintain `NetSuite Approval Checks/_netsuite_review_log.json`.
 - These field names are the contract with `publish_dashboard.py`. Do not rename them.
 - **`type` is required, and those three strings are the whole vocabulary.** Write it on every item. The publish script falls back to `Bill` when it is missing. That is a legacy default that silently mislabels a purchase order.
 - **`poRef` is the PO the bill is applied to**, resolved from the Step 2 linkage, never from `poTyped`. The two are separate fields on purpose: keeping the typed value lets a reader see the disagreement. `poLink` says which of the three states produced `poRef`. So an `unlinked` or `failed` item can never read as though its PO had been confirmed.
-- `head`, `facts`, `poContext` and `detail` are what the dashboard renders. Write them for a reader who is skimming. `facts` should be the two or three lines that carry the specific figures.
+- `head`, `facts`, `poContext` and `detail` are what the dashboard renders. Write them for a reader who is skimming. `facts` should be the two or three lines that carry the specific figures. The publish step cuts `detail` to 240 characters. A Full detail button asks the chat for the rest from the log. Put the figures in `head` and `facts`.
 - **`attachmentFiles` names every attached file the review that set this verdict opened**, one entry each. Same `name (id)` shape as `attachmentFile`. `attachmentFile` alone still names the one the figures are checked against.
 - **The id is Step 3's own file id.** In connector mode, an id is read only for the named-field files. That is the AP INVOICE or CHANGE ORDER ATTACHMENT id Step 3's file query looks up. In browser mode, the `media.nl` DOM read supplies an id for every link. That read is designed, not yet observed.
 - **`config.focus.emphasis`, when set, decides what leads those fields, and nothing else.** It may reorder and reword. It may **never** change a `verdict`, drop a finding, or alter `amount`, `poRef`, `poLink` or `poTyped`. Every check that ran still gets its line.
@@ -601,7 +601,7 @@ cd "<workspace>/NetSuite Approval Checks" && python3 -B publish_dashboard.py
 - **Render it as an inline widget with `show_widget`, passing the file's contents. Always attempt this, whatever the file size.** A large queue makes a large file, and that is normal. Handing the user a file or an artifact instead of attempting the render is a failure of this step. It is not a cautious alternative.
 
 <!--__SHARED:skill-artifact-host__-->
-**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live. The widget host exposes `sendPrompt` as a bare global. The artifact host exposes `window.cowork` with `callMcpTool`, `askClaude` and `runScheduledTask`, and no `sendPrompt` anywhere. On an artifact the re-run button cannot start a turn and fails silently. As a widget it works in one click, confirmed on a live run. The template keeps a clipboard handoff for the artifact case. It is a fallback, not a plan.
+**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live. The widget host exposes `sendPrompt` as a bare global. The artifact host exposes `window.cowork` with `callMcpTool`, `askClaude` and `runScheduledTask`, and no `sendPrompt` anywhere. On an artifact the re-run button cannot start a turn and fails silently. As a widget it works in one click, confirmed on a live run.
 <!--__END_SHARED:skill-artifact-host__-->
 
 **You cannot see whether the render worked, so ask.** `show_widget` returns `Content rendered and shown to the user` regardless of what it rendered. It says that even when handed a file path. After rendering, add one line:

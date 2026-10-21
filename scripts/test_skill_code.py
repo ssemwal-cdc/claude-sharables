@@ -2421,6 +2421,195 @@ def test_netsuite_stale_doc_and_caller():
           "timed out" in para, "the caller never names the `timed out` state")
 
 
+# ------------------------------------------------ render fixes (owner rulings 2026-10-21)
+def _guard_outcome(tpl_text, complete, state):
+    """Run the template's first inline script (the integrity guard) in node against a stub
+    document. `state` is document.readyState when the script runs, and `complete` says whether
+    the __complete marker exists. The stub's addEventListener only records listeners, so an
+    event that never fires stays unfired, as inside the widget host. Returns warnings drawn
+    right after the script ran, warnings after every recorded listener was then fired, and the
+    number of listeners recorded."""
+    script = re.search(r"<script>(.*?)</script>", tpl_text, re.S).group(1)
+    harness = ("""
+var inserted = 0, fns = [];
+var document = {readyState: %s,
+  getElementById: function(){ return %s; },
+  createElement: function(){ return {style: {}}; },
+  body: {firstChild: null, insertBefore: function(){ inserted++; }},
+  addEventListener: function(t, f){ fns.push(f); }};
+""" % (json.dumps(state), "{}" if complete else "null")) + script + """
+var now = inserted; fns.forEach(function(f){ f(); });
+console.log(JSON.stringify({now: now, later: inserted, listeners: fns.length}));
+"""
+    rc, out, err = run_node(harness)
+    if rc != 0:
+        sys.exit("ABORT: guard harness failed: %s" % (err or out))
+    return json.loads(out.splitlines()[-1])
+
+
+def test_guard_fires_in_widget_host():
+    """The widget host runs scripts after the page has loaded (readyState "complete"), so a
+    DOMContentLoaded listener never fires there and a truncated page showed no warning."""
+    listener_only = ('if(document.readyState==="loading")'
+                     'document.addEventListener("DOMContentLoaded",guard);else guard();')
+    for name, root in (("procore", PC), ("netsuite", NS)):
+        tpl = open(os.path.join(root, "assets/dashboard_template.html"), encoding="utf-8").read()
+        r = _guard_outcome(tpl, False, "complete")
+        check("%s guard: a truncated page warns when the script runs after load" % name,
+              r["now"] == 1, r)
+        r = _guard_outcome(tpl, True, "complete")
+        check("%s guard: a whole page is not warned about" % name, r["later"] == 0, r)
+        r = _guard_outcome(tpl, False, "loading")
+        check("%s guard: still warns through the event when the page is loading" % name,
+              r["now"] == 0 and r["later"] == 1, r)
+        check("%s guard: it is the only DOMContentLoaded listener" % name,
+              tpl.count("DOMContentLoaded\"") == 1 and listener_only in tpl)
+        old = tpl.replace(listener_only, 'document.addEventListener("DOMContentLoaded",guard);')
+        check("%s guard: the listener-only guard goes red (mutated copy)" % name,
+              old != tpl and _guard_outcome(old, False, "complete")["now"] == 0)
+
+
+def _load_publish(root, tag):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("pd_" + tag,
+                                                  os.path.join(root, "assets/publish_dashboard.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_published_page_has_no_comments():
+    """The built page carries no comment but the two data sentinels, and stripping never
+    touches a string."""
+    for name, root, tag in (("procore", PC, "pc"), ("netsuite", NS, "ns")):
+        mod = _load_publish(root, tag)
+        tricky = ('a{background:url("data:x;//y /* z */")}\n/* c */\n'
+                  'var s=\'/* no */\';/* t */ var q="http://h//p";\n<p>Don\'t</p>\n'
+                  + mod.S + '{}' + mod.E + '\n')
+        out = mod.strip_comments(tricky)
+        want = ('a{background:url("data:x;//y /* z */")}\n'
+                'var s=\'/* no */\'; var q="http://h//p";\n<p>Don\'t</p>\n'
+                + mod.S + '{}' + mod.E + '\n')
+        check("%s strip: strings survive, comments go, sentinels stay" % name, out == want,
+              repr(out))
+    for name, root, log, stem in (("procore", PC, _big_procore_log(), "_procore_review_log.json"),
+                                  ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json")):
+        d = tempfile.mkdtemp()
+        try:
+            for f in ("publish_dashboard.py", "dashboard_template.html"):
+                shutil.copy(os.path.join(root, "assets", f), d)
+            json.dump(log, open(os.path.join(d, stem), "w"))
+            out = os.path.join(d, "index.html")
+            r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
+                               capture_output=True, text=True, timeout=60)
+            check("%s comments: publish runs" % name, r.returncode == 0, (r.stderr or r.stdout)[-200:])
+            html = open(out, encoding="utf-8").read()
+            rest = re.sub(r"(/\*__REVIEW_DATA__\*/).*?(/\*__END__\*/)", r"\1\2", html, flags=re.S)
+            check("%s comments: only the two data sentinels remain" % name,
+                  re.findall(r"/\*.*?\*/", rest, re.S) == ["/*__REVIEW_DATA__*/", "/*__END__*/"],
+                  re.findall(r"/\*.*?\*/", rest, re.S)[:3])
+            check("%s comments: no HTML comment" % name, "<!--" not in rest)
+            lines = rest.split("\n")
+            check("%s comments: no comment-only line" % name,
+                  not [l for l in lines if l.lstrip().startswith(("//", "/*", "*/"))])
+            eol = [l.strip()[:70] for l in lines if re.search(r"(?<=[\s;{},)])//\s", l)]
+            check("%s comments: no end-of-line // comment" % name, not eol, eol[:2])
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+
+def test_dead_fallback_gone():
+    """No artifact-host clipboard fallback: say() sends the prompt or does nothing."""
+    for name, root in (("procore", PC), ("netsuite", NS)):
+        tpl = open(os.path.join(root, "assets/dashboard_template.html"), encoding="utf-8").read()
+        gone = [w for w in ("handoff", "recopy", "closeHandoff", "cowork", "execCommand") if w in tpl]
+        check("%s: no handoff/cowork fallback in the template" % name, not gone, gone)
+        if shutil.which("node"):
+            body = extract_fn(tpl, "say")
+            rc, out, err = run_node("var sent=[], window={};\n" + body + """
+say("x"); window.sendPrompt = function(t){ sent.push(t); }; say("y");
+console.log(JSON.stringify(sent));""")
+            check("%s: say() is silent without sendPrompt and sends with it" % name,
+                  rc == 0 and out == '["y"]', err or out)
+        skill = open(os.path.join(root, "SKILL.md"), encoding="utf-8").read()
+        check("%s SKILL.md: no clipboard-handoff text" % name,
+              "clipboard handoff" not in skill and "fallback, not a plan" not in skill)
+
+
+def test_detail_cap():
+    """A long `detail` is cut at publish, flagged `dcut`, and one click on the row asks the
+    chat for the full text. Short detail and skipped rows are unchanged."""
+    long_detail = " ".join("word%03d" % n for n in range(120))
+    short_detail = "A short paragraph of reasoning."
+    log_items = {
+        "1": dict(_base(itemId="1", docNo="#LONG"), detail=long_detail),
+        "2": dict(_base(itemId="2", docNo="#SHORT"), detail=short_detail),
+        "3": dict(_base(itemId="3", docNo="#SKIP"), verdict="skipped", detail=long_detail),
+    }
+    d = tempfile.mkdtemp()
+    try:
+        r, out = _publish_log(d, log_items)
+        check("detail cap: procore publish runs", r.returncode == 0, (r.stderr or r.stdout)[-200:])
+        blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/", open(out, encoding="utf-8").read(), re.S)
+        by = {i["doc"]: i for i in json.loads(blob.group(1))["items"]}
+        lg, sh, sk = by["#LONG"], by["#SHORT"], by["#SKIP"]
+        check("detail cap: a long detail is cut to 240 characters or fewer, plus the ellipsis",
+              len(lg["detail"]) <= 241 and lg["detail"].endswith("…")
+              and long_detail.startswith(lg["detail"][:-1].rstrip()), len(lg["detail"]))
+        check("detail cap: a cut row is flagged dcut", lg.get("dcut") == 1)
+        check("detail cap: a short detail is whole and unflagged",
+              sh["detail"] == short_detail and "dcut" not in sh)
+        check("detail cap: a skipped row stays compact", "detail" not in sk and "dcut" not in sk)
+        if shutil.which("node"):
+            tpl = os.path.join(PC, "assets/dashboard_template.html")
+            row = render_item_row(tpl, lg)
+            check("detail cap: procore row shows the Full detail control for a cut row",
+                  "fullDetail(" in row and "Full detail" in row, row[-300:])
+            check("detail cap: procore row shows none for an uncut row",
+                  "Full detail" not in render_item_row(tpl, sh))
+            src = open(tpl, encoding="utf-8").read()
+            fns = "\n".join(extract_fn(src, n) for n in ("byId", "say", "fullDetail"))
+            rc, o, err = run_node("var REVIEW={items:" + json.dumps([lg]) + "};var sent=[];\n"
+                                  "window={sendPrompt:function(t){sent.push(t)}};\n" + fns +
+                                  "\nfullDetail(" + json.dumps(lg["id"]) + ");console.log(JSON.stringify(sent));")
+            sent = json.loads(o)[0] if rc == 0 and o else ""
+            check("detail cap: procore Full detail sends a read-only prompt naming the item",
+                  "#LONG" in sent and "Read-only" in sent, err or o)
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+    nitems = {"7": dict(_nsrp_bill("BILL-LONG"), detail=long_detail),
+              "8": dict(_nsrp_bill("BILL-SHORT"), detail=short_detail)}
+    rc, o, err, html = _nsrp_publish(nitems)
+    check("detail cap: netsuite publish runs", rc == 0, (err or o)[-200:])
+    blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/", html, re.S)
+    by = {i["doc"]: i for i in json.loads(blob.group(1))["items"]}
+    lg, sh = by["BILL-LONG"], by["BILL-SHORT"]
+    check("detail cap: netsuite long detail is cut and flagged",
+          len(lg["detail"]) <= 241 and lg.get("dcut") == 1, len(lg["detail"]))
+    check("detail cap: netsuite short detail is whole and unflagged",
+          sh["detail"] == short_detail and "dcut" not in sh)
+    if shutil.which("node"):
+        tpl = os.path.join(NS, "assets/dashboard_template.html")
+        fns = ("esc", "money", "recUrl", "parseNsDate", "ageDaysRaw", "ageDays",
+               "poLine", "classify", "itemRow")
+        row = render_item_row(tpl, lg, fn_names=fns, call="itemRow(%s, classify(%s))"
+                              % (json.dumps(lg), json.dumps(lg)))
+        check("detail cap: netsuite row shows the Full detail control for a cut row",
+              "fullDetail(" in row and "Full detail" in row, row[-300:])
+        row = render_item_row(tpl, sh, fn_names=fns, call="itemRow(%s, classify(%s))"
+                              % (json.dumps(sh), json.dumps(sh)))
+        check("detail cap: netsuite row shows none for an uncut row", "Full detail" not in row)
+        src = open(tpl, encoding="utf-8").read()
+        body = "\n".join(extract_fn(src, n) for n in ("say", "fullDetail"))
+        rc, o, err = run_node("var REVIEW={items:" + json.dumps([lg]) + "};var sent=[];\n"
+                              "window={sendPrompt:function(t){sent.push(t)}};\n" + body +
+                              "\nfullDetail(" + json.dumps(lg.get("key", lg["id"])) +
+                              ");console.log(JSON.stringify(sent));")
+        sent = json.loads(o)[0] if rc == 0 and o else ""
+        check("detail cap: netsuite Full detail sends a read-only prompt naming the item",
+              "BILL-LONG" in sent and "Read-only" in sent, err or o)
+
+
 def main():
     print("Skill code checks\n")
     if shutil.which("node"):
@@ -2473,6 +2662,11 @@ def main():
     test_dashboard_view()
     test_po_identity_rules()
     test_read_docx()
+    if shutil.which("node"):
+        test_guard_fires_in_widget_host()
+        test_dead_fallback_gone()
+        test_detail_cap()
+    test_published_page_has_no_comments()
     print()
     if failures:
         print("FAILED: " + "; ".join(failures))

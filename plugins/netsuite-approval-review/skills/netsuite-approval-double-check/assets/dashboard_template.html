@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>NetSuite approval queue</title>
-<!-- layout template v18 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
+<!-- layout template v19 - do not regenerate by hand; publish_dashboard.py injects only the data block -->
 <!-- Bump this marker whenever this file changes; publish_dashboard.py compares it and warns on a stale workspace copy. scripts/test_skill_code.py fails if the two disagree. -->
 <style>
 :root{color-scheme:light dark;--ink:#141413;--surf:#f6f5f2;--sunk:#f1f0ec;--ctl:#c9c8c2;--ctl2:#9a9992;--ctl-on:#eceae4;--inv:#ffffff;--ink-hi:#000000;--ink2:#5f5e5a;--ink3:#8a8983;--line:#e5e4df;--bg:#faf9f7;--card:#ffffff;--ok-bg:#eaf3ea;--ok-fg:#1f6b33;--ok-line:#bcd9c1;--bad-bg:#fceceb;--bad-fg:#a32d2d;--bad-line:#eec4c2;--warn-bg:#fbf1dd;--warn-fg:#8a5a0b;--warn-line:#ecd7ae;--acc-bg:#e9f0fa;--acc-fg:#1a5da8;--acc-line:#bcd2ee;--r:9px;--r2:14px;--sh1:0 1px 2px rgba(20,20,19,.04),0 4px 14px rgba(20,20,19,.05);--sh2:0 2px 6px rgba(20,20,19,.05),0 10px 28px rgba(20,20,19,.09);--sh3:0 -1px 6px rgba(20,20,19,.03),0 12px 34px rgba(20,20,19,.16);--ring:rgba(20,20,19,.05)}
@@ -104,7 +104,9 @@ select{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http
 // unlike the old artifact path (which passed it by path) the whole layout travels through a tool
 // call and can arrive truncated. A short dashboard looks plausible: fewer rows reads as a shorter
 // queue, not as damage. This looks for a marker that is the very last element in the document.
-document.addEventListener("DOMContentLoaded",function(){
+// The widget host runs scripts after the page has loaded, so DOMContentLoaded never fires there:
+// run now once past loading, and wait for the event only before that.
+function guard(){
   if(document.getElementById("__complete"))return;
   var w=document.createElement("div");
   w.style.cssText="position:sticky;top:0;z-index:999;background:#a32d2d;color:#fff;padding:12px 16px;"+
@@ -112,7 +114,8 @@ document.addEventListener("DOMContentLoaded",function(){
   w.textContent="This dashboard did not render completely — part of it was lost on the way to the "+
     "screen, so items may be missing. Do not act on anything below. Ask for it to be rendered again.";
   document.body.insertBefore(w,document.body.firstChild);
-});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",guard);else guard();
 </script>
 </head>
 <body>
@@ -442,6 +445,7 @@ function itemRow(it,c2){
      :'<span class="txt" id="pw'+k+'">'+esc(it.poWarn)+'</span>'+
       '<button class="more" onclick="pwtog('+k+',this)">more</button></div>'):'')+'</div>'+
   '<p class="det" id="det'+k+'">'+esc(it.detail)+
+   (it.dcut?' <a href="#" onclick="fullDetail('+k+');return false">Full detail ↗</a>':'')+
    (it.att?'<br><span class="att">Read: '+esc(it.att)+'</span>':'')+'</p>'+
   '<div class="acts">'+
   '<span style="flex:1"></span>'+
@@ -457,40 +461,11 @@ function pwtog(id,btn){var t=document.getElementById("pw"+id);if(!t)return;
   t.className=open?"txt":"txt open";btn.textContent=open?"more":"less"}
 function tog(id,btn){var d=document.getElementById("det"+id);var open=d.style.display==="block";d.style.display=open?"none":"block";btn.textContent=open?"Show detail":"Hide detail"}
 // retired: see actionable-retired/netsuite-approval-review/dashboard_template.cut.html, review-only-mode
+function fullDetail(k){var it=null;
+  for(var i=0;i<REVIEW.items.length;i++){var x=REVIEW.items[i];if((x.key!=null?x.key:x.id)==k){it=x;break}}
+  if(it)say("Show me the full detail text for NetSuite "+it.type+" "+it.doc+" (id "+it.id+") exactly as it is written in the review log. Read-only: quote it and change nothing.")}
 function sendRun(){say("Run my NetSuite approval check now")}
-function say(t){
-  // Two hosts with disjoint surfaces, both probed live. The widget host exposes sendPrompt as a
-  // bare global — that is the path this dashboard takes, and the re-run button is one click.
-  // The artifact host exposes window.cowork (callMcpTool, askClaude, runScheduledTask) and no
-  // sendPrompt anywhere, so it cannot start a turn. The cowork branch is a hedge in case the two
-  // surfaces ever converge on that namespace; it matches nothing today.
-  if(window.cowork&&window.cowork.sendPrompt){window.cowork.sendPrompt(t);return}
-  if(window.sendPrompt){window.sendPrompt(t);return}
-  // Reached only when this page is opened as an artifact. Hand the instruction back to be pasted.
-  // Shown even when the copy succeeds, on purpose: you should read exactly what you are
-  // authorising, and it then runs from your message rather than from this page.
-  if(navigator.clipboard&&navigator.clipboard.writeText)
-    navigator.clipboard.writeText(t).then(function(){handoff(t,true)},function(){handoff(t,false)});
-  else handoff(t,false);
-}
-function handoff(t,copied){
-  closeHandoff();
-  var d=document.createElement("div");d.id="handoff";
-  d.style.cssText="position:fixed;inset:0;z-index:99;background:rgba(20,20,19,.45);display:flex;align-items:center;justify-content:center;padding:24px";
-  d.innerHTML='<div style="background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.18);max-width:640px;width:100%;padding:20px">'+
-   '<div style="font-size:15px;font-weight:600">'+(copied?"Copied — paste it into chat and send":"Copy this, then paste it into chat")+'</div>'+
-   '<p class="note" style="margin:4px 0 12px">Nothing has reached NetSuite. The re-run starts from your message, not from this page.</p>'+
-   '<textarea readonly style="width:100%;height:170px;box-sizing:border-box;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:10px;resize:vertical"></textarea>'+
-   '<div style="display:flex;gap:8px;margin-top:12px"><button class="go" onclick="recopy()">Copy again</button><button onclick="closeHandoff()">Close</button></div></div>';
-  d.addEventListener("click",function(e){if(e.target===d)closeHandoff()});
-  document.body.appendChild(d);
-  // Assigned as a value, never as markup — the instruction carries vendor names and free-text notes.
-  var ta=d.querySelector("textarea");ta.value=t;ta.focus();ta.select();
-}
-function recopy(){var ta=document.querySelector("#handoff textarea");if(!ta)return;ta.focus();ta.select();
-  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(ta.value);else document.execCommand("copy")}
-function closeHandoff(){var o=document.getElementById("handoff");if(o)o.parentNode.removeChild(o)}
-document.addEventListener("keydown",function(e){if(e.key==="Escape")closeHandoff()});
+function say(t){if(window.sendPrompt)window.sendPrompt(t)}
 
 // retired: see actionable-retired/netsuite-approval-review/dashboard_template.cut.html, review-only-mode
 //__SHARED:dash-band-track__
@@ -521,8 +496,10 @@ var BAND_TILE=100, BAND_MIN=140, bandSeen=new Map(), bandIO=null, bandH=-1;
 function bandBuild(){
   var sen=document.getElementById("bandsen");
   if(!sen||!window.IntersectionObserver)return;
-  var h=sen.clientHeight;              // height:100% of .wrap, so this measures the page
-  if(h===bandH)return;                 // nothing moved, and re-tiling would only churn
+  // height:100% of .wrap, so this measures the page
+  var h=sen.clientHeight;
+  // nothing moved, and re-tiling would only churn
+  if(h===bandH)return;
   bandH=h;
   if(bandIO)bandIO.disconnect();
   bandSeen.clear();

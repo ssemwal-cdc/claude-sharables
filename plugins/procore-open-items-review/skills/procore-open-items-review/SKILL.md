@@ -1,9 +1,9 @@
 ---
 name: procore-open-items-review
-description: v47 — Review of the Procore open items actually awaiting your workflow response. Covers internal change risks, subcontractor invoices, commitment change orders, and the purchase order and work order contracts. Published to a live dashboard widget in chat. Trigger on "run my Procore review," "check my open items," or "review my Procore queue". Also trigger on "double check my ICRs", "run the daily Procore check", or any mention of the Procore open items dashboard, items waiting on your response, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Filters the queue to items you can actually action. Verifies the cost figures and pay-application math against the attached support. Publishes a clear, flagged, skipped, tied, or vendor-tied verdict per item. Read-only: no clicking Respond, Approve, Reject, or Revise and Resubmit. Every Procore call is a GET. No response controls on the dashboard. Every verdict is a recommendation. The response stays yours to make in Procore.
+description: v48 — Review of the Procore open items actually awaiting your workflow response. Covers internal change risks, subcontractor invoices, commitment change orders, and the purchase order and work order contracts. Published to a live dashboard widget in chat. Trigger on "run my Procore review," "check my open items," or "review my Procore queue". Also trigger on "double check my ICRs", "run the daily Procore check", or any mention of the Procore open items dashboard, items waiting on your response, the dashboard's re-run button, or a request for a fresh snapshot of the queue. Filters the queue to items you can actually action. Verifies the cost figures and pay-application math against the attached support. Publishes a clear, flagged, skipped, tied, or vendor-tied verdict per item. Read-only: no clicking Respond, Approve, Reject, or Revise and Resubmit. Every Procore call is a GET. No response controls on the dashboard. Every verdict is a recommendation. The response stays yours to make in Procore.
 ---
 # Procore Open Items Review
-**Skill version 47 — 2026-10-21.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
+**Skill version 48 — 2026-10-21.** This installed file is a snapshot. Report this line when asked for the version. The current number is the Version column of the repo README at github.com/ssemwal-cdc/claude-sharables. That table does not ship with the plugin, so make no local comparison. A higher number there means that this copy is stale. Update or reinstall the plugin. Never add a version field to plugin.json.
 
 Review every Procore item **waiting on the user's workflow response**. Verify each item's figures against its attached support. Publish a per-item verdict to the dashboard. Output goes to an inline dashboard widget. Chat gets one headline line.
 <!-- retired: see actionable-retired/procore-open-items-review/SKILL.md.cut.md, review-only-mode -->
@@ -87,11 +87,11 @@ The `chmod` is required, not tidiness. The plugin's installed assets are read-on
 2. **Read, then Write.** Read each asset from `${CLAUDE_PLUGIN_ROOT}/skills/procore-open-items-review/assets/` and write it over the workspace copy byte for byte. Never retype, trim or tidy. Then prove the copy landed: the template carries `/*__REVIEW_DATA__*/` and `/*__END__*/` exactly once each, and `python3 -m py_compile publish_dashboard.py` passes. This rung is designed, not yet observed. If it also fails, say so in the run report.
 3. **Use the existing workspace copies and say so once.** One line near the headline, naming the modification date from `ls -l`: "dashboard code is from the last successful sync, \<date\>". Do not stop the run. The procedure ships in this file, so the verdicts stay current while the widget's wording lags. **On a first run there are no existing copies, so rung 3 is not available.** On a first run, if rungs 1 and 2 both fail, stop before Step 7 and say exactly that. Inventing a template is forbidden by the Absolute rules.
 
-**This plugin ships layout template `v20`. Confirm the sync landed by reading it back:**
+**This plugin ships layout template `v21`. Confirm the sync landed by reading it back:**
 ```bash
 head -n 8 "<workspace>/Procore Open Items/dashboard_template.html" | grep -o 'layout template v[0-9]*'
 ```
-If that does not say `v20`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
+If that does not say `v21`, say so once near the headline, naming both versions, and carry on. This is the only check that can see a uniformly stale workspace.
 
 <!--__SHARED:skill-chrome-first-call__-->
 - **Call `tabs_context_mcp` once, before any browser action, on every run.** This is the Claude in Chrome tool. Do this first, even in a scheduled run where nobody is watching.
@@ -698,6 +698,7 @@ Maintain `Procore Open Items/_procore_review_log.json`. These field names are th
 - **Set `commitmentId` on every `inv`, `cco` and `com`.** An `inv` uses the requisition's `commitment_id`. A `cco` takes the package's `contract_id`. A `com` takes the item's own id, because the record *is* the commitment.
 - **A blank `commitmentId` on an `inv` or `cco` publishes a WARNING naming the key.** The row then shows no link. The CCO link hard-codes the purchase order collection. See `G23`, the CCO link on a work order contract is unverified.
 - **A `skipped` row publishes compact.** It carries `head`, `att` and `carried`, and no `facts`, `detail`, `context` or response verbs. Put the cause in `head`.
+- **The publish step cuts `detail` to 240 characters** on flagged and clear rows. A Full detail button asks the chat for the rest from the log. Put the figures in `head` and `facts`, not only in `detail`.
 - `project` must keep Procore's full `"<Campus> - <Building>"` form, because the script splits it on the outer campus axis.
 
 On each run:
@@ -732,7 +733,7 @@ cd "<workspace>/Procore Open Items" && python3 -B publish_dashboard.py
 **Render, then say that.** Do not weigh the file size instead. **Handing over a file without having attempted the render is a failure of this step.** If it happens, say so plainly rather than presenting the file as the deliverable. After a red banner, hand over `index.html` itself. It is the complete dashboard.
 
 <!--__SHARED:skill-artifact-host__-->
-**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live. The widget host exposes `sendPrompt` as a bare global. The artifact host exposes `window.cowork` with `callMcpTool`, `askClaude` and `runScheduledTask`, and no `sendPrompt` anywhere. On an artifact the re-run button cannot start a turn and fails silently. As a widget it works in one click, confirmed on a live run. The template keeps a clipboard handoff for the artifact case. It is a fallback, not a plan.
+**Never publish it as an artifact.** The two hosts expose disjoint bridges, both probed live. The widget host exposes `sendPrompt` as a bare global. The artifact host exposes `window.cowork` with `callMcpTool`, `askClaude` and `runScheduledTask`, and no `sendPrompt` anywhere. On an artifact the re-run button cannot start a turn and fails silently. As a widget it works in one click, confirmed on a live run.
 <!--__END_SHARED:skill-artifact-host__-->
 
 <!--__SHARED:skill-render-fidelity__-->

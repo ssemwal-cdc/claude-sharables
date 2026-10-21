@@ -7,7 +7,7 @@ date: 2026-08-24
 ---
 # Provenance may cite ids
 
-**Rule.** Cite the record id and the date in a defect finding. Keep those ids out of shipped examples.
+**Rule.** Cite the record id and the date in a defect finding. Keep record ids, such as a bill or a purchase order, out of shipped examples.
 
 **Outcome protected.** Every documented defect is traceable to a record and a date.
 

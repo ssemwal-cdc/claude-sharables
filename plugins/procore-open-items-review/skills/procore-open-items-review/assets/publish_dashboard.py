@@ -4,11 +4,6 @@
 Reads the review log beside this script, injects it into dashboard_template.html, and writes
 index.html, whose contents are then rendered inline with show_widget.
 
-(An earlier design published this to an artifact. That path was dropped on 2026-08-11: the
-artifact host exposes no sendPrompt, so a dashboard there cannot put the re-run instruction
-into chat. The clipboard handoff still in dashboard_template.html is the deliberate fallback
-for that host and is not leftover - do not remove it.)
-
 The template holds the entire layout and all behaviour. This script only ever
 replaces the data block between the sentinels. Nothing here generates HTML, so
 the dashboard cannot drift between runs.
@@ -93,13 +88,15 @@ DETAIL_CAP = 240
 
 
 def cap_details(items):
-    """Cut each row's `detail` to DETAIL_CAP characters, at a word edge, and mark the cut.
+    """Cut the `detail` of each flagged or clear row to DETAIL_CAP characters, at a word edge, and mark the cut.
 
     DETAIL_CAP is about two lines at the width Show detail opens to. The full text stays in
     the review log; a row that was cut carries `dcut`, which draws the Full detail button.
     That button asks the chat to read the text back from the log. It never acts on the record.
     """
     for i in items:
+        if i.get("verdict") not in ("flagged", "clear"):
+            continue
         d = i.get("detail") or ""
         if len(d) > DETAIL_CAP:
             i["detail"] = d[:DETAIL_CAP].rsplit(" ", 1)[0].rstrip(" ,;:.") + "\u2026"

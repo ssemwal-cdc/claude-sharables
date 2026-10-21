@@ -2545,6 +2545,8 @@ def test_detail_cap():
         "1": dict(_base(itemId="1", docNo="#LONG"), detail=long_detail),
         "2": dict(_base(itemId="2", docNo="#SHORT"), detail=short_detail),
         "3": dict(_base(itemId="3", docNo="#SKIP"), verdict="skipped", detail=long_detail),
+        "4": dict(_base(itemId="4", docNo="#TIED"), verdict="tied", detail=long_detail),
+        "5": dict(_base(itemId="5", docNo="#UNG"), verdict="ungated", detail=long_detail),
     }
     d = tempfile.mkdtemp()
     try:
@@ -2560,6 +2562,9 @@ def test_detail_cap():
         check("detail cap: a short detail is whole and unflagged",
               sh["detail"] == short_detail and "dcut" not in sh)
         check("detail cap: a skipped row stays compact", "detail" not in sk and "dcut" not in sk)
+        check("detail cap: tied and ungated rows keep their whole detail",
+              by["#TIED"]["detail"] == long_detail and "dcut" not in by["#TIED"]
+              and by["#UNG"]["detail"] == long_detail and "dcut" not in by["#UNG"])
         if shutil.which("node"):
             tpl = os.path.join(PC, "assets/dashboard_template.html")
             row = render_item_row(tpl, lg)
@@ -2578,11 +2583,15 @@ def test_detail_cap():
     finally:
         shutil.rmtree(d, ignore_errors=True)
     nitems = {"7": dict(_nsrp_bill("BILL-LONG"), detail=long_detail),
-              "8": dict(_nsrp_bill("BILL-SHORT"), detail=short_detail)}
+              "8": dict(_nsrp_bill("BILL-SHORT"), detail=short_detail),
+              "9": dict(_nsrp_bill("BILL-HIST"), verdict="history-open", detail=long_detail,
+                           poWarning="Billed ahead of vendor history")}
     rc, o, err, html = _nsrp_publish(nitems)
     check("detail cap: netsuite publish runs", rc == 0, (err or o)[-200:])
     blob = re.search(r"/\*__REVIEW_DATA__\*/(.*?)/\*__END__\*/", html, re.S)
     by = {i["doc"]: i for i in json.loads(blob.group(1))["items"]}
+    check("detail cap: netsuite history-open row keeps its whole detail",
+          by["BILL-HIST"]["detail"] == long_detail and "dcut" not in by["BILL-HIST"])
     lg, sh = by["BILL-LONG"], by["BILL-SHORT"]
     check("detail cap: netsuite long detail is cut and flagged",
           len(lg["detail"]) <= 241 and lg.get("dcut") == 1, len(lg["detail"]))

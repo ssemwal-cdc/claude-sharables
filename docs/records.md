@@ -1,6 +1,6 @@
 # Records index
 
-This page lists every record in this repo: the rules in `CLAUDE.md`, and the files in `decisions/`, `debts/`, `deferred/` and `plans/`. A script writes it. Do not edit it by hand.
+This page lists every record in this repo: the rules in `CLAUDE.md`, and the files in `decisions/`, `debts/` and `plans/`. A script writes it. Do not edit it by hand.
 
 The merge tool writes this page again when a pull request merges, so a pull request need not carry a fresh one. To write it by hand, run `python3 lint/hook_catalog.py` from the claude-settings checkout, with `--root` set to this repo. The check on the default branch fails when the page is stale.
 

@@ -110,6 +110,9 @@ Covered:
                            sets __dashOK, inline and CDN.
  27. Shell assets        - shared_blocks' verdict check fails a shell (data-dash= tags) that
                            has no dashboard.js beside it.
+ 28. Pinned shell       - a shipped pinned shell, published without --inline, carries exactly
+                           its two CDN tags (integrity, crossorigin) and no asset bytes, at an
+                           empty and a full-size queue. An --inline control holds the code.
 
 Usage:  python3 scripts/test_skill_code.py
 Needs node on PATH for 1-3, 16, 18, 21 and 25; those are skipped with a notice if it is missing.
@@ -2912,6 +2915,76 @@ def _load_publish(root, tag):
     return mod
 
 
+# ------------------------------------------ 28. a pinned shell publishes its CDN tags
+_EMPTY_PROCORE = {"lastCompletedRun": "2026-11-11", "lastRunTime": "2026-11-11 09:00",
+                  "suppressed": 0, "config": {"company": "0", "icrToolId": "0"}, "items": {}}
+_EMPTY_NETSUITE = {"lastCompletedRun": "2026-11-11", "lastRunTime": "2026-11-11 09:00",
+                   "config": {"me": "0", "tool": "0", "account": "0"}, "items": {}}
+
+
+def _asset_lines(root, pub):
+    """Every stylesheet and script line at least 60 characters long, as publish would inline it:
+    comments stripped by the module's own strip_comments, so the test reads what it ships."""
+    lines = []
+    for f in ("dashboard.css", "dashboard.js"):
+        body = pub.strip_comments(_asset(root, f))
+        lines += [l for l in body.split("\n") if len(l.strip()) >= 60]
+    return lines
+
+
+def _is_pinned_cdn_tag(tag):
+    return (re.search(r"https://cdn\.jsdelivr\.net/gh/[^/]+/[^@]+@[0-9a-f]{40}/", tag) is not None
+            and 'integrity="sha384-' in tag and 'crossorigin="anonymous"' in tag)
+
+
+def test_pinned_shell_publishes_cdn_tags():
+    """A pinned shell, published without --inline, carries exactly its two pinned CDN tags and
+    no asset bytes. It runs on the shipped shells, the way a user publishes them, at an empty
+    and a full-size queue. The --inline page of the same shell is the control: it carries no
+    data-dash tag and holds the code's own lines.
+
+    Red on 51d5cb3, where the shipped shells are unpinned: the scope check names that cause and
+    the case stops there. The publish logic itself is shown red by a mutant on a scratch copy,
+    where the publish inlines a pinned tag.
+    """
+    for name, root, stem, full, empty in (
+            ("procore", PC, "_procore_review_log.json", _big_procore_log(), _EMPTY_PROCORE),
+            ("netsuite", NS, "_netsuite_review_log.json", _big_netsuite_log(), _EMPTY_NETSUITE)):
+        pub = _load_publish(root, "pin_" + name)
+        tpl = _asset(root, "dashboard_template.html")
+        shell_tags = pub.ASSET_TAG.findall(tpl)
+        # Scope first: the shipped shell is pinned, so its two tags name a commit and hold no token.
+        pinned = len(shell_tags) == 2 and all("__PIN_" not in t for t in shell_tags)
+        check("%s pinned shell: the shipped shell's two asset tags carry no __PIN_ token" % name,
+              pinned, shell_tags)
+        if not pinned:
+            continue
+        lines = _asset_lines(root, pub)
+        check("%s pinned shell: the assets have code lines to look for" % name, len(lines) > 0)
+        for size, log in (("empty", empty), ("full", full)):
+            r, html = _publish_page(root, stem, log, inline=False)
+            check("%s pinned shell (%s): publish without --inline runs" % (name, size),
+                  r.returncode == 0 and html != "", (r.stderr or r.stdout)[-200:])
+            if r.returncode != 0 or not html:
+                continue
+            page_tags = pub.ASSET_TAG.findall(html)
+            check("%s pinned shell (%s): the page carries exactly the shell's two tags"
+                  % (name, size), page_tags == shell_tags, page_tags)
+            check("%s pinned shell (%s): each tag is a pinned CDN tag with integrity and crossorigin"
+                  % (name, size), len(page_tags) == 2 and all(_is_pinned_cdn_tag(t) for t in page_tags),
+                  page_tags)
+            check("%s pinned shell (%s): no <style> element is inlined" % (name, size),
+                  "<style" not in html)
+            check("%s pinned shell (%s): no stylesheet or script line is inlined" % (name, size),
+                  not [l for l in lines if l in html], [l[:60] for l in lines if l in html][:1])
+            # Control, the same shell with --inline: the tags are gone and the code is there.
+            _, inl = _publish_page(root, stem, log, inline=True)
+            check("%s pinned shell (%s), --inline control: the page has no data-dash tag"
+                  % (name, size), _data_dash_tags(inl) == 0, _data_dash_tags(inl))
+            check("%s pinned shell (%s), --inline control: the page holds the code's lines"
+                  % (name, size), any(l in inl for l in lines))
+
+
 def test_published_page_has_no_comments():
     """The built page carries no comment but the two data sentinels, and stripping never
     touches a string."""
@@ -3125,6 +3198,7 @@ def main():
     test_published_page_has_no_comments()
     test_temp_run_folder_sweep()
     test_shell_needs_dashboard_js()
+    test_pinned_shell_publishes_cdn_tags()
     print()
     if failures:
         print("FAILED: " + "; ".join(failures))

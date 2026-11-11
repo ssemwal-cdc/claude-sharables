@@ -15,8 +15,8 @@
     "slugGroup": 2,
     "template": "{id}",
     "scanGlobs": ["CLAUDE.md", "README.md", "plugins/*/README.md", "plugins/*/skills/*/SKILL.md",
-                  "plugins/*/skills/*/references/*.md", "decisions/*.md", "findings/*.md", "gaps/*.md"],
-    "excludeGlobs": ["plugins/_*/**", "decisions/prose-compliance-plan.md"]
+                  "plugins/*/skills/*/references/*.md", "plugins/_shared/*.block", "decisions/*.md", "findings/*.md", "gaps/*.md"],
+    "excludeGlobs": ["decisions/prose-compliance-plan.md"]
   },
   "merge": { "method": "merge", "deadlineMinutes": 10, "requiredChecks": ["validate", "shots", "records"], "deleteBranch": false }
 }

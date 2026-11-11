@@ -110,6 +110,9 @@ Covered:
                            sets __dashOK, inline and CDN.
  27. Shell assets        - shared_blocks' verdict check fails a shell (data-dash= tags) that
                            has no dashboard.js beside it.
+ 28. Pinned shell       - a shipped pinned shell, published without --inline, carries exactly
+                           its two CDN tags (integrity, crossorigin) and no asset bytes, at an
+                           empty and a full-size queue. An --inline control holds the code.
 
 Usage:  python3 scripts/test_skill_code.py
 Needs node on PATH for 1-3, 16, 18, 21 and 25; those are skipped with a notice if it is missing.
@@ -649,8 +652,8 @@ def test_commitment_kind():
         }
         json.dump(log, open(os.path.join(d, "_procore_review_log.json"), "w"))
         out_html = os.path.join(d, "index.html")
-        r = subprocess.run([sys.executable, os.path.join(d, "publish_dashboard.py"), out_html],
-                           capture_output=True, text=True, timeout=60)
+        r = subprocess.run([sys.executable, os.path.join(d, "publish_dashboard.py"), "--inline",
+                            out_html], capture_output=True, text=True, timeout=60)
         if r.returncode != 0:
             check("publish script runs on commitments", False,
                   (r.stderr or r.stdout).strip().splitlines()[-1:] or "")
@@ -671,7 +674,7 @@ def test_commitment_kind():
         check("com: the demotion is announced, not silent", "wfType" in (r.stdout + r.stderr))
         # The link's collection is the same fork. Getting it from `wf` rather than from `kind`
         # is what makes one kind able to address two collections at all.
-        check("com: the record link branches on the collection, not on kind alone",
+        check("com (--inline page): the record link branches on the collection, not on kind alone",
               "work_order_contracts" in page and 'it.kind==="com"' in page)
     finally:
         shutil.rmtree(d, ignore_errors=True)
@@ -1187,6 +1190,11 @@ def _render_page(index_html, view_sort=None):
     # the data block, so the two run together, in that order. The guard is not needed to render.
     scripts = re.findall(r"<script>(.*?)</script>", text, re.S)
     data = [s for s in scripts if "/*__REVIEW_DATA__*/" in s][-1]
+    # Scope first: the page's code is its last inline script. On a page whose assets are CDN tags
+    # that script is the data block, so the render would run no code and prove nothing.
+    if "/*__REVIEW_DATA__*/" in scripts[-1]:
+        sys.exit("ABORT: %s carries no inline code (its assets are CDN tags). Publish it with "
+                 "--inline before rendering it." % index_html)
     script = data + "\n" + scripts[-1]
     order = re.findall(r'<div id="(rows|\w+wrap)"', text)
     stored = "null" if view_sort is None else json.dumps(json.dumps({"sort": view_sort}))
@@ -1251,7 +1259,7 @@ def test_vendor_tied_verdict():
         # 3. rendered page: own section after tied, before skipped; not Clear
         secs, order = _render_page(out)
         host = [k for k, v in secs.items() if "#VT" in v]
-        check("vendor-tied: its row renders in exactly one section, not the clear list",
+        check("vendor-tied (--inline page): its row renders in exactly one section, not the clear list",
               len(host) == 1 and host[0] not in ("rows", "tiedwrap", "skipwrap"), host)
         if len(host) == 1:
             h = host[0]
@@ -1261,7 +1269,7 @@ def test_vendor_tied_verdict():
                   order)
             check("vendor-tied: row is not rendered as Clear (G10 final-else trap)",
                   "vclear" not in secs[h], secs[h][:200])
-        check("vendor-tied: the tiles carry its own counter",
+        check("vendor-tied (--inline page): the tiles carry its own counter",
               re.search(r"vendor[- ]tied", secs.get("cards", ""), re.I) is not None,
               secs.get("cards", "")[:300])
         # 4a. an unmapped subtype demotes it to skipped, as for clear and tied
@@ -1722,7 +1730,7 @@ def test_render_fits_one_read():
             json.dump(log, open(os.path.join(d, stem), "w"))
             out_html = os.path.join(d, "index.html")
             r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
-                                out_html], capture_output=True, text=True, timeout=60)
+                                "--inline", out_html], capture_output=True, text=True, timeout=60)
             if r.returncode != 0:
                 check("%s: publish script runs (large queue)" % name, False,
                       (r.stderr or r.stdout).strip().splitlines()[-1] if (r.stderr or r.stdout)
@@ -1730,7 +1738,7 @@ def test_render_fits_one_read():
                 continue
             text = open(out_html, encoding="utf-8").read()
             lines = text.split("\n")
-            check("%s: a 62-item render fits one default file read" % name,
+            check("%s: a 62-item --inline render fits one default file read" % name,
                   len(lines) < 2000, "%d lines" % len(lines))
             check("%s: no single line is long enough to truncate on its own" % name,
                   max(len(l) for l in lines) < 8000,
@@ -1806,7 +1814,8 @@ def _big_netsuite_log():
 # Parallel Procore lane edits this file too; keep these cases together.
 # ======================================================================
 def _nsrp_publish(items, tpl_edit=None):
-    """Publish a NetSuite log in a temp copy of the assets; return (rc, out, err, html)."""
+    """Publish a NetSuite log in a temp copy of the assets, with --inline so the page carries its
+    code whatever the shell's pin; return (rc, out, err, html)."""
     d = tempfile.mkdtemp()
     try:
         _copy_assets(NS, d)
@@ -1818,8 +1827,8 @@ def _nsrp_publish(items, tpl_edit=None):
                    "config": {"account": "1"}, "items": items},
                   open(os.path.join(d, "_netsuite_review_log.json"), "w"))
         out = os.path.join(d, "index.html")
-        r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
-                           capture_output=True, text=True, timeout=60)
+        r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
+                            "--inline", out], capture_output=True, text=True, timeout=60)
         html = open(out, encoding="utf-8").read() if os.path.exists(out) else ""
         return r.returncode, r.stdout, r.stderr, html
     finally:
@@ -1831,13 +1840,16 @@ SKIPPED_KEYS = {"key", "id", "pid", "cid", "kind", "subtype", "toolId", "wf", "t
                 "vendor", "projLabel", "amt", "due", "verdict", "head", "att", "carried"}
 
 
-def _publish_log(d, items, name="index.html"):
+def _publish_log(d, items, name="index.html", inline=True):
+    """Publish a Procore log in `d`. `inline` (the default) passes --inline, so the page carries
+    its code whatever the shell's pin, and every caller that reads the page sees the same page."""
     _copy_assets(PC, d)
     json.dump({"lastCompletedRun": "2026-10-07", "lastRunTime": "2026-10-07 09:00",
                "suppressed": 0, "config": {"company": "0", "icrToolId": "0"}, "items": items},
               open(os.path.join(d, "_procore_review_log.json"), "w"))
     out = os.path.join(d, name)
-    r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
+    flags = ["--inline"] if inline else []
+    r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py")] + flags + [out],
                        capture_output=True, text=True, timeout=60)
     return r, out
 
@@ -2035,7 +2047,7 @@ def test_stripped_js_parses():
             json.dump(log, open(os.path.join(d, stem), "w"))
             out = os.path.join(d, "index.html")
             r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
-                                out], capture_output=True, text=True, timeout=60)
+                                "--inline", out], capture_output=True, text=True, timeout=60)
             if r.returncode != 0:
                 check("%s: publish runs (js parse)" % name, False, (r.stderr or r.stdout)[-200:])
                 continue
@@ -2049,10 +2061,10 @@ def test_stripped_js_parses():
                 if c.returncode != 0:
                     bad.append(c.stderr.strip()[:200])
             if mutate:
-                check("%s: the guard goes red on a strip-breaking template" % name,
+                check("%s (--inline page): the guard goes red on a strip-breaking template" % name,
                       bool(bad), "mutated page still parsed")
                 continue
-            check("%s: every inline script of the published page parses" % name,
+            check("%s: every inline script of the --inline page parses" % name,
                   bool(scripts) and not bad, bad[:1] or "no inline script found")
         finally:
             shutil.rmtree(d, ignore_errors=True)
@@ -2593,17 +2605,19 @@ def test_guard_fires_in_widget_host():
               old != tpl and _guard_outcome(old, False, "complete")["now"] == 0)
 
 
-def _publish_page(root, stem, log):
-    """Publish a full-size log with the shell's assets beside it. The shell's __PIN_ tokens are
-    unfilled, so publish inlines both assets, which is the page a user sees. Returns the
-    CompletedProcess and the built html, and removes its folder."""
+def _publish_page(root, stem, log, inline=True):
+    """Publish a log with the shell's assets beside it. `inline` (the default) passes --inline, so
+    the page carries both assets whatever the shell's pin: the --inline page the banner and guard
+    claims are about. inline=False publishes the shell as shipped, where a pinned shell keeps its
+    CDN tags. Returns the CompletedProcess and the built html, and removes its folder."""
     d = tempfile.mkdtemp(dir=_run_folder())
     try:
         _copy_assets(root, d)
         with open(os.path.join(d, stem), "w", encoding="utf-8") as f:
             json.dump(log, f)
         out = os.path.join(d, "index.html")
-        r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
+        flags = ["--inline"] if inline else []
+        r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py")] + flags + [out],
                            capture_output=True, text=True, timeout=60)
         html = open(out, encoding="utf-8").read() if os.path.exists(out) else ""
         return r, html
@@ -2689,7 +2703,7 @@ def test_guard_banners():
         if runs is None:
             continue
         tpl = _asset(root, "dashboard_template.html")
-        check("%s banners: the shell has two data-dash tags and the inline page none" % name,
+        check("%s banners: the shell has two data-dash tags and the --inline page none" % name,
               _data_dash_tags(tpl) == 2 and _data_dash_tags(pub) == 0,
               (_data_dash_tags(tpl), _data_dash_tags(pub)))
         check("%s banners: the inline page holds its __complete marker once, so it can be cut"
@@ -2899,6 +2913,76 @@ def _load_publish(root, tag):
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
+
+# ------------------------------------------ 28. a pinned shell publishes its CDN tags
+_EMPTY_PROCORE = {"lastCompletedRun": "2026-11-11", "lastRunTime": "2026-11-11 09:00",
+                  "suppressed": 0, "config": {"company": "0", "icrToolId": "0"}, "items": {}}
+_EMPTY_NETSUITE = {"lastCompletedRun": "2026-11-11", "lastRunTime": "2026-11-11 09:00",
+                   "config": {"me": "0", "tool": "0", "account": "0"}, "items": {}}
+
+
+def _asset_lines(root, pub):
+    """Every stylesheet and script line at least 60 characters long, as publish would inline it:
+    comments stripped by the module's own strip_comments, so the test reads what it ships."""
+    lines = []
+    for f in ("dashboard.css", "dashboard.js"):
+        body = pub.strip_comments(_asset(root, f))
+        lines += [l for l in body.split("\n") if len(l.strip()) >= 60]
+    return lines
+
+
+def _is_pinned_cdn_tag(tag):
+    return (re.search(r"https://cdn\.jsdelivr\.net/gh/[^/]+/[^@]+@[0-9a-f]{40}/", tag) is not None
+            and 'integrity="sha384-' in tag and 'crossorigin="anonymous"' in tag)
+
+
+def test_pinned_shell_publishes_cdn_tags():
+    """A pinned shell, published without --inline, carries exactly its two pinned CDN tags and
+    no asset bytes. It runs on the shipped shells, the way a user publishes them, at an empty
+    and a full-size queue. The --inline page of the same shell is the control: it carries no
+    data-dash tag and holds the code's own lines.
+
+    Red on 51d5cb3, where the shipped shells are unpinned: the scope check names that cause and
+    the case stops there. The publish logic itself is shown red by a mutant on a scratch copy,
+    where the publish inlines a pinned tag.
+    """
+    for name, root, stem, full, empty in (
+            ("procore", PC, "_procore_review_log.json", _big_procore_log(), _EMPTY_PROCORE),
+            ("netsuite", NS, "_netsuite_review_log.json", _big_netsuite_log(), _EMPTY_NETSUITE)):
+        pub = _load_publish(root, "pin_" + name)
+        tpl = _asset(root, "dashboard_template.html")
+        shell_tags = pub.ASSET_TAG.findall(tpl)
+        # Scope first: the shipped shell is pinned, so its two tags name a commit and hold no token.
+        pinned = len(shell_tags) == 2 and all("__PIN_" not in t for t in shell_tags)
+        check("%s pinned shell: the shipped shell's two asset tags carry no __PIN_ token" % name,
+              pinned, shell_tags)
+        if not pinned:
+            continue
+        lines = _asset_lines(root, pub)
+        check("%s pinned shell: the assets have code lines to look for" % name, len(lines) > 0)
+        for size, log in (("empty", empty), ("full", full)):
+            r, html = _publish_page(root, stem, log, inline=False)
+            check("%s pinned shell (%s): publish without --inline runs" % (name, size),
+                  r.returncode == 0 and html != "", (r.stderr or r.stdout)[-200:])
+            if r.returncode != 0 or not html:
+                continue
+            page_tags = pub.ASSET_TAG.findall(html)
+            check("%s pinned shell (%s): the page carries exactly the shell's two tags"
+                  % (name, size), page_tags == shell_tags, page_tags)
+            check("%s pinned shell (%s): each tag is a pinned CDN tag with integrity and crossorigin"
+                  % (name, size), len(page_tags) == 2 and all(_is_pinned_cdn_tag(t) for t in page_tags),
+                  page_tags)
+            check("%s pinned shell (%s): no <style> element is inlined" % (name, size),
+                  "<style" not in html)
+            check("%s pinned shell (%s): no stylesheet or script line is inlined" % (name, size),
+                  not [l for l in lines if l in html], [l[:60] for l in lines if l in html][:1])
+            # Control, the same shell with --inline: the tags are gone and the code is there.
+            _, inl = _publish_page(root, stem, log, inline=True)
+            check("%s pinned shell (%s), --inline control: the page has no data-dash tag"
+                  % (name, size), _data_dash_tags(inl) == 0, _data_dash_tags(inl))
+            check("%s pinned shell (%s), --inline control: the page holds the code's lines"
+                  % (name, size), any(l in inl for l in lines))
 
 
 def test_published_page_has_no_comments():
@@ -3114,6 +3198,7 @@ def main():
     test_published_page_has_no_comments()
     test_temp_run_folder_sweep()
     test_shell_needs_dashboard_js()
+    test_pinned_shell_publishes_cdn_tags()
     print()
     if failures:
         print("FAILED: " + "; ".join(failures))

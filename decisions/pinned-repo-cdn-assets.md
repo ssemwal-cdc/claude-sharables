@@ -36,7 +36,7 @@ Owner ruling, 2026-10-21. The probe in F‹widget-readystate-complete›, the wi
 - In an assets `.css` file, no `@import`.
 - A URL inside an HTML comment passes. Publish strips comments first.
 
-**Pin form.** A pin is a full 40-hex sha. The check reads three states: pass, fail and unknown. The sha must exist, be an ancestor of HEAD, and hold the same file as HEAD. The tag's `integrity` must be the `sha384` of that file at the pin. A short sha or a ref fails. A shallow clone or a clone with no git gives unknown, never a pass. One pin per plugin: D‹one-pin-per-plugin›, the rule that `--pin` carries out.
+**Pin form.** A pin is a full 40-hex sha. The check reads three states: pass, fail and unknown. The sha must exist, be an ancestor of HEAD, and hold the same file as HEAD. The tag's `integrity` must be the `sha384` of that file at the pin. A short sha or a ref fails. A clone with no git, or a shallow clone that lacks the pinned sha, gives unknown, never a pass. One pin per plugin: D‹one-pin-per-plugin›, the rule that `--pin` carries out.
 
 **Merges.** The merge tool appends a claim commit on top of the PR head. It does not rewrite branch commits, so the pinned commit survives. Read in the merge tool's source, 2026-11-11.
 

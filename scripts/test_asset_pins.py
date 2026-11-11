@@ -22,19 +22,18 @@ Contract the builder implements:
   and never fail. validate.yml's shots job checks out shallow and runs validate.py, so this is routine.
 - Controls pass on the old code by design. They hold the no-false-alarm side, so a naive scan fails them.
 - Ruling 2026-11-11: CDN URLs anywhere in a shell are checked, including inside a <script> body. A
-  shell's external <script src>, <link href> and CSS @import (in a <style> body) must be the pin URL,
-  or the placeholder @__PIN_SHA__ with integrity __PIN_CSS_SRI__ (link) or __PIN_JS_SRI__ (script).
-  The placeholder passes with a note containing "unpinned". Refusal keywords:
-    no ref ................... "no ref"
-    not https (// or http://) . "not https"
-    another repo ............. "other repo"
-    another CDN host ......... "other host"
-    a leading space in the URL "leading space"
+  shell's external <script src> and <link href> must be the pin URL, or the placeholder @__PIN_SHA__
+  with integrity __PIN_CSS_SRI__ (link) or __PIN_JS_SRI__ (script). The placeholder passes with a note
+  containing "unpinned". A CSS @import in a shell is refused always, pinned or placeholder (ruling
+  2026-11-11): the shells never use one. Refusal keywords:
+    a URL that is not the pin form (no ref, //, http://, other repo, other host, leading space)
+                              "pinned form"
     a branch ref (@main) ..... "40 hex"
+    a CSS @import ............ "@import"
 - assets/dashboard.js or dashboard.css holding a URL on cdn.jsdelivr.net, unpkg.com, cdnjs.cloudflare.com
-  or esm.sh is refused with "CDN URL".
-- `shared_blocks.py --pin <sha>` fills every placeholder (tags and @import), keeps exactly one integrity
-  attribute on an unquoted tag, and exits non-zero with "no pinned tag" on a page with no pinned tag.
+  or esm.sh is refused with "from a CDN".
+- `shared_blocks.py --pin <sha>` fills every placeholder in a tag, keeps exactly one integrity attribute on
+  an unquoted tag, and exits non-zero with "No pinned or placeholder tag found" on a page with no tag.
 - A pin path is URL-decoded: %20 is a space in the file name.
 - validate.py runs the pin check: a bad pin makes it exit 1 and name the cause.
 """
@@ -407,6 +406,11 @@ def c_import_no_ref(run):
     return _pinned(run, "import-no-ref", lambda r, s: [_import(_no_ref(s, _asset("p", CSS)))])
 
 
+def c_import_pinned(run):
+    """A CSS @import with the correct pin. Refused anyway: a shell never carries one (ruling 2026-11-11)."""
+    return _pinned(run, "import-pinned", lambda r, s: [_import(_url(s, _asset("p", CSS)))])
+
+
 def c_hidden_by_attr(run):
     """A comment opener inside a quoted attribute of a tag that is not script or link. The bad tag
     after it sits between that opener and the next comment closer, so a scan that starts a comment
@@ -571,30 +575,31 @@ CASES = [
      ("refuse", "40 hex")),
     ("a bad URL inside a JS string in the shell is refused (ruling 2026-11-11: CDN URLs anywhere)",
      c_js_string_url, ("refuse", "40 hex")),
-    ("script src with no ref is refused", c_no_ref, ("refuse", "no ref")),
-    ("script src with a leading space in its URL is refused", c_leading_space, ("refuse", "leading space")),
-    ("script src that is protocol-relative (//) is refused", c_protocol_relative, ("refuse", "not https")),
-    ("link href on http:// is refused", c_plain_http, ("refuse", "not https")),
-    ("script src pinned in another repo is refused", c_other_repo, ("refuse", "other repo")),
-    ("script src on another CDN host (unpkg.com) is refused", c_other_host, ("refuse", "other host")),
+    ("script src with no ref is refused", c_no_ref, ("refuse", "pinned form")),
+    ("script src with a leading space in its URL is refused", c_leading_space, ("refuse", "pinned form")),
+    ("script src that is protocol-relative (//) is refused", c_protocol_relative, ("refuse", "pinned form")),
+    ("link href on http:// is refused", c_plain_http, ("refuse", "pinned form")),
+    ("script src pinned in another repo is refused", c_other_repo, ("refuse", "pinned form")),
+    ("script src on another CDN host (unpkg.com) is refused", c_other_host, ("refuse", "pinned form")),
     ("CSS @import on a branch ref (@main) in a style body is refused", c_import_branch, ("refuse", "40 hex")),
-    ("CSS @import with no ref in a style body is refused", c_import_no_ref, ("refuse", "no ref")),
+    ("CSS @import with no ref in a style body is refused", c_import_no_ref, ("refuse", "pinned form")),
+    ("CSS @import with a correct pin is refused", c_import_pinned, ("refuse", "@import")),
     ("a <!-- inside a quoted attribute does not hide a later bad tag", c_hidden_by_attr,
      ("refuse", "40 hex")),
     ("placeholder pin on script and link is ok with an unpinned note", c_placeholder_tags, ("unpinned",)),
-    ("placeholder pin in a CSS @import is ok with an unpinned note", c_placeholder_import, ("unpinned",)),
+    ("placeholder pin in a CSS @import is refused", c_placeholder_import, ("refuse", "@import")),
     ("dashboard.js with a jsdelivr URL string is refused", _asset_case("js-jsdelivr", _asset("p", JS),
-     'fetch("%s");\n' % CDN_HOSTS[0][1]), ("refuse", "CDN URL")),
+     'fetch("%s");\n' % CDN_HOSTS[0][1]), ("refuse", "from a CDN")),
     ("dashboard.js with an unpkg URL string is refused", _asset_case("js-unpkg", _asset("p", JS),
-     'fetch("%s");\n' % CDN_HOSTS[1][1]), ("refuse", "CDN URL")),
+     'fetch("%s");\n' % CDN_HOSTS[1][1]), ("refuse", "from a CDN")),
     ("dashboard.js with a cdnjs URL string is refused", _asset_case("js-cdnjs", _asset("p", JS),
-     'fetch("%s");\n' % CDN_HOSTS[2][1]), ("refuse", "CDN URL")),
+     'fetch("%s");\n' % CDN_HOSTS[2][1]), ("refuse", "from a CDN")),
     ("dashboard.js with an esm.sh URL string is refused", _asset_case("js-esm", _asset("p", JS),
-     'fetch("%s");\n' % CDN_HOSTS[3][1]), ("refuse", "CDN URL")),
+     'fetch("%s");\n' % CDN_HOSTS[3][1]), ("refuse", "from a CDN")),
     ("dashboard.css with a jsdelivr URL string is refused", _asset_case(
         "css-jsdelivr", _asset("p", CSS),
         '@import url("https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.css");\n'),
-     ("refuse", "CDN URL")),
+     ("refuse", "from a CDN")),
     ("asset path with %20 resolves to the file with a space in its name", c_pct20, ("pass",)),
     ("control: template with no CDN tags passes (today's state)", c_no_tags, ("pass",)),
     ("control: full-size template, two plugins, script and link pins, passes", c_full_size, ("pass",)),
@@ -638,13 +643,6 @@ def _pin_then_check(run, name, lines_for):
     return _verdict(rc, out, ("pass",))
 
 
-def p_fills_all(run):
-    return _pin_then_check(run, "pin-fills-all", lambda s: [
-        _link_at(_placeholder(s, _asset("p", CSS)), "__PIN_CSS_SRI__"),
-        _script_at(_placeholder(s, _asset("p", JS)), "__PIN_JS_SRI__"),
-        _import(_placeholder(s, _asset("p", CSS)))])
-
-
 def p_fills_tags(run):
     return _pin_then_check(run, "pin-fills-tags", lambda s: [
         _link_at(_placeholder(s, _asset("p", CSS)), "__PIN_CSS_SRI__"),
@@ -673,7 +671,8 @@ def p_no_tags(run):
         return "--pin crashed: " + out.strip().splitlines()[-1]
     if rc == 0:
         return "--pin exit 0 on a page with no pinned tag, want non-zero"
-    return None if "no pinned tag" in out else "refused for another cause: no 'no pinned tag' in the output"
+    return None if "No pinned or placeholder tag found" in out else (
+        "refused for another cause: no 'No pinned or placeholder tag found' in the output")
 
 
 VALIDATE_ASSETS = "plugins/netsuite-approval-review/skills/netsuite-approval-double-check/assets"
@@ -734,7 +733,6 @@ def v_good_pin(run):
 
 
 PINS = [
-    ("--pin fills the sha and every placeholder, then --check passes", p_fills_all),
     ("control: --pin fills the tag placeholders, then --check passes", p_fills_tags),
     ("--pin keeps exactly one integrity attribute on an unquoted integrity", p_unquoted_integrity),
     ("--pin on a page with no pinned tag exits non-zero", p_no_tags),

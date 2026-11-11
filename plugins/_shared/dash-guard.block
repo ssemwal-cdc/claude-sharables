@@ -19,8 +19,8 @@ var CDN="The dashboard code did not arrive from cdn.jsdelivr.net, so nothing bel
   "Do not act on this page. Tell Claude what you see. It will publish the page again with the "+
   "code built into the page.";
 var CODE="The dashboard code did not run to the end, so nothing below is drawn. Do not act on "+
-  "this page. The fault is in the dashboard, not in the connection, so publishing it again will "+
-  "not help. Tell Claude what you see so it can report the defect.";
+  "this page. Ask Claude to render it once more. If this banner shows again, tell Claude it is "+
+  "a defect in the dashboard code.";
 var shown=[],settled=0,failed=0,armed=0,decided=0,timer=0,okv,kind="";
 function tags(){return document.querySelectorAll("[data-dash]")}
 function hide(on){var w=document.querySelector(".wrap");if(w)w.style.display=on?"none":""}

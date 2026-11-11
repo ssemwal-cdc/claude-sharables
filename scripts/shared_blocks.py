@@ -30,7 +30,7 @@ not part of any plugin, so it never ships. Usage:
     python3 scripts/shared_blocks.py --sync     # push canonical into every marked site
     python3 scripts/shared_blocks.py --pin <full sha>   # write the sha and sha384 into each template's CDN tags
 """
-import base64, hashlib, os, re, subprocess, sys, urllib.parse
+import base64, hashlib, os, posixpath, re, subprocess, sys, urllib.parse
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHARED = os.path.join(REPO, "plugins", "_shared")
@@ -503,7 +503,7 @@ SRI_PLACEHOLDER = {"link": "__PIN_CSS_SRI__", "script": "__PIN_JS_SRI__"}
 PIN_URL = re.compile(r"https://cdn\.jsdelivr\.net/gh/ssemwal-cdc/claude-sharables@(?P<sha>[^/]+)/(?P<path>.+)")
 CDN_URL = re.compile(r"""(?:https?:)?//(?:cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|esm\.sh)(?![\w-])"""
                      r"""(?:[/:?#][^\s"'`)<>\\]*)?""", re.I)
-CSS_IMPORT = re.compile(r"""@import\s+(?:url\(\s*)?["']?([^"')\s;]+)""", re.I)
+CSS_IMPORT = re.compile(r"""@import(?![\w-])\s*(?:url\(\s*)?["']?([^"')\s;]+)""", re.I)
 # One tag pattern for every tag, so a quoted attribute value (which may hold "<!--" or ">") is never
 # read as markup. A comment only counts where a tag could start.
 _ATTRS = r"""(?:[^>"']|"[^"]*"|'[^']*')*"""
@@ -558,9 +558,10 @@ def _asset_files(root):
                         yield os.path.join(dirpath, fn)
 
 
-def _check_url(root, where, url, tag=None, attrs=None):
+def _check_url(root, where, url, tag=None, attrs=None, own=""):
     """[(state, message)] for one load URL in a shell. tag is "script" or "link" for a tag, whose
-    integrity and crossorigin are checked too. Three states, never a boolean: a clone that cannot
+    integrity and crossorigin are checked too. own is this shell's assets directory, repo-relative:
+    a pin may name only a file there. Three states, never a boolean: a clone that cannot
     answer is unknown, and a shallow clone is the routine case."""
     pm, out = PIN_URL.match(url), []
     if not pm:
@@ -569,7 +570,12 @@ def _check_url(root, where, url, tag=None, attrs=None):
     sha, path = pm.group("sha"), urllib.parse.unquote(pm.group("path"))
     if tag and (attrs or {}).get("crossorigin") != "anonymous":
         out.append(("fail", '%s: crossorigin="anonymous" is missing, so the browser skips the sha384 check' % where))
+    if own and not posixpath.normpath(path).startswith(own + "/"):
+        out.append(("fail", "%s: %s is not in this shell's own assets (%s/)" % (where, path, own)))
     if sha == PLACEHOLDER:
+        # no sha to read it at yet, so the file must be in the working tree
+        if own and not os.path.isfile(os.path.join(root, *path.split("/"))):
+            out.append(("fail", "%s: %s is not a file in this shell's own assets (%s/)" % (where, path, own)))
         if tag and attrs.get("integrity") != SRI_PLACEHOLDER[tag]:
             out.append(("fail", "%s: placeholder pin with integrity other than %s" % (where, SRI_PLACEHOLDER[tag])))
         return out or [("ok", "%s: unpinned; publish inlines" % where)]
@@ -609,21 +615,25 @@ def check_asset_pins(root=REPO):
         with open(path, encoding="utf-8") as fh:
             text = fh.read()
         rel = os.path.relpath(path, root).replace(os.sep, "/")
+        own = posixpath.dirname(rel)
         if not path.endswith(".html"):
             results += [("fail", "%s: loads %s from a CDN; an asset must not load more code" % (rel, u.group(0)))
                         for u in CDN_URL.finditer(text)]
+            if path.endswith(".css"):
+                results += [("fail", "%s: @import of %r is refused; an asset must not load more code" % (rel, u))
+                            for u in CSS_IMPORT.findall(text)]
             continue
         for kind, name, *rest in _scan(text):
             if kind == "tag":
                 url = _tag_url(name, rest[1])
                 if url is not None and not url.startswith("data:"):
-                    results += _check_url(root, "%s <%s>" % (rel, name), url, name, rest[1])
+                    results += _check_url(root, "%s <%s>" % (rel, name), url, name, rest[1], own)
                 continue
             if name == "style":  # owner ruling 2026-11-11: no CSS @import in a shell, pinned or not
                 results += [("fail", "%s inline <style>: @import of %r is refused; load CSS with a pinned <link>"
                                      % (rel, u)) for u in CSS_IMPORT.findall(rest[0]) if not u.startswith("data:")]
             for u in (m.group(0) for m in CDN_URL.finditer(rest[0])):
-                results += _check_url(root, "%s inline <%s>" % (rel, name), u)
+                results += _check_url(root, "%s inline <%s>" % (rel, name), u, own=own)
     return results
 
 

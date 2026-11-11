@@ -1,0 +1,495 @@
+// Dashboard code for the procore-open-items-review dashboard. The shell, dashboard_template.html, holds the markup, the
+// data block and the guard; publish_dashboard.py either inlines this file or leaves a pinned CDN tag.
+var CO=(REVIEW.config&&REVIEW.config.company)||"";
+var ICR_TOOL=(REVIEW.config&&REVIEW.config.icrToolId)||"";
+
+// publish_dashboard.py splits Procore's "<Campus> - <Building>" into campus + bldg,
+// because every campus has its own Building 1. Derive defensively if an older
+// payload arrives without them.
+REVIEW.items.forEach(function(i){
+  if(!i.campus && i.projLabel){var p=String(i.projLabel).split(" \u00b7 ");i.campus=p[0];i.bldg=p[1]||"Campus-wide"}
+  if(!i.bldg)i.bldg="Campus-wide";
+  if(!i.campus)i.campus="";
+  if(!i.projLabel)i.projLabel=(i.campus+" \u00b7 "+i.bldg).replace(/^ \u00b7 | \u00b7 $/,"");
+  if(!i.resp)i.resp=[];
+  if(!i.facts)i.facts=[];
+});
+
+// Mark keys, kept named although nothing writes them. The per-item marks lived in
+// localStorage under `pc_marks_v1`, each entry {kind:"<Procore response verb>", text:""}.
+// Never rename or reuse that key: an old browser still holds real decisions under it.
+// D38, never rename a marks key; retired by review-only-mode.
+
+var showSkipped=false;
+
+// ---- view state: sort / filter / search, persisted ---------------------------
+// v3 because the default sort changed from oldest to newest. A stored v2 view would
+// otherwise pin everyone who has ever touched the toolbar to the old default for good and
+// the change would reach nobody who already uses the page. The migration carries their
+// filters and search across and resets only the sort, so the cost is not even a scroll.
+var VKEY="pc_view_v3", OLDVKEY="pc_view_v2";
+var DEFV={sort:"newest",campus:"all",bldg:"all",type:"all",q:""};
+//__SHARED:dash-view-migration__
+var view=Object.assign({},DEFV);
+try{
+  var sv=JSON.parse(localStorage.getItem(VKEY)||"null");
+  if(!sv){var old=JSON.parse(localStorage.getItem(OLDVKEY)||"null");
+          if(old){sv=Object.assign({},old); delete sv.sort}}
+  if(sv)view=Object.assign(view,sv);
+}catch(e){}
+function saveView(){try{localStorage.setItem(VKEY,JSON.stringify(view))}catch(e){}}
+//__END_SHARED:dash-view-migration__
+function setView(k,v){
+  view[k]=v;
+  // campus is the outer axis; buildings belong to one campus
+  if(k==="campus")view.bldg="all";
+  if(k==="q"&&v)showSkipped=true;
+  saveView(); render();
+  if(k==="q"){var e=document.getElementById("fQ"); if(e){e.focus(); e.setSelectionRange(e.value.length,e.value.length)}}
+}
+function resetView(){view=Object.assign({},DEFV);saveView();render()}
+function viewActive(){return view.campus!=="all"||view.bldg!=="all"||view.type!=="all"||!!view.q}
+
+function bldgRank(b){
+  if(b==="Campus-wide")return 0;
+  if(/(\d+)\s*$/.test(b))return 10+parseInt(RegExp.$1,10);
+  return 99;
+}
+function docNum(d){var m=String(d).match(/(\d+)/);return m?parseInt(m[1],10):0}
+
+function applyView(list){
+  var q=(view.q||"").toLowerCase().trim();
+  var out=list.filter(function(i){
+    if(view.campus!=="all" && i.campus!==view.campus)return false;
+    if(view.bldg!=="all"   && i.bldg!==view.bldg)return false;
+    if(view.type!=="all"   && i.type!==view.type)return false;
+    if(q){
+      var hay=(i.doc+" "+i.vendor+" "+i.projLabel+" "+i.type+" "+i.id+" "+i.head).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  });
+  var s=view.sort;
+  out.sort(function(a,b){
+    var ad=daysSince(a.due), bd=daysSince(b.due);
+    //__SHARED:dash-date-comparator__
+    // Both-null has to return 0. The previous shape returned 1 for both orderings, which is
+    // not a valid comparator and lets an engine produce an arbitrary order from it.
+    function bydate(oldestFirst){
+      if(ad==null&&bd==null)return 0;
+      if(ad==null)return 1;
+      if(bd==null)return -1;
+      return oldestFirst?bd-ad:ad-bd;
+    }
+    //__END_SHARED:dash-date-comparator__
+    switch(s){
+      case "oldest":  return bydate(true) || docNum(a.doc)-docNum(b.doc);
+      case "amtDesc": return (b.amt||0)-(a.amt||0);
+      case "amtAsc":  return (a.amt||0)-(b.amt||0);
+      case "doc":     return a.type.localeCompare(b.type) || docNum(a.doc)-docNum(b.doc) ||
+                             a.doc.localeCompare(b.doc,undefined,{numeric:true});
+      // Newest is the default. Read this honestly: `due` is the workflow step's DUE date and
+      // it is the only date Procore's pipeline carries, so this is latest-deadline-first, not
+      // most-recently-raised. Chosen deliberately as the closest available proxy for "newest";
+      // do not relabel it as a creation date unless one is actually added to the reads.
+      // Item number descending breaks a same-deadline tie, newer numbers being later work.
+      default:        return bydate(false) || docNum(b.doc)-docNum(a.doc);
+    }
+  });
+  return out;
+}
+
+function fillFilters(all){
+  function counts(arr,key){var o={};arr.forEach(function(i){o[i[key]]=(o[i[key]]||0)+1});return o}
+  function opts(vals,cts,cur){
+    return '<option value="all">All</option>'+vals.map(function(v){
+      return '<option value="'+esc(v)+'"'+(v===cur?' selected':'')+'>'+esc(v)+' ('+cts[v]+')</option>'}).join("");
+  }
+  // campus list from everything
+  var camps=[]; all.forEach(function(i){if(camps.indexOf(i.campus)<0)camps.push(i.campus)}); camps.sort();
+  var cSel=document.getElementById("fCampus");
+  cSel.innerHTML=opts(camps,counts(all,"campus"),view.campus);
+  if(camps.indexOf(view.campus)<0 && view.campus!=="all"){view.campus="all";cSel.value="all"}
+
+  // building list depends on the chosen campus
+  var scope = view.campus==="all" ? all : all.filter(function(i){return i.campus===view.campus});
+  var blds=[]; scope.forEach(function(i){if(blds.indexOf(i.bldg)<0)blds.push(i.bldg)});
+  blds.sort(function(a,b){return bldgRank(a)-bldgRank(b)});
+  var bSel=document.getElementById("fBldg");
+  bSel.innerHTML=opts(blds,counts(scope,"bldg"),view.bldg);
+  if(blds.indexOf(view.bldg)<0 && view.bldg!=="all"){view.bldg="all";bSel.value="all"}
+
+  // type list respects campus + building
+  var tScope = scope.filter(function(i){return view.bldg==="all"||i.bldg===view.bldg});
+  var types=[]; tScope.forEach(function(i){if(types.indexOf(i.type)<0)types.push(i.type)}); types.sort();
+  var tSel=document.getElementById("fType");
+  tSel.innerHTML=opts(types,counts(tScope,"type"),view.type);
+  if(types.indexOf(view.type)<0 && view.type!=="all"){view.type="all";tSel.value="all"}
+
+  document.getElementById("fSort").value=view.sort;
+  var qEl=document.getElementById("fQ"); if(qEl.value!==view.q)qEl.value=view.q;
+  cSel.className=view.campus!=="all"?"act":"";
+  bSel.className=view.bldg!=="all"?"act":"";
+  tSel.className=view.type!=="all"?"act":"";
+  document.getElementById("fReset").className="chip"+(viewActive()||view.sort!==DEFV.sort?" on":"");
+}
+
+function money(n){return n==null?"—":Math.abs(n).toLocaleString("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2})}
+// Compact form for the summary cards: 2,702,000 → $2.7m · 270,200 → $270k
+//__SHARED:dash-compact-money__
+function compactMoney(n){
+  n=Math.abs(n||0);
+  if(n<1000)return "$"+Math.round(n);
+  var k=Math.round(n/1000);
+  if(k>=1000)return "$"+(Math.round(n/1e5)/10)+"m";
+  return "$"+k.toLocaleString()+"k";
+}
+//__END_SHARED:dash-compact-money__
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function daysSince(iso){if(!iso)return null;var p=iso.split("-");var d=new Date(+p[0],+p[1]-1,+p[2]);return Math.floor((Date.now()-d.getTime())/86400000)}
+// daysSince is negative for a deadline still ahead. Kept signed for the comparator - the sign
+// is the whole ordering - and phrased here instead, so a future date reads "in 13 days" rather
+// than "-13 days ago". Never clamp daysSince itself; that is the bug fixed on the NetSuite side.
+function dueText(a){return a>0?a+" days ago":a<0?"in "+(-a)+" days":"today"}
+function ageOfRun(){var t=new Date(REVIEW.lastRunISO).getTime();if(isNaN(t))return null;return Math.max(0,Math.round((Date.now()-t)/60000))}
+function ageText(){var m=ageOfRun();if(m==null)return "";
+  if(m<2)return "just now"; if(m<60)return m+" minutes ago";
+  var h=Math.round(m/60); if(h<24)return h+" hour"+(h>1?"s":"")+" ago";
+  var d=Math.round(h/24); return d+" day"+(d>1?"s":"")+" ago";}
+//__SHARED:dash-nav__
+function nav(a){
+  // The widget host exposes openLink as a bare global; target=_blank is unreliable in a sandboxed
+  // iframe. Fall through to the anchor on any host that does not provide it.
+  if(window.openLink){try{window.openLink(a.href);return false}catch(e){}}
+  return true
+}
+//__END_SHARED:dash-nav__
+function recUrl(it){
+  // inv and cco build the link from the commitment id. Blank, the URL would carry an empty
+  // segment and open the wrong page, so no link (publish_dashboard.py warns by key).
+  if((it.kind==="inv"||it.kind==="cco")&&!it.cid)return "";
+  if(it.kind==="inv")return "https://app.procore.com/webclients/host/companies/"+CO+"/projects/"+it.pid+"/tools/invoicing/requisitions/"+it.cid+"/"+it.id;
+  if(it.kind==="cco")return "https://app.procore.com/"+it.pid+"/project/commitments/purchase_order_contracts/"+it.cid+"/change_orders/commitment_contract_change_orders/"+it.id;
+  // A commitment is the contract itself, so the record id is the last segment rather than a
+  // parent. One kind, two collections: wfType carries the queue's item_type and is the only thing
+  // that separates a subcontract from a purchase order here. Defaulting is the common case, not a
+  // guess to rely on - Step 2 requires wfType on every com item for exactly this reason.
+  if(it.kind==="com")return "https://app.procore.com/"+it.pid+"/project/commitments/"+(it.wf==="WorkOrderContract"?"work_order_contracts":"purchase_order_contracts")+"/"+it.id;
+  // One queue can carry several custom tools - Internal Change Risk and Customer Change Risk
+  // were 25 and 37 of one 62-item queue. tool_id is what picks between them, so it comes from
+  // the item, and ICR_TOOL is only the floor for a payload published before subtypes were
+  // recorded. Returning "" is deliberate and the caller renders no link: the wrong tool_id does
+  // not 404, it resolves to a real page in the wrong tool, which nobody can tell from the right
+  // one. Same fail-closed reasoning as the commitment link above.
+  var tid = it.toolId || ICR_TOOL;
+  if(!tid) return "";
+  return "https://app.procore.com/webclients/host/companies/"+CO+"/projects/"+it.pid+"/tools/generic-tool/details/"+it.id+"?tool_id="+tid;
+}
+// retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode
+
+var STALE_NOTE=" — this snapshot is getting old. Procore may have moved on; re-check before acting on anything below.";
+// Split out of render() so the 60s tick can age this without rebuilding the queue.
+function freshTick(){
+  var stale=isStale();
+  var ft=document.getElementById("freshtext");
+  ft.className="fresh"+(stale?" stale":"");
+  ft.innerHTML='Reviewed '+ageText()+' \u00b7 '+esc(REVIEW.lastRun)+(stale?STALE_NOTE:'');
+  var conn=document.getElementById("conn");
+  conn.textContent=stale?"Snapshot \u00b7 "+ageText():"Snapshot \u00b7 fresh";
+  conn.style.background=stale?"var(--bad-bg)":"var(--ok-bg)";
+  conn.style.color=stale?"var(--bad-fg)":"var(--ok-fg)";
+}
+function isStale(){var m=ageOfRun();return m!=null&&m>180}
+// A clamped warning offers `more` only when three lines actually clip something.
+// Emitted unconditionally, a one-line warning got a control that did nothing.
+function trimMores(){
+  var t=document.querySelectorAll(".pwarn .txt");
+  for(var i=0;i<t.length;i++){
+    var b=t[i].parentNode.querySelector(".more");
+    if(b)b.style.display=(t[i].scrollHeight>t[i].clientHeight+1)?"":"none";
+  }
+}
+function render(){
+  // no filter: "gone" is not in VERDICTS, so nothing can ever be excluded
+  var all=REVIEW.items;
+  var ready=all.filter(function(i){return i.verdict==="clear"||i.verdict==="flagged"});
+  var tied=all.filter(function(i){return i.verdict==="tied"});
+  var vtied=all.filter(function(i){return i.verdict==="vendor-tied"});
+  var ungated=all.filter(function(i){return i.verdict==="ungated"});
+  var skipped=all.filter(function(i){return i.verdict==="skipped"});
+
+  var clear=ready.filter(function(i){return i.verdict==="clear"}).length;
+  var flagged=ready.filter(function(i){return i.verdict==="flagged"}).length;
+  // Decidable counts tied alongside clear/flagged: support was read and the figures
+  // agree, so its dollar value is as actionable as a clear or flagged item's.
+  var decidable=ready.concat(tied);
+  var value=decidable.reduce(function(s,i){return s+(i.amt||0)},0);
+  var ages=all.map(function(i){return daysSince(i.due)}).filter(function(a){return a!=null});
+  var oldest=ages.length?Math.max.apply(null,ages):0;
+
+  document.getElementById("sub").textContent =
+    all.length+" awaiting your response · "+REVIEW.suppressed+" suppressed because you cannot respond to them";
+
+  freshTick();
+
+
+  fillFilters(all);
+
+  var vReady=applyView(ready), vTied=applyView(tied), vVtied=applyView(vtied), vUngated=applyView(ungated), vSkipped=applyView(skipped);
+  var shown=vReady.length+vTied.length+vVtied.length+vUngated.length+vSkipped.length, hidden=all.length-shown;
+  function cnt(v,t){return ofTotal(v.length,t.length)}
+
+  // The "Awaiting you" tile went with the freshness card: it restated the subtitle
+  // directly above it. The rest now count the filtered set against the whole queue.
+  var vClear=vReady.filter(function(i){return i.verdict==="clear"}).length;
+  var vFlagged=vReady.filter(function(i){return i.verdict==="flagged"}).length;
+  var vDecidable=vReady.concat(vTied);
+  var vValue=vDecidable.reduce(function(s,i){return s+(i.amt||0)},0);
+
+  // The one line the floating header carries that depends on the filter, so it has to be set
+  // before floatPaint(), which is what paints that bar.
+  window.__vsum=(hidden>0?shown+" of "+all.length+" shown":all.length+" awaiting you")+
+                (vFlagged?" · "+vFlagged+" flagged":"");
+
+  document.getElementById("cards").innerHTML=
+    cd("Clear",ofTotal(vClear,clear),"var(--ok-fg)")+
+    cd("Flagged",ofTotal(vFlagged,flagged),"var(--bad-fg)")+
+    cd("Ties out",cnt(vTied,tied),"var(--acc-fg)")+
+    cd("Vendor tied",cnt(vVtied,vtied),"var(--acc-fg)")+
+    cd("Gate unknown",cnt(vUngated,ungated),"var(--acc-fg)")+
+    cd("Skipped",cnt(vSkipped,skipped),"var(--warn-fg)")+
+    cd("Decidable",ofTotal(compactMoney(vValue),compactMoney(value)));
+
+  document.getElementById("rows").innerHTML =
+    (hidden>0 ? '<p class="hid">'+hidden+' item'+(hidden>1?'s':'')+' hidden by the current filter. <a href="#" onclick="resetView();return false">Show everything</a></p>' : '')+
+    (vReady.length
+      ? vReady.map(function(i){return itemRow(i)}).join("")
+      : '<div class="empty">'+(viewActive()?"No decidable items match this filter.":"Nothing ready to decide.")+'</div>');
+
+  floatPaint();
+
+  document.getElementById("tiedwrap").innerHTML = vTied.length
+    ? '<h2>Ties out — one field blank in Procore ('+cnt(vTied,tied)+')</h2>'+
+      '<p class="seclead">Support was read and the figures tie. One field is still blank in Procore. Not an approval — the response is still yours to make.</p>'+
+      vTied.map(function(i){return itemRow(i)}).join("")
+    : "";
+
+  document.getElementById("vtiedwrap").innerHTML = vVtied.length
+    ? '<h2>Vendor tied — accepted cost and Cost Impact blank ('+cnt(vVtied,vtied)+')</h2>'+
+      '<p class="seclead">Vendor Proposed matches the attached proposal total. The accepted cost and Cost Impact are blank, so no approved figure was checked. Not an approval — the response is still yours to make.</p>'+
+      vVtied.map(function(i){return itemRow(i)}).join("")
+    : "";
+
+  document.getElementById("ungatedwrap").innerHTML = vUngated.length
+    ? '<h2>Gate unresolved ('+cnt(vUngated,ungated)+')</h2>'+
+      '<p class="seclead">The arithmetic on these checks out, but Procore will not answer whether you are a responder, so their step and due date could not be read. Everything else was reviewed.</p>'+
+      vUngated.map(function(i){return itemRow(i)}).join("")
+    : "";
+
+  document.getElementById("skipwrap").innerHTML = (vSkipped.length||!viewActive())
+    ? '<h2 class="tog" onclick="toggleSkipped()">'+(showSkipped?"▾":"▸")+' Not ready for review ('+cnt(vSkipped,skipped)+')</h2>'+
+      '<p class="seclead">Not approved, not rejected. These sit on your gate step with no cost value, no attachment, or both. Rejecting sends them back for the cost information the step asks for.'+
+      (showSkipped?'':' <a href="#" onclick="toggleSkipped();return false">Show them</a>')+'</p>'+
+      (showSkipped ? vSkipped.map(function(i){return itemRow(i)}).join("") : "")
+    : "";
+  trimMores();
+}
+//__SHARED:dash-of-total__
+// Tiles follow the filter, so they can never disagree with the list underneath them.
+function ofTotal(v,t){return String(v)===String(t)?String(t)
+  :v+'<span class="of"> of '+t+'</span>'}
+//__END_SHARED:dash-of-total__
+function cd(l,v,col){return '<div class="card"><div class="l">'+l+'</div><div class="v"'+(col?' style="color:'+col+'"':'')+'>'+v+'</div></div>'}
+function byId(id){for(var i=0;i<REVIEW.items.length;i++){if(REVIEW.items[i].id===String(id))return REVIEW.items[i]}return null}
+
+function itemRow(it){
+  var cls="row";
+  var a=daysSince(it.due);
+  // Verdict rides the card's left rail and a label on the meta line below. Five
+  // verdicts here against NetSuite's two, which is exactly why the label cannot sit
+  // before the title: "Gate unknown" would set the gutter for every row.
+  var vcls,vtxt,vcol;
+  if(it.verdict==="flagged"){vcls="vflag";vtxt="Flagged";vcol="var(--bad-fg)"}
+  else if(it.verdict==="skipped"){vcls="vskip";vtxt="Skipped";vcol="var(--warn-fg)"}
+  else if(it.verdict==="ungated"){vcls="vgate";vtxt="Gate unknown";vcol="var(--acc-fg)"}
+  else if(it.verdict==="tied"){vcls="vtied";vtxt="Ties out";vcol="var(--acc-fg)"}
+  else if(it.verdict==="vendor-tied"){vcls="vvtied";vtxt="Vendor tied";vcol="var(--acc-fg)"}
+  else{vcls="vclear";vtxt="Clear";vcol="var(--ok-fg)"}
+  var vlab='<span class="vlab" style="color:'+vcol+'">'+vtxt+'</span> · ';
+
+  var h='<div class="'+cls+' '+vcls+'" id="row'+it.id+'">'+
+   '<div class="rh">'+
+   '<span class="doc">'+esc(it.type)+' · '+esc(it.doc)+'</span>'+
+   '<span class="amt">'+money(it.amt)+'</span></div>'+
+   '<p class="ven">'+vlab+esc(it.projLabel)+' · '+esc(it.vendor)+
+     (a!=null?' <span style="color:'+(a>30?"var(--bad-fg)":a>7?"var(--warn-fg)":"var(--ink3)")+'">· step due '+esc(it.due)+', '+dueText(a)+'</span>':'')+'</p>'+
+   '<p class="head">'+esc(it.head)+'</p>'+
+   '<ul class="f">'+(it.facts||[]).map(function(f){return '<li>'+esc(f)+'</li>'}).join("")+'</ul>'+
+   '<div class="po">'+esc(it.po)+
+   (it.poWarn?'<div class="pwarn"><span class="lbl">Worth clearing separately</span>'+
+    '<span class="txt" id="pw'+it.id+'">'+esc(it.poWarn)+'</span>'+
+    '<button class="more" onclick="pwtog(\''+it.id+'\',this)">more</button></div>':'')+'</div>'+
+   '<p class="det" id="det'+it.id+'">'+esc(it.detail)+
+    (it.dcut?' <a href="#" onclick="fullDetail(\''+it.id+'\');return false">Full detail ↗</a>':'')+
+    (it.att?'<br><span class="att">Read: '+esc(it.att)+'</span>':'')+
+    (it.carried?'<br><span class="att">Carried forward, not re-read: '+esc(it.carried)+'</span>':'')+'</p>'+
+   '<div class="acts">';
+
+  if(it.verdict==="ungated"){
+    h+='<button class="acc" onclick="resolveGate(\''+it.id+'\')">Resolve the gate on this ↗</button>'+
+       '<button class="acc" onclick="reviewSupport(\''+it.id+'\')">Read the attached PCIs ↗</button>';
+  }
+
+  h+='<span style="flex:1"></span>'+
+     '<a href="#" onclick="tog(\''+it.id+'\',this);return false">Show detail</a>'+
+     (recUrl(it)
+        ? '<a href="'+recUrl(it)+'" target="_blank" rel="noopener" onclick="return nav(this)">Open in Procore</a>'
+        : '<span style="color:var(--ink3)" title="The record URL cannot be built: no custom tool is mapped for this subtype, or the commitment id is blank. Fixing the config or the log entry restores the link.">no record link</span>')+'</div>';
+  return h+'</div>';
+}
+
+function pwtog(id,btn){var t=document.getElementById("pw"+id);if(!t)return;
+  var open=t.className.indexOf("open")>=0;
+  t.className=open?"txt":"txt open";btn.textContent=open?"more":"less"}
+function tog(id,btn){var d=document.getElementById("det"+id);var open=d.style.display==="block";d.style.display=open?"none":"block";btn.textContent=open?"Show detail":"Hide detail"}
+function toggleSkipped(){showSkipped=!showSkipped;render()}
+// retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode
+function fullDetail(id){var it=byId(id);
+  say("Show me the full detail text for Procore item "+it.doc+" (id "+it.id+") exactly as it is written in the review log. Read-only: quote it and change nothing.")}
+function sendRun(){say("Re-run my Procore open items review now.")}
+function resolveGate(id){var it=byId(id);
+  say("Resolve the workflow gate for Procore change order package "+it.doc+" (package id "+it.id+", project id "+it.pid+", commitment "+it.cid+"). The workflow is not attached to the package, which is why ChangeOrderPackage returns a 400. Fetch the change order package record for project "+it.pid+" and read line_items[].holder.id - that is the commitment change order id the workflow hangs off. Dedupe it across the lines: exactly one id is the answer; several means the package spans several change orders, so report the ids and leave it ungated rather than picking one; none means fall back to opening the commitment_contract_change_orders URL for the package id and noting the id it redirects to. Then query workflows/instances for project "+it.pid+" with filters[workflowable_object_type]=CommitmentChangeOrder and filters[workflowable_object_id] set to that change order id, page=1, view=action_card. Save the id as wfId on the item in the log so the dashboard can compose it, and update the dashboard with can_respond, the step name, due date and available responses. Never query with the package id. Do not click Respond.");}
+function reviewSupport(id){var it=byId(id);
+  say("Read every PCI attached to Procore change order package "+it.doc+" (id "+it.id+", project id "+it.pid+"), tie each one to a line item, confirm the PCI totals sum to the package grand total, and flag any line without support or any PCI without a line. Then update the dashboard. Do not respond to the item.");}
+function say(t){if(window.sendPrompt)window.sendPrompt(t)}
+
+// retired: see actionable-retired/procore-open-items-review/dashboard_template.cut.html, review-only-mode
+//__SHARED:dash-band-track__
+// ---- the host's visible band, and the floating header that rides it ---------------------
+// This frame does not scroll. It is sized to its own content and the HOST page scrolls, so
+// window.innerHeight === document.scrollHeight and window.scrollY never leaves 0. Both
+// position:sticky and position:fixed freeze at a document coordinate and slide off screen
+// with everything else - which is why the header could not just be made sticky, and why
+// nobody has ever seen the floating bar pinned.
+//
+// IntersectionObserver is the one instrument that reaches across the frame boundary. Its
+// intersectionRect is clipped by every ancestor viewport, cross-origin ones included, so from
+// in here it is possible to read exactly which slice of this document the reader is looking
+// at. rootBounds does come back null - that part really is withheld - but the clipped rect is
+// not, and the clipped rect is all this needs.
+//
+// The instrument has to be a column of CONTIGUOUS TILES rather than one full-height sentinel,
+// and that is the whole trick. Thresholds are ratios: a 700px viewport over a 4,000px
+// sentinel is 17% of it and stays 17% however far you scroll, so no threshold is ever crossed
+// and the callback fires a handful of times for a whole page of scrolling - measured at 4,
+// reporting a stale band at three of six offsets. Tiled, the tile straddling the top edge of
+// the band is clipped BY that edge, so its intersectionRect.top is the band top exactly, and
+// its own visible ratio changes continuously as the reader scrolls, which is what keeps the
+// callbacks coming. Measured against both host arrangements: 0.0px error at every offset, and
+// a distinct position for all 26 steps of an 8px-step scroll.
+var BAND_TILE=100, BAND_MIN=140, bandSeen=new Map(), bandIO=null, bandH=-1;
+
+function bandBuild(){
+  var sen=document.getElementById("bandsen");
+  if(!sen||!window.IntersectionObserver)return;
+  // height:100% of .wrap, so this measures the page
+  var h=sen.clientHeight;
+  // nothing moved, and re-tiling would only churn
+  if(h===bandH)return;
+  bandH=h;
+  if(bandIO)bandIO.disconnect();
+  bandSeen.clear();
+  sen.innerHTML="";
+  var n=Math.max(1,Math.ceil(h/BAND_TILE));
+  for(var k=0;k<n;k++){
+    var t=document.createElement("i");
+    t.style.height=(k===n-1?Math.max(1,h-k*BAND_TILE):BAND_TILE)+"px";
+    sen.appendChild(t);
+  }
+  // 20 steps per tile puts a threshold every 5px of scroll. Fewer and the bar steps visibly;
+  // more buys nothing a reader can see and costs a callback every time one is crossed.
+  var th=[]; for(var i=0;i<=20;i++)th.push(i/20);
+  bandIO=new IntersectionObserver(bandSaw,{threshold:th});
+  for(var j=0;j<sen.children.length;j++)bandIO.observe(sen.children[j]);
+}
+
+function bandSaw(es){
+  es.forEach(function(e){
+    if(e.isIntersecting&&e.intersectionRect.height>0)bandSeen.set(e.target,e.intersectionRect);
+    else bandSeen.delete(e.target);
+  });
+  var top=Infinity,bot=-Infinity;
+  bandSeen.forEach(function(r){if(r.top<top)top=r.top; if(r.bottom>bot)bot=r.bottom});
+  bandPlace(top===Infinity?null:top,bot);
+}
+
+// Show the floating bar only once the real header has left the band, and put it at the top of
+// what the reader can actually see. While the real controls are on screen nothing is
+// duplicated: a second copy of a control you are already looking at is only clutter.
+function bandPlace(top,bot){
+  var fh=document.getElementById("floathdr"), tb=document.querySelector(".toolbar"),
+      wrap=document.querySelector(".wrap");
+  if(!fh||!tb||!wrap)return;
+  // BAND_MIN is a design constant, not a measurement: the bar is about 44px, so below this
+  // much visible page the bar would be most of what is on screen and would hang out of the
+  // sliver it is meant to sit in.
+  if(top==null||bot-top<BAND_MIN){fh.style.display="none";return}
+  if(tb.getBoundingClientRect().bottom>=top){fh.style.display="none";return}
+  // intersectionRect arrives in this document's client coordinates and #floathdr is absolute
+  // inside .wrap, so .wrap's own offset has to come off. That offset is read live rather than
+  // cached because a host that DID scroll this frame would otherwise place the bar wrongly.
+  fh.style.top=Math.round(top-wrap.getBoundingClientRect().top+10)+"px";
+  fh.style.display="block";
+}
+
+function toFilters(){
+  var t=document.querySelector(".toolbar");
+  // scrollIntoView from inside a cross-origin frame really does scroll the host's scroller -
+  // verified in Chromium, a host at 2500 landing on the frame's own top. It is the only
+  // control this page has over where the reader is looking, and it is what makes the floating
+  // bar a way BACK to the header rather than a replacement for it.
+  if(t)t.scrollIntoView({block:"start"});
+}
+
+// What the bar carries. The full header is ~380px of chrome and reproducing that mid-queue
+// would cost half a 700px viewport, so what floats is only what is worth having in the second
+// before a glance: where you are in the filter, and one press back to the real controls. The
+// whole bar is aria-hidden with tabindex="-1" throughout, because it duplicates controls that
+// are already in the page and a screen reader gains nothing from meeting them twice.
+// It once mirrored the execute button too - retired, see actionable-retired/_shared/
+// dash-header-mirror.block, review-only-mode.
+function floatPaint(){
+  var fh=document.getElementById("floathdr");
+  if(!fh)return;
+  fh.innerHTML='<div class="floatbar">'+
+    '<span class="fc">'+esc(window.__vsum||"")+'</span>'+
+    '<span class="fsp"></span>'+
+    '<button tabindex="-1" onclick="toFilters()">Filters ↑</button></div>';
+}
+
+if(window.ResizeObserver){
+  // The page's height changes whenever a filter narrows the queue or a reader opens a detail,
+  // and tiles that stopped short of the new bottom would leave the band unreadable down there
+  // - no tile intersecting reads as "off screen", so the bar would vanish mid-queue. Observing
+  // the wrapper covers every cause at once, the first layout included, so no render path has
+  // to remember to call bandBuild(). The sentinel column is absolutely positioned and
+  // contributes no height, so re-tiling cannot feed itself.
+  new ResizeObserver(function(){bandBuild()}).observe(document.querySelector(".wrap"));
+} else { bandBuild(); }
+//__END_SHARED:dash-band-track__
+//__SHARED:dash-render-tail__
+// retired: see actionable-retired/_shared/dash-render-tail.cut.block, review-only-mode
+render();
+// The tick ages the freshness line and flips the Snapshot pill. It must NEVER call
+// render(), which rebuilds #rows from scratch: that silently collapsed every expanded
+// detail and every opened warning, and which rows survived depended only on where the
+// 60s boundary fell relative to the clicks - so it read as random. Measured on v9.
+// The data is a snapshot and never changes, so there is nothing else for a tick to do.
+setInterval(freshTick, 60000);
+// Last line of the file. The inline guard reads window.__dashOK to learn that this file ran to the
+// end and that the stylesheet is applied (--dash-css is declared on :root in dashboard.css). A
+// dynamically added script does not wait for a stylesheet, so a failed first probe tries once
+// more when the stylesheet's own load event fires.
+function dashProbe(){window.__dashOK=!!getComputedStyle(document.documentElement).getPropertyValue("--dash-css").trim();return window.__dashOK}
+if(!dashProbe()){var dashLink=document.querySelector("link[data-dash]");if(dashLink)dashLink.addEventListener("load",dashProbe)}
+//__END_SHARED:dash-render-tail__

@@ -273,11 +273,16 @@ def check_verdict_vocabulary():
             if not m:
                 continue
             allowed = set(re.findall(r'"([a-z-]+)"', m.group(1)))
-            with open(tpl, encoding="utf-8") as fh:
-                tested = set(VERDICT_TEST.findall(fh.read()))
+            # The page's branches live in dashboard.js since the split. The shell is still read,
+            # because a verdict test written into it would run just the same.
+            tested = set()
+            for part in (tpl, os.path.join(assets, "dashboard.js")):
+                if os.path.isfile(part):
+                    with open(part, encoding="utf-8") as fh:
+                        tested |= set(VERDICT_TEST.findall(fh.read()))
             for bad in sorted(tested - allowed):
                 problems.append(
-                    "%s/%s: dashboard_template.html branches on verdict %r, which "
+                    "%s/%s: the dashboard page (template or dashboard.js) branches on verdict %r, which "
                     "publish_dashboard.py's VERDICTS allowlist (%s) can never emit - that "
                     "branch is unreachable. Either add the verdict to the allowlist and to "
                     "SKILL.md's Step 6 vocabulary, or delete the branch."

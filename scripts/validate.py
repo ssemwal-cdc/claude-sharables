@@ -360,10 +360,10 @@ if "github.io" in open(os.path.join(REPO, "README.md"), encoding="utf-8").read()
         fail("README.md links the GitHub Pages root, but docs/index.html is missing")
 
 # The NetSuite dashboard's "3 hours" staleness warning, published in its README
-# and SKILL.md, must match the actual threshold in the shipped JS template.
+# and SKILL.md, must match the actual threshold in the shipped dashboard code (dashboard.js).
 _NETSUITE_TEMPLATE = os.path.join(
     PLUGINS_DIR, "netsuite-approval-review", "skills",
-    "netsuite-approval-double-check", "assets", "dashboard_template.html")
+    "netsuite-approval-double-check", "assets", "dashboard.js")
 if os.path.isfile(_NETSUITE_TEMPLATE):
     with open(_NETSUITE_TEMPLATE, encoding="utf-8") as fh:
         _tm = re.search(r"function isStale\(\)\{var m=ageOfRun\(\);return m!=null&&m>(\d+)\}",
@@ -376,7 +376,7 @@ if os.path.isfile(_NETSUITE_TEMPLATE):
         if _hours != 3:
             fail(
                 f"the NetSuite README and SKILL.md say the dashboard warns after 3 "
-                f"hours, but dashboard_template.html's isStale() fires at {_hours:g} hour(s)"
+                f"hours, but dashboard.js's isStale() fires at {_hours:g} hour(s)"
             )
 
 # ------------------------------------------------- shared blocks (cross-plugin)

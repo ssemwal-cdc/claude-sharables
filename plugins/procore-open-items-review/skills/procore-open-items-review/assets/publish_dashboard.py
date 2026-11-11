@@ -8,7 +8,12 @@ The template holds the entire layout and all behaviour. This script only ever
 replaces the data block between the sentinels. Nothing here generates HTML, so
 the dashboard cannot drift between runs.
 
-Usage:  python3 publish_dashboard.py [<output path>]
+The layout is split in three: dashboard_template.html is the shell (markup, data block, guard),
+and dashboard.css and dashboard.js are the code. A shell whose asset tags carry no pin has those
+two files inlined; a pinned tag stays a CDN tag. --inline inlines them for this run whatever the
+pin, which is the way out when the CDN tags fail on screen. The flag is never stored.
+
+Usage:  python3 publish_dashboard.py [--inline] [<output path>]
 """
 import json, os, re, sys, datetime
 
@@ -26,7 +31,10 @@ if not os.path.exists(LOG) and os.path.exists(_LEGACY):
     except OSError:
         LOG = _LEGACY  # cloud-synced folders can refuse the move; keep working
 TPL = os.path.join(HERE, "dashboard_template.html")
-OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "index.html")
+# --inline is a flag for this one run and is never stored, so the next run tries the CDN again.
+INLINE = "--inline" in sys.argv[1:]
+_ARGS = [a for a in sys.argv[1:] if a != "--inline"]
+OUT = _ARGS[0] if _ARGS else os.path.join(HERE, "index.html")
 
 S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 
@@ -39,7 +47,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v21"
+TEMPLATE_VERSION = "v22"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -128,6 +136,39 @@ def strip_comments(tpl):
     return tpl.replace("\0", "")
 #__END_SHARED:pub-strip-comments__
 
+#__SHARED:pub-assets__
+# The shell names its stylesheet and script with a data-dash tag each. Until those tags carry
+# a pin (no __PIN_ token left in them) every run inlines the asset bytes, so the page is what
+# it was before the split. A pinned tag stays a CDN tag unless this run passed --inline.
+ASSET_TAG = re.compile(r'<link\b[^>]*\bdata-dash="css"[^>]*>'
+                       r'|<script\b[^>]*\bdata-dash="js"[^>]*></script>')
+
+
+def fill_assets(tpl, inline):
+    """Replace each unpinned (or, with `inline`, every) asset tag by the asset's own bytes.
+
+    The bytes are the same dashboard.css and dashboard.js a pin serves, with the same comment
+    strip the shell gets, because an inlined page passes through a turn like any other. The
+    CDN copy is served unstripped, as pinned. A missing asset aborts: a workspace copy that
+    lags the plugin is stale, and a page with no code is worse than no page.
+    """
+    def one(m):
+        kind = "css" if m.group(0).startswith("<link") else "js"
+        if "__PIN_" not in m.group(0) and not inline:
+            return m.group(0)
+        name = "dashboard." + kind
+        try:
+            with open(os.path.join(HERE, name), encoding="utf-8") as fh:
+                body = strip_comments(fh.read())
+        except OSError:
+            sys.exit("ABORT: %s is missing beside this script. Step 0 copies it from the plugin "
+                     "assets. Restore it from there and retry." % name)
+        tag = "style" if kind == "css" else "script"
+        return "<%s>\n%s</%s>" % (tag, body if body.endswith("\n") else body + "\n", tag)
+
+    return ASSET_TAG.sub(one, tpl)
+#__END_SHARED:pub-assets__
+
 
 VERDICTS = ("clear", "flagged", "skipped", "ungated", "tied", "vendor-tied")
 # The type the workflows/instances endpoint wants, which is NOT always the queue's item_type.
@@ -169,6 +210,10 @@ def main():
     # injection, so the data block is never touched. The sentinels are /* */ and the
     # __complete div is markup, so neither is a comment here.
     tpl = strip_comments(tpl)
+
+    # The two asset files are filled in after the strip, and stripped the same way on their own, so
+    # an inlined page carries no more bytes than the single-file template did.
+    tpl = fill_assets(tpl, INLINE)
 
     if tpl.count(S) != 1 or tpl.count(E) != 1:
         sys.exit("ABORT: template sentinels missing or duplicated. Do not "

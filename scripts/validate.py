@@ -394,16 +394,9 @@ except ImportError as exc:
          "check did not run" % exc)
     shared_blocks = None
 if shared_blocks is not None:
-    _problems, _synced, _seen = shared_blocks.run(sync=False)
-    for _name in shared_blocks.orphan_canonicals(_seen):
-        _problems.append(f"plugins/_shared/{_name} is not referenced by any plugin file")
-    _pin_problems, _pins = shared_blocks.check_pins()
-    _problems += _pin_problems
-    _problems += shared_blocks.check_template_versions()
-    _problems += shared_blocks.check_verdict_vocabulary()
-    _problems += shared_blocks.check_check_registry()
-    _problems += shared_blocks.check_capability_verdicts()
-    _problems += shared_blocks.check_onboarding_page()
+    # One call list, shared with `shared_blocks.py --check`, so a check added there runs here.
+    _problems, _synced, _seen, _pins, _notes = shared_blocks.collect_problems(sync=False)
+    notes.extend("[shared] " + _n for _n in _notes)
     for _p in _problems:
         fail("[shared] " + _p.replace("\n", " ").replace("      ", " "))
     if not _problems:

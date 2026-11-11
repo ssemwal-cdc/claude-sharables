@@ -24,8 +24,9 @@ jobs:
           python-version: '3.x'
 
       # Enforces the layout, manifest and doc rules described in CLAUDE.md, plus the
-      # cross-plugin shared-block, cdnjs-pin, template-version and verdict-reachability
-      # checks in scripts/shared_blocks.py.
+      # cross-plugin shared-block, cdnjs-pin, template-version, verdict-reachability and
+      # asset-pin checks. validate.py runs them through collect_problems() in
+      # scripts/shared_blocks.py, the same list `shared_blocks.py --check` runs.
       - name: Validate marketplace, plugins and docs
         run: python3 scripts/validate.py
 
@@ -37,6 +38,9 @@ jobs:
 
       - name: Test the version-bump check
         run: python3 scripts/test_check_version_bump.py
+
+      - name: Test the asset-pin check
+        run: python3 scripts/test_asset_pins.py
 
       # Pinned to the version proven locally (3.1.5); needed by the skill's own
       # workbook reader test below.
@@ -57,8 +61,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      # Full history, so validate.py's asset-pin check can read a pinned sha and prove it an
+      # ancestor of HEAD. A shallow clone would report that check as unknown.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0

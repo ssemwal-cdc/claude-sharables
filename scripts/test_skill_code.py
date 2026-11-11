@@ -176,15 +176,38 @@ def extract_fn(src, name):
     sys.exit("ABORT: unbalanced braces extracting %r" % name)
 
 
+# A published page is built from three files: the shell (markup, data block and guard), its
+# stylesheet and its script. publish_dashboard.py inlines the stylesheet and the script, so a
+# test that publishes copies all four, and a text read names the file that holds the thing.
+ASSET_FILES = ("publish_dashboard.py", "dashboard_template.html", "dashboard.css", "dashboard.js")
+
+
+def _copy_assets(root, d):
+    for f in ASSET_FILES:
+        shutil.copy(os.path.join(root, "assets", f), d)
+
+
+def _asset(root, name):
+    return open(os.path.join(root, "assets", name), encoding="utf-8").read()
+
+
+def _page_src(root):
+    """The shell, stylesheet and script together: every byte a published page is built from.
+    Only a negative check reads this, so a string that moved to another file still counts."""
+    return "\n".join(_asset(root, f) for f in ("dashboard_template.html", "dashboard.css",
+                                               "dashboard.js"))
+
+
 def render_item_row(tpl_path, item, fn_names=("esc", "money", "daysSince", "dueText",
                                                "recUrl", "itemRow"), call=None):
-    """Render one dashboard row with the template's own itemRow() and its real
+    """Render one dashboard row with the page's own itemRow() and its real
     dependencies (esc, money, daysSince, dueText, recUrl by default), executed by node.
-    Returns the HTML string itemRow() actually produced - not a guess from the source
-    text. `fn_names` and `call` adapt this same harness to a template whose itemRow()
-    takes a different helper set or a second argument (NetSuite's classify()) - the
-    harness, and the fact that it drives the template's own code, do not change."""
-    src = open(tpl_path, encoding="utf-8").read()
+    The functions are read from the dashboard.js beside `tpl_path`, the file that holds
+    the page's code since the split. Returns the HTML string itemRow() actually produced -
+    not a guess from the source text. `fn_names` and `call` adapt this same harness to a
+    page whose itemRow() takes a different helper set or a second argument (NetSuite's
+    classify()) - the harness, and the fact that it drives the page's own code, do not change."""
+    src = open(os.path.join(os.path.dirname(tpl_path), "dashboard.js"), encoding="utf-8").read()
     fns = "\n".join(extract_fn(src, n) for n in fn_names)
     call_expr = call or ("itemRow(%s)" % json.dumps(item))
     harness = ("""
@@ -502,9 +525,7 @@ def test_read_docx():
 def test_cco_demotion():
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(PC, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(PC, d)
         log = {
             "lastCompletedRun": "2026-08-13", "lastRunTime": "2026-08-13 11:00",
             "suppressed": 0, "config": {"company": "0", "icrToolId": "0"},
@@ -566,9 +587,7 @@ def test_commitment_kind():
     """
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(PC, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(PC, d)
         base = {"projectId": "9", "kind": "com", "project": "A - B", "counterparty": "X",
                 "amount": 1000, "step": "Financial Analyst Review",
                 "responses": ["Approve", "Revise and Resubmit"], "verdict": "clear",
@@ -639,9 +658,7 @@ def test_template_version():
     # lag is the layout - which is the whole reason this warns instead of exiting.
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(NS, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(NS, d)
         tpl_path = os.path.join(d, "dashboard_template.html")
         tpl = open(tpl_path, encoding="utf-8").read()
         open(tpl_path, "w", encoding="utf-8").write(
@@ -821,30 +838,33 @@ def test_dashboard_view():
     comparator that is not a valid comparator, and a sticky rule with no room to travel."""
     for label, root, key, oldkey in (("netsuite", NS, "ns_view_v2", "ns_view_v1"),
                                      ("procore",  PC, "pc_view_v3", "pc_view_v2")):
-        tpl = open(os.path.join(root, "assets", "dashboard_template.html"), encoding="utf-8").read()
+        shell = _asset(root, "dashboard_template.html")
+        css = _asset(root, "dashboard.css")
+        js = _asset(root, "dashboard.js")
+        page = _page_src(root)
 
-        m = re.search(r"var DEFV=\{sort:\"(\w+)\"", tpl)
+        m = re.search(r"var DEFV=\{sort:\"(\w+)\"", js)
         check("%s: default sort is newest" % label, bool(m) and m.group(1) == "newest",
               "found %s" % (m.group(1) if m else "no DEFV"))
 
         # A new default that ships under the old storage key reaches nobody who has ever
         # touched the toolbar - their stored view simply overrides it, for good.
-        check("%s: view key was bumped with the default" % label, 'VKEY="%s"' % key in tpl)
+        check("%s: view key was bumped with the default" % label, 'VKEY="%s"' % key in js)
         check("%s: the previous view key is migrated, not dropped" % label,
-              'OLDVKEY="%s"' % oldkey in tpl and "delete sv.sort" in tpl)
+              'OLDVKEY="%s"' % oldkey in js and "delete sv.sort" in js)
 
         # Returning 1 for both orderings when both dates are absent is not a valid
         # comparator; an engine may produce any order from it.
         check("%s: the date comparator handles both-null" % label,
-              "if(ad==null&&bd==null)return 0;" in tpl)
+              "if(ad==null&&bd==null)return 0;" in js)
 
         # retired: see actionable-retired/scripts/test_skill_code.cut.py, review-only-mode
-        # Execute mode is gone, so neither template may carry a decision control or the
+        # Execute mode is gone, so no part of the page may carry a decision control or the
         # batched bar those controls fed. review-only-mode, execute mode retired.
         check("%s: no per-item mark control survives" % label,
-              'onclick="mark(' not in tpl, "found onclick=\"mark(")
+              'onclick="mark(' not in page, "found onclick=\"mark(")
         check("%s: no execute bar survives" % label,
-              'id="bar"' not in tpl, 'found id="bar"')
+              'id="bar"' not in page, 'found id="bar"')
 
         # ---- the floating header ------------------------------------------------------
         # The frame is sized to its own content and the HOST scrolls, so nothing in CSS can
@@ -854,36 +874,36 @@ def test_dashboard_view():
         # ancestor viewports across the cross-origin boundary. These assertions pin the
         # mechanism; the positions themselves need a browser (scripts/measure_float.js).
         check("%s: the floating header and its sentinel are in the markup" % label,
-              'id="floathdr"' in tpl and 'id="bandsen"' in tpl)
+              'id="floathdr"' in shell and 'id="bandsen"' in shell)
         check("%s: the floating header has a containing block to be placed in" % label,
-              ".wrap{position:relative}" in tpl and "#floathdr{position:absolute" in tpl)
-        m_float = re.search(r"#floathdr\{[^}]*\}", tpl)
+              ".wrap{position:relative}" in css and "#floathdr{position:absolute" in css)
+        m_float = re.search(r"#floathdr\{[^}]*\}", css)
         check("%s: the floating header is NOT sticky - it has nowhere to travel" % label,
               bool(m_float) and "sticky" not in m_float.group(0) and "fixed" not in m_float.group(0))
 
         # A scroll listener is the obvious-looking way to do this and it is dead code here:
         # this document never scrolls, so the event never fires and the bar never moves.
         check("%s: the band is not tracked by a scroll event" % label,
-              'addEventListener("scroll"' not in tpl and "onscroll" not in tpl)
+              'addEventListener("scroll"' not in page and "onscroll" not in page)
 
         # One full-height sentinel is the trap. Thresholds are ratios, so a 700px viewport
         # over a 4,000px sentinel stays at 17% however far you scroll and no threshold is
         # ever crossed - observed at 4 callbacks for a whole page, with a stale band at
         # three of six offsets. Contiguous tiles are what make the top edge readable.
         check("%s: the sentinel is a tiled column, not one full-height element" % label,
-              "BAND_TILE" in tpl and "bandBuild" in tpl and "sen.appendChild(t)" in tpl)
+              "BAND_TILE" in js and "bandBuild" in js and "sen.appendChild(t)" in js)
         check("%s: the observer gets a threshold list, not a single ratio" % label,
-              "for(var i=0;i<=20;i++)th.push(i/20)" in tpl and "{threshold:th}" in tpl)
+              "for(var i=0;i<=20;i++)th.push(i/20)" in js and "{threshold:th}" in js)
 
         # Filtering the queue changes the page height. Tiles that stopped short of the new
         # bottom read as "off screen" down there, and the bar would vanish mid-queue.
         check("%s: re-tiling is wired to the page's height, not to a render path" % label,
-              "new ResizeObserver(function(){bandBuild()}).observe(" in tpl)
+              "new ResizeObserver(function(){bandBuild()}).observe(" in js)
 
         # The bar duplicates controls that are already in the page, so it is out of the tab
         # order and hidden from screen readers rather than announced twice.
         check("%s: the floating bar is a visual duplicate only" % label,
-              'id="floathdr" aria-hidden="true"' in tpl and 'tabindex="-1"' in tpl)
+              'id="floathdr" aria-hidden="true"' in shell and 'tabindex="-1"' in js)
 
 
 def test_po_identity_rules():
@@ -938,8 +958,8 @@ def test_po_line():
     """The dashboard must keep the three PO states distinct. Rendering an
     `unlinked` or `failed` PO the same way as a `linked` one would present an
     unconfirmed PO as confirmed - the same misfile the skill just removed."""
-    tpl = open(os.path.join(NS, "assets", "dashboard_template.html"), encoding="utf-8").read()
-    m = re.search(r"(function poLine\(it\)\{.*?\n\})", tpl, re.S)
+    js = _asset(NS, "dashboard.js")
+    m = re.search(r"(function poLine\(it\)\{.*?\n\})", js, re.S)
     if not m:
         sys.exit("ABORT: poLine() not found in the NetSuite dashboard template. This "
                  "test extracts it from the template on purpose - if it moved, fix "
@@ -985,9 +1005,7 @@ def test_custom_tool_subtype():
     """
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(PC, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(PC, d)
         base = {"projectId": "9", "kind": "icr", "project": "A - B", "counterparty": "X",
                 "amount": 1000, "step": "Cost Gate", "responses": ["Yes", "Reject"],
                 "verdict": "clear", "head": "h", "facts": ["f"], "detail": "d"}
@@ -1052,8 +1070,8 @@ def test_custom_tool_subtype():
               {k: items[k]["toolId"] for k in items})
 
         # The template must read the item's tool id, not only the config-level floor.
-        tpl = open(os.path.join(d, "dashboard_template.html"), encoding="utf-8").read()
-        rec = tpl[tpl.index("function recUrl"):]
+        js = open(os.path.join(d, "dashboard.js"), encoding="utf-8").read()
+        rec = js[js.index("function recUrl"):]
         rec = rec[:rec.index("\n}")]
         check("subtype: recUrl prefers the item's own tool id", "it.toolId" in rec)
         check("subtype: recUrl returns no link rather than a wrong one",
@@ -1071,9 +1089,7 @@ def test_tied_verdict():
     """
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(PC, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(PC, d)
         log = {
             "lastCompletedRun": "2026-09-23", "lastRunTime": "2026-09-23 09:00",
             "suppressed": 0, "config": {"company": "0", "icrToolId": "0"},
@@ -1123,7 +1139,11 @@ def _render_page(index_html, view_sort=None):
     ({element id: innerHTML}, [wrapper ids in markup order]). `view_sort` stores that sort in
     the page's saved view (NetSuite's `ns_view_v2`), so a test can pick the verdict sort."""
     text = open(index_html, encoding="utf-8").read()
-    script = re.findall(r"<script>(.*?)</script>", text, re.S)[-1]
+    # The page's scripts are the guard, the data block and the code. The code reads REVIEW from
+    # the data block, so the two run together, in that order. The guard is not needed to render.
+    scripts = re.findall(r"<script>(.*?)</script>", text, re.S)
+    data = [s for s in scripts if "/*__REVIEW_DATA__*/" in s][-1]
+    script = data + "\n" + scripts[-1]
     order = re.findall(r'<div id="(rows|\w+wrap)"', text)
     stored = "null" if view_sort is None else json.dumps(json.dumps({"sort": view_sort}))
     ls_line = ("var localStorage = {getItem(k){return k===\"ns_view_v2\"?" + stored +
@@ -1139,9 +1159,12 @@ function el(id){ var e = {style:{}, classList:{add(){},remove(){},toggle(){}}, v
   return e; }
 var cache = {};
 var document = {getElementById(id){return cache[id]||(cache[id]=el(id))}, body: el("body"),
+  documentElement: el("html"),
   addEventListener(){}, querySelector(){return el("q")}, querySelectorAll(){return []},
   createElement(){return el("c")}};
 var window = {}; var setInterval = function(){return 0}; var setTimeout = function(){return 0};
+// The code's last line probes --dash-css on the stylesheet; the stub answers that it is applied.
+var getComputedStyle = function(){ return {getPropertyValue(){ return "1"; }}; };
 """ + ls_line + script + """
 console.log(JSON.stringify(out));
 """
@@ -1330,17 +1353,20 @@ def _ns_rows(rows_html):
 
 
 def _render_ns_items(items, view_sort="verdict"):
-    """Inject `items` into the NetSuite template's data block (the same shape publish writes),
-    then run the page's own script through _render_page under the saved sort."""
-    tpl = open(os.path.join(NS, "assets", "dashboard_template.html"), encoding="utf-8").read()
+    """Inject `items` into the NetSuite shell's data block (the same shape publish writes), inline
+    the stylesheet and script the way publish does, then run the page's own code through
+    _render_page under the saved sort."""
+    tpl = _asset(NS, "dashboard_template.html")
     a = tpl.index("/*__REVIEW_DATA__*/") + len("/*__REVIEW_DATA__*/")
     b = tpl.index("/*__END__*/")
     payload = {"lastRun": "2026-10-12 09:00", "lastRunISO": "",
                "config": {"account": "1"}, "items": items}
+    text = _load_publish(NS, "ns_render").fill_assets(
+        tpl[:a] + json.dumps(payload) + tpl[b:], True)
     d = tempfile.mkdtemp()
     try:
         page = os.path.join(d, "index.html")
-        open(page, "w", encoding="utf-8").write(tpl[:a] + json.dumps(payload) + tpl[b:])
+        open(page, "w", encoding="utf-8").write(text)
         return _render_page(page, view_sort=view_sort)
     finally:
         shutil.rmtree(d, ignore_errors=True)
@@ -1452,8 +1478,7 @@ def test_history_open_warning_not_clipped():
          "po": "", "poWarn": long_warn, "poRef": "", "poLink": "", "detail": "d", "att": ""}])
     rows = _ns_rows(secs.get("rows", ""))
     seg = {k: s for k, _, s in rows}.get("701", "")
-    tpl = open(os.path.join(NS, "assets", "dashboard_template.html"), encoding="utf-8").read()
-    clamped = set(_NS_WARN_CLAMP.findall(tpl))
+    clamped = set(_NS_WARN_CLAMP.findall(_asset(NS, "dashboard.css")))
     span = re.search(_NS_SPAN % "701", seg)
     span_classes = set(span.group(1).split()) if span else set()
     check("history-open unclipped: the warning text is rendered in full",
@@ -1514,9 +1539,7 @@ def test_carried_attachments():
     """
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(PC, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(PC, d)
         log = {
             "lastCompletedRun": "2026-09-24", "lastRunTime": "2026-09-24 09:00",
             "suppressed": 0, "config": {"company": "0", "icrToolId": "0"},
@@ -1650,9 +1673,7 @@ def test_render_fits_one_read():
                             ("netsuite", NS, _big_netsuite_log())):
         d = tempfile.mkdtemp()
         try:
-            assets = os.path.join(root, "assets")
-            for f in ("publish_dashboard.py", "dashboard_template.html"):
-                shutil.copy(os.path.join(assets, f), d)
+            _copy_assets(root, d)
             stem = "_procore_review_log.json" if name == "procore" else "_netsuite_review_log.json"
             json.dump(log, open(os.path.join(d, stem), "w"))
             out_html = os.path.join(d, "index.html")
@@ -1744,9 +1765,7 @@ def _nsrp_publish(items, tpl_edit=None):
     """Publish a NetSuite log in a temp copy of the assets; return (rc, out, err, html)."""
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(NS, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(NS, d)
         if tpl_edit:
             tp = os.path.join(d, "dashboard_template.html")
             edited = tpl_edit(open(tp, encoding="utf-8").read())
@@ -1769,9 +1788,7 @@ SKIPPED_KEYS = {"key", "id", "pid", "cid", "kind", "subtype", "toolId", "wf", "t
 
 
 def _publish_log(d, items, name="index.html"):
-    assets = os.path.join(PC, "assets")
-    for f in ("publish_dashboard.py", "dashboard_template.html"):
-        shutil.copy(os.path.join(assets, f), d)
+    _copy_assets(PC, d)
     json.dump({"lastCompletedRun": "2026-10-07", "lastRunTime": "2026-10-07 09:00",
                "suppressed": 0, "config": {"company": "0", "icrToolId": "0"}, "items": items},
               open(os.path.join(d, "_procore_review_log.json"), "w"))
@@ -1955,26 +1972,22 @@ def test_stripped_js_parses():
     Parse every inline <script> of the published page with `node --check`.
     (NetSuite strips only once PR #42 lands; until then its half passes trivially.)"""
     def poison(t):
-        # Mutation: a `<!--` in one JS string and a `-->` in another. The strip regex eats
-        # everything between them, so the page's script no longer parses.
-        i = t.index("/*__END__*/;") + len("/*__END__*/;")
-        t = t[:i] + "\nvar __m1='<!--';\n" + t[i:]
-        j = t.rindex("</script>")
-        return t[:j] + 'var __m2="-->";\n' + t[j:]
+        # Mutation of the script that gets inlined: a `<!--` in one JS string near the top and a
+        # `-->` in another near the end. The strip regex eats everything between them, so the
+        # inlined script no longer parses.
+        return "var __m1='<!--';\n" + t + 'var __m2="-->";\n'
 
-    for name, root, log, stem, mutate in (
-            ("procore", PC, _big_procore_log(), "_procore_review_log.json", None),
+    for name, root, log, stem, target, mutate in (
+            ("procore", PC, _big_procore_log(), "_procore_review_log.json", None, None),
             ("procore (mutated copy, must be red)", PC, _big_procore_log(),
-             "_procore_review_log.json", poison),
-            ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json", None)):
+             "_procore_review_log.json", "dashboard.js", poison),
+            ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json", None, None)):
         d = tempfile.mkdtemp()
         try:
-            for f in ("publish_dashboard.py", "dashboard_template.html"):
-                shutil.copy(os.path.join(root, "assets", f), d)
+            _copy_assets(root, d)
             if mutate:
-                tp = os.path.join(d, "dashboard_template.html")
-                mutated = mutate(open(tp, encoding="utf-8").read())
-                open(tp, "w", encoding="utf-8").write(mutated)
+                tp = os.path.join(d, target)
+                open(tp, "w", encoding="utf-8").write(mutate(open(tp, encoding="utf-8").read()))
             json.dump(log, open(os.path.join(d, stem), "w"))
             out = os.path.join(d, "index.html")
             r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
@@ -2423,22 +2436,31 @@ def test_netsuite_stale_doc_and_caller():
 
 # ------------------------------------------------ render fixes (owner rulings 2026-10-21)
 def _guard_outcome(tpl_text, complete, state):
-    """Run the template's first inline script (the integrity guard) in node against a stub
+    """Run the shell's first inline script (the integrity guard) in node against a stub
     document. `state` is document.readyState when the script runs, and `complete` says whether
-    the __complete marker exists. The stub's addEventListener only records listeners, so an
-    event that never fires stays unfired, as inside the widget host. Returns warnings drawn
-    right after the script ran, warnings after every recorded listener was then fired, and the
-    number of listeners recorded."""
+    the __complete marker exists. The code has run, so window.__dashOK is set: a banner can
+    only mean the page was cut short. The stub's addEventListener only records listeners, so
+    an event that never fires stays unfired, as inside the widget host. Timers are a queue the
+    harness controls: zero-delay timers run when flushed, and the guard's long timeouts never
+    fire, so no wall clock is read. Returns the banners drawn once the script and its
+    zero-delay timers ran (`now`), the banners drawn after every recorded listener fired and
+    the timers flushed again (`later`), and the number of listeners recorded."""
     script = re.search(r"<script>(.*?)</script>", tpl_text, re.S).group(1)
     harness = ("""
-var inserted = 0, fns = [];
+var inserted = 0, fns = [], soon = [];
+var window = {__dashOK: true};
+var setTimeout = function(f, ms){ if (ms === 0) soon.push(f); return 1; };
+var clearTimeout = function(){};
+function flush(){ while (soon.length) soon.shift()(); }
 var document = {readyState: %s,
   getElementById: function(){ return %s; },
+  querySelectorAll: function(){ return []; },
   createElement: function(){ return {style: {}}; },
-  body: {firstChild: null, insertBefore: function(){ inserted++; }},
+  body: {firstChild: null, insertBefore: function(){ inserted++; },
+         removeChild: function(){ inserted--; }},
   addEventListener: function(t, f){ fns.push(f); }};
 """ % (json.dumps(state), "{}" if complete else "null")) + script + """
-var now = inserted; fns.forEach(function(f){ f(); });
+flush(); var now = inserted; fns.forEach(function(f){ f(); }); flush();
 console.log(JSON.stringify({now: now, later: inserted, listeners: fns.length}));
 """
     rc, out, err = run_node(harness)
@@ -2451,9 +2473,9 @@ def test_guard_fires_in_widget_host():
     """The widget host runs scripts after the page has loaded (readyState "complete"), so a
     DOMContentLoaded listener never fires there and a truncated page showed no warning."""
     listener_only = ('if(document.readyState==="loading")'
-                     'document.addEventListener("DOMContentLoaded",guard);else guard();')
+                     'document.addEventListener("DOMContentLoaded",start);else start();')
     for name, root in (("procore", PC), ("netsuite", NS)):
-        tpl = open(os.path.join(root, "assets/dashboard_template.html"), encoding="utf-8").read()
+        tpl = _asset(root, "dashboard_template.html")
         r = _guard_outcome(tpl, False, "complete")
         check("%s guard: a truncated page warns when the script runs after load" % name,
               r["now"] == 1, r)
@@ -2463,8 +2485,8 @@ def test_guard_fires_in_widget_host():
         check("%s guard: still warns through the event when the page is loading" % name,
               r["now"] == 0 and r["later"] == 1, r)
         check("%s guard: it is the only DOMContentLoaded listener" % name,
-              tpl.count("DOMContentLoaded\"") == 1 and listener_only in tpl)
-        old = tpl.replace(listener_only, 'document.addEventListener("DOMContentLoaded",guard);')
+              _page_src(root).count("DOMContentLoaded\"") == 1 and listener_only in tpl)
+        old = tpl.replace(listener_only, 'document.addEventListener("DOMContentLoaded",start);')
         check("%s guard: the listener-only guard goes red (mutated copy)" % name,
               old != tpl and _guard_outcome(old, False, "complete")["now"] == 0)
 
@@ -2496,8 +2518,7 @@ def test_published_page_has_no_comments():
                                   ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json")):
         d = tempfile.mkdtemp()
         try:
-            for f in ("publish_dashboard.py", "dashboard_template.html"):
-                shutil.copy(os.path.join(root, "assets", f), d)
+            _copy_assets(root, d)
             json.dump(log, open(os.path.join(d, stem), "w"))
             out = os.path.join(d, "index.html")
             r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
@@ -2521,11 +2542,12 @@ def test_published_page_has_no_comments():
 def test_dead_fallback_gone():
     """No artifact-host clipboard fallback: say() sends the prompt or does nothing."""
     for name, root in (("procore", PC), ("netsuite", NS)):
-        tpl = open(os.path.join(root, "assets/dashboard_template.html"), encoding="utf-8").read()
-        gone = [w for w in ("handoff", "recopy", "closeHandoff", "cowork", "execCommand") if w in tpl]
-        check("%s: no handoff/cowork fallback in the template" % name, not gone, gone)
+        page = _page_src(root)
+        gone = [w for w in ("handoff", "recopy", "closeHandoff", "cowork", "execCommand") if w in page]
+        check("%s: no handoff/cowork fallback in the page" % name, not gone, gone)
         if shutil.which("node"):
-            body = extract_fn(tpl, "say")
+            # The shell's guard defines its own say(); the page's say() is the one in the script.
+            body = extract_fn(_asset(root, "dashboard.js"), "say")
             rc, out, err = run_node("var sent=[], window={};\n" + body + """
 say("x"); window.sendPrompt = function(t){ sent.push(t); }; say("y");
 console.log(JSON.stringify(sent));""")
@@ -2572,7 +2594,7 @@ def test_detail_cap():
                   "fullDetail(" in row and "Full detail" in row, row[-300:])
             check("detail cap: procore row shows none for an uncut row",
                   "Full detail" not in render_item_row(tpl, sh))
-            src = open(tpl, encoding="utf-8").read()
+            src = _asset(PC, "dashboard.js")
             fns = "\n".join(extract_fn(src, n) for n in ("byId", "say", "fullDetail"))
             rc, o, err = run_node("var REVIEW={items:" + json.dumps([lg]) + "};var sent=[];\n"
                                   "window={sendPrompt:function(t){sent.push(t)}};\n" + fns +
@@ -2608,7 +2630,7 @@ def test_detail_cap():
         row = render_item_row(tpl, sh, fn_names=fns, call="itemRow(%s, classify(%s))"
                               % (json.dumps(sh), json.dumps(sh)))
         check("detail cap: netsuite row shows none for an uncut row", "Full detail" not in row)
-        src = open(tpl, encoding="utf-8").read()
+        src = _asset(NS, "dashboard.js")
         body = "\n".join(extract_fn(src, n) for n in ("say", "fullDetail"))
         rc, o, err = run_node("var REVIEW={items:" + json.dumps([lg]) + "};var sent=[];\n"
                               "window={sendPrompt:function(t){sent.push(t)}};\n" + body +

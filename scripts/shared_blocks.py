@@ -28,8 +28,9 @@ not part of any plugin, so it never ships. Usage:
 
     python3 scripts/shared_blocks.py --check    # what validate.py runs
     python3 scripts/shared_blocks.py --sync     # push canonical into every marked site
+    python3 scripts/shared_blocks.py --pin <full sha>   # write the sha and sha384 into each template's CDN tags
 """
-import os, re, sys
+import base64, hashlib, os, re, subprocess, sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHARED = os.path.join(REPO, "plugins", "_shared")
@@ -493,6 +494,127 @@ def check_check_registry():
     return problems
 
 
+# A pinned asset is fetched from jsdelivr at a commit of this repo. Code at a sha never changes, so
+# the check only has to prove the sha is real, merged, still equal to HEAD's file, and hashed right.
+PIN_URL = re.compile(r"https://cdn\.jsdelivr\.net/gh/ssemwal-cdc/claude-sharables@(?P<sha>[^/]*)/(?P<path>.+)")
+# One pass over the markup: a comment or a script/style body is consumed whole, so only a real
+# <script> or <link> tag matches. A quoted attribute value may hold ">" and span lines.
+_ATTRS = r"""(?:[^>"']|"[^"]*"|'[^']*')*"""
+TAGS = re.compile(r"<!--.*?-->|<(?P<raw>script|style)\b(?P<ra>%s)>(?:.*?</(?P=raw)\s*>)?"
+                  r"|<(?P<link>link)\b(?P<la>%s)>" % (_ATTRS, _ATTRS), re.S | re.I)
+ATTR = re.compile(r"""([\w:-]+)\s*(?:=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?""")
+
+
+def _pin_tags(text):
+    """Yield (tag name, attrs span, attrs dict, PIN_URL match) for each real tag that carries a pin."""
+    for m in TAGS.finditer(text):
+        name = (m.group("raw") or m.group("link") or "").lower()
+        if name not in ("script", "link"):
+            continue
+        group = "ra" if m.group("raw") else "la"
+        attrs = {a.lower(): next((v for v in (q, r, u) if v), "") for a, q, r, u in ATTR.findall(m.group(group))}
+        pm = PIN_URL.match(attrs.get("src" if name == "script" else "href", ""))
+        if pm:
+            yield name, m.span(group), attrs, pm
+
+
+def _git(root, *args):
+    """(exit code, stdout bytes). Exit code None when git cannot run."""
+    try:
+        p = subprocess.run(["git", "-C", root, *args], capture_output=True)
+    except OSError:
+        return None, b""
+    return p.returncode, p.stdout
+
+
+def _sri(data):
+    return "sha384-" + base64.b64encode(hashlib.sha384(data).digest()).decode("ascii")
+
+
+def _asset_templates(root):
+    plugins = os.path.join(root, "plugins")
+    for plugin in sorted(os.listdir(plugins)) if os.path.isdir(plugins) else []:
+        for dirpath, _dirs, files in os.walk(os.path.join(plugins, plugin, "skills")):
+            if os.path.basename(dirpath) == "assets":
+                for fn in sorted(files):
+                    if fn.endswith(".html"):
+                        yield os.path.join(dirpath, fn)
+
+
+def _verify_pin(root, where, attrs, pm):
+    """[(state, message)] for one pinned tag. Three states, never a boolean: a clone that cannot
+    answer is unknown, and a shallow clone is the routine case (the shots job checked out shallow)."""
+    sha, path, out = pm.group("sha"), pm.group("path"), []
+    if attrs.get("crossorigin") != "anonymous":
+        out.append(("fail", '%s: crossorigin="anonymous" is missing, so the browser skips the sha384 check' % where))
+    if not re.fullmatch(r"[0-9a-f]{40}", sha):
+        return out + [("fail", "%s: pin %r is not 40 hex characters. A short sha can resolve to another commit." % (where, sha))]
+    shallow = _git(root, "rev-parse", "--is-shallow-repository")[1].strip() == b"true"
+    have = _git(root, "cat-file", "-e", sha + "^{commit}")[0]
+    if have is None or (have != 0 and shallow):
+        return out + [("unknown", "%s: unknown whether pin %s is valid; this clone is shallow or has no git" % (where, sha[:12]))]
+    if have != 0:
+        return out + [("fail", "%s: pin %s does not exist in this repo" % (where, sha))]
+    anc = _git(root, "merge-base", "--is-ancestor", sha, "HEAD")[0]
+    if anc == 1 and not shallow:
+        out.append(("fail", "%s: pin %s is not an ancestor of HEAD, so a fork or unmerged commit could serve it" % (where, sha)))
+    elif anc != 0:
+        out.append(("unknown", "%s: unknown whether pin %s is an ancestor of HEAD" % (where, sha[:12])))
+    rc, pinned = _git(root, "cat-file", "blob", "%s:%s" % (sha, path))
+    if rc != 0:
+        return out + [("fail", "%s: %s does not exist at pin %s" % (where, path, sha))]
+    if _git(root, "cat-file", "blob", "HEAD:" + path) != (0, pinned):
+        out.append(("fail", "%s: %s at HEAD and at pin %s differ. Re-run `shared_blocks.py --pin`." % (where, path, sha)))
+    if _sri(pinned) not in attrs.get("integrity", "").split():
+        out.append(("fail", "%s: integrity is not the sha384 of the stored blob at the pin (want %s)" % (where, _sri(pinned))))
+    return out or [("ok", "%s: pin %s verified" % (where, sha[:12]))]
+
+
+def check_asset_pins(root=REPO):
+    """[(state, message)] over every pinned CDN tag in plugins/*/skills/*/assets/*.html."""
+    results = []
+    for tpl in _asset_templates(root):
+        with open(tpl, encoding="utf-8") as fh:
+            text = fh.read()
+        rel = os.path.relpath(tpl, root).replace(os.sep, "/")
+        for name, _span, attrs, pm in _pin_tags(text):
+            results += _verify_pin(root, "%s <%s>" % (rel, name), attrs, pm)
+    return results
+
+
+def _set_attr(attrs, name, value):
+    pat = re.compile(r"""(\s%s\s*=\s*)(?:"[^"]*"|'[^']*')""" % name, re.I)
+    if pat.search(attrs):
+        return pat.sub(lambda m: '%s"%s"' % (m.group(1), value), attrs, 1)
+    return attrs.rstrip() + ' %s="%s"' % (name, value)
+
+
+def pin_templates(sha, root=REPO):
+    """Write sha, the sha384 of each asset blob at sha, and crossorigin into every pinned tag.
+    Touches no version line; a template with no pinned tag is left byte for byte as it was."""
+    if not re.fullmatch(r"[0-9a-f]{40}", sha):
+        sys.exit("--pin needs a full 40 hex sha, got %r" % sha)
+    written = []
+    for tpl in _asset_templates(root):
+        with open(tpl, encoding="utf-8", newline="") as fh:
+            text = fh.read()
+        edits = []
+        for name, (a, b), attrs, pm in _pin_tags(text):
+            rc, blob = _git(root, "cat-file", "blob", "%s:%s" % (sha, pm.group("path")))
+            if rc != 0:
+                sys.exit("%s is not at %s" % (pm.group("path"), sha))
+            url = attrs["src" if name == "script" else "href"]
+            new = text[a:b].replace(url, url.replace("@" + pm.group("sha") + "/", "@" + sha + "/"))
+            new = _set_attr(_set_attr(new, "integrity", _sri(blob)), "crossorigin", "anonymous")
+            edits.append((a, b, new))
+        for a, b, new in reversed(edits):
+            text = text[:a] + new + text[b:]
+        if edits:
+            with open(tpl, "w", encoding="utf-8", newline="") as fh:
+                fh.write(text)
+            written.append(os.path.relpath(tpl, root).replace(os.sep, "/"))
+    return written
+
 # retired: see actionable-retired/scripts/shared_blocks.cut.py, review-only-mode
 def orphan_canonicals(seen):
     if not os.path.isdir(SHARED):
@@ -502,6 +624,11 @@ def orphan_canonicals(seen):
 
 
 def main():
+    if "--pin" in sys.argv:
+        i = sys.argv.index("--pin")
+        for rel in pin_templates(sys.argv[i + 1] if i + 1 < len(sys.argv) else ""):
+            print("pinned " + rel)
+        return
     sync = "--sync" in sys.argv
     if not sync and "--check" not in sys.argv:
         sys.exit(__doc__)
@@ -515,6 +642,11 @@ def main():
     problems += check_check_registry()
 # retired: see actionable-retired/scripts/shared_blocks.cut.py, review-only-mode
     problems += check_onboarding_page()
+    pinned = check_asset_pins()
+    problems += [m for st, m in pinned if st == "fail"]
+    for st, m in pinned:
+        if st == "unknown":  # a note, never a pass or a fail: a shallow clone cannot answer
+            print("note: " + m)
     if sync:
         for s in synced:
             print("synced " + s)

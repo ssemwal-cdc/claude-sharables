@@ -1,0 +1,4 @@
+# jsdelivr serves the stored blob, and check_asset_pins() in scripts/shared_blocks.py hashes that blob.
+# LF in the checkout keeps core.autocrlf=true from making the working copy differ from what it serves.
+plugins/*/skills/*/assets/*.css eol=lf
+plugins/*/skills/*/assets/*.js eol=lf

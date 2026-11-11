@@ -35,6 +35,10 @@ Contract the builder implements:
 - `shared_blocks.py --pin <sha>` fills every placeholder in a tag, keeps exactly one integrity attribute on
   an unquoted tag, and exits non-zero with "No pinned or placeholder tag found" on a page with no tag.
 - A pin path is URL-decoded: %20 is a space in the file name.
+- A shell tag (placeholder or pinned) whose path is not a file in that shell's own assets directory is
+  refused with "own assets": a path to another plugin's file, or to a missing file.
+- Any @import in an assets .css file is refused with "@import". So is a minified @import"x.css" (no
+  space) in a shell <style>.
 - validate.py runs the pin check: a bad pin makes it exit 1 and name the cause.
 """
 import base64
@@ -502,6 +506,40 @@ def c_pct20(run):
     return repo
 
 
+def c_cross_placeholder(run):
+    """A placeholder tag whose path is plugin q's dashboard.js, in plugin p's shell."""
+    return _pinned(run, "cross-placeholder", lambda r, s: [
+        _script_at(_placeholder(s, _asset("q", JS)), "__PIN_JS_SRI__")])
+
+
+def c_cross_pinned(run):
+    """A correct pin, but to plugin q's dashboard.js, in plugin p's shell."""
+    return _pinned(run, "cross-pinned", lambda r, s: [
+        _script_at(_url(s, _asset("q", JS)), _sri(_blob(r, s, _asset("q", JS))))])
+
+
+def c_missing_placeholder(run):
+    """A placeholder tag whose path names a file that is not in plugin p's assets."""
+    return _pinned(run, "missing-placeholder", lambda r, s: [
+        _script_at(_placeholder(s, _asset("p", "nope.js")), "__PIN_JS_SRI__")])
+
+
+def c_missing_pinned(run):
+    """A pin to a path that is no file at that sha, in plugin p's assets."""
+    return _pinned(run, "missing-pinned", lambda r, s: [
+        _script_at(_url(s, _asset("p", "nope.js")), _sri(b""))])
+
+
+def c_import_minified(run):
+    """A minified @import with no space after the keyword, in a shell's own style body."""
+    return _pinned(run, "import-minified", lambda r, s: ['<style>@import"x.css";</style>'])
+
+
+def c_style_plain(run):
+    """A shell style body with no @import: the control for the minified case."""
+    return _pinned(run, "style-plain", lambda r, s: ["<style>body { margin: 0 }</style>"])
+
+
 # ----------------------------------------------------------------- shallow (unknown, not fail)
 
 def c_shallow(run):
@@ -609,6 +647,23 @@ CASES = [
     ("control: dashboard.js with no CDN URL string passes", _asset_case(
         "js-no-url", _asset("p", JS), 'const note = "loads nothing from a CDN";\nfetch("records.json");\n'),
      ("pass",)),
+    ("placeholder tag on another plugin's dashboard.js is refused (not in this shell's own assets)",
+     c_cross_placeholder, ("refuse", "own assets")),
+    ("pinned tag on another plugin's dashboard.js is refused (not in this shell's own assets)",
+     c_cross_pinned, ("refuse", "own assets")),
+    ("placeholder tag on a missing file is refused (not in this shell's own assets)",
+     c_missing_placeholder, ("refuse", "own assets")),
+    ("pinned tag on a missing file is refused (not in this shell's own assets)",
+     c_missing_pinned, ("refuse", "own assets")),
+    ("dashboard.css with a quoted @import is refused", _asset_case(
+        "css-import-quoted", _asset("p", CSS), '@import "base.css";\nbody { margin: 0 }\n'),
+     ("refuse", "@import")),
+    ("dashboard.css with a url() @import is refused", _asset_case(
+        "css-import-url", _asset("p", CSS), '@import url(base.css);\n'), ("refuse", "@import")),
+    ("control: dashboard.css with no @import passes", _asset_case(
+        "css-plain", _asset("p", CSS), "body { margin: 1px }\n"), ("pass",)),
+    ("minified @import\"x.css\" in a shell style is refused", c_import_minified, ("refuse", "@import")),
+    ("control: a shell style body with no @import passes", c_style_plain, ("pass",)),
     ("shallow clone that cannot read the pinned sha reports unknown, not fail", c_shallow,
      ("unknown",)),
 ]

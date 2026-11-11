@@ -76,13 +76,13 @@ jobs:
         with:
           python-version: '3.x'
 
-      # Pinned to the Playwright version already proved against this repo (F99,
-      # device shots first run), not "latest" — D51, check pins, never share, for
-      # the same reason this repo pins cdnjs libraries.
-      - name: Install Playwright 1.56.1 and its Chromium
+      # Pinned, not "latest" (D51, check pins, never share), for the same reason this
+      # repo pins cdnjs libraries. 1.65.0 is the newest release that supports ubuntu
+      # 26.04, the ubuntu-latest image; 1.56.1 (F99, device shots first run) does not.
+      - name: Install Playwright 1.65.0 and its Chromium
         timeout-minutes: 3
         run: |
-          npm install -g playwright@1.56.1
+          npm install -g playwright@1.65.0
           npx playwright install --with-deps chromium
 
       - name: Capture every screen at 390px, 1200px and 1600px, light and dark

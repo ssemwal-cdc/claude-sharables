@@ -104,7 +104,7 @@ Generated from the frontmatter and the first outcome sentence of every record in
 | D114 | `merge-waits-for-owner` | Every merge waits for the owner | settled | 2026-10-15 | The owner decides what ships to every teammate. |
 | D115 | `parent-rules-win` | The parent CLAUDE.md always wins | settled | 2026-10-15 | One rule has one home, so two copies never disagree. |
 | D116 | `execute-rules-retired` | Execute-mode rules are retired | settled | 2026-10-16 | A reader finds one record for the execute rules. |
-| pending | `pinned-repo-cdn-assets` | Dashboards may load fixed assets from a pinned repo copy | settled | 2026-10-21 | A dashboard stays small enough to render in one read. |
-| pending | `inline-fallback-per-run` | Inline fallback lasts one run | settled | 2026-11-11 | If the CDN fails, a dashboard still renders. |
-| pending | `no-css-import-in-shell` | No CSS import in a shell or an assets stylesheet | settled | 2026-11-11 | A dashboard loads no code that its pin does not name. |
-| pending | `one-pin-per-plugin` | One pin per plugin | settled | 2026-11-11 | A reviewer checks one commit per plugin. |
+| D117 | `pinned-repo-cdn-assets` | Dashboards may load fixed assets from a pinned repo copy | settled | 2026-10-21 | A dashboard stays small enough to render in one read. |
+| D118 | `inline-fallback-per-run` | Inline fallback lasts one run | settled | 2026-11-11 | If the CDN fails, a dashboard still renders. |
+| D119 | `no-css-import-in-shell` | No CSS import in a shell or an assets stylesheet | settled | 2026-11-11 | A dashboard loads no code that its pin does not name. |
+| D120 | `one-pin-per-plugin` | One pin per plugin | settled | 2026-11-11 | A reviewer checks one commit per plugin. |

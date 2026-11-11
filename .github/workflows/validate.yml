@@ -24,8 +24,9 @@ jobs:
           python-version: '3.x'
 
       # Enforces the layout, manifest and doc rules described in CLAUDE.md, plus the
-      # cross-plugin shared-block, cdnjs-pin, template-version and verdict-reachability
-      # checks in scripts/shared_blocks.py.
+      # cross-plugin shared-block, cdnjs-pin, template-version, verdict-reachability and
+      # asset-pin checks. validate.py runs them through collect_problems() in
+      # scripts/shared_blocks.py, the same list `shared_blocks.py --check` runs.
       - name: Validate marketplace, plugins and docs
         run: python3 scripts/validate.py
 

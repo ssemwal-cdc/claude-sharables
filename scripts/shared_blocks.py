@@ -30,7 +30,7 @@ not part of any plugin, so it never ships. Usage:
     python3 scripts/shared_blocks.py --sync     # push canonical into every marked site
     python3 scripts/shared_blocks.py --pin <full sha>   # write the sha and sha384 into each template's CDN tags
 """
-import base64, hashlib, os, re, subprocess, sys
+import base64, hashlib, os, re, subprocess, sys, urllib.parse
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHARED = os.path.join(REPO, "plugins", "_shared")
@@ -495,27 +495,44 @@ def check_check_registry():
 
 
 # A pinned asset is fetched from jsdelivr at a commit of this repo. Code at a sha never changes, so
-# the check only has to prove the sha is real, merged, still equal to HEAD's file, and hashed right.
-PIN_URL = re.compile(r"https://cdn\.jsdelivr\.net/gh/ssemwal-cdc/claude-sharables@(?P<sha>[^/]*)/(?P<path>.+)")
-# One pass over the markup: a comment or a script/style body is consumed whole, so only a real
-# <script> or <link> tag matches. A quoted attribute value may hold ">" and span lines.
+# the check proves the sha is real, merged, still equal to HEAD's file, and hashed right. It also
+# refuses any other load in a template shell (D95, a skill never shapes its way past a filter): a
+# load the check does not recognise would be the hole.
+PLACEHOLDER = "__PIN_SHA__"  # the split lane's contract: publish inlines while a tag holds __PIN_
+SRI_PLACEHOLDER = {"link": "__PIN_CSS_SRI__", "script": "__PIN_JS_SRI__"}
+PIN_URL = re.compile(r"https://cdn\.jsdelivr\.net/gh/ssemwal-cdc/claude-sharables@(?P<sha>[^/]+)/(?P<path>.+)")
+CDN_URL = re.compile(r"""(?:https?:)?//(?:cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com|esm\.sh)(?![\w-])"""
+                     r"""(?:[/:?#][^\s"'`)<>\\]*)?""", re.I)
+CSS_IMPORT = re.compile(r"""@import\s+(?:url\(\s*)?["']?([^"')\s;]+)""", re.I)
+# One tag pattern for every tag, so a quoted attribute value (which may hold "<!--" or ">") is never
+# read as markup. A comment only counts where a tag could start.
 _ATTRS = r"""(?:[^>"']|"[^"]*"|'[^']*')*"""
-TAGS = re.compile(r"<!--.*?-->|<(?P<raw>script|style)\b(?P<ra>%s)>(?:.*?</(?P=raw)\s*>)?"
-                  r"|<(?P<link>link)\b(?P<la>%s)>" % (_ATTRS, _ATTRS), re.S | re.I)
+TAG = re.compile(r"<!--.*?-->|<(?P<n>[A-Za-z][\w:-]*)(?P<a>%s)>" % _ATTRS, re.S)
 ATTR = re.compile(r"""([\w:-]+)\s*(?:=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?""")
 
 
-def _pin_tags(text):
-    """Yield (tag name, attrs span, attrs dict, PIN_URL match) for each real tag that carries a pin."""
-    for m in TAGS.finditer(text):
-        name = (m.group("raw") or m.group("link") or "").lower()
-        if name not in ("script", "link"):
+def _scan(text):
+    """Yield ("tag", name, attrs span, attrs dict) for each <script> and <link>, and
+    ("body", name, text) for each inline <script> or <style> body. Comments are skipped."""
+    pos = 0
+    while True:
+        m = TAG.search(text, pos)
+        if not m:
+            return
+        pos, name = m.end(), (m.group("n") or "").lower()
+        if name not in ("script", "style", "link"):
             continue
-        group = "ra" if m.group("raw") else "la"
-        attrs = {a.lower(): next((v for v in (q, r, u) if v), "") for a, q, r, u in ATTR.findall(m.group(group))}
-        pm = PIN_URL.match(attrs.get("src" if name == "script" else "href", ""))
-        if pm:
-            yield name, m.span(group), attrs, pm
+        attrs = {}
+        for a, q, r, u in ATTR.findall(m.group("a")):
+            attrs.setdefault(a.lower(), next((v for v in (q, r, u) if v), ""))
+        if name != "style":
+            yield "tag", name, m.span("a"), attrs
+        if name != "link":
+            end = re.compile(r"</%s\s*>" % name, re.I).search(text, pos)
+            body = text[pos:end.start() if end else len(text)]
+            pos = end.end() if end else len(text)
+            if body.strip():
+                yield "body", name, body
 
 
 def _git(root, *args):
@@ -531,24 +548,33 @@ def _sri(data):
     return "sha384-" + base64.b64encode(hashlib.sha384(data).digest()).decode("ascii")
 
 
-def _asset_templates(root):
+def _asset_files(root):
     plugins = os.path.join(root, "plugins")
     for plugin in sorted(os.listdir(plugins)) if os.path.isdir(plugins) else []:
         for dirpath, _dirs, files in os.walk(os.path.join(plugins, plugin, "skills")):
             if os.path.basename(dirpath) == "assets":
                 for fn in sorted(files):
-                    if fn.endswith(".html"):
+                    if fn.endswith((".html", ".css", ".js")):
                         yield os.path.join(dirpath, fn)
 
 
-def _verify_pin(root, where, attrs, pm):
-    """[(state, message)] for one pinned tag. Three states, never a boolean: a clone that cannot
-    answer is unknown, and a shallow clone is the routine case (the shots job checked out shallow)."""
-    sha, path, out = pm.group("sha"), pm.group("path"), []
-    if attrs.get("crossorigin") != "anonymous":
+def _check_url(root, where, url, tag=None, attrs=None):
+    """[(state, message)] for one load URL in a shell. tag is "script" or "link" for a tag, whose
+    integrity and crossorigin are checked too. Three states, never a boolean: a clone that cannot
+    answer is unknown, and a shallow clone is the routine case."""
+    pm, out = PIN_URL.match(url), []
+    if not pm:
+        return [("fail", "%s: %r is not the pinned form https://cdn.jsdelivr.net/gh/ssemwal-cdc/"
+                         "claude-sharables@<40 hex>/<path>. Nothing else may load." % (where, url))]
+    sha, path = pm.group("sha"), urllib.parse.unquote(pm.group("path"))
+    if tag and (attrs or {}).get("crossorigin") != "anonymous":
         out.append(("fail", '%s: crossorigin="anonymous" is missing, so the browser skips the sha384 check' % where))
+    if sha == PLACEHOLDER:
+        if tag and attrs.get("integrity") != SRI_PLACEHOLDER[tag]:
+            out.append(("fail", "%s: placeholder pin with integrity other than %s" % (where, SRI_PLACEHOLDER[tag])))
+        return out or [("ok", "%s: unpinned; publish inlines" % where)]
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
-        return out + [("fail", "%s: pin %r is not 40 hex characters. A short sha can resolve to another commit." % (where, sha))]
+        return out + [("fail", "%s: pin %r is not 40 hex characters. A short sha or a ref can move." % (where, sha))]
     shallow = _git(root, "rev-parse", "--is-shallow-repository")[1].strip() == b"true"
     have = _git(root, "cat-file", "-e", sha + "^{commit}")[0]
     if have is None or (have != 0 and shallow):
@@ -565,55 +591,111 @@ def _verify_pin(root, where, attrs, pm):
         return out + [("fail", "%s: %s does not exist at pin %s" % (where, path, sha))]
     if _git(root, "cat-file", "blob", "HEAD:" + path) != (0, pinned):
         out.append(("fail", "%s: %s at HEAD and at pin %s differ. Re-run `shared_blocks.py --pin`." % (where, path, sha)))
-    if _sri(pinned) not in attrs.get("integrity", "").split():
+    if tag and _sri(pinned) not in attrs.get("integrity", "").split():
         out.append(("fail", "%s: integrity is not the sha384 of the stored blob at the pin (want %s)" % (where, _sri(pinned))))
     return out or [("ok", "%s: pin %s verified" % (where, sha[:12]))]
 
 
+def _tag_url(name, attrs):
+    return attrs.get("src" if name == "script" else "href")
+
+
 def check_asset_pins(root=REPO):
-    """[(state, message)] over every pinned CDN tag in plugins/*/skills/*/assets/*.html."""
+    """[(state, message)] over plugins/*/skills/*/assets. In an .html shell every script src, link href,
+    CSS @import and CDN URL string must be the pinned form or the placeholder form. In a .css or .js
+    asset no CDN URL may appear: the fixed code never loads more code."""
     results = []
-    for tpl in _asset_templates(root):
-        with open(tpl, encoding="utf-8") as fh:
+    for path in _asset_files(root):
+        with open(path, encoding="utf-8") as fh:
             text = fh.read()
-        rel = os.path.relpath(tpl, root).replace(os.sep, "/")
-        for name, _span, attrs, pm in _pin_tags(text):
-            results += _verify_pin(root, "%s <%s>" % (rel, name), attrs, pm)
+        rel = os.path.relpath(path, root).replace(os.sep, "/")
+        if not path.endswith(".html"):
+            results += [("fail", "%s: loads %s from a CDN; an asset must not load more code" % (rel, u.group(0)))
+                        for u in CDN_URL.finditer(text)]
+            continue
+        for kind, name, *rest in _scan(text):
+            if kind == "tag":
+                url = _tag_url(name, rest[1])
+                if url is not None and not url.startswith("data:"):
+                    results += _check_url(root, "%s <%s>" % (rel, name), url, name, rest[1])
+                continue
+            urls = [u for u in CSS_IMPORT.findall(rest[0]) if name == "style" and not u.startswith("data:")]
+            urls += [u.group(0) for u in CDN_URL.finditer(rest[0]) if u.group(0) not in urls]
+            for u in urls:
+                results += _check_url(root, "%s inline <%s>" % (rel, name), u)
     return results
 
 
 def _set_attr(attrs, name, value):
-    pat = re.compile(r"""(\s%s\s*=\s*)(?:"[^"]*"|'[^']*')""" % name, re.I)
+    """Set one attribute in an attrs string, quoted, unquoted or bare, without adding a second."""
+    pat = re.compile(r"""(\s)%s(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?(?=[\s/]|$)""" % name, re.I)
     if pat.search(attrs):
-        return pat.sub(lambda m: '%s"%s"' % (m.group(1), value), attrs, 1)
+        return pat.sub(lambda m: '%s%s="%s"' % (m.group(1), name, value), attrs, 1)
     return attrs.rstrip() + ' %s="%s"' % (name, value)
 
 
 def pin_templates(sha, root=REPO):
-    """Write sha, the sha384 of each asset blob at sha, and crossorigin into every pinned tag.
-    Touches no version line; a template with no pinned tag is left byte for byte as it was."""
+    """Write sha, the sha384 of each asset blob at sha, and crossorigin into every pinned or
+    placeholder tag. Touches no version line. Exits non-zero on zero tags or any tag it skips,
+    and writes nothing then. Returns the pinned count."""
     if not re.fullmatch(r"[0-9a-f]{40}", sha):
         sys.exit("--pin needs a full 40 hex sha, got %r" % sha)
-    written = []
-    for tpl in _asset_templates(root):
-        with open(tpl, encoding="utf-8", newline="") as fh:
+    plan, skipped = [], []
+    for path in _asset_files(root):
+        if not path.endswith(".html"):
+            continue
+        with open(path, encoding="utf-8", newline="") as fh:
             text = fh.read()
         edits = []
-        for name, (a, b), attrs, pm in _pin_tags(text):
-            rc, blob = _git(root, "cat-file", "blob", "%s:%s" % (sha, pm.group("path")))
+        for kind, name, *rest in _scan(text):
+            url = _tag_url(name, rest[1]) if kind == "tag" else None
+            if not url or url.startswith("data:"):
+                continue
+            pm = PIN_URL.match(url)
+            if not pm:
+                skipped.append("%s <%s> %r" % (os.path.relpath(path, root), name, url))
+                continue
+            rc, blob = _git(root, "cat-file", "blob", "%s:%s" % (sha, urllib.parse.unquote(pm.group("path"))))
             if rc != 0:
-                sys.exit("%s is not at %s" % (pm.group("path"), sha))
-            url = attrs["src" if name == "script" else "href"]
-            new = text[a:b].replace(url, url.replace("@" + pm.group("sha") + "/", "@" + sha + "/"))
+                skipped.append("%s <%s>: %s is not at %s" % (os.path.relpath(path, root), name, pm.group("path"), sha))
+                continue
+            new = _set_attr(text[slice(*rest[0])], "src" if name == "script" else "href",
+                            url.replace("@" + pm.group("sha") + "/", "@" + sha + "/", 1))
             new = _set_attr(_set_attr(new, "integrity", _sri(blob)), "crossorigin", "anonymous")
-            edits.append((a, b, new))
-        for a, b, new in reversed(edits):
+            edits.append((rest[0], new))
+        plan.append((path, text, edits))
+    if skipped or not any(e for _p, _t, e in plan):
+        sys.exit("--pin wrote nothing. " + ("Skipped: " + "; ".join(skipped) if skipped else "No pinned or placeholder tag found."))
+    count = 0
+    for path, text, edits in plan:
+        for (a, b), new in reversed(edits):
             text = text[:a] + new + text[b:]
         if edits:
-            with open(tpl, "w", encoding="utf-8", newline="") as fh:
+            with open(path, "w", encoding="utf-8", newline="") as fh:
                 fh.write(text)
-            written.append(os.path.relpath(tpl, root).replace(os.sep, "/"))
-    return written
+            count += len(edits)
+            print("pinned %s" % os.path.relpath(path, root).replace(os.sep, "/"))
+    return count
+
+
+def collect_problems(sync=False):
+    """The one list of shared-block checks. --check and validate.py both call it, so a check added
+    here runs in CI. Returns (problems, synced, seen, cdnjs pins, notes)."""
+    problems, synced, seen = run(sync=sync)
+    problems += ["plugins/_shared/%s is not referenced by any plugin file" % n for n in orphan_canonicals(seen)]
+    pin_problems, pins = check_pins()
+    problems += pin_problems
+    problems += check_template_versions()
+    problems += check_verdict_vocabulary()
+    problems += check_check_registry()
+    problems += check_capability_verdicts()
+    # retired: see actionable-retired/scripts/shared_blocks.cut.py, review-only-mode
+    problems += check_onboarding_page()
+    results = check_asset_pins()
+    problems += [m for st, m in results if st == "fail"]
+    # unknown is a note, never a pass or a fail: a shallow clone cannot answer
+    notes = [m for st, m in results if st == "unknown" or "unpinned" in m]
+    return problems, synced, seen, pins, notes
 
 # retired: see actionable-retired/scripts/shared_blocks.cut.py, review-only-mode
 def orphan_canonicals(seen):
@@ -626,27 +708,14 @@ def orphan_canonicals(seen):
 def main():
     if "--pin" in sys.argv:
         i = sys.argv.index("--pin")
-        for rel in pin_templates(sys.argv[i + 1] if i + 1 < len(sys.argv) else ""):
-            print("pinned " + rel)
+        print("pinned %d tag(s)" % pin_templates(sys.argv[i + 1] if i + 1 < len(sys.argv) else ""))
         return
     sync = "--sync" in sys.argv
     if not sync and "--check" not in sys.argv:
         sys.exit(__doc__)
-    problems, synced, seen = run(sync=sync)
-    for name in orphan_canonicals(seen):
-        problems.append("plugins/_shared/%s is not referenced by any plugin file" % name)
-    pin_problems, pins = check_pins()
-    problems += pin_problems
-    problems += check_template_versions()
-    problems += check_verdict_vocabulary()
-    problems += check_check_registry()
-# retired: see actionable-retired/scripts/shared_blocks.cut.py, review-only-mode
-    problems += check_onboarding_page()
-    pinned = check_asset_pins()
-    problems += [m for st, m in pinned if st == "fail"]
-    for st, m in pinned:
-        if st == "unknown":  # a note, never a pass or a fail: a shallow clone cannot answer
-            print("note: " + m)
+    problems, synced, seen, pins, notes = collect_problems(sync=sync)
+    for n in notes:
+        print("note: " + n)
     if sync:
         for s in synced:
             print("synced " + s)

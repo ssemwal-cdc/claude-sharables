@@ -9,7 +9,10 @@ if not os.path.exists(LOG) and os.path.exists(_LEGACY):
     except OSError:
         LOG = _LEGACY  # cloud-synced folders can refuse the move; keep working
 TPL = os.path.join(HERE, "dashboard_template.html")
-OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "index.html")
+# --inline is a flag for this one run and is never stored, so the next run tries the CDN again.
+INLINE = "--inline" in sys.argv[1:]
+_ARGS = [a for a in sys.argv[1:] if a != "--inline"]
+OUT = _ARGS[0] if _ARGS else os.path.join(HERE, "index.html")
 
 S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 

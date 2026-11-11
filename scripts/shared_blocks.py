@@ -267,18 +267,36 @@ def check_verdict_vocabulary():
             assets = os.path.join(skills, skill, "assets")
             script = os.path.join(assets, "publish_dashboard.py")
             tpl = os.path.join(assets, "dashboard_template.html")
-            if not (os.path.isfile(script) and os.path.isfile(tpl)):
+            if not os.path.isfile(tpl):
+                continue
+            js = os.path.join(assets, "dashboard.js")
+            with open(tpl, encoding="utf-8") as fh:
+                is_shell = "data-dash=" in fh.read()
+            if is_shell and not os.path.isfile(js):
+                # A shell (it names its asset tags with data-dash) holds no page code. A skipped
+                # read would pass a page whose every branch is unchecked, so a missing
+                # dashboard.js is a failure.
+                problems.append(
+                    "%s/%s: dashboard.js is missing beside dashboard_template.html. The shell "
+                    "carries no page code, so its verdict branches cannot be checked. Restore "
+                    "dashboard.js." % (entry, skill))
+            if not os.path.isfile(script):
                 continue
             with open(script, encoding="utf-8") as fh:
                 m = VERDICT_ALLOWLIST.search(fh.read())
             if not m:
                 continue
             allowed = set(re.findall(r'"([a-z-]+)"', m.group(1)))
-            with open(tpl, encoding="utf-8") as fh:
-                tested = set(VERDICT_TEST.findall(fh.read()))
+            # The page's branches live in dashboard.js since the split. The shell is still read,
+            # because a verdict test written into it would run just the same.
+            tested = set()
+            for part in (tpl, js):
+                if os.path.isfile(part):
+                    with open(part, encoding="utf-8") as fh:
+                        tested |= set(VERDICT_TEST.findall(fh.read()))
             for bad in sorted(tested - allowed):
                 problems.append(
-                    "%s/%s: dashboard_template.html branches on verdict %r, which "
+                    "%s/%s: the dashboard page (template or dashboard.js) branches on verdict %r, which "
                     "publish_dashboard.py's VERDICTS allowlist (%s) can never emit - that "
                     "branch is unreachable. Either add the verdict to the allowlist and to "
                     "SKILL.md's Step 6 vocabulary, or delete the branch."

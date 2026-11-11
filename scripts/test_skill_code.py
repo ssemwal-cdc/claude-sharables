@@ -99,11 +99,22 @@ Covered:
                            accepts it, the page gives it its own row class, tile and PO
                            warning, sorts it between flagged and clear, and both shared
                            verdict checks see it.
+ 25. Guard banners       - the integrity guard in each shell, run on a virtual clock. A whole
+                           inline page draws no banner; a page whose code never sets
+                           __dashOK gets one after 1.5 s; a CDN tag error, a slow CDN, a cut-off
+                           page and both loaded with the code failed each draw their own banner.
+                           A banner hides the page body and names no network fault unless the
+                           CDN is the cause.
+ 26. Guard late paths    - a CDN tag that fails before the guard starts draws its banner at
+                           once; a timeout banner clears and .wrap returns when the code later
+                           sets __dashOK, inline and CDN.
+ 27. Shell assets        - shared_blocks' verdict check fails a shell (data-dash= tags) that
+                           has no dashboard.js beside it.
 
 Usage:  python3 scripts/test_skill_code.py
-Needs node on PATH for 1-3, 16, 18 and 21; those are skipped with a notice if it is missing.
+Needs node on PATH for 1-3, 16, 18, 21 and 25; those are skipped with a notice if it is missing.
 """
-import ast, json, os, re, shutil, subprocess, sys, tempfile
+import ast, atexit, json, os, re, shutil, subprocess, sys, tempfile, time, uuid
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NS = os.path.join(REPO, "plugins/netsuite-approval-review/skills/"
@@ -142,10 +153,43 @@ def py_block(path, needle):
     return blocks[0]
 
 
+# Temp files follow test-temp-standard: one temp root per repo, one run folder per test run
+# named <pid>-<UUID>, and every helper takes its folder from the run folder. The first request
+# of a run removes sibling run folders older than a day; newer ones belong to parallel runs.
+TEMP_ROOT = os.path.join(tempfile.gettempdir(), "claude-sharables-tests")
+DAY = 86400
+_RUN = None
+
+
+def _sweep_old_runs(root, own, now, max_age=DAY):
+    """Remove the sibling run folders under `root` that are older than `max_age` seconds at
+    `now`. The clock is an argument, so a test fixes it. `own` is this run's folder name."""
+    if not os.path.isdir(root):
+        return
+    for name in os.listdir(root):
+        p = os.path.join(root, name)
+        if name == own or not re.fullmatch(r"\d+-[0-9a-f-]{36}", name) or not os.path.isdir(p):
+            continue
+        if now - os.path.getmtime(p) > max_age:
+            shutil.rmtree(p, ignore_errors=True)
+
+
+def _run_folder():
+    global _RUN
+    if _RUN is None:
+        own = "%d-%s" % (os.getpid(), uuid.uuid4())
+        os.makedirs(TEMP_ROOT, exist_ok=True)
+        _sweep_old_runs(TEMP_ROOT, own, time.time())
+        _RUN = os.path.join(TEMP_ROOT, own)
+        os.makedirs(_RUN)
+        atexit.register(shutil.rmtree, _RUN, True)
+    return _RUN
+
+
 def run_node(script):
-    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
+    p = os.path.join(_run_folder(), "node-%s.js" % uuid.uuid4().hex)
+    with open(p, "w", encoding="utf-8") as f:
         f.write(script)
-        p = f.name
     try:
         r = subprocess.run(["node", p], capture_output=True, text=True, timeout=60)
         return r.returncode, r.stdout.strip(), r.stderr.strip()
@@ -176,15 +220,38 @@ def extract_fn(src, name):
     sys.exit("ABORT: unbalanced braces extracting %r" % name)
 
 
+# A published page is built from three files: the shell (markup, data block and guard), its
+# stylesheet and its script. publish_dashboard.py inlines the stylesheet and the script, so a
+# test that publishes copies all four, and a text read names the file that holds the thing.
+ASSET_FILES = ("publish_dashboard.py", "dashboard_template.html", "dashboard.css", "dashboard.js")
+
+
+def _copy_assets(root, d):
+    for f in ASSET_FILES:
+        shutil.copy(os.path.join(root, "assets", f), d)
+
+
+def _asset(root, name):
+    return open(os.path.join(root, "assets", name), encoding="utf-8").read()
+
+
+def _page_src(root):
+    """The shell, stylesheet and script together: every byte a published page is built from.
+    Only a negative check reads this, so a string that moved to another file still counts."""
+    return "\n".join(_asset(root, f) for f in ("dashboard_template.html", "dashboard.css",
+                                               "dashboard.js"))
+
+
 def render_item_row(tpl_path, item, fn_names=("esc", "money", "daysSince", "dueText",
                                                "recUrl", "itemRow"), call=None):
-    """Render one dashboard row with the template's own itemRow() and its real
+    """Render one dashboard row with the page's own itemRow() and its real
     dependencies (esc, money, daysSince, dueText, recUrl by default), executed by node.
-    Returns the HTML string itemRow() actually produced - not a guess from the source
-    text. `fn_names` and `call` adapt this same harness to a template whose itemRow()
-    takes a different helper set or a second argument (NetSuite's classify()) - the
-    harness, and the fact that it drives the template's own code, do not change."""
-    src = open(tpl_path, encoding="utf-8").read()
+    The functions are read from the dashboard.js beside `tpl_path`, the file that holds
+    the page's code since the split. Returns the HTML string itemRow() actually produced -
+    not a guess from the source text. `fn_names` and `call` adapt this same harness to a
+    page whose itemRow() takes a different helper set or a second argument (NetSuite's
+    classify()) - the harness, and the fact that it drives the page's own code, do not change."""
+    src = open(os.path.join(os.path.dirname(tpl_path), "dashboard.js"), encoding="utf-8").read()
     fns = "\n".join(extract_fn(src, n) for n in fn_names)
     call_expr = call or ("itemRow(%s)" % json.dumps(item))
     harness = ("""
@@ -502,9 +569,7 @@ def test_read_docx():
 def test_cco_demotion():
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(PC, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(PC, d)
         log = {
             "lastCompletedRun": "2026-08-13", "lastRunTime": "2026-08-13 11:00",
             "suppressed": 0, "config": {"company": "0", "icrToolId": "0"},
@@ -566,9 +631,7 @@ def test_commitment_kind():
     """
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(PC, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(PC, d)
         base = {"projectId": "9", "kind": "com", "project": "A - B", "counterparty": "X",
                 "amount": 1000, "step": "Financial Analyst Review",
                 "responses": ["Approve", "Revise and Resubmit"], "verdict": "clear",
@@ -639,9 +702,7 @@ def test_template_version():
     # lag is the layout - which is the whole reason this warns instead of exiting.
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(NS, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(NS, d)
         tpl_path = os.path.join(d, "dashboard_template.html")
         tpl = open(tpl_path, encoding="utf-8").read()
         open(tpl_path, "w", encoding="utf-8").write(
@@ -821,30 +882,33 @@ def test_dashboard_view():
     comparator that is not a valid comparator, and a sticky rule with no room to travel."""
     for label, root, key, oldkey in (("netsuite", NS, "ns_view_v2", "ns_view_v1"),
                                      ("procore",  PC, "pc_view_v3", "pc_view_v2")):
-        tpl = open(os.path.join(root, "assets", "dashboard_template.html"), encoding="utf-8").read()
+        shell = _asset(root, "dashboard_template.html")
+        css = _asset(root, "dashboard.css")
+        js = _asset(root, "dashboard.js")
+        page = _page_src(root)
 
-        m = re.search(r"var DEFV=\{sort:\"(\w+)\"", tpl)
+        m = re.search(r"var DEFV=\{sort:\"(\w+)\"", js)
         check("%s: default sort is newest" % label, bool(m) and m.group(1) == "newest",
               "found %s" % (m.group(1) if m else "no DEFV"))
 
         # A new default that ships under the old storage key reaches nobody who has ever
         # touched the toolbar - their stored view simply overrides it, for good.
-        check("%s: view key was bumped with the default" % label, 'VKEY="%s"' % key in tpl)
+        check("%s: view key was bumped with the default" % label, 'VKEY="%s"' % key in js)
         check("%s: the previous view key is migrated, not dropped" % label,
-              'OLDVKEY="%s"' % oldkey in tpl and "delete sv.sort" in tpl)
+              'OLDVKEY="%s"' % oldkey in js and "delete sv.sort" in js)
 
         # Returning 1 for both orderings when both dates are absent is not a valid
         # comparator; an engine may produce any order from it.
         check("%s: the date comparator handles both-null" % label,
-              "if(ad==null&&bd==null)return 0;" in tpl)
+              "if(ad==null&&bd==null)return 0;" in js)
 
         # retired: see actionable-retired/scripts/test_skill_code.cut.py, review-only-mode
-        # Execute mode is gone, so neither template may carry a decision control or the
+        # Execute mode is gone, so no part of the page may carry a decision control or the
         # batched bar those controls fed. review-only-mode, execute mode retired.
         check("%s: no per-item mark control survives" % label,
-              'onclick="mark(' not in tpl, "found onclick=\"mark(")
+              'onclick="mark(' not in page, "found onclick=\"mark(")
         check("%s: no execute bar survives" % label,
-              'id="bar"' not in tpl, 'found id="bar"')
+              'id="bar"' not in page, 'found id="bar"')
 
         # ---- the floating header ------------------------------------------------------
         # The frame is sized to its own content and the HOST scrolls, so nothing in CSS can
@@ -854,36 +918,36 @@ def test_dashboard_view():
         # ancestor viewports across the cross-origin boundary. These assertions pin the
         # mechanism; the positions themselves need a browser (scripts/measure_float.js).
         check("%s: the floating header and its sentinel are in the markup" % label,
-              'id="floathdr"' in tpl and 'id="bandsen"' in tpl)
+              'id="floathdr"' in shell and 'id="bandsen"' in shell)
         check("%s: the floating header has a containing block to be placed in" % label,
-              ".wrap{position:relative}" in tpl and "#floathdr{position:absolute" in tpl)
-        m_float = re.search(r"#floathdr\{[^}]*\}", tpl)
+              ".wrap{position:relative}" in css and "#floathdr{position:absolute" in css)
+        m_float = re.search(r"#floathdr\{[^}]*\}", css)
         check("%s: the floating header is NOT sticky - it has nowhere to travel" % label,
               bool(m_float) and "sticky" not in m_float.group(0) and "fixed" not in m_float.group(0))
 
         # A scroll listener is the obvious-looking way to do this and it is dead code here:
         # this document never scrolls, so the event never fires and the bar never moves.
         check("%s: the band is not tracked by a scroll event" % label,
-              'addEventListener("scroll"' not in tpl and "onscroll" not in tpl)
+              'addEventListener("scroll"' not in page and "onscroll" not in page)
 
         # One full-height sentinel is the trap. Thresholds are ratios, so a 700px viewport
         # over a 4,000px sentinel stays at 17% however far you scroll and no threshold is
         # ever crossed - observed at 4 callbacks for a whole page, with a stale band at
         # three of six offsets. Contiguous tiles are what make the top edge readable.
         check("%s: the sentinel is a tiled column, not one full-height element" % label,
-              "BAND_TILE" in tpl and "bandBuild" in tpl and "sen.appendChild(t)" in tpl)
+              "BAND_TILE" in js and "bandBuild" in js and "sen.appendChild(t)" in js)
         check("%s: the observer gets a threshold list, not a single ratio" % label,
-              "for(var i=0;i<=20;i++)th.push(i/20)" in tpl and "{threshold:th}" in tpl)
+              "for(var i=0;i<=20;i++)th.push(i/20)" in js and "{threshold:th}" in js)
 
         # Filtering the queue changes the page height. Tiles that stopped short of the new
         # bottom read as "off screen" down there, and the bar would vanish mid-queue.
         check("%s: re-tiling is wired to the page's height, not to a render path" % label,
-              "new ResizeObserver(function(){bandBuild()}).observe(" in tpl)
+              "new ResizeObserver(function(){bandBuild()}).observe(" in js)
 
         # The bar duplicates controls that are already in the page, so it is out of the tab
         # order and hidden from screen readers rather than announced twice.
         check("%s: the floating bar is a visual duplicate only" % label,
-              'id="floathdr" aria-hidden="true"' in tpl and 'tabindex="-1"' in tpl)
+              'id="floathdr" aria-hidden="true"' in shell and 'tabindex="-1"' in js)
 
 
 def test_po_identity_rules():
@@ -938,8 +1002,8 @@ def test_po_line():
     """The dashboard must keep the three PO states distinct. Rendering an
     `unlinked` or `failed` PO the same way as a `linked` one would present an
     unconfirmed PO as confirmed - the same misfile the skill just removed."""
-    tpl = open(os.path.join(NS, "assets", "dashboard_template.html"), encoding="utf-8").read()
-    m = re.search(r"(function poLine\(it\)\{.*?\n\})", tpl, re.S)
+    js = _asset(NS, "dashboard.js")
+    m = re.search(r"(function poLine\(it\)\{.*?\n\})", js, re.S)
     if not m:
         sys.exit("ABORT: poLine() not found in the NetSuite dashboard template. This "
                  "test extracts it from the template on purpose - if it moved, fix "
@@ -985,9 +1049,7 @@ def test_custom_tool_subtype():
     """
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(PC, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(PC, d)
         base = {"projectId": "9", "kind": "icr", "project": "A - B", "counterparty": "X",
                 "amount": 1000, "step": "Cost Gate", "responses": ["Yes", "Reject"],
                 "verdict": "clear", "head": "h", "facts": ["f"], "detail": "d"}
@@ -1052,8 +1114,8 @@ def test_custom_tool_subtype():
               {k: items[k]["toolId"] for k in items})
 
         # The template must read the item's tool id, not only the config-level floor.
-        tpl = open(os.path.join(d, "dashboard_template.html"), encoding="utf-8").read()
-        rec = tpl[tpl.index("function recUrl"):]
+        js = open(os.path.join(d, "dashboard.js"), encoding="utf-8").read()
+        rec = js[js.index("function recUrl"):]
         rec = rec[:rec.index("\n}")]
         check("subtype: recUrl prefers the item's own tool id", "it.toolId" in rec)
         check("subtype: recUrl returns no link rather than a wrong one",
@@ -1071,9 +1133,7 @@ def test_tied_verdict():
     """
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(PC, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(PC, d)
         log = {
             "lastCompletedRun": "2026-09-23", "lastRunTime": "2026-09-23 09:00",
             "suppressed": 0, "config": {"company": "0", "icrToolId": "0"},
@@ -1123,7 +1183,11 @@ def _render_page(index_html, view_sort=None):
     ({element id: innerHTML}, [wrapper ids in markup order]). `view_sort` stores that sort in
     the page's saved view (NetSuite's `ns_view_v2`), so a test can pick the verdict sort."""
     text = open(index_html, encoding="utf-8").read()
-    script = re.findall(r"<script>(.*?)</script>", text, re.S)[-1]
+    # The page's scripts are the guard, the data block and the code. The code reads REVIEW from
+    # the data block, so the two run together, in that order. The guard is not needed to render.
+    scripts = re.findall(r"<script>(.*?)</script>", text, re.S)
+    data = [s for s in scripts if "/*__REVIEW_DATA__*/" in s][-1]
+    script = data + "\n" + scripts[-1]
     order = re.findall(r'<div id="(rows|\w+wrap)"', text)
     stored = "null" if view_sort is None else json.dumps(json.dumps({"sort": view_sort}))
     ls_line = ("var localStorage = {getItem(k){return k===\"ns_view_v2\"?" + stored +
@@ -1139,9 +1203,12 @@ function el(id){ var e = {style:{}, classList:{add(){},remove(){},toggle(){}}, v
   return e; }
 var cache = {};
 var document = {getElementById(id){return cache[id]||(cache[id]=el(id))}, body: el("body"),
+  documentElement: el("html"),
   addEventListener(){}, querySelector(){return el("q")}, querySelectorAll(){return []},
   createElement(){return el("c")}};
 var window = {}; var setInterval = function(){return 0}; var setTimeout = function(){return 0};
+// The code's last line probes --dash-css on the stylesheet; the stub answers that it is applied.
+var getComputedStyle = function(){ return {getPropertyValue(){ return "1"; }}; };
 """ + ls_line + script + """
 console.log(JSON.stringify(out));
 """
@@ -1330,17 +1397,20 @@ def _ns_rows(rows_html):
 
 
 def _render_ns_items(items, view_sort="verdict"):
-    """Inject `items` into the NetSuite template's data block (the same shape publish writes),
-    then run the page's own script through _render_page under the saved sort."""
-    tpl = open(os.path.join(NS, "assets", "dashboard_template.html"), encoding="utf-8").read()
+    """Inject `items` into the NetSuite shell's data block (the same shape publish writes), inline
+    the stylesheet and script the way publish does, then run the page's own code through
+    _render_page under the saved sort."""
+    tpl = _asset(NS, "dashboard_template.html")
     a = tpl.index("/*__REVIEW_DATA__*/") + len("/*__REVIEW_DATA__*/")
     b = tpl.index("/*__END__*/")
     payload = {"lastRun": "2026-10-12 09:00", "lastRunISO": "",
                "config": {"account": "1"}, "items": items}
+    text = _load_publish(NS, "ns_render").fill_assets(
+        tpl[:a] + json.dumps(payload) + tpl[b:], True)
     d = tempfile.mkdtemp()
     try:
         page = os.path.join(d, "index.html")
-        open(page, "w", encoding="utf-8").write(tpl[:a] + json.dumps(payload) + tpl[b:])
+        open(page, "w", encoding="utf-8").write(text)
         return _render_page(page, view_sort=view_sort)
     finally:
         shutil.rmtree(d, ignore_errors=True)
@@ -1452,8 +1522,7 @@ def test_history_open_warning_not_clipped():
          "po": "", "poWarn": long_warn, "poRef": "", "poLink": "", "detail": "d", "att": ""}])
     rows = _ns_rows(secs.get("rows", ""))
     seg = {k: s for k, _, s in rows}.get("701", "")
-    tpl = open(os.path.join(NS, "assets", "dashboard_template.html"), encoding="utf-8").read()
-    clamped = set(_NS_WARN_CLAMP.findall(tpl))
+    clamped = set(_NS_WARN_CLAMP.findall(_asset(NS, "dashboard.css")))
     span = re.search(_NS_SPAN % "701", seg)
     span_classes = set(span.group(1).split()) if span else set()
     check("history-open unclipped: the warning text is rendered in full",
@@ -1514,9 +1583,7 @@ def test_carried_attachments():
     """
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(PC, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(PC, d)
         log = {
             "lastCompletedRun": "2026-09-24", "lastRunTime": "2026-09-24 09:00",
             "suppressed": 0, "config": {"company": "0", "icrToolId": "0"},
@@ -1650,9 +1717,7 @@ def test_render_fits_one_read():
                             ("netsuite", NS, _big_netsuite_log())):
         d = tempfile.mkdtemp()
         try:
-            assets = os.path.join(root, "assets")
-            for f in ("publish_dashboard.py", "dashboard_template.html"):
-                shutil.copy(os.path.join(assets, f), d)
+            _copy_assets(root, d)
             stem = "_procore_review_log.json" if name == "procore" else "_netsuite_review_log.json"
             json.dump(log, open(os.path.join(d, stem), "w"))
             out_html = os.path.join(d, "index.html")
@@ -1744,9 +1809,7 @@ def _nsrp_publish(items, tpl_edit=None):
     """Publish a NetSuite log in a temp copy of the assets; return (rc, out, err, html)."""
     d = tempfile.mkdtemp()
     try:
-        assets = os.path.join(NS, "assets")
-        for f in ("publish_dashboard.py", "dashboard_template.html"):
-            shutil.copy(os.path.join(assets, f), d)
+        _copy_assets(NS, d)
         if tpl_edit:
             tp = os.path.join(d, "dashboard_template.html")
             edited = tpl_edit(open(tp, encoding="utf-8").read())
@@ -1769,9 +1832,7 @@ SKIPPED_KEYS = {"key", "id", "pid", "cid", "kind", "subtype", "toolId", "wf", "t
 
 
 def _publish_log(d, items, name="index.html"):
-    assets = os.path.join(PC, "assets")
-    for f in ("publish_dashboard.py", "dashboard_template.html"):
-        shutil.copy(os.path.join(assets, f), d)
+    _copy_assets(PC, d)
     json.dump({"lastCompletedRun": "2026-10-07", "lastRunTime": "2026-10-07 09:00",
                "suppressed": 0, "config": {"company": "0", "icrToolId": "0"}, "items": items},
               open(os.path.join(d, "_procore_review_log.json"), "w"))
@@ -1955,26 +2016,22 @@ def test_stripped_js_parses():
     Parse every inline <script> of the published page with `node --check`.
     (NetSuite strips only once PR #42 lands; until then its half passes trivially.)"""
     def poison(t):
-        # Mutation: a `<!--` in one JS string and a `-->` in another. The strip regex eats
-        # everything between them, so the page's script no longer parses.
-        i = t.index("/*__END__*/;") + len("/*__END__*/;")
-        t = t[:i] + "\nvar __m1='<!--';\n" + t[i:]
-        j = t.rindex("</script>")
-        return t[:j] + 'var __m2="-->";\n' + t[j:]
+        # Mutation of the script that gets inlined: a `<!--` in one JS string near the top and a
+        # `-->` in another near the end. The strip regex eats everything between them, so the
+        # inlined script no longer parses.
+        return "var __m1='<!--';\n" + t + 'var __m2="-->";\n'
 
-    for name, root, log, stem, mutate in (
-            ("procore", PC, _big_procore_log(), "_procore_review_log.json", None),
+    for name, root, log, stem, target, mutate in (
+            ("procore", PC, _big_procore_log(), "_procore_review_log.json", None, None),
             ("procore (mutated copy, must be red)", PC, _big_procore_log(),
-             "_procore_review_log.json", poison),
-            ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json", None)):
+             "_procore_review_log.json", "dashboard.js", poison),
+            ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json", None, None)):
         d = tempfile.mkdtemp()
         try:
-            for f in ("publish_dashboard.py", "dashboard_template.html"):
-                shutil.copy(os.path.join(root, "assets", f), d)
+            _copy_assets(root, d)
             if mutate:
-                tp = os.path.join(d, "dashboard_template.html")
-                mutated = mutate(open(tp, encoding="utf-8").read())
-                open(tp, "w", encoding="utf-8").write(mutated)
+                tp = os.path.join(d, target)
+                open(tp, "w", encoding="utf-8").write(mutate(open(tp, encoding="utf-8").read()))
             json.dump(log, open(os.path.join(d, stem), "w"))
             out = os.path.join(d, "index.html")
             r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"),
@@ -2422,38 +2479,105 @@ def test_netsuite_stale_doc_and_caller():
 
 
 # ------------------------------------------------ render fixes (owner rulings 2026-10-21)
-def _guard_outcome(tpl_text, complete, state):
-    """Run the template's first inline script (the integrity guard) in node against a stub
-    document. `state` is document.readyState when the script runs, and `complete` says whether
-    the __complete marker exists. The stub's addEventListener only records listeners, so an
-    event that never fires stays unfired, as inside the widget host. Returns warnings drawn
-    right after the script ran, warnings after every recorded listener was then fired, and the
-    number of listeners recorded."""
-    script = re.search(r"<script>(.*?)</script>", tpl_text, re.S).group(1)
-    harness = ("""
-var inserted = 0, fns = [];
-var document = {readyState: %s,
-  getElementById: function(){ return %s; },
+# The guard harness runs the shell's first inline script (the integrity guard) in node against a
+# stub document, on a virtual clock. Timers are a queue with due times: a step advances time, and
+# only the timers due by then fire, in order. A timer armed with a delay waits for that delay, so a
+# 1.5 s or 8 s timeout is exercised, not dropped. Each step is one of: ["code"] (the page's own
+# script ran to its last line and set __dashOK), ["dcl"] (DOMContentLoaded fires), ["settle", bad]
+# (a CDN tag's load or error event calls __dashSettle), ["advance", ms], or ["snap", label].
+# A snap records the banners in the document, whether the page body .wrap is hidden, and every
+# delay armed so far, so an assert can show the timer it depends on was armed.
+GUARD_HARNESS = """
+var STEPS = %(steps)s, COMPLETE = %(complete)s, STATE = %(state)s, TAGS = %(tags)s;
+var now = 0, seq = 0, timers = [], armed = [], dcl = [], shown = [], snaps = [];
+var WRAP = {style: {}, hidden: false};
+var window = {};
+var setTimeout = function(f, ms){ var id = ++seq; armed.push(ms || 0);
+  timers.push({id: id, due: now + (ms || 0), f: f}); return id; };
+var clearTimeout = function(id){ timers = timers.filter(function(t){ return t.id !== id; }); };
+function advance(ms){
+  var end = now + ms, fired = 0;
+  for (;;) {
+    var idx = -1;
+    for (var i = 0; i < timers.length; i++) {
+      var t = timers[i];
+      if (t.due <= end && (idx < 0 || t.due < timers[idx].due ||
+          (t.due === timers[idx].due && t.id < timers[idx].id))) idx = i;
+    }
+    if (idx < 0) break;
+    if (++fired > 1000) throw new Error("timers never settle");
+    var next = timers.splice(idx, 1)[0];
+    now = next.due;
+    next.f();
+  }
+  now = end;
+}
+function wrapHidden(){
+  return WRAP.style.display === "none" || WRAP.style.visibility === "hidden" || WRAP.hidden === true;
+}
+var document = {
+  readyState: STATE,
+  getElementById: function(id){ return id === "__complete" && COMPLETE ? {} : null; },
+  querySelector: function(sel){ return /wrap/.test(sel) ? WRAP : null; },
+  querySelectorAll: function(sel){
+    return sel === "[data-dash]" ? TAGS : (/wrap/.test(sel) ? [WRAP] : []); },
+  getElementsByClassName: function(name){ return name === "wrap" ? [WRAP] : []; },
   createElement: function(){ return {style: {}}; },
-  body: {firstChild: null, insertBefore: function(){ inserted++; }},
-  addEventListener: function(t, f){ fns.push(f); }};
-""" % (json.dumps(state), "{}" if complete else "null")) + script + """
-var now = inserted; fns.forEach(function(f){ f(); });
-console.log(JSON.stringify({now: now, later: inserted, listeners: fns.length}));
+  body: {firstChild: null,
+         insertBefore: function(el){ shown.unshift(el); },
+         removeChild: function(el){ var i = shown.indexOf(el); if (i >= 0) shown.splice(i, 1); }},
+  addEventListener: function(t, f){ if (t === "DOMContentLoaded") dcl.push(f); }};
 """
-    rc, out, err = run_node(harness)
+
+GUARD_RUN = r"""
+STEPS.forEach(function(s){
+  if (s[0] === "code") window.__dashOK = true;
+  else if (s[0] === "dcl") dcl.forEach(function(f){ f(); });
+  else if (s[0] === "advance") advance(s[1]);
+  else if (s[0] === "settle") window.__dashSettle(s[1]);
+  else if (s[0] === "snap") snaps.push({label: s[1], now: now, armed: armed.slice(),
+    wrapHidden: wrapHidden(),
+    banners: shown.map(function(el){
+      return {text: el.textContent, style: el.style, className: el.className || ""}; })});
+});
+console.log(JSON.stringify(snaps).replace(/[\u0080-￿]/g, function(c){
+  return "\\u" + ("000" + c.charCodeAt(0).toString(16)).slice(-4); }));
+"""
+
+
+def _guard_run(tpl_text, steps, state="loading", complete=True, tags=0):
+    """Run the guard in tpl_text through `steps` and return the snaps. `tags` is the number of
+    data-dash elements the document holds (a CDN page has 2, an inline page 0)."""
+    script = re.search(r"<script>(.*?)</script>", tpl_text, re.S).group(1)
+    head = GUARD_HARNESS % {"steps": json.dumps(steps), "complete": "true" if complete else "false",
+                            "state": json.dumps(state), "tags": json.dumps([{}] * tags)}
+    rc, out, err = run_node(head + script + GUARD_RUN)
     if rc != 0:
         sys.exit("ABORT: guard harness failed: %s" % (err or out))
     return json.loads(out.splitlines()[-1])
+
+
+def _snap(snaps, label):
+    return next(s for s in snaps if s["label"] == label)
+
+
+def _guard_outcome(tpl_text, complete, state):
+    """The shell's guard with the code run (window.__dashOK set), so a banner can only mean the
+    page was cut short. `now` counts the banners after the script and its zero-delay timers ran;
+    `later` counts them after the DOMContentLoaded listener fired and 8 s more passed."""
+    snaps = _guard_run(tpl_text, [["code"], ["advance", 0], ["snap", "now"], ["dcl"],
+                                  ["advance", 0], ["advance", 8000], ["snap", "later"]],
+                       state=state, complete=complete)
+    return {"now": len(_snap(snaps, "now")["banners"]), "later": len(_snap(snaps, "later")["banners"])}
 
 
 def test_guard_fires_in_widget_host():
     """The widget host runs scripts after the page has loaded (readyState "complete"), so a
     DOMContentLoaded listener never fires there and a truncated page showed no warning."""
     listener_only = ('if(document.readyState==="loading")'
-                     'document.addEventListener("DOMContentLoaded",guard);else guard();')
+                     'document.addEventListener("DOMContentLoaded",start);else start();')
     for name, root in (("procore", PC), ("netsuite", NS)):
-        tpl = open(os.path.join(root, "assets/dashboard_template.html"), encoding="utf-8").read()
+        tpl = _asset(root, "dashboard_template.html")
         r = _guard_outcome(tpl, False, "complete")
         check("%s guard: a truncated page warns when the script runs after load" % name,
               r["now"] == 1, r)
@@ -2463,10 +2587,309 @@ def test_guard_fires_in_widget_host():
         check("%s guard: still warns through the event when the page is loading" % name,
               r["now"] == 0 and r["later"] == 1, r)
         check("%s guard: it is the only DOMContentLoaded listener" % name,
-              tpl.count("DOMContentLoaded\"") == 1 and listener_only in tpl)
-        old = tpl.replace(listener_only, 'document.addEventListener("DOMContentLoaded",guard);')
+              _page_src(root).count("DOMContentLoaded\"") == 1 and listener_only in tpl)
+        old = tpl.replace(listener_only, 'document.addEventListener("DOMContentLoaded",start);')
         check("%s guard: the listener-only guard goes red (mutated copy)" % name,
               old != tpl and _guard_outcome(old, False, "complete")["now"] == 0)
+
+
+def _publish_page(root, stem, log):
+    """Publish a full-size log with the shell's assets beside it. The shell's __PIN_ tokens are
+    unfilled, so publish inlines both assets, which is the page a user sees. Returns the
+    CompletedProcess and the built html, and removes its folder."""
+    d = tempfile.mkdtemp(dir=_run_folder())
+    try:
+        _copy_assets(root, d)
+        with open(os.path.join(d, stem), "w", encoding="utf-8") as f:
+            json.dump(log, f)
+        out = os.path.join(d, "index.html")
+        r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
+                           capture_output=True, text=True, timeout=60)
+        html = open(out, encoding="utf-8").read() if os.path.exists(out) else ""
+        return r, html
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def _data_dash_tags(html):
+    """How many elements carry data-dash: 2 on a CDN shell, 0 once publish inlines both."""
+    return len(re.findall(r"<\w+\b[^>]*\sdata-dash=", html))
+
+
+def _pinned(tpl):
+    """The shell with its __PIN_ tokens filled, as a pinned workspace copy has them."""
+    return (tpl.replace("__PIN_SHA__", "0" * 40)
+               .replace("__PIN_CSS_SRI__", "sha384-" + "A" * 64)
+               .replace("__PIN_JS_SRI__", "sha384-" + "B" * 64))
+
+
+INLINE_CODE = [["code"], ["dcl"], ["snap", "load"], ["advance", 1499], ["snap", "1.499 s"],
+               ["advance", 1], ["snap", "1.5 s"], ["advance", 60000], ["snap", "61.5 s"]]
+INLINE_NOCODE = [["dcl"], ["snap", "load"], ["advance", 1499], ["snap", "1.499 s"],
+                 ["advance", 1], ["snap", "1.5 s"], ["advance", 60000], ["snap", "61.5 s"]]
+CUT = [["code"], ["dcl"], ["advance", 0], ["snap", "load"], ["advance", 60000], ["snap", "61 s"]]
+CDN_ERROR = [["dcl"], ["advance", 0], ["snap", "load"], ["settle", True], ["advance", 0],
+             ["snap", "error"], ["advance", 8000], ["snap", "8 s"]]
+CDN_BOTH = [["dcl"], ["snap", "load"], ["settle", False], ["settle", False], ["advance", 0],
+            ["snap", "both loaded"], ["advance", 8000], ["snap", "8 s"]]
+CDN_SLOW = [["dcl"], ["advance", 7999], ["snap", "7.999 s"], ["advance", 1], ["snap", "8 s"],
+            ["code"], ["settle", False], ["settle", False], ["advance", 0], ["snap", "code landed"]]
+COMPLETE_DIV = '<div id="__complete" hidden></div>'
+BANNER_CODE_FAILED = r"dashboard code[^.]*\b(did not run|failed|did not start)"
+NETWORK_WORDS = r"cdn|network|could not load|blocked"
+
+
+def _banner_scenarios(root, log, stem):
+    """Every way a page ends up, run through the shell's own guard. Returns the publish result,
+    the built inline html, and {scenario: snaps}. A scenario keyed by a tuple is (kind, state or
+    form). The inline runs use the page publish built; the CDN runs use the shell, with its two
+    data-dash tags counted, placeholder or pinned."""
+    r, pub = _publish_page(root, stem, log)
+    if r.returncode != 0 or not pub:
+        return r, pub, None
+    tpl = _asset(root, "dashboard_template.html")
+    runs = {}
+    for state in ("loading", "complete"):
+        runs[("inline-code", state)] = _guard_run(pub, INLINE_CODE, state, True, 0)
+        runs[("inline-nocode", state)] = _guard_run(pub, INLINE_NOCODE, state, True, 0)
+    runs["cut"] = _guard_run(pub.replace(COMPLETE_DIV, ""), CUT, "loading", False, 0)
+    cdn_tags = _data_dash_tags(tpl)
+    for form, text in (("placeholder", tpl), ("pinned", _pinned(tpl))):
+        runs[("cdn-error", form)] = _guard_run(text, CDN_ERROR, "loading", True, cdn_tags)
+        runs[("cdn-both", form)] = _guard_run(text, CDN_BOTH, "loading", True, cdn_tags)
+    runs["cdn-slow"] = _guard_run(tpl, CDN_SLOW, "loading", True, cdn_tags)
+    return r, pub, runs
+
+
+def _own_colours(banner):
+    """True when the banner sets its own text and background colour, with no var() and no class,
+    so it reads the same in a dark scheme and with no stylesheet loaded."""
+    s = banner["style"]
+    decl = " ".join([str(s.get("cssText", ""))] + ["%s:%s" % (k, v) for k, v in s.items()
+                                                  if k != "cssText"])
+    return (re.search(r"(?<![\w-])color\s*:", decl) is not None
+            and re.search(r"background(-color)?\s*:", decl) is not None
+            and "var(" not in decl and not banner["className"])
+
+
+def _first_text(banners):
+    return banners[0]["text"] if len(banners) == 1 else ""
+
+
+def test_guard_banners():
+    """The guard's banner for each way a page ends up, run on a virtual clock. The timing and
+    count claims (section A) hold on the shipped shell. The presentation claims (section B) are
+    new: the page body hides under a banner that says the dashboard did not render, the banner
+    names no network fault unless the CDN is the cause, and every banner keeps its own colours."""
+    for name, root, log, stem in (("procore", PC, _big_procore_log(), "_procore_review_log.json"),
+                                  ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json")):
+        r, pub, runs = _banner_scenarios(root, log, stem)
+        check("%s banners: the inline publish runs" % name, runs is not None,
+              (r.stderr or r.stdout)[-200:])
+        if runs is None:
+            continue
+        tpl = _asset(root, "dashboard_template.html")
+        check("%s banners: the shell has two data-dash tags and the inline page none" % name,
+              _data_dash_tags(tpl) == 2 and _data_dash_tags(pub) == 0,
+              (_data_dash_tags(tpl), _data_dash_tags(pub)))
+        check("%s banners: the inline page holds its __complete marker once, so it can be cut"
+              % name, pub.count(COMPLETE_DIV) == 1, pub.count(COMPLETE_DIV))
+
+        # A. Timing and count. Each no-banner assert first proves its timer was armed.
+        for state in ("loading", "complete"):
+            s = runs[("inline-code", state)]
+            check("%s inline page (%s): the guard armed its 1.5 s timer" % (name, state),
+                  1500 in _snap(s, "load")["armed"], _snap(s, "load")["armed"])
+            seen = [(x["label"], [b["text"][:60] for b in x["banners"]]) for x in s if x["banners"]]
+            check("%s inline page (%s): whole, it draws no banner at any time" % (name, state),
+                  not seen, seen[:1])
+            s = runs[("inline-nocode", state)]
+            before = _snap(s, "1.499 s")["banners"]
+            at = _snap(s, "1.5 s")["banners"]
+            late = _snap(s, "61.5 s")["banners"]
+            check("%s inline page with no __dashOK (%s): one banner at 1.5 s, none before it"
+                  % (name, state), not before and len(at) == 1 and len(late) == 1,
+                  (len(before), len(at), len(late)))
+            check("%s inline page with no __dashOK (%s): the banner says the code did not run"
+                  % (name, state), re.search(BANNER_CODE_FAILED, _first_text(at)) is not None,
+                  _first_text(at)[:90])
+        s = runs["cut"]
+        check("%s cut page: one truncation banner at load, still one at 61 s" % name,
+              len(_snap(s, "load")["banners"]) == 1 and len(_snap(s, "61 s")["banners"]) == 1
+              and "did not render completely" in _first_text(_snap(s, "load")["banners"]),
+              _first_text(_snap(s, "load")["banners"])[:90])
+        for form in ("placeholder", "pinned"):
+            s = runs[("cdn-error", form)]
+            check("%s CDN error (%s): the guard armed its 8 s CDN timer" % (name, form),
+                  8000 in _snap(s, "load")["armed"], _snap(s, "load")["armed"])
+            check("%s CDN error (%s): no banner while the tags load" % (name, form),
+                  not _snap(s, "load")["banners"])
+            err = _snap(s, "error")["banners"]
+            check("%s CDN error (%s): one banner naming cdn.jsdelivr.net, still one at 8 s"
+                  % (name, form), len(err) == 1 and "cdn.jsdelivr.net" in _first_text(err)
+                  and len(_snap(s, "8 s")["banners"]) == 1, _first_text(err)[:90])
+            s = runs[("cdn-both", form)]
+            both = _snap(s, "both loaded")["banners"]
+            check("%s CDN both loaded, code not run (%s): the guard armed its 8 s CDN timer"
+                  % (name, form), 8000 in _snap(s, "load")["armed"])
+            check("%s CDN both loaded, code not run (%s): one banner, still one at 8 s"
+                  % (name, form), len(both) == 1 and len(_snap(s, "8 s")["banners"]) == 1,
+                  len(both))
+            cdn_text = _first_text(_snap(runs[("cdn-error", form)], "error")["banners"])
+            check("%s CDN both loaded, code not run (%s): the banner is not the CDN banner"
+                  % (name, form), _first_text(both) != "" and _first_text(both) != cdn_text,
+                  _first_text(both)[:90])
+            check("%s CDN both loaded, code not run (%s): the banner names no network fault"
+                  % (name, form), _first_text(both) != ""
+                  and re.search(NETWORK_WORDS, _first_text(both), re.I) is None,
+                  _first_text(both)[:90])
+            check("%s CDN both loaded, code not run (%s): the banner says the dashboard code "
+                  "failed (pattern %s)" % (name, form, BANNER_CODE_FAILED),
+                  re.search(BANNER_CODE_FAILED, _first_text(both)) is not None,
+                  _first_text(both)[:90])
+        s = runs["cdn-slow"]
+        check("%s slow CDN: the guard armed its 8 s CDN timer" % name,
+              8000 in _snap(s, "7.999 s")["armed"], _snap(s, "7.999 s")["armed"])
+        check("%s slow CDN: no banner at 7.999 s, one at 8 s" % name,
+              not _snap(s, "7.999 s")["banners"] and len(_snap(s, "8 s")["banners"]) == 1,
+              len(_snap(s, "8 s")["banners"]))
+        check("%s slow CDN: the banner clears once the code lands late" % name,
+              _snap(s, "code landed")["banners"] == [], len(_snap(s, "code landed")["banners"]))
+
+        # B. Presentation. These are new claims: each banner that says the dashboard did not
+        # render hides the page body, and every banner says only what is true.
+        hide_wanted = [("inline-nocode", st, "1.5 s") for st in ("loading", "complete")]
+        hide_wanted += [("inline-nocode", st, "61.5 s") for st in ("loading", "complete")]
+        hide_wanted += [("cdn-error", f, "error") for f in ("placeholder", "pinned")]
+        hide_wanted += [("cdn-both", f, "both loaded") for f in ("placeholder", "pinned")]
+        hide_wanted += [("cdn-slow", None, "8 s")]
+        unhidden = []
+        for kind, key, label in hide_wanted:
+            s = runs[(kind, key)] if key else runs[kind]
+            x = _snap(s, label)
+            if x["banners"] and not x["wrapHidden"]:
+                unhidden.append("%s %s @%s" % (kind, key or "", label))
+        check("%s the CDN and code-failed banners hide the page body (.wrap)" % name,
+              not unhidden, unhidden)
+        every = []
+        for key, s in runs.items():
+            for x in s:
+                for b in x["banners"]:
+                    every.append((key, x["label"], b, x["wrapHidden"]))
+        inline_word = [(k, l, b["text"][:80]) for k, l, b, _ in every
+                       if re.search(r"\binline\b", b["text"], re.I)]
+        check("%s no banner says 'inline'" % name, not inline_word, inline_word[:1])
+        claims_empty = [(k, l) for k, l, b, hid in every
+                        if "nothing below is drawn" in b["text"] and not hid]
+        check("%s a banner that says nothing below is drawn hides the page body" % name,
+              not claims_empty, claims_empty[:2])
+        bare = [(k, l, b["text"][:60]) for k, l, b, _ in every if not _own_colours(b)]
+        check("%s every banner keeps its own colours, with no stylesheet and in a dark scheme"
+              % name, not bare, bare[:1])
+
+
+EARLY_ERROR = [["settle", True], ["dcl"], ["advance", 0], ["snap", "started"],
+               ["advance", 7999], ["snap", "7.999 s"]]
+EARLY_ERROR_AFTER_START = [["settle", True], ["advance", 0], ["snap", "error"]]
+INLINE_LATE = [["dcl"], ["advance", 1500], ["snap", "timeout"], ["code"],
+               ["snap", "code landed"], ["advance", 60000], ["snap", "later"]]
+# The code's own __dashOK set is checked before either tag reports, so the clear cannot come
+# from a load event. The load events follow and must leave the page clear.
+CDN_LATE = [["dcl"], ["advance", 8000], ["snap", "timeout"], ["code"], ["snap", "code landed"],
+            ["settle", False], ["settle", False], ["advance", 0], ["snap", "loads reported"],
+            ["advance", 60000], ["snap", "later"]]
+
+
+def test_guard_early_error_and_late_code():
+    """Two guard paths the banner round left open, on the virtual clock. (3) A CDN tag that
+    fails before the guard starts draws its banner when the guard starts, not 8 s later. The
+    same error after the guard started is the control: it is at once on either build. (4) A
+    banner raised on a timeout is taken down, and .wrap returns, when the code later sets
+    __dashOK: an inline page at 1.5 s, a CDN page at 8 s. Nothing raises a banner again."""
+    for name, root, log, stem in (("procore", PC, _big_procore_log(), "_procore_review_log.json"),
+                                  ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json")):
+        r, pub = _publish_page(root, stem, log)
+        check("%s late code: the inline publish runs" % name, r.returncode == 0 and pub != "",
+              (r.stderr or r.stdout)[-200:])
+        if r.returncode != 0 or not pub:
+            continue
+        tpl = _asset(root, "dashboard_template.html")
+
+        started = _snap(_guard_run(tpl, EARLY_ERROR, "loading", True, 2), "started")["banners"]
+        check("%s early CDN error: the banner is up when the guard starts, not 8 s later" % name,
+              len(started) == 1 and "cdn.jsdelivr.net" in _first_text(started),
+              [b["text"][:90] for b in started])
+        after = _snap(_guard_run(tpl, EARLY_ERROR_AFTER_START, "complete", True, 2), "error")
+        check("%s early CDN error, control: the same error after the guard started is at once"
+              % name, len(after["banners"]) == 1 and "cdn.jsdelivr.net" in _first_text(after["banners"]),
+              [b["text"][:90] for b in after["banners"]])
+
+        late = _guard_run(pub, INLINE_LATE, "loading", True, 0)
+        armed = _snap(late, "timeout")["armed"]
+        check("%s inline timeout: the guard armed its 1.5 s timer" % name, 1500 in armed, armed)
+        check("%s inline timeout: one banner at 1.5 s, and it hides .wrap" % name,
+              len(_snap(late, "timeout")["banners"]) == 1 and _snap(late, "timeout")["wrapHidden"],
+              (len(_snap(late, "timeout")["banners"]), _snap(late, "timeout")["wrapHidden"]))
+        check("%s inline timeout: the banner clears when the code later sets __dashOK" % name,
+              _snap(late, "code landed")["banners"] == [],
+              [b["text"][:60] for b in _snap(late, "code landed")["banners"]])
+        check("%s inline timeout: .wrap returns when the code lands" % name,
+              not _snap(late, "code landed")["wrapHidden"])
+        check("%s inline timeout: nothing raises a banner again after the code lands" % name,
+              _snap(late, "later")["banners"] == [], len(_snap(late, "later")["banners"]))
+
+        late = _guard_run(tpl, CDN_LATE, "loading", True, 2)
+        armed = _snap(late, "timeout")["armed"]
+        check("%s CDN timeout: the guard armed its 8 s CDN timer" % name, 8000 in armed, armed)
+        check("%s CDN timeout: one banner at 8 s, and it hides .wrap" % name,
+              len(_snap(late, "timeout")["banners"]) == 1 and _snap(late, "timeout")["wrapHidden"],
+              (len(_snap(late, "timeout")["banners"]), _snap(late, "timeout")["wrapHidden"]))
+        check("%s CDN timeout: the banner clears when the late code lands" % name,
+              _snap(late, "code landed")["banners"] == [],
+              [b["text"][:60] for b in _snap(late, "code landed")["banners"]])
+        check("%s CDN timeout: .wrap returns when the late code lands" % name,
+              not _snap(late, "code landed")["wrapHidden"])
+        check("%s CDN timeout: nothing raises a banner again after the code lands" % name,
+              _snap(late, "later")["banners"] == [], len(_snap(late, "later")["banners"]))
+
+
+def test_shell_needs_dashboard_js():
+    """shared_blocks' verdict check fails a shell (a template that names its asset tags with
+    data-dash=) with no dashboard.js beside it: the shell then holds no page code, so its
+    verdict branches cannot be checked. Driven on fixture plugins, through the function
+    main() runs. Controls: a shell with its dashboard.js, and a template with no data-dash
+    tag, which is not a shell, both stay silent."""
+    sys.path.insert(0, os.path.join(REPO, "scripts"))
+    import shared_blocks as sb
+    root = tempfile.mkdtemp(dir=_run_folder())
+    old = sb.PLUGINS
+    try:
+        def problems_for(case, shell, with_js):
+            assets = os.path.join(root, case, "p", "skills", "s", "assets")
+            os.makedirs(assets)
+            with open(os.path.join(assets, "publish_dashboard.py"), "w", encoding="utf-8") as f:
+                f.write('VERDICTS = ("clear", "flagged")\n')
+            with open(os.path.join(assets, "dashboard_template.html"), "w", encoding="utf-8") as f:
+                f.write('<link rel="stylesheet" data-dash="css" href="x.css">\n' if shell
+                        else "<p>static page</p>\n")
+            if with_js:
+                with open(os.path.join(assets, "dashboard.js"), "w", encoding="utf-8") as f:
+                    f.write("window.__dashOK = true;\n")
+            sb.PLUGINS = os.path.join(root, case)
+            return sb.check_verdict_vocabulary()
+
+        missing = problems_for("missing", shell=True, with_js=False)
+        check("shell with no dashboard.js beside it: the shared-blocks check names the file",
+              any("dashboard.js is missing" in p for p in missing), missing)
+        present = problems_for("present", shell=True, with_js=True)
+        check("shell with its dashboard.js: the shared-blocks check is silent", present == [],
+              present)
+        static = problems_for("static", shell=False, with_js=False)
+        check("template with no data-dash tag is not a shell: the check stays silent",
+              static == [], static)
+    finally:
+        sb.PLUGINS = old
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def _load_publish(root, tag):
@@ -2494,38 +2917,49 @@ def test_published_page_has_no_comments():
               repr(out))
     for name, root, log, stem in (("procore", PC, _big_procore_log(), "_procore_review_log.json"),
                                   ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json")):
-        d = tempfile.mkdtemp()
-        try:
-            for f in ("publish_dashboard.py", "dashboard_template.html"):
-                shutil.copy(os.path.join(root, "assets", f), d)
-            json.dump(log, open(os.path.join(d, stem), "w"))
-            out = os.path.join(d, "index.html")
-            r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
-                               capture_output=True, text=True, timeout=60)
-            check("%s comments: publish runs" % name, r.returncode == 0, (r.stderr or r.stdout)[-200:])
-            html = open(out, encoding="utf-8").read()
-            rest = re.sub(r"(/\*__REVIEW_DATA__\*/).*?(/\*__END__\*/)", r"\1\2", html, flags=re.S)
-            check("%s comments: only the two data sentinels remain" % name,
-                  re.findall(r"/\*.*?\*/", rest, re.S) == ["/*__REVIEW_DATA__*/", "/*__END__*/"],
-                  re.findall(r"/\*.*?\*/", rest, re.S)[:3])
-            check("%s comments: no HTML comment" % name, "<!--" not in rest)
-            lines = rest.split("\n")
-            check("%s comments: no comment-only line" % name,
-                  not [l for l in lines if l.lstrip().startswith(("//", "/*", "*/"))])
-            eol = [l.strip()[:70] for l in lines if re.search(r"(?<=[\s;{},)])//\s", l)]
-            check("%s comments: no end-of-line // comment" % name, not eol, eol[:2])
-        finally:
-            shutil.rmtree(d, ignore_errors=True)
+        r, html = _publish_page(root, stem, log)
+        check("%s comments: publish runs" % name, r.returncode == 0, (r.stderr or r.stdout)[-200:])
+        rest = re.sub(r"(/\*__REVIEW_DATA__\*/).*?(/\*__END__\*/)", r"\1\2", html, flags=re.S)
+        check("%s comments: only the two data sentinels remain" % name,
+              re.findall(r"/\*.*?\*/", rest, re.S) == ["/*__REVIEW_DATA__*/", "/*__END__*/"],
+              re.findall(r"/\*.*?\*/", rest, re.S)[:3])
+        check("%s comments: no HTML comment" % name, "<!--" not in rest)
+        lines = rest.split("\n")
+        check("%s comments: no comment-only line" % name,
+              not [l for l in lines if l.lstrip().startswith(("//", "/*", "*/"))])
+        eol = [l.strip()[:70] for l in lines if re.search(r"(?<=[\s;{},)])//\s", l)]
+        check("%s comments: no end-of-line // comment" % name, not eol, eol[:2])
+
+
+def test_temp_run_folder_sweep():
+    """test-temp-standard: the sweep removes a sibling run folder older than a day, keeps a
+    newer one, and keeps this run's own folder however old it is. The clock is an argument."""
+    now = 1800000000
+    root = tempfile.mkdtemp(dir=_run_folder())
+    try:
+        old = os.path.join(root, "101-%s" % uuid.uuid4())
+        new = os.path.join(root, "102-%s" % uuid.uuid4())
+        mine = os.path.join(root, "103-%s" % uuid.uuid4())
+        for p, age in ((old, 2 * DAY), (new, 3600), (mine, 2 * DAY)):
+            os.makedirs(p)
+            os.utime(p, (now - age, now - age))
+        _sweep_old_runs(root, os.path.basename(mine), now)
+        check("temp sweep: a sibling run folder older than a day is removed", not os.path.exists(old))
+        check("temp sweep: a sibling run folder newer than a day is kept", os.path.exists(new))
+        check("temp sweep: this run's own folder is kept, however old", os.path.exists(mine))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def test_dead_fallback_gone():
     """No artifact-host clipboard fallback: say() sends the prompt or does nothing."""
     for name, root in (("procore", PC), ("netsuite", NS)):
-        tpl = open(os.path.join(root, "assets/dashboard_template.html"), encoding="utf-8").read()
-        gone = [w for w in ("handoff", "recopy", "closeHandoff", "cowork", "execCommand") if w in tpl]
-        check("%s: no handoff/cowork fallback in the template" % name, not gone, gone)
+        page = _page_src(root)
+        gone = [w for w in ("handoff", "recopy", "closeHandoff", "cowork", "execCommand") if w in page]
+        check("%s: no handoff/cowork fallback in the page" % name, not gone, gone)
         if shutil.which("node"):
-            body = extract_fn(tpl, "say")
+            # The shell's guard defines its own say(); the page's say() is the one in the script.
+            body = extract_fn(_asset(root, "dashboard.js"), "say")
             rc, out, err = run_node("var sent=[], window={};\n" + body + """
 say("x"); window.sendPrompt = function(t){ sent.push(t); }; say("y");
 console.log(JSON.stringify(sent));""")
@@ -2572,7 +3006,7 @@ def test_detail_cap():
                   "fullDetail(" in row and "Full detail" in row, row[-300:])
             check("detail cap: procore row shows none for an uncut row",
                   "Full detail" not in render_item_row(tpl, sh))
-            src = open(tpl, encoding="utf-8").read()
+            src = _asset(PC, "dashboard.js")
             fns = "\n".join(extract_fn(src, n) for n in ("byId", "say", "fullDetail"))
             rc, o, err = run_node("var REVIEW={items:" + json.dumps([lg]) + "};var sent=[];\n"
                                   "window={sendPrompt:function(t){sent.push(t)}};\n" + fns +
@@ -2608,7 +3042,7 @@ def test_detail_cap():
         row = render_item_row(tpl, sh, fn_names=fns, call="itemRow(%s, classify(%s))"
                               % (json.dumps(sh), json.dumps(sh)))
         check("detail cap: netsuite row shows none for an uncut row", "Full detail" not in row)
-        src = open(tpl, encoding="utf-8").read()
+        src = _asset(NS, "dashboard.js")
         body = "\n".join(extract_fn(src, n) for n in ("say", "fullDetail"))
         rc, o, err = run_node("var REVIEW={items:" + json.dumps([lg]) + "};var sent=[];\n"
                               "window={sendPrompt:function(t){sent.push(t)}};\n" + body +
@@ -2673,9 +3107,13 @@ def main():
     test_read_docx()
     if shutil.which("node"):
         test_guard_fires_in_widget_host()
+        test_guard_banners()
+        test_guard_early_error_and_late_code()
         test_dead_fallback_gone()
         test_detail_cap()
     test_published_page_has_no_comments()
+    test_temp_run_folder_sweep()
+    test_shell_needs_dashboard_js()
     print()
     if failures:
         print("FAILED: " + "; ".join(failures))

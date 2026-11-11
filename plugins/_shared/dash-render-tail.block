@@ -6,3 +6,9 @@ render();
 // 60s boundary fell relative to the clicks - so it read as random. Measured on v9.
 // The data is a snapshot and never changes, so there is nothing else for a tick to do.
 setInterval(freshTick, 60000);
+// Last line of the file. The inline guard reads window.__dashOK to learn that this file ran to the
+// end and that the stylesheet is applied (--dash-css is declared on :root in dashboard.css). A
+// dynamically added script does not wait for a stylesheet, so a failed first probe tries once
+// more when the stylesheet's own load event fires.
+function dashProbe(){window.__dashOK=!!getComputedStyle(document.documentElement).getPropertyValue("--dash-css").trim();return window.__dashOK}
+if(!dashProbe()){var dashLink=document.querySelector("link[data-dash]");if(dashLink)dashLink.addEventListener("load",dashProbe)}

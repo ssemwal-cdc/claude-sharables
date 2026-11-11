@@ -1,0 +1,30 @@
+# The shell names its stylesheet and script with a data-dash tag each. Until those tags carry
+# a pin (no __PIN_ token left in them) every run inlines the asset bytes, so the page is what
+# it was before the split. A pinned tag stays a CDN tag unless this run passed --inline.
+ASSET_TAG = re.compile(r'<link\b[^>]*\bdata-dash="css"[^>]*>'
+                       r'|<script\b[^>]*\bdata-dash="js"[^>]*></script>')
+
+
+def fill_assets(tpl, inline):
+    """Replace each unpinned (or, with `inline`, every) asset tag by the asset's own bytes.
+
+    The bytes are the same dashboard.css and dashboard.js a pin serves, with the same comment
+    strip the shell gets, because an inlined page passes through a turn like any other. The
+    CDN copy is served unstripped, as pinned. A missing asset aborts: a workspace copy that
+    lags the plugin is stale, and a page with no code is worse than no page.
+    """
+    def one(m):
+        kind = "css" if m.group(0).startswith("<link") else "js"
+        if "__PIN_" not in m.group(0) and not inline:
+            return m.group(0)
+        name = "dashboard." + kind
+        try:
+            with open(os.path.join(HERE, name), encoding="utf-8") as fh:
+                body = strip_comments(fh.read())
+        except OSError:
+            sys.exit("ABORT: %s is missing beside this script. Step 0 copies it from the plugin "
+                     "assets. Restore it from there and retry." % name)
+        tag = "style" if kind == "css" else "script"
+        return "<%s>\n%s</%s>" % (tag, body if body.endswith("\n") else body + "\n", tag)
+
+    return ASSET_TAG.sub(one, tpl)

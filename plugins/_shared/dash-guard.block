@@ -1,0 +1,64 @@
+// Integrity guard. It stays inline and runs first, so it still works when the CDN is down.
+// It answers two questions: did the page arrive whole (the last element, __complete, exists),
+// and did the dashboard code load and draw (dashboard.js sets window.__dashOK as its last line,
+// after it finds the stylesheet's --dash-css property).
+// The widget host runs scripts once the page has loaded (readyState "complete"), so
+// DOMContentLoaded never fires there and the CDN tags may still be loading. Each CDN tag calls
+// __dashSettle from its own load or error event. A tag that fails settles the guard at once,
+// even before the guard has started. The 8 s timeout covers a tag that never reports.
+// With no CDN tag (an inline publish) nothing reports, so a short timeout lets the inline
+// scripts run first.
+// __dashOK is a property with a setter, so code that lands after the banner went up takes the
+// banner down at the moment it sets the flag, with no polling.
+// A banner that says nothing is drawn also hides .wrap, so the unstyled page is not left
+// beside it. Every banner sets its own colours, because the stylesheet may be the missing part.
+(function(){
+var TRUNC="This dashboard did not render completely — part of it was lost on the way to the "+
+  "screen, so items may be missing. Do not act on anything below. Ask for it to be rendered again.";
+var CDN="The dashboard code did not arrive from cdn.jsdelivr.net, so nothing below is drawn. "+
+  "Do not act on this page. Tell Claude what you see. It will publish the page again with the "+
+  "code built into the page.";
+var CODE="The dashboard code did not run to the end, so nothing below is drawn. Do not act on "+
+  "this page. Ask Claude to render it once more. If this banner shows again, tell Claude it is "+
+  "a defect in the dashboard code.";
+var shown=[],settled=0,failed=0,armed=0,decided=0,timer=0,okv,kind="";
+function tags(){return document.querySelectorAll("[data-dash]")}
+function hide(on){var w=document.querySelector(".wrap");if(w)w.style.display=on?"none":""}
+function say(m,gone){
+  var w=document.createElement("div");
+  w.style.cssText="position:sticky;top:0;z-index:999;background:#a32d2d;color:#fff;padding:12px 16px;"+
+    "font:500 14px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif";
+  w.textContent=m;
+  document.body.insertBefore(w,document.body.firstChild);
+  shown.push(w);
+  kind=m;
+  if(gone)hide(1);
+}
+function allIn(){var n=tags().length;return n>0&&settled>=n&&!failed}
+function sync(){
+  var whole=!!document.getElementById("__complete"),ok=whole&&!!window.__dashOK;
+  if(decided){
+    if(ok&&shown.length){while(shown.length)document.body.removeChild(shown.pop());hide(0)}
+    else if(!ok&&whole&&kind===CDN&&allIn()){shown[0].textContent=kind=CODE}
+    return;
+  }
+  decided=1;
+  clearTimeout(timer);
+  if(!whole)say(TRUNC,0);
+  else if(!ok)say(tags().length&&!allIn()?CDN:CODE,1);
+}
+function start(){
+  var n=tags().length;
+  armed=1;
+  if(!document.getElementById("__complete")||failed||allIn())setTimeout(sync,0);
+  else timer=setTimeout(sync,n?8000:1500);
+}
+window.__dashSettle=function(bad){
+  settled++;
+  if(bad)failed=1;
+  if(armed&&(bad||settled>=tags().length))setTimeout(sync,0);
+};
+try{Object.defineProperty(window,"__dashOK",{configurable:true,
+  get:function(){return okv},set:function(v){okv=v;if(decided)sync()}})}catch(e){}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
+})();

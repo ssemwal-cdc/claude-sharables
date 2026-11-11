@@ -784,8 +784,15 @@ def v_short_pin(run):
 
 
 def v_good_pin(run):
+    """No false alarm on a correct probe pin. The throwaway tree holds one commit, so validate.py
+    also refuses the shipped shells' real pins as absent (`does not exist`). That is the check right
+    about those pages, which this case does not judge. It holds when no refusal names the probe's
+    own page. v_short_pin proves validate reads the probe page: it refuses the same page's short pin."""
     rc, out = _validate(_probe(run, "validate-good", short=False))
-    return _verdict(rc, out, ("pass",))
+    if "Traceback" in out:
+        return "crashed: " + out.strip().splitlines()[-1]
+    named = [l.strip() for l in out.splitlines() if l.startswith("  - ") and "pin_probe" in l]
+    return ("refused the correct probe pin: " + named[0][:200]) if named else None
 
 
 PINS = [
@@ -793,7 +800,7 @@ PINS = [
     ("--pin keeps exactly one integrity attribute on an unquoted integrity", p_unquoted_integrity),
     ("--pin on a page with no pinned tag exits non-zero", p_no_tags),
     ("validate.py exits 1 on a short pin and names it", v_short_pin),
-    ("control: validate.py passes a correct pin on the same tree", v_good_pin),
+    ("control: validate.py does not refuse a correct pin on the same tree", v_good_pin),
 ]
 
 

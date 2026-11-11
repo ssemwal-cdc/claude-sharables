@@ -18,9 +18,9 @@ A pinned `<link>` names one commit and one `sha384`. The browser checks the file
 **Evidence.**
 
 - Ruling, 2026-11-11, by the orchestrating session under the owner's 2026-10-21 grant.
-- Check `check_asset_pins` on branch `claude/cdn-pins`: a shell's inline `<style>` refuses an `@import`, except one whose URL starts `data:`. An assets `.css` file refuses any `@import`.
+- Check `check_asset_pins`: a shell's inline `<style>` refuses an `@import`, except one whose URL starts `data:`. An assets `.css` file refuses any `@import`.
 
-**Checks.** `check_asset_pins` in `scripts/shared_blocks.py`, on branch `claude/cdn-pins`. Tests in `scripts/test_asset_pins.py`. Not on main until that branch merges.
+**Checks.** `check_asset_pins` in `scripts/shared_blocks.py`. Tests in `scripts/test_asset_pins.py`.
 
 Kind: process
 Home: scripts/shared_blocks.py

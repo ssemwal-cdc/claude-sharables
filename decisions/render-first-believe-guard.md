@@ -21,9 +21,7 @@ A cut-off page shows a red banner, and the page stays visible.
 
 A CDN failure names `cdn.jsdelivr.net`. It hides the dashboard body (`.wrap`), so no unstyled controls or dead buttons show. It licenses one inline publish for that run. See D‹inline-fallback-per-run›, a flag that lasts one run. The banner also shows when a tag has not reported after 8 seconds.
 
-A dashboard code failure means that the code arrived and did not run to the end. It also hides the body. It is a defect in the dashboard code, so the run reports the defect and does not render again. Design review, 2026-11-11: the hidden body keeps unstyled controls and dead buttons off the screen.
-
-The three banners are on branch `claude/cdn-split`. The guard on main shows only the cut-off banner.
+A dashboard code failure means that the code arrived and did not run to the end. It also hides the body. The run renders once more. If the banner shows again, the run reports a defect in the dashboard code. Design review, 2026-11-11: the hidden body keeps unstyled controls and dead buttons off the screen.
 
 The guard now fires in the widget. It did not before commit `c888908`. See F‹widget-readystate-complete›, the widget runs scripts late.
 

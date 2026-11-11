@@ -25,7 +25,7 @@ Match this shape when porting. If a new skill deviates, say so rather than norma
 
 - The house-convention wording said the output is published to an artifact. That contradicted the widget decision, which is settled and later.
 - Corrected 2026-09-15 in the prose pass. Both plugins have rendered through the widget since 2026-08-12.
-- The shell split into `dashboard.css` and `dashboard.js` is on branch `claude/cdn-split`, 2026-11-11. Not on main.
+- The shell split into `dashboard.css` and `dashboard.js` was built 2026-11-11.
 
 **Checks.** `scripts/validate.py` fails a `SKILL.md` that names a missing `${CLAUDE_PLUGIN_ROOT}` path, and fails a bare relative asset path. An asset that no `SKILL.md` names is a note, not a failure.
 

@@ -19,7 +19,7 @@ The fallback is licensed by an observed failure. See D77, render first, believe 
 
 **Evidence.**
 
-- The publish script on branch `claude/cdn-split` says `--inline` is a flag for one run and is never stored.
+- The publish script says `--inline` is a flag for one run and is never stored.
 - The same script inlines a tag that still holds `__PIN_`.
 
 **Checks.** none.

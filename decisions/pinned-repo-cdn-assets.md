@@ -7,7 +7,7 @@ date: 2026-10-21
 ---
 # Dashboards may load fixed assets from a pinned repo copy
 
-**Rule.** A dashboard may load its fixed CSS and JS from this repo through jsdelivr `/gh/`. The URL names a full commit sha. The tag carries an SRI `sha384` hash. Both are required. Partly built. Not yet pinned.
+**Rule.** A dashboard may load its fixed CSS and JS from this repo through jsdelivr `/gh/`. The URL names a full commit sha. The tag carries an SRI `sha384` hash. Both are required. Built. Not yet pinned.
 
 The repo stays public on the `ssemwal-cdc` account under its current name. Merges keep the pinned commit: merge method `merge`, never squash or rebase.
 
@@ -21,11 +21,11 @@ The pin only resolves while the repo is public and keeps its name and account. S
 
 Owner ruling, 2026-10-21. The probe in F‹widget-readystate-complete›, the widget runs scripts late, showed a pinned `<script src>` loads in the widget.
 
-**Status.** Built on branches. Nothing is on main yet.
+**Status.** Built. Not yet pinned.
 
-- Branch `claude/cdn-pins` holds the check, `check_asset_pins` in `scripts/shared_blocks.py`. `validate.py` runs it in the call list that `--check` shares. Its tests are in `scripts/test_asset_pins.py`.
+- The check is `check_asset_pins` in `scripts/shared_blocks.py`. `validate.py` runs it in the call list that `--check` shares. Its tests are in `scripts/test_asset_pins.py`.
 - `python3 scripts/shared_blocks.py --pin <sha>` writes the sha, the `sha384` and `crossorigin="anonymous"` into every pinned or placeholder tag in every shell. The placeholders are `__PIN_SHA__`, `__PIN_CSS_SRI__` and `__PIN_JS_SRI__`.
-- Branch `claude/cdn-split` holds each dashboard shell as a template plus `dashboard.css` and `dashboard.js`. Publish inlines any asset whose tag still holds `__PIN_`. A pinned tag stays a CDN tag. Inline fallback lasts one run: D‹inline-fallback-per-run›, a flag that is never stored.
+- Each dashboard shell is a template plus `dashboard.css` and `dashboard.js`. Publish inlines any asset whose tag still holds `__PIN_`. A pinned tag stays a CDN tag. Inline fallback lasts one run: D‹inline-fallback-per-run›, a flag that is never stored.
 
 **What the check refuses.** Each refusal is a check failure.
 
@@ -52,7 +52,7 @@ Owner ruling, 2026-10-21. The probe in F‹widget-readystate-complete›, the wi
 - An `@import` inside a CSS comment in an assets `.css` file raises a false alarm.
 - The CDN host check is a four-host denylist: the four hosts named in the refusals above.
 
-**Checks.** `scripts/test_asset_pins.py`, with `check_asset_pins`, on branch `claude/cdn-pins`. Not on main until that branch merges.
+**Checks.** `scripts/test_asset_pins.py`, with `check_asset_pins`.
 
 Kind: process
 Home: scripts/shared_blocks.py

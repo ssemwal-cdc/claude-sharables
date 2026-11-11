@@ -19,7 +19,7 @@ Only `--pin` keeps the sha uniform. A check that counted shas per plugin would c
 
 **Evidence.**
 
-- Read of `check_asset_pins` in `scripts/shared_blocks.py` on branch `claude/cdn-pins`, 2026-11-11: each tag is checked alone.
+- Read of `check_asset_pins` in `scripts/shared_blocks.py`, 2026-11-11: each tag is checked alone.
 - Read of `pin_templates` in the same file: one sha is written into every pinned tag.
 
 **Checks.** none. The check verifies each tag alone.

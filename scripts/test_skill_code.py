@@ -99,11 +99,17 @@ Covered:
                            accepts it, the page gives it its own row class, tile and PO
                            warning, sorts it between flagged and clear, and both shared
                            verdict checks see it.
+ 25. Guard banners       - the integrity guard in each shell, run on a virtual clock. A whole
+                           inline page draws no banner; a page whose code never sets
+                           __dashOK gets one after 1.5 s; a CDN tag error, a slow CDN, a cut-off
+                           page and both loaded with the code failed each draw their own banner.
+                           A banner hides the page body and names no network fault unless the
+                           CDN is the cause.
 
 Usage:  python3 scripts/test_skill_code.py
-Needs node on PATH for 1-3, 16, 18 and 21; those are skipped with a notice if it is missing.
+Needs node on PATH for 1-3, 16, 18, 21 and 25; those are skipped with a notice if it is missing.
 """
-import ast, json, os, re, shutil, subprocess, sys, tempfile
+import ast, atexit, json, os, re, shutil, subprocess, sys, tempfile, time, uuid
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NS = os.path.join(REPO, "plugins/netsuite-approval-review/skills/"
@@ -142,10 +148,43 @@ def py_block(path, needle):
     return blocks[0]
 
 
+# Temp files follow test-temp-standard: one temp root per repo, one run folder per test run
+# named <pid>-<UUID>, and every helper takes its folder from the run folder. The first request
+# of a run removes sibling run folders older than a day; newer ones belong to parallel runs.
+TEMP_ROOT = os.path.join(tempfile.gettempdir(), "claude-sharables-tests")
+DAY = 86400
+_RUN = None
+
+
+def _sweep_old_runs(root, own, now, max_age=DAY):
+    """Remove the sibling run folders under `root` that are older than `max_age` seconds at
+    `now`. The clock is an argument, so a test fixes it. `own` is this run's folder name."""
+    if not os.path.isdir(root):
+        return
+    for name in os.listdir(root):
+        p = os.path.join(root, name)
+        if name == own or not re.fullmatch(r"\d+-[0-9a-f-]{36}", name) or not os.path.isdir(p):
+            continue
+        if now - os.path.getmtime(p) > max_age:
+            shutil.rmtree(p, ignore_errors=True)
+
+
+def _run_folder():
+    global _RUN
+    if _RUN is None:
+        own = "%d-%s" % (os.getpid(), uuid.uuid4())
+        os.makedirs(TEMP_ROOT, exist_ok=True)
+        _sweep_old_runs(TEMP_ROOT, own, time.time())
+        _RUN = os.path.join(TEMP_ROOT, own)
+        os.makedirs(_RUN)
+        atexit.register(shutil.rmtree, _RUN, True)
+    return _RUN
+
+
 def run_node(script):
-    with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
+    p = os.path.join(_run_folder(), "node-%s.js" % uuid.uuid4().hex)
+    with open(p, "w", encoding="utf-8") as f:
         f.write(script)
-        p = f.name
     try:
         r = subprocess.run(["node", p], capture_output=True, text=True, timeout=60)
         return r.returncode, r.stdout.strip(), r.stderr.strip()
@@ -2435,38 +2474,96 @@ def test_netsuite_stale_doc_and_caller():
 
 
 # ------------------------------------------------ render fixes (owner rulings 2026-10-21)
-def _guard_outcome(tpl_text, complete, state):
-    """Run the shell's first inline script (the integrity guard) in node against a stub
-    document. `state` is document.readyState when the script runs, and `complete` says whether
-    the __complete marker exists. The code has run, so window.__dashOK is set: a banner can
-    only mean the page was cut short. The stub's addEventListener only records listeners, so
-    an event that never fires stays unfired, as inside the widget host. Timers are a queue the
-    harness controls: zero-delay timers run when flushed, and the guard's long timeouts never
-    fire, so no wall clock is read. Returns the banners drawn once the script and its
-    zero-delay timers ran (`now`), the banners drawn after every recorded listener fired and
-    the timers flushed again (`later`), and the number of listeners recorded."""
-    script = re.search(r"<script>(.*?)</script>", tpl_text, re.S).group(1)
-    harness = ("""
-var inserted = 0, fns = [], soon = [];
-var window = {__dashOK: true};
-var setTimeout = function(f, ms){ if (ms === 0) soon.push(f); return 1; };
-var clearTimeout = function(){};
-function flush(){ while (soon.length) soon.shift()(); }
-var document = {readyState: %s,
-  getElementById: function(){ return %s; },
-  querySelectorAll: function(){ return []; },
+# The guard harness runs the shell's first inline script (the integrity guard) in node against a
+# stub document, on a virtual clock. Timers are a queue with due times: a step advances time, and
+# only the timers due by then fire, in order. A timer armed with a delay waits for that delay, so a
+# 1.5 s or 8 s timeout is exercised, not dropped. Each step is one of: ["code"] (the page's own
+# script ran to its last line and set __dashOK), ["dcl"] (DOMContentLoaded fires), ["settle", bad]
+# (a CDN tag's load or error event calls __dashSettle), ["advance", ms], or ["snap", label].
+# A snap records the banners in the document, whether the page body .wrap is hidden, and every
+# delay armed so far, so an assert can show the timer it depends on was armed.
+GUARD_HARNESS = """
+var STEPS = %(steps)s, COMPLETE = %(complete)s, STATE = %(state)s, TAGS = %(tags)s;
+var now = 0, seq = 0, timers = [], armed = [], dcl = [], shown = [], snaps = [];
+var WRAP = {style: {}, hidden: false};
+var window = {};
+var setTimeout = function(f, ms){ var id = ++seq; armed.push(ms || 0);
+  timers.push({id: id, due: now + (ms || 0), f: f}); return id; };
+var clearTimeout = function(id){ timers = timers.filter(function(t){ return t.id !== id; }); };
+function advance(ms){
+  var end = now + ms, fired = 0;
+  for (;;) {
+    var idx = -1;
+    for (var i = 0; i < timers.length; i++) {
+      var t = timers[i];
+      if (t.due <= end && (idx < 0 || t.due < timers[idx].due ||
+          (t.due === timers[idx].due && t.id < timers[idx].id))) idx = i;
+    }
+    if (idx < 0) break;
+    if (++fired > 1000) throw new Error("timers never settle");
+    var next = timers.splice(idx, 1)[0];
+    now = next.due;
+    next.f();
+  }
+  now = end;
+}
+function wrapHidden(){
+  return WRAP.style.display === "none" || WRAP.style.visibility === "hidden" || WRAP.hidden === true;
+}
+var document = {
+  readyState: STATE,
+  getElementById: function(id){ return id === "__complete" && COMPLETE ? {} : null; },
+  querySelector: function(sel){ return /wrap/.test(sel) ? WRAP : null; },
+  querySelectorAll: function(sel){
+    return sel === "[data-dash]" ? TAGS : (/wrap/.test(sel) ? [WRAP] : []); },
+  getElementsByClassName: function(name){ return name === "wrap" ? [WRAP] : []; },
   createElement: function(){ return {style: {}}; },
-  body: {firstChild: null, insertBefore: function(){ inserted++; },
-         removeChild: function(){ inserted--; }},
-  addEventListener: function(t, f){ fns.push(f); }};
-""" % (json.dumps(state), "{}" if complete else "null")) + script + """
-flush(); var now = inserted; fns.forEach(function(f){ f(); }); flush();
-console.log(JSON.stringify({now: now, later: inserted, listeners: fns.length}));
+  body: {firstChild: null,
+         insertBefore: function(el){ shown.unshift(el); },
+         removeChild: function(el){ var i = shown.indexOf(el); if (i >= 0) shown.splice(i, 1); }},
+  addEventListener: function(t, f){ if (t === "DOMContentLoaded") dcl.push(f); }};
 """
-    rc, out, err = run_node(harness)
+
+GUARD_RUN = r"""
+STEPS.forEach(function(s){
+  if (s[0] === "code") window.__dashOK = true;
+  else if (s[0] === "dcl") dcl.forEach(function(f){ f(); });
+  else if (s[0] === "advance") advance(s[1]);
+  else if (s[0] === "settle") window.__dashSettle(s[1]);
+  else if (s[0] === "snap") snaps.push({label: s[1], now: now, armed: armed.slice(),
+    wrapHidden: wrapHidden(),
+    banners: shown.map(function(el){
+      return {text: el.textContent, style: el.style, className: el.className || ""}; })});
+});
+console.log(JSON.stringify(snaps).replace(/[\u0080-￿]/g, function(c){
+  return "\\u" + ("000" + c.charCodeAt(0).toString(16)).slice(-4); }));
+"""
+
+
+def _guard_run(tpl_text, steps, state="loading", complete=True, tags=0):
+    """Run the guard in tpl_text through `steps` and return the snaps. `tags` is the number of
+    data-dash elements the document holds (a CDN page has 2, an inline page 0)."""
+    script = re.search(r"<script>(.*?)</script>", tpl_text, re.S).group(1)
+    head = GUARD_HARNESS % {"steps": json.dumps(steps), "complete": "true" if complete else "false",
+                            "state": json.dumps(state), "tags": json.dumps([{}] * tags)}
+    rc, out, err = run_node(head + script + GUARD_RUN)
     if rc != 0:
         sys.exit("ABORT: guard harness failed: %s" % (err or out))
     return json.loads(out.splitlines()[-1])
+
+
+def _snap(snaps, label):
+    return next(s for s in snaps if s["label"] == label)
+
+
+def _guard_outcome(tpl_text, complete, state):
+    """The shell's guard with the code run (window.__dashOK set), so a banner can only mean the
+    page was cut short. `now` counts the banners after the script and its zero-delay timers ran;
+    `later` counts them after the DOMContentLoaded listener fired and 8 s more passed."""
+    snaps = _guard_run(tpl_text, [["code"], ["advance", 0], ["snap", "now"], ["dcl"],
+                                  ["advance", 0], ["advance", 8000], ["snap", "later"]],
+                       state=state, complete=complete)
+    return {"now": len(_snap(snaps, "now")["banners"]), "later": len(_snap(snaps, "later")["banners"])}
 
 
 def test_guard_fires_in_widget_host():
@@ -2489,6 +2586,201 @@ def test_guard_fires_in_widget_host():
         old = tpl.replace(listener_only, 'document.addEventListener("DOMContentLoaded",start);')
         check("%s guard: the listener-only guard goes red (mutated copy)" % name,
               old != tpl and _guard_outcome(old, False, "complete")["now"] == 0)
+
+
+def _publish_page(root, stem, log):
+    """Publish a full-size log with the shell's assets beside it. The shell's __PIN_ tokens are
+    unfilled, so publish inlines both assets, which is the page a user sees. Returns the
+    CompletedProcess and the built html, and removes its folder."""
+    d = tempfile.mkdtemp(dir=_run_folder())
+    try:
+        _copy_assets(root, d)
+        with open(os.path.join(d, stem), "w", encoding="utf-8") as f:
+            json.dump(log, f)
+        out = os.path.join(d, "index.html")
+        r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
+                           capture_output=True, text=True, timeout=60)
+        html = open(out, encoding="utf-8").read() if os.path.exists(out) else ""
+        return r, html
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def _data_dash_tags(html):
+    """How many elements carry data-dash: 2 on a CDN shell, 0 once publish inlines both."""
+    return len(re.findall(r"<\w+\b[^>]*\sdata-dash=", html))
+
+
+def _pinned(tpl):
+    """The shell with its __PIN_ tokens filled, as a pinned workspace copy has them."""
+    return (tpl.replace("__PIN_SHA__", "0" * 40)
+               .replace("__PIN_CSS_SRI__", "sha384-" + "A" * 64)
+               .replace("__PIN_JS_SRI__", "sha384-" + "B" * 64))
+
+
+INLINE_CODE = [["code"], ["dcl"], ["snap", "load"], ["advance", 1499], ["snap", "1.499 s"],
+               ["advance", 1], ["snap", "1.5 s"], ["advance", 60000], ["snap", "61.5 s"]]
+INLINE_NOCODE = [["dcl"], ["snap", "load"], ["advance", 1499], ["snap", "1.499 s"],
+                 ["advance", 1], ["snap", "1.5 s"], ["advance", 60000], ["snap", "61.5 s"]]
+CUT = [["code"], ["dcl"], ["advance", 0], ["snap", "load"], ["advance", 60000], ["snap", "61 s"]]
+CDN_ERROR = [["dcl"], ["advance", 0], ["snap", "load"], ["settle", True], ["advance", 0],
+             ["snap", "error"], ["advance", 8000], ["snap", "8 s"]]
+CDN_BOTH = [["dcl"], ["snap", "load"], ["settle", False], ["settle", False], ["advance", 0],
+            ["snap", "both loaded"], ["advance", 8000], ["snap", "8 s"]]
+CDN_SLOW = [["dcl"], ["advance", 7999], ["snap", "7.999 s"], ["advance", 1], ["snap", "8 s"],
+            ["code"], ["settle", False], ["settle", False], ["advance", 0], ["snap", "code landed"]]
+COMPLETE_DIV = '<div id="__complete" hidden></div>'
+BANNER_CODE_FAILED = r"dashboard code[^.]*\b(did not run|failed|did not start)"
+NETWORK_WORDS = r"cdn|network|could not load|blocked"
+
+
+def _banner_scenarios(root, log, stem):
+    """Every way a page ends up, run through the shell's own guard. Returns the publish result,
+    the built inline html, and {scenario: snaps}. A scenario keyed by a tuple is (kind, state or
+    form). The inline runs use the page publish built; the CDN runs use the shell, with its two
+    data-dash tags counted, placeholder or pinned."""
+    r, pub = _publish_page(root, stem, log)
+    if r.returncode != 0 or not pub:
+        return r, pub, None
+    tpl = _asset(root, "dashboard_template.html")
+    runs = {}
+    for state in ("loading", "complete"):
+        runs[("inline-code", state)] = _guard_run(pub, INLINE_CODE, state, True, 0)
+        runs[("inline-nocode", state)] = _guard_run(pub, INLINE_NOCODE, state, True, 0)
+    runs["cut"] = _guard_run(pub.replace(COMPLETE_DIV, ""), CUT, "loading", False, 0)
+    cdn_tags = _data_dash_tags(tpl)
+    for form, text in (("placeholder", tpl), ("pinned", _pinned(tpl))):
+        runs[("cdn-error", form)] = _guard_run(text, CDN_ERROR, "loading", True, cdn_tags)
+        runs[("cdn-both", form)] = _guard_run(text, CDN_BOTH, "loading", True, cdn_tags)
+    runs["cdn-slow"] = _guard_run(tpl, CDN_SLOW, "loading", True, cdn_tags)
+    return r, pub, runs
+
+
+def _own_colours(banner):
+    """True when the banner sets its own text and background colour, with no var() and no class,
+    so it reads the same in a dark scheme and with no stylesheet loaded."""
+    s = banner["style"]
+    decl = " ".join([str(s.get("cssText", ""))] + ["%s:%s" % (k, v) for k, v in s.items()
+                                                  if k != "cssText"])
+    return (re.search(r"(?<![\w-])color\s*:", decl) is not None
+            and re.search(r"background(-color)?\s*:", decl) is not None
+            and "var(" not in decl and not banner["className"])
+
+
+def _first_text(banners):
+    return banners[0]["text"] if len(banners) == 1 else ""
+
+
+def test_guard_banners():
+    """The guard's banner for each way a page ends up, run on a virtual clock. The timing and
+    count claims (section A) hold on the shipped shell. The presentation claims (section B) are
+    new: the page body hides under a banner that says the dashboard did not render, the banner
+    names no network fault unless the CDN is the cause, and every banner keeps its own colours."""
+    for name, root, log, stem in (("procore", PC, _big_procore_log(), "_procore_review_log.json"),
+                                  ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json")):
+        r, pub, runs = _banner_scenarios(root, log, stem)
+        check("%s banners: the inline publish runs" % name, runs is not None,
+              (r.stderr or r.stdout)[-200:])
+        if runs is None:
+            continue
+        tpl = _asset(root, "dashboard_template.html")
+        check("%s banners: the shell has two data-dash tags and the inline page none" % name,
+              _data_dash_tags(tpl) == 2 and _data_dash_tags(pub) == 0,
+              (_data_dash_tags(tpl), _data_dash_tags(pub)))
+        check("%s banners: the inline page holds its __complete marker once, so it can be cut"
+              % name, pub.count(COMPLETE_DIV) == 1, pub.count(COMPLETE_DIV))
+
+        # A. Timing and count. Each no-banner assert first proves its timer was armed.
+        for state in ("loading", "complete"):
+            s = runs[("inline-code", state)]
+            check("%s inline page (%s): the guard armed its 1.5 s timer" % (name, state),
+                  1500 in _snap(s, "load")["armed"], _snap(s, "load")["armed"])
+            seen = [(x["label"], [b["text"][:60] for b in x["banners"]]) for x in s if x["banners"]]
+            check("%s inline page (%s): whole, it draws no banner at any time" % (name, state),
+                  not seen, seen[:1])
+            s = runs[("inline-nocode", state)]
+            before = _snap(s, "1.499 s")["banners"]
+            at = _snap(s, "1.5 s")["banners"]
+            late = _snap(s, "61.5 s")["banners"]
+            check("%s inline page with no __dashOK (%s): one banner at 1.5 s, none before it"
+                  % (name, state), not before and len(at) == 1 and len(late) == 1,
+                  (len(before), len(at), len(late)))
+            check("%s inline page with no __dashOK (%s): the banner says the code did not run"
+                  % (name, state), re.search(BANNER_CODE_FAILED, _first_text(at)) is not None,
+                  _first_text(at)[:90])
+        s = runs["cut"]
+        check("%s cut page: one truncation banner at load, still one at 61 s" % name,
+              len(_snap(s, "load")["banners"]) == 1 and len(_snap(s, "61 s")["banners"]) == 1
+              and "did not render completely" in _first_text(_snap(s, "load")["banners"]),
+              _first_text(_snap(s, "load")["banners"])[:90])
+        for form in ("placeholder", "pinned"):
+            s = runs[("cdn-error", form)]
+            check("%s CDN error (%s): the guard armed its 8 s CDN timer" % (name, form),
+                  8000 in _snap(s, "load")["armed"], _snap(s, "load")["armed"])
+            check("%s CDN error (%s): no banner while the tags load" % (name, form),
+                  not _snap(s, "load")["banners"])
+            err = _snap(s, "error")["banners"]
+            check("%s CDN error (%s): one banner naming cdn.jsdelivr.net, still one at 8 s"
+                  % (name, form), len(err) == 1 and "cdn.jsdelivr.net" in _first_text(err)
+                  and len(_snap(s, "8 s")["banners"]) == 1, _first_text(err)[:90])
+            s = runs[("cdn-both", form)]
+            both = _snap(s, "both loaded")["banners"]
+            check("%s CDN both loaded, code not run (%s): the guard armed its 8 s CDN timer"
+                  % (name, form), 8000 in _snap(s, "load")["armed"])
+            check("%s CDN both loaded, code not run (%s): one banner, still one at 8 s"
+                  % (name, form), len(both) == 1 and len(_snap(s, "8 s")["banners"]) == 1,
+                  len(both))
+            cdn_text = _first_text(_snap(runs[("cdn-error", form)], "error")["banners"])
+            check("%s CDN both loaded, code not run (%s): the banner is not the CDN banner"
+                  % (name, form), _first_text(both) != "" and _first_text(both) != cdn_text,
+                  _first_text(both)[:90])
+            check("%s CDN both loaded, code not run (%s): the banner names no network fault"
+                  % (name, form), _first_text(both) != ""
+                  and re.search(NETWORK_WORDS, _first_text(both), re.I) is None,
+                  _first_text(both)[:90])
+            check("%s CDN both loaded, code not run (%s): the banner says the dashboard code "
+                  "failed (pattern %s)" % (name, form, BANNER_CODE_FAILED),
+                  re.search(BANNER_CODE_FAILED, _first_text(both)) is not None,
+                  _first_text(both)[:90])
+        s = runs["cdn-slow"]
+        check("%s slow CDN: the guard armed its 8 s CDN timer" % name,
+              8000 in _snap(s, "7.999 s")["armed"], _snap(s, "7.999 s")["armed"])
+        check("%s slow CDN: no banner at 7.999 s, one at 8 s" % name,
+              not _snap(s, "7.999 s")["banners"] and len(_snap(s, "8 s")["banners"]) == 1,
+              len(_snap(s, "8 s")["banners"]))
+        check("%s slow CDN: the banner clears once the code lands late" % name,
+              _snap(s, "code landed")["banners"] == [], len(_snap(s, "code landed")["banners"]))
+
+        # B. Presentation. These are new claims: each banner that says the dashboard did not
+        # render hides the page body, and every banner says only what is true.
+        hide_wanted = [("inline-nocode", st, "1.5 s") for st in ("loading", "complete")]
+        hide_wanted += [("inline-nocode", st, "61.5 s") for st in ("loading", "complete")]
+        hide_wanted += [("cdn-error", f, "error") for f in ("placeholder", "pinned")]
+        hide_wanted += [("cdn-both", f, "both loaded") for f in ("placeholder", "pinned")]
+        hide_wanted += [("cdn-slow", None, "8 s")]
+        unhidden = []
+        for kind, key, label in hide_wanted:
+            s = runs[(kind, key)] if key else runs[kind]
+            x = _snap(s, label)
+            if x["banners"] and not x["wrapHidden"]:
+                unhidden.append("%s %s @%s" % (kind, key or "", label))
+        check("%s the CDN and code-failed banners hide the page body (.wrap)" % name,
+              not unhidden, unhidden)
+        every = []
+        for key, s in runs.items():
+            for x in s:
+                for b in x["banners"]:
+                    every.append((key, x["label"], b, x["wrapHidden"]))
+        inline_word = [(k, l, b["text"][:80]) for k, l, b, _ in every
+                       if re.search(r"\binline\b", b["text"], re.I)]
+        check("%s no banner says 'inline'" % name, not inline_word, inline_word[:1])
+        claims_empty = [(k, l) for k, l, b, hid in every
+                        if "nothing below is drawn" in b["text"] and not hid]
+        check("%s a banner that says nothing below is drawn hides the page body" % name,
+              not claims_empty, claims_empty[:2])
+        bare = [(k, l, b["text"][:60]) for k, l, b, _ in every if not _own_colours(b)]
+        check("%s every banner keeps its own colours, with no stylesheet and in a dark scheme"
+              % name, not bare, bare[:1])
 
 
 def _load_publish(root, tag):
@@ -2516,27 +2808,38 @@ def test_published_page_has_no_comments():
               repr(out))
     for name, root, log, stem in (("procore", PC, _big_procore_log(), "_procore_review_log.json"),
                                   ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json")):
-        d = tempfile.mkdtemp()
-        try:
-            _copy_assets(root, d)
-            json.dump(log, open(os.path.join(d, stem), "w"))
-            out = os.path.join(d, "index.html")
-            r = subprocess.run([sys.executable, "-B", os.path.join(d, "publish_dashboard.py"), out],
-                               capture_output=True, text=True, timeout=60)
-            check("%s comments: publish runs" % name, r.returncode == 0, (r.stderr or r.stdout)[-200:])
-            html = open(out, encoding="utf-8").read()
-            rest = re.sub(r"(/\*__REVIEW_DATA__\*/).*?(/\*__END__\*/)", r"\1\2", html, flags=re.S)
-            check("%s comments: only the two data sentinels remain" % name,
-                  re.findall(r"/\*.*?\*/", rest, re.S) == ["/*__REVIEW_DATA__*/", "/*__END__*/"],
-                  re.findall(r"/\*.*?\*/", rest, re.S)[:3])
-            check("%s comments: no HTML comment" % name, "<!--" not in rest)
-            lines = rest.split("\n")
-            check("%s comments: no comment-only line" % name,
-                  not [l for l in lines if l.lstrip().startswith(("//", "/*", "*/"))])
-            eol = [l.strip()[:70] for l in lines if re.search(r"(?<=[\s;{},)])//\s", l)]
-            check("%s comments: no end-of-line // comment" % name, not eol, eol[:2])
-        finally:
-            shutil.rmtree(d, ignore_errors=True)
+        r, html = _publish_page(root, stem, log)
+        check("%s comments: publish runs" % name, r.returncode == 0, (r.stderr or r.stdout)[-200:])
+        rest = re.sub(r"(/\*__REVIEW_DATA__\*/).*?(/\*__END__\*/)", r"\1\2", html, flags=re.S)
+        check("%s comments: only the two data sentinels remain" % name,
+              re.findall(r"/\*.*?\*/", rest, re.S) == ["/*__REVIEW_DATA__*/", "/*__END__*/"],
+              re.findall(r"/\*.*?\*/", rest, re.S)[:3])
+        check("%s comments: no HTML comment" % name, "<!--" not in rest)
+        lines = rest.split("\n")
+        check("%s comments: no comment-only line" % name,
+              not [l for l in lines if l.lstrip().startswith(("//", "/*", "*/"))])
+        eol = [l.strip()[:70] for l in lines if re.search(r"(?<=[\s;{},)])//\s", l)]
+        check("%s comments: no end-of-line // comment" % name, not eol, eol[:2])
+
+
+def test_temp_run_folder_sweep():
+    """test-temp-standard: the sweep removes a sibling run folder older than a day, keeps a
+    newer one, and keeps this run's own folder however old it is. The clock is an argument."""
+    now = 1800000000
+    root = tempfile.mkdtemp(dir=_run_folder())
+    try:
+        old = os.path.join(root, "101-%s" % uuid.uuid4())
+        new = os.path.join(root, "102-%s" % uuid.uuid4())
+        mine = os.path.join(root, "103-%s" % uuid.uuid4())
+        for p, age in ((old, 2 * DAY), (new, 3600), (mine, 2 * DAY)):
+            os.makedirs(p)
+            os.utime(p, (now - age, now - age))
+        _sweep_old_runs(root, os.path.basename(mine), now)
+        check("temp sweep: a sibling run folder older than a day is removed", not os.path.exists(old))
+        check("temp sweep: a sibling run folder newer than a day is kept", os.path.exists(new))
+        check("temp sweep: this run's own folder is kept, however old", os.path.exists(mine))
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def test_dead_fallback_gone():
@@ -2695,9 +2998,11 @@ def main():
     test_read_docx()
     if shutil.which("node"):
         test_guard_fires_in_widget_host()
+        test_guard_banners()
         test_dead_fallback_gone()
         test_detail_cap()
     test_published_page_has_no_comments()
+    test_temp_run_folder_sweep()
     print()
     if failures:
         print("FAILED: " + "; ".join(failures))

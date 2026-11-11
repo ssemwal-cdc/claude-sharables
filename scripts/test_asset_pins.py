@@ -36,7 +36,8 @@ Contract the builder implements:
   an unquoted tag, and exits non-zero with "No pinned or placeholder tag found" on a page with no tag.
 - A pin path is URL-decoded: %20 is a space in the file name.
 - A shell tag (placeholder or pinned) whose path is not a file in that shell's own assets directory is
-  refused with "own assets": a path to another plugin's file, or to a missing file.
+  refused with "own assets": a path to another plugin's file, or to a missing placeholder path. A
+  pinned path to a missing file is refused with the existing "does not exist" (at pin).
 - Any @import in an assets .css file is refused with "@import". So is a minified @import"x.css" (no
   space) in a shell <style>.
 - validate.py runs the pin check: a bad pin makes it exit 1 and name the cause.
@@ -653,8 +654,8 @@ CASES = [
      c_cross_pinned, ("refuse", "own assets")),
     ("placeholder tag on a missing file is refused (not in this shell's own assets)",
      c_missing_placeholder, ("refuse", "own assets")),
-    ("pinned tag on a missing file is refused (not in this shell's own assets)",
-     c_missing_pinned, ("refuse", "own assets")),
+    ("pinned tag on a missing file is refused (does not exist at pin)",
+     c_missing_pinned, ("refuse", "does not exist")),
     ("dashboard.css with a quoted @import is refused", _asset_case(
         "css-import-quoted", _asset("p", CSS), '@import "base.css";\nbody { margin: 0 }\n'),
      ("refuse", "@import")),

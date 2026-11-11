@@ -619,9 +619,10 @@ def check_asset_pins(root=REPO):
                 if url is not None and not url.startswith("data:"):
                     results += _check_url(root, "%s <%s>" % (rel, name), url, name, rest[1])
                 continue
-            urls = [u for u in CSS_IMPORT.findall(rest[0]) if name == "style" and not u.startswith("data:")]
-            urls += [u.group(0) for u in CDN_URL.finditer(rest[0]) if u.group(0) not in urls]
-            for u in urls:
+            if name == "style":  # owner ruling 2026-11-11: no CSS @import in a shell, pinned or not
+                results += [("fail", "%s inline <style>: @import of %r is refused; load CSS with a pinned <link>"
+                                     % (rel, u)) for u in CSS_IMPORT.findall(rest[0]) if not u.startswith("data:")]
+            for u in (m.group(0) for m in CDN_URL.finditer(rest[0])):
                 results += _check_url(root, "%s inline <%s>" % (rel, name), u)
     return results
 

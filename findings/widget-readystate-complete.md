@@ -21,7 +21,7 @@ The same probe loaded a `<script src>` from `cdn.jsdelivr.net/gh/ssemwal-cdc/cla
 
 A second probe on 2026-11-11 tested the hash check. A script and a stylesheet with the correct sha384 `integrity` value loaded. The same files with a wrong value were blocked.
 
-A third probe on 2026-11-11 read the `--dash-css` marker that the dashboard code checks. The widget read it from a `<style>` block and from the pinned stylesheet. In that probe the send button did nothing when clicked; in the hash probe earlier that day it sent its text. The cause is unknown.
+A third probe on 2026-11-11 read the `--dash-css` marker that the dashboard code checks. The widget read it from a `<style>` block and from the pinned stylesheet. In that probe the send button did nothing when clicked. In the hash probe earlier that day it sent its text. The cause is unknown.
 
 **Evidence.**
 

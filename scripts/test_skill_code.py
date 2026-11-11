@@ -105,6 +105,11 @@ Covered:
                            page and both loaded with the code failed each draw their own banner.
                            A banner hides the page body and names no network fault unless the
                            CDN is the cause.
+ 26. Guard late paths    - a CDN tag that fails before the guard starts draws its banner at
+                           once; a timeout banner clears and .wrap returns when the code later
+                           sets __dashOK, inline and CDN.
+ 27. Shell assets        - shared_blocks' verdict check fails a shell (data-dash= tags) that
+                           has no dashboard.js beside it.
 
 Usage:  python3 scripts/test_skill_code.py
 Needs node on PATH for 1-3, 16, 18, 21 and 25; those are skipped with a notice if it is missing.
@@ -2783,6 +2788,110 @@ def test_guard_banners():
               % name, not bare, bare[:1])
 
 
+EARLY_ERROR = [["settle", True], ["dcl"], ["advance", 0], ["snap", "started"],
+               ["advance", 7999], ["snap", "7.999 s"]]
+EARLY_ERROR_AFTER_START = [["settle", True], ["advance", 0], ["snap", "error"]]
+INLINE_LATE = [["dcl"], ["advance", 1500], ["snap", "timeout"], ["code"],
+               ["snap", "code landed"], ["advance", 60000], ["snap", "later"]]
+# The code's own __dashOK set is checked before either tag reports, so the clear cannot come
+# from a load event. The load events follow and must leave the page clear.
+CDN_LATE = [["dcl"], ["advance", 8000], ["snap", "timeout"], ["code"], ["snap", "code landed"],
+            ["settle", False], ["settle", False], ["advance", 0], ["snap", "loads reported"],
+            ["advance", 60000], ["snap", "later"]]
+
+
+def test_guard_early_error_and_late_code():
+    """Two guard paths the banner round left open, on the virtual clock. (3) A CDN tag that
+    fails before the guard starts draws its banner when the guard starts, not 8 s later. The
+    same error after the guard started is the control: it is at once on either build. (4) A
+    banner raised on a timeout is taken down, and .wrap returns, when the code later sets
+    __dashOK: an inline page at 1.5 s, a CDN page at 8 s. Nothing raises a banner again."""
+    for name, root, log, stem in (("procore", PC, _big_procore_log(), "_procore_review_log.json"),
+                                  ("netsuite", NS, _big_netsuite_log(), "_netsuite_review_log.json")):
+        r, pub = _publish_page(root, stem, log)
+        check("%s late code: the inline publish runs" % name, r.returncode == 0 and pub != "",
+              (r.stderr or r.stdout)[-200:])
+        if r.returncode != 0 or not pub:
+            continue
+        tpl = _asset(root, "dashboard_template.html")
+
+        started = _snap(_guard_run(tpl, EARLY_ERROR, "loading", True, 2), "started")["banners"]
+        check("%s early CDN error: the banner is up when the guard starts, not 8 s later" % name,
+              len(started) == 1 and "cdn.jsdelivr.net" in _first_text(started),
+              [b["text"][:90] for b in started])
+        after = _snap(_guard_run(tpl, EARLY_ERROR_AFTER_START, "complete", True, 2), "error")
+        check("%s early CDN error, control: the same error after the guard started is at once"
+              % name, len(after["banners"]) == 1 and "cdn.jsdelivr.net" in _first_text(after["banners"]),
+              [b["text"][:90] for b in after["banners"]])
+
+        late = _guard_run(pub, INLINE_LATE, "loading", True, 0)
+        armed = _snap(late, "timeout")["armed"]
+        check("%s inline timeout: the guard armed its 1.5 s timer" % name, 1500 in armed, armed)
+        check("%s inline timeout: one banner at 1.5 s, and it hides .wrap" % name,
+              len(_snap(late, "timeout")["banners"]) == 1 and _snap(late, "timeout")["wrapHidden"],
+              (len(_snap(late, "timeout")["banners"]), _snap(late, "timeout")["wrapHidden"]))
+        check("%s inline timeout: the banner clears when the code later sets __dashOK" % name,
+              _snap(late, "code landed")["banners"] == [],
+              [b["text"][:60] for b in _snap(late, "code landed")["banners"]])
+        check("%s inline timeout: .wrap returns when the code lands" % name,
+              not _snap(late, "code landed")["wrapHidden"])
+        check("%s inline timeout: nothing raises a banner again after the code lands" % name,
+              _snap(late, "later")["banners"] == [], len(_snap(late, "later")["banners"]))
+
+        late = _guard_run(tpl, CDN_LATE, "loading", True, 2)
+        armed = _snap(late, "timeout")["armed"]
+        check("%s CDN timeout: the guard armed its 8 s CDN timer" % name, 8000 in armed, armed)
+        check("%s CDN timeout: one banner at 8 s, and it hides .wrap" % name,
+              len(_snap(late, "timeout")["banners"]) == 1 and _snap(late, "timeout")["wrapHidden"],
+              (len(_snap(late, "timeout")["banners"]), _snap(late, "timeout")["wrapHidden"]))
+        check("%s CDN timeout: the banner clears when the late code lands" % name,
+              _snap(late, "code landed")["banners"] == [],
+              [b["text"][:60] for b in _snap(late, "code landed")["banners"]])
+        check("%s CDN timeout: .wrap returns when the late code lands" % name,
+              not _snap(late, "code landed")["wrapHidden"])
+        check("%s CDN timeout: nothing raises a banner again after the code lands" % name,
+              _snap(late, "later")["banners"] == [], len(_snap(late, "later")["banners"]))
+
+
+def test_shell_needs_dashboard_js():
+    """shared_blocks' verdict check fails a shell (a template that names its asset tags with
+    data-dash=) with no dashboard.js beside it: the shell then holds no page code, so its
+    verdict branches cannot be checked. Driven on fixture plugins, through the function
+    main() runs. Controls: a shell with its dashboard.js, and a template with no data-dash
+    tag, which is not a shell, both stay silent."""
+    sys.path.insert(0, os.path.join(REPO, "scripts"))
+    import shared_blocks as sb
+    root = tempfile.mkdtemp(dir=_run_folder())
+    old = sb.PLUGINS
+    try:
+        def problems_for(case, shell, with_js):
+            assets = os.path.join(root, case, "p", "skills", "s", "assets")
+            os.makedirs(assets)
+            with open(os.path.join(assets, "publish_dashboard.py"), "w", encoding="utf-8") as f:
+                f.write('VERDICTS = ("clear", "flagged")\n')
+            with open(os.path.join(assets, "dashboard_template.html"), "w", encoding="utf-8") as f:
+                f.write('<link rel="stylesheet" data-dash="css" href="x.css">\n' if shell
+                        else "<p>static page</p>\n")
+            if with_js:
+                with open(os.path.join(assets, "dashboard.js"), "w", encoding="utf-8") as f:
+                    f.write("window.__dashOK = true;\n")
+            sb.PLUGINS = os.path.join(root, case)
+            return sb.check_verdict_vocabulary()
+
+        missing = problems_for("missing", shell=True, with_js=False)
+        check("shell with no dashboard.js beside it: the shared-blocks check names the file",
+              any("dashboard.js is missing" in p for p in missing), missing)
+        present = problems_for("present", shell=True, with_js=True)
+        check("shell with its dashboard.js: the shared-blocks check is silent", present == [],
+              present)
+        static = problems_for("static", shell=False, with_js=False)
+        check("template with no data-dash tag is not a shell: the check stays silent",
+              static == [], static)
+    finally:
+        sb.PLUGINS = old
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def _load_publish(root, tag):
     import importlib.util
     spec = importlib.util.spec_from_file_location("pd_" + tag,
@@ -2999,10 +3108,12 @@ def main():
     if shutil.which("node"):
         test_guard_fires_in_widget_host()
         test_guard_banners()
+        test_guard_early_error_and_late_code()
         test_dead_fallback_gone()
         test_detail_cap()
     test_published_page_has_no_comments()
     test_temp_run_folder_sweep()
+    test_shell_needs_dashboard_js()
     print()
     if failures:
         print("FAILED: " + "; ".join(failures))

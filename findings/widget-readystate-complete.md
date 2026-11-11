@@ -19,9 +19,12 @@ So the integrity guard in both dashboards never fired in the widget before commi
 
 The same probe loaded a `<script src>` from `cdn.jsdelivr.net/gh/ssemwal-cdc/claude-sharables@<full sha>`. An npm control loaded too. See D‹pinned-repo-cdn-assets›, pinned repo assets.
 
+A second probe on 2026-11-11 tested the hash check. A script and a stylesheet with the correct sha384 `integrity` value loaded. The same files with a wrong value were blocked.
+
 **Evidence.**
 
 - Owner-run probe widget, Claude desktop app, 2026-10-21.
+- Owner-run hash probe, 2026-11-11: correct hash loaded, wrong hash blocked, for a script and a stylesheet.
 - Fix landed in commit `c888908`: the guard now checks `readyState`.
 
 **Checks.** none

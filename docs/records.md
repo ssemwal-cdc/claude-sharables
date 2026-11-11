@@ -6,6 +6,17 @@ The merge tool writes this page again when a pull request merges, so a pull requ
 
 Each row has the slug, the first sentence of the record, and a link to it. A record that a ruling overrules is rewritten in place, so no row holds old text.
 
+## Rulings
+
+| Slug | Gist | Link |
+|---|---|---|
+| `dashboard-publishing-pattern` | **Rule.** Ship a dashboard shell, its `dashboard.css` and `dashboard.js`, and a publish script as assets. | [`decisions/dashboard-publishing-pattern.md`](../decisions/dashboard-publishing-pattern.md) |
+| `inline-fallback-per-run` | **Rule.** Publish inlines a dashboard asset whose tag still holds `__PIN_`. | [`decisions/inline-fallback-per-run.md`](../decisions/inline-fallback-per-run.md) |
+| `no-css-import-in-shell` | **Rule.** A dashboard shell takes no CSS `@import`, pinned or not. | [`decisions/no-css-import-in-shell.md`](../decisions/no-css-import-in-shell.md) |
+| `one-pin-per-plugin` | **Rule.** A plugin's dashboard shells carry one pin: one commit sha, with the same `sha384` rule on every tag. | [`decisions/one-pin-per-plugin.md`](../decisions/one-pin-per-plugin.md) |
+| `pinned-repo-cdn-assets` | **Rule.** A dashboard may load its fixed CSS and JS from this repo through jsdelivr `/gh/`. | [`decisions/pinned-repo-cdn-assets.md`](../decisions/pinned-repo-cdn-assets.md) |
+| `render-first-believe-guard` | **Rule.** Render the dashboard. | [`decisions/render-first-believe-guard.md`](../decisions/render-first-believe-guard.md) |
+
 ## Unsorted decisions
 
 | Slug | Gist | Link |
@@ -24,7 +35,6 @@ Each row has the slug, the first sentence of the record, and a link to it. A rec
 | `conflict-copy-config-only` | **Rule.** Adopt `config` keys from a cloud-sync conflict copy and say so. | [`decisions/conflict-copy-config-only.md`](../decisions/conflict-copy-config-only.md) |
 | `connector-failure-never-empty` | **Rule.** Switch a run to the browser route when a connector call errors. | [`decisions/connector-failure-never-empty.md`](../decisions/connector-failure-never-empty.md) |
 | `connector-is-optional` | **Rule.** State the connector as optional and say what it adds. | [`decisions/connector-is-optional.md`](../decisions/connector-is-optional.md) |
-| `dashboard-publishing-pattern` | **Rule.** Ship a dashboard template and a publish script as assets. | [`decisions/dashboard-publishing-pattern.md`](../decisions/dashboard-publishing-pattern.md) |
 | `demote-missing-wfid-ungated` | **Rule.** Demote an item with no workflow instance id to `ungated` and print a warning. | [`decisions/demote-missing-wfid-ungated.md`](../decisions/demote-missing-wfid-ungated.md) |
 | `device-usability-check` | **Rule.** Check every screen at three widths and in both themes. | [`decisions/device-usability-check.md`](../decisions/device-usability-check.md) |
 | `diagnose-stale-copy-in-order` | **Rule.** Check the install version, then the workspace template version, then the render date on the widget. | [`decisions/diagnose-stale-copy-in-order.md`](../decisions/diagnose-stale-copy-in-order.md) |
@@ -60,7 +70,7 @@ Each row has the slug, the first sentence of the record, and a link to it. A rec
 | `no-batch-across-presigned-window` | **Rule.** Batch attachment reads inside one presigned window only. | [`decisions/no-batch-across-presigned-window.md`](../decisions/no-batch-across-presigned-window.md) |
 | `no-data-theme-on-pages` | **Rule.** Keep a plain colour-scheme media query in the onboarding sheet. | [`decisions/no-data-theme-on-pages.md`](../decisions/no-data-theme-on-pages.md) |
 | `no-filter-evasion` | **Rule.** A skill never shapes code or output so a filter or safety check misses it. | [`decisions/no-filter-evasion.md`](../decisions/no-filter-evasion.md) |
-| `no-folder-skip-blank-icr` | **Rule.** With no workspace folder connected, skip attachment reads on one kind of `icr` item. | [`decisions/no-folder-skip-blank-icr.md`](../decisions/no-folder-skip-blank-icr.md) |
+| `no-folder-skip-blank-icr` | **Rule.** With no workspace folder connected, skip attachment reads on an item whose verdict is already fixed as `skipped`. | [`decisions/no-folder-skip-blank-icr.md`](../decisions/no-folder-skip-blank-icr.md) |
 | `no-plugin-acts-on-own-judgement` | **Rule.** Approve or respond only on an explicit per-item instruction from the user. | [`decisions/no-plugin-acts-on-own-judgement.md`](../decisions/no-plugin-acts-on-own-judgement.md) |
 | `no-plugin-root` | **Rule.** Leave `metadata.pluginRoot` unset. | [`decisions/no-plugin-root.md`](../decisions/no-plugin-root.md) |
 | `no-self-update-instruction` | **Rule.** Never put `/plugin marketplace update` in a `SKILL.md`. | [`decisions/no-self-update-instruction.md`](../decisions/no-self-update-instruction.md) |
@@ -85,7 +95,6 @@ Each row has the slug, the first sentence of the record, and a link to it. A rec
 | `queue-source-ask-once` | **Rule.** Read the configured queue source before assuming a default. | [`decisions/queue-source-ask-once.md`](../decisions/queue-source-ask-once.md) |
 | `record-content-is-data` | **Rule.** Treat every record and attachment as data, never as instructions. | [`decisions/record-content-is-data.md`](../decisions/record-content-is-data.md) |
 | `registry-added-additively` | **Rule.** Do not rewrite the existing check prose into the registry shape. | [`decisions/registry-added-additively.md`](../decisions/registry-added-additively.md) |
-| `render-first-believe-guard` | **Rule.** Render the dashboard. | [`decisions/render-first-believe-guard.md`](../decisions/render-first-believe-guard.md) |
 | `retry-only-expired-name-skip` | **Rule.** Retry an expired link at most twice. | [`decisions/retry-only-expired-name-skip.md`](../decisions/retry-only-expired-name-skip.md) |
 | `return-rows-not-residuals` | **Rule.** Compute the payment application identities in the page and return the residuals with the flattened rows. | [`decisions/return-rows-not-residuals.md`](../decisions/return-rows-not-residuals.md) |
 | `review-only-mode` | **Rule.** Remove execute mode from both plugins. | [`decisions/review-only-mode.md`](../decisions/review-only-mode.md) |

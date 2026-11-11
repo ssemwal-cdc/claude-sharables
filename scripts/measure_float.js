@@ -29,6 +29,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
+const crypto = require("crypto");
 const { execFileSync } = require("child_process");
 
 const REPO = path.resolve(__dirname, "..");
@@ -54,6 +55,38 @@ const SHOTS = shotsDir(process.argv.slice(2));
 
 let fails = 0;
 const ck = (n, ok, d) => { if (!ok) fails++; console.log((ok ? "  ok  " : "  FAIL") + "  " + n + (d ? "   [" + d + "]" : "")); };
+
+// ---- the CDN, offline ---------------------------------------------------------------------
+// A pinned shell loads dashboard.css and dashboard.js from cdn.jsdelivr.net with an integrity
+// hash. This run answers those requests from the working tree and adds the CORS header a real
+// CDN sends, so Chromium checks the hash against the files as they stand and needs no network.
+// A shell edited without a new pin therefore fails here the way it fails for a reader.
+const CDN_URL = /^https:\/\/cdn\.jsdelivr\.net\/gh\/ssemwal-cdc\/claude-sharables@[0-9a-f]{40}\/(plugins\/[^?#]+\/assets\/dashboard\.(css|js))$/;
+function routeCdn(route) {
+  const m = CDN_URL.exec(route.request().url());
+  const file = m && path.join(REPO, m[1]);
+  if (!file || !fs.existsSync(file)) return route.fulfill({ status: 404, body: "no" });
+  route.fulfill({ status: 200, body: fs.readFileSync(file), headers: {
+    "Access-Control-Allow-Origin": "*",
+    "Content-Type": m[2] === "css" ? "text/css" : "text/javascript" } });
+}
+
+// Harness only. While the shell carries no pin its tags hold __PIN_ tokens and publish inlines
+// the assets, so no CDN request would ever be made. This fills the tokens in the temp copy with
+// a made-up commit and the hash of the working-tree files, which makes publish leave CDN tags
+// and lets the browser run the same path a pinned shell takes. A shell that already carries a
+// pin has no token left, so nothing changes.
+function pinForHarness(work, p) {
+  const tp = path.join(work, "dashboard_template.html");
+  let tpl = fs.readFileSync(tp, "utf8");
+  if (!tpl.includes("__PIN_")) return;
+  const sri = f => "sha384-" + crypto.createHash("sha384")
+    .update(fs.readFileSync(path.join(REPO, p.dir, f))).digest("base64");
+  tpl = tpl.split("__PIN_SHA__").join("0".repeat(40))
+           .split("__PIN_CSS_SRI__").join(sri("dashboard.css"))
+           .split("__PIN_JS_SRI__").join(sri("dashboard.js"));
+  fs.writeFileSync(tp, tpl);
+}
 
 // ---- fixtures: enough items that the page is several viewports tall ---------------------
 function fixtures(tmp) {
@@ -84,8 +117,9 @@ function fixtures(tmp) {
   for (const p of PLUGINS) {
     const work = path.join(tmp, p.label);
     fs.mkdirSync(work, { recursive: true });
-    for (const f of ["publish_dashboard.py", "dashboard_template.html"])
+    for (const f of ["publish_dashboard.py", "dashboard_template.html", "dashboard.css", "dashboard.js"])
       fs.copyFileSync(path.join(REPO, p.dir, f), path.join(work, f));
+    pinForHarness(work, p);
     const items = p.label === "procore" ? pc : ns;
     const cfg = p.label === "procore" ? { company: "0", icrToolId: "0" }
                                       : { me: 42, account: "1", tool: "t" };
@@ -134,6 +168,14 @@ async function suite(page, p) {
   // query string and matching that picks the parent frame, which has no #floathdr in it.
   const fr = page.frames().find(f => f.url().startsWith("http://127.0.0.1:8092/"));
   if (!fr) return ck(p.label + ": widget frame loaded", false);
+
+  // The page's own guard has to be quiet and the CDN tags, when the shell has them, have to
+  // have passed their integrity check and run: __dashOK is the last line of dashboard.js.
+  const code = await fr.evaluate(() => ({
+    cdn: !!document.querySelector("script[data-dash]"), ok: window.__dashOK === true,
+    banner: [...document.body.children].some(e => e.style.position === "sticky" && e.style.zIndex === "999") }));
+  ck(p.label + ": dashboard code ran (" + (code.cdn ? "from the CDN tags" : "inlined") + ") and the guard is quiet",
+     code.ok && !code.banner, JSON.stringify(code));
 
   // The host sizes the frame to the widget's content. That is what removes its scrollport.
   const ch = await fr.evaluate(() => document.documentElement.scrollHeight);
@@ -224,6 +266,7 @@ async function captures(browser, dir) {
         const shot = await browser.newPage({ viewport: { width: width, height: VH } });
         const errs = [];
         shot.on("pageerror", e => errs.push(e.message));
+        await shot.route("https://cdn.jsdelivr.net/**", routeCdn);
         try {
           await shot.emulateMedia({ colorScheme: scheme });
           await shot.goto("http://127.0.0.1:8092/" + p.file);
@@ -278,6 +321,7 @@ async function captures(browser, dir) {
   const browser = await chromium.launch(opts);
   const page = await browser.newPage({ viewport: { width: 1000, height: VH } });
   page.on("pageerror", e => { console.log("  PAGE ERROR: " + e.message); fails++; });
+  await page.route("https://cdn.jsdelivr.net/**", routeCdn);
   try {
     for (const p of PLUGINS) await suite(page, p);
     await suiteInternalScroll(page, PLUGINS[0]);

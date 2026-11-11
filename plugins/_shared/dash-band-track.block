@@ -25,8 +25,10 @@ var BAND_TILE=100, BAND_MIN=140, bandSeen=new Map(), bandIO=null, bandH=-1;
 function bandBuild(){
   var sen=document.getElementById("bandsen");
   if(!sen||!window.IntersectionObserver)return;
-  var h=sen.clientHeight;              // height:100% of .wrap, so this measures the page
-  if(h===bandH)return;                 // nothing moved, and re-tiling would only churn
+  // height:100% of .wrap, so this measures the page
+  var h=sen.clientHeight;
+  // nothing moved, and re-tiling would only churn
+  if(h===bandH)return;
   bandH=h;
   if(bandIO)bandIO.disconnect();
   bandSeen.clear();

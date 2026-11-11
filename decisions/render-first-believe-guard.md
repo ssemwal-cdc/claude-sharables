@@ -15,7 +15,15 @@ date: 2026-09-01
 
 There is no known ceiling on the render tool. Every threshold anyone proposed for it was invented, including by the repo notes.
 
-The template carries a guard that turns a truncated render into a red banner. That exists so the question is settled by observation.
+The template carries a guard with three banners. That exists so the question is settled by observation. Each banner is an observed failure.
+
+A cut-off page shows a red banner, and the page stays visible.
+
+A CDN failure names `cdn.jsdelivr.net`. It hides the dashboard body (`.wrap`), so no unstyled controls or dead buttons show. It licenses one inline publish for that run. See D118, a flag that lasts one run. The banner also shows when a tag has not reported after 8 seconds.
+
+A dashboard code failure means that the code arrived and did not run to the end. It also hides the body. The run renders once more. If the banner shows again, the run reports a defect in the dashboard code. Design review, 2026-11-11: the hidden body keeps unstyled controls and dead buttons off the screen.
+
+The guard now fires in the widget. It did not before commit `c888908`. See F216, the widget runs scripts late.
 
 An estimate is not an observed failure.
 
@@ -41,3 +49,6 @@ The slim build was no size fallback, and it is deleted. See
 - The same run produced four findings this repo could not have produced. See F91, a wrong run found four defects.
 
 **Checks.** `test_render_fits_one_read` in `scripts/test_skill_code.py`, mutation-tested.
+
+Kind: process
+Home: plugins/procore-open-items-review/skills/procore-open-items-review/assets/dashboard_template.html

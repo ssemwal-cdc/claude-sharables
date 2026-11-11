@@ -360,10 +360,10 @@ if "github.io" in open(os.path.join(REPO, "README.md"), encoding="utf-8").read()
         fail("README.md links the GitHub Pages root, but docs/index.html is missing")
 
 # The NetSuite dashboard's "3 hours" staleness warning, published in its README
-# and SKILL.md, must match the actual threshold in the shipped JS template.
+# and SKILL.md, must match the actual threshold in the shipped dashboard code (dashboard.js).
 _NETSUITE_TEMPLATE = os.path.join(
     PLUGINS_DIR, "netsuite-approval-review", "skills",
-    "netsuite-approval-double-check", "assets", "dashboard_template.html")
+    "netsuite-approval-double-check", "assets", "dashboard.js")
 if os.path.isfile(_NETSUITE_TEMPLATE):
     with open(_NETSUITE_TEMPLATE, encoding="utf-8") as fh:
         _tm = re.search(r"function isStale\(\)\{var m=ageOfRun\(\);return m!=null&&m>(\d+)\}",
@@ -376,7 +376,7 @@ if os.path.isfile(_NETSUITE_TEMPLATE):
         if _hours != 3:
             fail(
                 f"the NetSuite README and SKILL.md say the dashboard warns after 3 "
-                f"hours, but dashboard_template.html's isStale() fires at {_hours:g} hour(s)"
+                f"hours, but dashboard.js's isStale() fires at {_hours:g} hour(s)"
             )
 
 # ------------------------------------------------- shared blocks (cross-plugin)
@@ -394,16 +394,9 @@ except ImportError as exc:
          "check did not run" % exc)
     shared_blocks = None
 if shared_blocks is not None:
-    _problems, _synced, _seen = shared_blocks.run(sync=False)
-    for _name in shared_blocks.orphan_canonicals(_seen):
-        _problems.append(f"plugins/_shared/{_name} is not referenced by any plugin file")
-    _pin_problems, _pins = shared_blocks.check_pins()
-    _problems += _pin_problems
-    _problems += shared_blocks.check_template_versions()
-    _problems += shared_blocks.check_verdict_vocabulary()
-    _problems += shared_blocks.check_check_registry()
-    _problems += shared_blocks.check_capability_verdicts()
-    _problems += shared_blocks.check_onboarding_page()
+    # One call list, shared with `shared_blocks.py --check`, so a check added there runs here.
+    _problems, _synced, _seen, _pins, _notes = shared_blocks.collect_problems(sync=False)
+    notes.extend("[shared] " + _n for _n in _notes)
     for _p in _problems:
         fail("[shared] " + _p.replace("\n", " ").replace("      ", " "))
     if not _problems:

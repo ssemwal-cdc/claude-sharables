@@ -4,16 +4,16 @@
 Reads the review log beside this script, injects it into dashboard_template.html, and writes
 index.html, whose contents are then rendered inline with show_widget.
 
-(An earlier design published this to an artifact. That path was dropped on 2026-08-11: the
-artifact host exposes no sendPrompt, so a dashboard there cannot put the re-run instruction
-into chat. The clipboard handoff still in dashboard_template.html is the deliberate fallback
-for that host and is not leftover - do not remove it.)
-
 The template holds the entire layout and all behaviour. This script only ever
 replaces the data block between the sentinels. Nothing here regenerates HTML,
 so the dashboard cannot drift between runs.
 
-Usage:  python3 publish_dashboard.py [<output path>]
+The layout is split in three: dashboard_template.html is the shell (markup, data block, guard),
+and dashboard.css and dashboard.js are the code. A shell whose asset tags carry no pin has those
+two files inlined; a pinned tag stays a CDN tag. --inline inlines them for this run whatever the
+pin, which is the way out when the CDN tags fail on screen. The flag is never stored.
+
+Usage:  python3 publish_dashboard.py [--inline] [<output path>]
 """
 import json, os, re, sys, datetime
 
@@ -31,7 +31,10 @@ if not os.path.exists(LOG) and os.path.exists(_LEGACY):
     except OSError:
         LOG = _LEGACY  # cloud-synced folders can refuse the move; keep working
 TPL = os.path.join(HERE, "dashboard_template.html")
-OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "index.html")
+# --inline is a flag for this one run and is never stored, so the next run tries the CDN again.
+INLINE = "--inline" in sys.argv[1:]
+_ARGS = [a for a in sys.argv[1:] if a != "--inline"]
+OUT = _ARGS[0] if _ARGS else os.path.join(HERE, "index.html")
 
 S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 
@@ -44,7 +47,7 @@ S, E = "/*__REVIEW_DATA__*/", "/*__END__*/"
 # ships in SKILL.md with the plugin, and only the layout can fall behind. Aborting would kill
 # a run that is fine.
 #__END_SHARED:pub-log-migration__
-TEMPLATE_VERSION = "v18"
+TEMPLATE_VERSION = "v20"
 
 #__SHARED:pub-version-check__
 def check_template_version(tpl):
@@ -93,18 +96,83 @@ def serialise(payload):
 VERDICTS = ("clear", "history-open", "flagged")
 
 
+#__SHARED:pub-detail-cap__
+DETAIL_CAP = 240
+
+
+def cap_details(items):
+    """Cut the `detail` of each flagged or clear row to DETAIL_CAP characters, at a word edge, and mark the cut.
+
+    DETAIL_CAP is about two lines at the width Show detail opens to. The full text stays in
+    the review log; a row that was cut carries `dcut`, which draws the Full detail button.
+    That button asks the chat to read the text back from the log. It never acts on the record.
+    """
+    for i in items:
+        if i.get("verdict") not in ("flagged", "clear"):
+            continue
+        d = i.get("detail") or ""
+        if len(d) > DETAIL_CAP:
+            i["detail"] = d[:DETAIL_CAP].rsplit(" ", 1)[0].rstrip(" ,;:.") + "\u2026"
+            i["dcut"] = 1
+#__END_SHARED:pub-detail-cap__
+
 #__SHARED:pub-strip-comments__
 def strip_comments(tpl):
-    """Drop HTML comments and whole-line // comments from the published page.
+    """Drop every comment from the published page except the two data sentinels.
 
     The widget payload has to be read and reproduced whole, and comments are dead bytes in it
     (Procore field run 2026-10-07: 101 KB render, ~45 KB template). The source template keeps
     its comments. Run after the version check, which reads a marker held in a comment.
-    The data sentinels are /* */ comments, so they survive.
+    Three kinds go: HTML comments, whole-line // comments, and /* */ comments. End-of-line //
+    is not scanned: a // inside a URL string is not a comment, so the source keeps such
+    comments on their own lines. The /* */ scan reads quoted strings first and leaves them
+    whole, so a /* or // inside a string survives. The sentinels S and E are /* */ and stay.
     """
     tpl = re.sub(r"<!--.*?-->[ \t]*\n?", "", tpl, flags=re.S)
-    return re.sub(r"^[ \t]*//[^\n]*\n", "", tpl, flags=re.M)
+    tpl = re.sub(r"^[ \t]*//[^\n]*\n", "", tpl, flags=re.M)
+
+    def block(m):
+        if m.group(1) or m.group(0) in (S, E):
+            return m.group(0)
+        return "\0"
+
+    tpl = re.sub(r"""("(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*')|/\*.*?\*/""", block, tpl, flags=re.S)
+    tpl = re.sub(r"^[ \t]*\0[ \t]*\n", "", tpl, flags=re.M)
+    return tpl.replace("\0", "")
 #__END_SHARED:pub-strip-comments__
+
+#__SHARED:pub-assets__
+# The shell names its stylesheet and script with a data-dash tag each. Until those tags carry
+# a pin (no __PIN_ token left in them) every run inlines the asset bytes, so the page is what
+# it was before the split. A pinned tag stays a CDN tag unless this run passed --inline.
+ASSET_TAG = re.compile(r'<link\b[^>]*\bdata-dash="css"[^>]*>'
+                       r'|<script\b[^>]*\bdata-dash="js"[^>]*></script>')
+
+
+def fill_assets(tpl, inline):
+    """Replace each unpinned (or, with `inline`, every) asset tag by the asset's own bytes.
+
+    The bytes are the same dashboard.css and dashboard.js a pin serves, with the same comment
+    strip the shell gets, because an inlined page passes through a turn like any other. The
+    CDN copy is served unstripped, as pinned. A missing asset aborts: a workspace copy that
+    lags the plugin is stale, and a page with no code is worse than no page.
+    """
+    def one(m):
+        kind = "css" if m.group(0).startswith("<link") else "js"
+        if "__PIN_" not in m.group(0) and not inline:
+            return m.group(0)
+        name = "dashboard." + kind
+        try:
+            with open(os.path.join(HERE, name), encoding="utf-8") as fh:
+                body = strip_comments(fh.read())
+        except OSError:
+            sys.exit("ABORT: %s is missing beside this script. Step 0 copies it from the plugin "
+                     "assets. Restore it from there and retry." % name)
+        tag = "style" if kind == "css" else "script"
+        return "<%s>\n%s</%s>" % (tag, body if body.endswith("\n") else body + "\n", tag)
+
+    return ASSET_TAG.sub(one, tpl)
+#__END_SHARED:pub-assets__
 
 
 def main():
@@ -114,6 +182,10 @@ def main():
     # Warns on a stale workspace copy; deliberately does not stop the run.
     check_template_version(tpl)
     tpl = strip_comments(tpl)
+
+    # The two asset files are filled in after the strip, and stripped the same way on their own, so
+    # an inlined page carries no more bytes than the single-file template did.
+    tpl = fill_assets(tpl, INLINE)
 
     if tpl.count(S) != 1 or tpl.count(E) != 1:
         sys.exit("ABORT: template sentinels missing or duplicated. Do not "
@@ -196,6 +268,8 @@ def main():
             sys.exit("ABORT: config.%s missing from %s (%s). "
                      "Run the first-time setup before publishing - never fall back "
                      "to another person's identity." % (key, os.path.basename(LOG), hint))
+
+    cap_details(items)
 
     payload = {
         "lastRun": log.get("lastRunTime") or log.get("lastCompletedRun", ""),

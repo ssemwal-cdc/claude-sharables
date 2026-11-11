@@ -1,5 +1,5 @@
 ---
-id: D120
+id: pending
 slug: one-pin-per-plugin
 kind: decision
 status: settled

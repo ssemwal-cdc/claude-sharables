@@ -1,5 +1,5 @@
 ---
-id: D119
+id: pending
 slug: no-css-import-in-shell
 kind: decision
 status: settled

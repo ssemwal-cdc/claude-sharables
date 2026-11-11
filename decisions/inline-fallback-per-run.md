@@ -1,5 +1,5 @@
 ---
-id: D118
+id: pending
 slug: inline-fallback-per-run
 kind: decision
 status: settled
